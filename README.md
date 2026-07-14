@@ -71,11 +71,15 @@ npm install
 npm run dev
 ```
 
+Hostinq çıxışları ayrı saxlanılır: `npm run build` Sites/Cloudflare üçün `dist/`,
+`npm run build:vercel` isə Vercel üçün `.next/` çıxışı yaradır.
+
 Keyfiyyət yoxlamaları:
 
 ```bash
 npm run lint
 npm run build
+npm run build:vercel
 npm test
 ```
 
