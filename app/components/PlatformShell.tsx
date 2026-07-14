@@ -89,7 +89,13 @@ export function PlatformShell({ children }: PlatformShellProps) {
               {platformRoutes.map((route) => {
                 const current = isCurrentRoute(pathname, route.href);
                 return (
-                  <Link key={route.href} href={route.href} onClick={closeMenu} aria-current={current ? "page" : undefined}>
+                  <Link
+                    key={route.href}
+                    href={route.href}
+                    onClick={closeMenu}
+                    onNavigate={closeMenu}
+                    aria-current={current ? "page" : undefined}
+                  >
                     <span>{route.number}</span>{route.label}
                   </Link>
                 );
