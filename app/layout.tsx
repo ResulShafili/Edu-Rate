@@ -5,18 +5,18 @@ import "./globals.css";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
 });
 
 const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument-serif",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: "400",
 });
 
-const title = "EduRate — Learn together. Go further.";
+const title = "EduRate — Birlikdə öyrən, daha irəli get.";
 const description =
-  "A thoughtful learning community for curated experiences, trusted peer connections, purposeful mentorship, and human support.";
+  "Seçilmiş təcrübələri, etibarlı icma əlaqələrini, məqsədli mentorluğu və qayğıkeş dəstəyi bir araya gətirən öyrənmə platforması.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const incomingHeaders = await headers();
@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
     incomingHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const socialImage = `${origin}/og-phase3.png`;
+  const socialImage = `${origin}/og.png`;
 
   return {
     title,
@@ -41,8 +41,16 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
+      locale: "az_AZ",
       url: origin,
-      images: [{ url: socialImage, width: 1734, height: 907, alt: "EduRate — Learn together. Go further." }],
+      images: [
+        {
+          url: socialImage,
+          width: 1734,
+          height: 907,
+          alt: "EduRate — Birlikdə öyrən, daha irəli get.",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
@@ -59,7 +67,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="az">
       <body className={`${dmSans.variable} ${instrumentSerif.variable} antialiased`}>
         {children}
       </body>

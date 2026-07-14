@@ -1,14 +1,27 @@
 "use client";
 
-import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import { ArrowDown, ArrowRight, Menu, Sparkles, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
-import { categories, events, type Event, type EventFilter } from "../data/events";
+import {
+  categories,
+  eventCategoryLabels,
+  events,
+  type Event,
+  type EventFilter,
+} from "../data/events";
 import { EventCard } from "./EventCard";
 import { EventDrawer } from "./EventDrawer";
 import { MagneticButton } from "./MagneticButton";
 import { ConnectionsExperience } from "./ConnectionsExperience";
 import { GuidanceExperience } from "./GuidanceExperience";
+import { TeacherEvaluation } from "./TeacherEvaluation";
 
 const reveal = {
   hidden: { opacity: 0, y: 28 },
@@ -19,6 +32,7 @@ export function EventExperience() {
   const [activeFilter, setActiveFilter] = useState<EventFilter>("All");
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -36,30 +50,35 @@ export function EventExperience() {
   const closeDrawer = useCallback(() => setSelectedEvent(null), []);
 
   function scrollToEvents() {
-    document.getElementById("events")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("events")?.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
   }
 
-  function scrollToMentors() {
-    document.getElementById("mentors")?.scrollIntoView({ behavior: "smooth" });
+  function scrollToTeachers() {
+    document.getElementById("teachers")?.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
   }
 
   return (
     <main className="site-shell">
-      <nav className="nav-shell" aria-label="Main navigation">
-        <a href="#top" className="brand" aria-label="EduRate home">
+      <nav className="nav-shell" aria-label="Əsas naviqasiya">
+        <a href="#top" className="brand" aria-label="EduRate ana səhifəsi">
           <span className="brand-mark"><span /></span>
           EDURATE
         </a>
 
         <div className="nav-links">
-          <a href="#events">Discover</a>
-          <a href="#peers">Community</a>
-          <a href="#mentors">Mentors</a>
-          <a href="#support">Support</a>
+          <a href="#events">Tədbirlər</a>
+          <a href="#peers">İcma</a>
+          <a href="#teachers">Müəllimlər</a>
+          <a href="#mentors">Mentorlar</a>
+          <a href="#support">Dəstək</a>
         </div>
 
-        <MagneticButton className="nav-cta" onClick={scrollToMentors}>
-          Find a mentor <ArrowRight size={15} />
+        <MagneticButton className="nav-cta" onClick={scrollToTeachers}>
+          Müəllim tap <ArrowRight size={15} />
         </MagneticButton>
 
         <button
@@ -67,7 +86,7 @@ export function EventExperience() {
           className="menu-toggle"
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
-          aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+          aria-label={menuOpen ? "Naviqasiyanı bağla" : "Naviqasiyanı aç"}
         >
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -80,10 +99,11 @@ export function EventExperience() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -12, scale: 0.98 }}
             >
-              <a href="#events" onClick={() => setMenuOpen(false)}>Discover</a>
-              <a href="#peers" onClick={() => setMenuOpen(false)}>Community</a>
-              <a href="#mentors" onClick={() => setMenuOpen(false)}>Mentors</a>
-              <a href="#support" onClick={() => setMenuOpen(false)}>Support</a>
+              <a href="#events" onClick={() => setMenuOpen(false)}>Tədbirlər</a>
+              <a href="#peers" onClick={() => setMenuOpen(false)}>İcma</a>
+              <a href="#teachers" onClick={() => setMenuOpen(false)}>Müəllimlər</a>
+              <a href="#mentors" onClick={() => setMenuOpen(false)}>Mentorlar</a>
+              <a href="#support" onClick={() => setMenuOpen(false)}>Dəstək</a>
             </motion.div>
           )}
         </AnimatePresence>
@@ -106,7 +126,7 @@ export function EventExperience() {
           transition={{ duration: 0.65, delay: 0.15 }}
         >
           <Sparkles size={14} />
-          EduRate community · Autumn ’26
+          EduRate icması · Payız ’26
         </motion.div>
 
         <motion.div
@@ -118,9 +138,9 @@ export function EventExperience() {
             visible: { transition: { staggerChildren: 0.11, delayChildren: 0.24 } },
           }}
         >
-          <div className="title-line"><motion.span variants={reveal}>Come for the</motion.span></div>
-          <div className="title-line title-line-accent"><motion.span variants={reveal}>unexpected.</motion.span></div>
-          <div className="title-line title-line-last"><motion.span variants={reveal}>Leave <em>changed.</em></motion.span></div>
+          <div className="title-line"><motion.span variants={reveal}>Maraqla gəl.</motion.span></div>
+          <div className="title-line title-line-accent"><motion.span variants={reveal}>Birlikdə öyrən.</motion.span></div>
+          <div className="title-line title-line-last"><motion.span variants={reveal}>Daha <em>irəli get.</em></motion.span></div>
         </motion.div>
 
         <motion.div
@@ -130,11 +150,11 @@ export function EventExperience() {
           transition={{ duration: 0.8, delay: 0.78, ease: [0.22, 1, 0.36, 1] }}
         >
           <p>
-            EduRate brings ambitious learners together through thoughtful
-            experiences, trusted peers, and conversations that keep growing.
+            EduRate düşünülmüş təcrübələr, etibarlı icma və davam edən
+            söhbətlər vasitəsilə öyrənmək istəyən insanları bir araya gətirir.
           </p>
           <button type="button" onClick={scrollToEvents} className="scroll-cue">
-            <span>Explore the season</span>
+            <span>Mövsümü kəşf et</span>
             <i><ArrowDown size={16} /></i>
           </button>
         </motion.div>
@@ -147,7 +167,7 @@ export function EventExperience() {
           aria-hidden="true"
         >
           <span>06</span>
-          <small>cities</small>
+          <small>şəhər</small>
         </motion.div>
       </motion.section>
 
@@ -160,10 +180,10 @@ export function EventExperience() {
           transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
         >
           <div>
-            <span className="section-kicker">01 / The calendar</span>
-            <h2>Find your next<br /><em>good story.</em></h2>
+            <span className="section-kicker">01 / Təqvim</span>
+            <h2>Növbəti yaxşı hekayən<br /><em>burada başlasın.</em></h2>
           </div>
-          <p>Small rooms, big ideas, and the kind of people you’ll be glad you met.</p>
+          <p>Kiçik qruplar, böyük ideyalar və tanış olduğuna sevinəcəyin insanlar.</p>
         </motion.div>
 
         <motion.div
@@ -173,7 +193,7 @@ export function EventExperience() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          <div className="filters" role="group" aria-label="Filter events by category">
+          <div className="filters" role="group" aria-label="Tədbirləri kateqoriyaya görə süzgəcdən keçir">
             {categories.map((category) => (
               <button
                 type="button"
@@ -185,11 +205,13 @@ export function EventExperience() {
                 {activeFilter === category && (
                   <motion.span className="filter-pill" layoutId="active-filter" />
                 )}
-                <span>{category}</span>
+                <span>{eventCategoryLabels[category]}</span>
               </button>
             ))}
           </div>
-          <span className="event-count">{String(visibleEvents.length).padStart(2, "0")} events</span>
+          <span className="event-count">
+            {String(visibleEvents.length).padStart(2, "0")} tədbir
+          </span>
         </motion.div>
 
         <motion.div layout className="events-grid">
@@ -208,6 +230,8 @@ export function EventExperience() {
 
       <ConnectionsExperience />
 
+      <TeacherEvaluation />
+
       <GuidanceExperience />
 
       <section id="about" className="manifesto-section">
@@ -223,14 +247,14 @@ export function EventExperience() {
           viewport={{ once: true, margin: "-20%" }}
           transition={{ duration: 0.8 }}
         >
-          Less networking.<br />More <em>connecting.</em>
+          Daha az formal tanışlıq.<br />Daha çox <em>həqiqi bağ.</em>
         </motion.p>
-        <span>Every EduRate connection starts with shared curiosity and leaves enough room for a genuinely useful surprise.</span>
+        <span>EduRate-də hər əlaqə ortaq maraqdan başlayır və faydalı bir sürprizə çevrilmək üçün yetərincə yer saxlayır.</span>
       </section>
 
       <footer id="journal" className="site-footer">
         <a href="#top" className="brand"><span className="brand-mark"><span /></span>EDURATE</a>
-        <p>Made for people who believe<br />learning gets better together.</p>
+        <p>Birlikdə öyrənməyin daha yaxşı olduğuna<br />inanan insanlar üçün yaradılıb.</p>
         <div>
           <span>© 2026 EduRate</span>
           <a href="mailto:hello@edurate.community">hello@edurate.community</a>

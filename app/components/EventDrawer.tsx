@@ -4,7 +4,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, CalendarDays, Clock3, MapPin, Sparkles, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
-import type { Event } from "../data/events";
+import {
+  eventCategoryLabels,
+  eventMonthLongLabels,
+  type Event,
+} from "../data/events";
 
 type EventDrawerProps = {
   event: Event | null;
@@ -66,7 +70,7 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
           <motion.button
             type="button"
             className="drawer-backdrop"
-            aria-label="Close event details"
+            aria-label="Tədbir təfərrüatlarını bağla"
             onClick={onClose}
           />
 
@@ -87,13 +91,13 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
           >
             <div className="drawer-noise" aria-hidden="true" />
             <div className="drawer-topline">
-              <span>Event / {event.category}</span>
+              <span>Tədbir / {eventCategoryLabels[event.category]}</span>
               <button
                 ref={closeRef}
                 type="button"
                 onClick={onClose}
                 className="drawer-close"
-                aria-label="Close event details"
+                aria-label="Tədbir təfərrüatlarını bağla"
               >
                 <X size={20} strokeWidth={1.6} />
               </button>
@@ -117,25 +121,28 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
             </div>
 
             <div className="drawer-content">
-              <span className="drawer-kicker">A gathered experience</span>
+              <span className="drawer-kicker">Birlikdə yaşanan təcrübə</span>
               <h2 id="event-drawer-title">{event.title}</h2>
               <p className="drawer-description">{event.longDescription}</p>
 
               <div className="drawer-facts">
-                <div><CalendarDays size={17} /><span>{event.date} {event.month}</span></div>
+                <div>
+                  <CalendarDays size={17} />
+                  <span>{event.date} {eventMonthLongLabels[event.month]}</span>
+                </div>
                 <div><Clock3 size={17} /><span>{event.time}</span></div>
                 <div><MapPin size={17} /><span>{event.location}, {event.city}</span></div>
               </div>
 
               <div className="drawer-hosts">
-                <span>Featuring</span>
+                <span>Qonaqlar</span>
                 <p>{event.speakers.join(" · ")}</p>
               </div>
 
               <div className="drawer-bottom">
                 <span>{event.capacity}</span>
                 <button type="button" className="reserve-button">
-                  Reserve a place <ArrowRight size={17} />
+                  Tədbirə qeydiyyatdan keç <ArrowRight size={17} />
                 </button>
               </div>
             </div>

@@ -36,22 +36,22 @@ export function MentorshipDashboard() {
         transition={{ duration: 0.75, ease }}
       >
         <div>
-          <span className="mentor-kicker">03 / Guided growth</span>
+          <span className="mentor-kicker">04 / İnkişaf yolunda bələdçi</span>
           <h2 id="mentor-title">
-            Find a mentor.<br />
-            Make the next move <em>yours.</em>
+            Mentorunu tap.<br />
+            Növbəti addımı <em>özün seç.</em>
           </h2>
         </div>
         <div className="mentor-heading-aside">
-          <span><Sparkles size={13} /> Thoughtfully matched</span>
+          <span><Sparkles size={13} /> Diqqətlə uyğunlaşdırılır</span>
           <p>
-            Learn beside someone who has navigated the questions you are asking now.
-            No cold introductions, no performative networking.
+            Hazırda verdiyin suallarla vaxtilə üzləşmiş biri ilə birlikdə öyrən.
+            Soyuq tanışlıqlar da, süni əlaqələr də yoxdur.
           </p>
         </div>
       </motion.div>
 
-      <motion.div layout className="mentor-grid" aria-label="Mentor directory">
+      <motion.div layout className="mentor-grid" aria-label="Mentor siyahısı">
         {mentors.map((mentor, index) => {
           const expanded = expandedId === mentor.id;
           const requested = requestedIds.has(mentor.id);
@@ -124,12 +124,12 @@ export function MentorshipDashboard() {
                       </div>
 
                       <div className="mentor-practice">
-                        <span className="mentor-label">Expertise</span>
+                        <span className="mentor-label">İxtisas sahələri</span>
                         <div className="mentor-expertise">
                           {mentor.expertise.map((item) => <span key={item}>{item}</span>)}
                         </div>
 
-                        <span className="mentor-label mentor-availability-label">Availability</span>
+                        <span className="mentor-label mentor-availability-label">Uyğun vaxtlar</span>
                         <div className="mentor-availability">
                           {mentor.availability.map((slot) => <span key={slot}>{slot}</span>)}
                         </div>
@@ -161,7 +161,7 @@ export function MentorshipDashboard() {
                               transition={{ duration: 0.2 }}
                             >
                               {requested ? <Check size={16} strokeWidth={2.4} /> : <Sparkles size={15} />}
-                              {requested ? "Request sent" : "Request mentorship"}
+                              {requested ? "Müraciət göndərildi" : "Mentorluq üçün müraciət et"}
                             </motion.span>
                           </AnimatePresence>
                           {requested && !reduceMotion && (
@@ -171,7 +171,7 @@ export function MentorshipDashboard() {
                           )}
                         </motion.button>
                         <span className="sr-only" aria-live="polite">
-                          {requested ? `Mentorship request sent to ${mentor.name}` : ""}
+                          {requested ? `${mentor.name} üçün mentorluq müraciəti göndərildi.` : ""}
                         </span>
                       </div>
                     </div>

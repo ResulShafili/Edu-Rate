@@ -1,10 +1,11 @@
 export type EventCategory = "Design" | "Technology" | "Culture" | "Wellness";
+export type EventMonth = "SEP" | "OCT";
 
 export type Event = {
   id: string;
   category: EventCategory;
   date: string;
-  month: string;
+  month: EventMonth;
   time: string;
   title: string;
   location: string;
@@ -27,6 +28,24 @@ export const categories = [
 
 export type EventFilter = (typeof categories)[number];
 
+export const eventCategoryLabels: Record<EventFilter, string> = {
+  All: "Hamısı",
+  Design: "Dizayn",
+  Technology: "Texnologiya",
+  Culture: "Mədəniyyət",
+  Wellness: "Sağlamlıq",
+};
+
+export const eventMonthLabels: Record<EventMonth, string> = {
+  SEP: "SEN",
+  OCT: "OKT",
+};
+
+export const eventMonthLongLabels: Record<EventMonth, string> = {
+  SEP: "sentyabr",
+  OCT: "oktyabr",
+};
+
 export const events: Event[] = [
   {
     id: "future-forms",
@@ -34,16 +53,16 @@ export const events: Event[] = [
     date: "18",
     month: "SEP",
     time: "18:30",
-    title: "Future Forms",
+    title: "Gələcəyin formaları",
     location: "Aperture Hall",
-    city: "Copenhagen",
-    description: "An evening exploring the shapes, systems, and stories defining tomorrow.",
+    city: "Kopenhagen",
+    description: "Sabahı formalaşdıran ideyaları, sistemləri və hekayələri araşdıran bir axşam.",
     longDescription:
-      "A tactile gathering for the design-curious. Step inside a living exhibition of material experiments, spatial interfaces, and conversations with the people creating a more thoughtful tomorrow.",
+      "Dizayna maraq göstərənlər üçün hiss olunan, canlı bir görüş. Material təcrübələrini, məkan interfeyslərini və daha düşünülmüş bir sabah yaradan insanlarla söhbətləri bir araya gətirən sərgiyə qoşul.",
     accent: "#c8ff4d",
     glow: "rgba(200, 255, 77, 0.28)",
     speakers: ["Mina Park", "Noah El-Amin", "Eva Krüger"],
-    capacity: "180 guests",
+    capacity: "180 iştirakçı",
   },
   {
     id: "human-machine",
@@ -51,16 +70,16 @@ export const events: Event[] = [
     date: "22",
     month: "SEP",
     time: "19:00",
-    title: "Human / Machine",
+    title: "İnsan / Maşın",
     location: "The Foundry",
     city: "Berlin",
-    description: "A candid salon on intelligence, imagination, and what stays beautifully human.",
+    description: "Zəka, təxəyyül və bizi insan edən dəyərlər haqqında səmimi söhbət.",
     longDescription:
-      "Beyond the hype cycle, this intimate salon asks better questions about our relationship with intelligent tools. Expect practical provocations, sharp debate, and a room full of generous minds.",
+      "Səs-küylü trendlərdən kənara çıxan bu yaxın görüş ağıllı alətlərlə münasibətimiz barədə daha düzgün suallar verir. Praktik düşüncə təcrübələrinə, canlı müzakirəyə və açıqfikirli insanlarla dolu bir məkana hazır ol.",
     accent: "#b9a7ff",
     glow: "rgba(185, 167, 255, 0.3)",
     speakers: ["Iris Bell", "Kaito Mori", "Amara Osei"],
-    capacity: "120 guests",
+    capacity: "120 iştirakçı",
   },
   {
     id: "afterlight",
@@ -68,16 +87,16 @@ export const events: Event[] = [
     date: "28",
     month: "SEP",
     time: "21:00",
-    title: "Afterlight",
+    title: "İşıqdan sonra",
     location: "Museo Cielo",
-    city: "Lisbon",
-    description: "An immersive night of sound, projection, movement, and collective wonder.",
+    city: "Lissabon",
+    description: "Səs, işıq, hərəkət və ortaq heyrət hissini birləşdirən immersiv gecə.",
     longDescription:
-      "When the museum closes, Afterlight begins. Wander through responsive installations, live performances, and shifting fields of sound created by artists from five continents.",
+      "Muzey qapılarını bağlayanda “İşıqdan sonra” başlayır. Beş qitədən olan sənətçilərin yaratdığı interaktiv instalyasiyalar, canlı performanslar və dəyişən səs mənzərələri arasında sərbəst dolaş.",
     accent: "#ff9e7a",
     glow: "rgba(255, 158, 122, 0.3)",
     speakers: ["Sora Studio", "León Vale", "Aïcha Rae"],
-    capacity: "350 guests",
+    capacity: "350 iştirakçı",
   },
   {
     id: "soft-reset",
@@ -85,16 +104,16 @@ export const events: Event[] = [
     date: "04",
     month: "OCT",
     time: "09:30",
-    title: "Soft Reset",
+    title: "Yumşaq başlanğıc",
     location: "Casa Flora",
-    city: "Mallorca",
-    description: "A slow morning designed to restore attention, energy, and a sense of possibility.",
+    city: "Malyorka",
+    description: "Diqqəti, enerjini və yenidən başlamaq hissini bərpa edən sakit səhər.",
     longDescription:
-      "A half-day retreat for busy minds. Guided movement, breathwork, nourishing food, and deliberate quiet come together in a sunlit sanctuary overlooking the Mediterranean.",
+      "Daim məşğul düşüncələr üçün yarımgünlük fasilə. Aralıq dənizinə baxan, günəşli bir məkanda yönləndirilən hərəkət, nəfəs məşqləri, faydalı qidalar və şüurlu sakitlik bir araya gəlir.",
     accent: "#7de5d1",
     glow: "rgba(125, 229, 209, 0.28)",
     speakers: ["Nia Laurent", "Mar Soler", "Studio Still"],
-    capacity: "48 guests",
+    capacity: "48 iştirakçı",
   },
   {
     id: "strange-loops",
@@ -102,16 +121,16 @@ export const events: Event[] = [
     date: "11",
     month: "OCT",
     time: "17:45",
-    title: "Strange Loops",
+    title: "Qəribə dövrlər",
     location: "Signal House",
     city: "London",
-    description: "Live experiments at the edge of code, music, and emergent creative systems.",
+    description: "Kod, musiqi və yeni yaradıcı sistemlərin sərhədində canlı təcrübələr.",
     longDescription:
-      "Part concert, part lab, Strange Loops brings creative technologists on stage to build, break, and remix new systems in real time—with the audience shaping the result.",
+      "Bir qədər konsert, bir qədər laboratoriya olan “Qəribə dövrlər” yaradıcı texnoloqları səhnədə yeni sistemlər qurmağa, sınaqdan keçirməyə və canlı remiks etməyə dəvət edir. Nəticəni tamaşaçılar da formalaşdırır.",
     accent: "#77b8ff",
     glow: "rgba(119, 184, 255, 0.3)",
     speakers: ["Ordinal", "Maya Chen", "Tomas Grey"],
-    capacity: "220 guests",
+    capacity: "220 iştirakçı",
   },
   {
     id: "new-rituals",
@@ -119,15 +138,15 @@ export const events: Event[] = [
     date: "16",
     month: "OCT",
     time: "18:00",
-    title: "New Rituals",
+    title: "Yeni rituallar",
     location: "Atelier 04",
     city: "Paris",
-    description: "Designers reimagine the everyday objects and gestures that make a life.",
+    description: "Dizaynerlər gündəlik həyatı quran əşyalara və vərdişlərə yenidən baxırlar.",
     longDescription:
-      "A warm, object-led exhibition about the quiet choreography of daily life. Meet the designers giving familiar rituals new meaning through craft, technology, and care.",
+      "Gündəlik həyatın sakit axınından bəhs edən, əşyaların ön planda olduğu səmimi sərgi. Sənətkarlıq, texnologiya və qayğı ilə tanış vərdişlərə yeni məna verən dizaynerlərlə görüş.",
     accent: "#f7d56f",
     glow: "rgba(247, 213, 111, 0.28)",
     speakers: ["Oona Wells", "Bureau Matin", "Ren Ito"],
-    capacity: "95 guests",
+    capacity: "95 iştirakçı",
   },
 ];

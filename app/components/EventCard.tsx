@@ -3,7 +3,12 @@
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ArrowUpRight, MapPin } from "lucide-react";
 import type { CSSProperties, MouseEvent } from "react";
-import type { Event } from "../data/events";
+import {
+  eventCategoryLabels,
+  eventMonthLabels,
+  eventMonthLongLabels,
+  type Event,
+} from "../data/events";
 
 type EventCardProps = {
   event: Event;
@@ -55,7 +60,7 @@ export function EventCard({ event, index, onSelect }: EventCardProps) {
         type="button"
         onClick={() => onSelect(event)}
         className="event-card-button"
-        aria-label={`View details for ${event.title}`}
+        aria-label={`${event.title} tədbirinin təfərrüatlarına bax`}
       >
         <div
           className="event-art"
@@ -67,14 +72,17 @@ export function EventCard({ event, index, onSelect }: EventCardProps) {
           <div className="event-art-orbit event-art-orbit-one" />
           <div className="event-art-orbit event-art-orbit-two" />
           <div className="event-art-core" />
-          <span className="event-category">{event.category}</span>
+          <span className="event-category">{eventCategoryLabels[event.category]}</span>
           <span className="event-time">{event.time}</span>
         </div>
 
         <div className="event-card-content">
-          <div className="event-date" aria-label={`${event.month} ${event.date}`}>
+          <div
+            className="event-date"
+            aria-label={`${event.date} ${eventMonthLongLabels[event.month]}`}
+          >
             <span>{event.date}</span>
-            <small>{event.month}</small>
+            <small>{eventMonthLabels[event.month]}</small>
           </div>
           <div className="event-copy">
             <div className="event-title-row">

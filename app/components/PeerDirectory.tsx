@@ -5,6 +5,12 @@ import { Check, MapPin, MessageCircle, RefreshCw, UserPlus } from "lucide-react"
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { peers, type Peer } from "../data/peers";
 
+const statusLabels: Record<Peer["status"], string> = {
+  online: "onlayn",
+  away: "fasilədə",
+  offline: "oflayn",
+};
+
 type PeerDirectoryProps = {
   onMessage: (peer: Peer) => void;
 };
@@ -67,30 +73,30 @@ export function PeerDirectory({ onMessage }: PeerDirectoryProps) {
         transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
       >
         <div>
-          <span className="section-kicker section-kicker-dark">02 / Your circle</span>
-          <h2>Meet the people<br />behind the <em>ideas.</em></h2>
+          <span className="section-kicker section-kicker-dark">02 / Sənin çevrən</span>
+          <h2>İdeyaların arxasındakı<br /><em>insanlarla tanış ol.</em></h2>
         </div>
         <div className="peers-heading-aside">
-          <p>Thoughtful introductions to learners, makers, and mentors moving in the same direction.</p>
+          <p>Ortaq maraqlara əsaslanan səmimi tanışlıqlar: öyrənənlər, yaradıcılar və mentorlar bir arada.</p>
           <button type="button" onClick={refreshDirectory} disabled={loading}>
             <RefreshCw size={14} className={loading ? "is-spinning" : ""} />
-            New faces
+            Yeni üzlər
           </button>
         </div>
       </motion.div>
 
       <div className="directory-meta">
-        <span><i /> 2,418 members active this week</span>
-        <span>Curated from shared interests</span>
+        <span><i /> Bu həftə 2 418 icma üzvü aktivdir</span>
+        <span>Ortaq maraqlara əsasən seçilib</span>
       </div>
 
       <div
         className="peers-grid"
         aria-busy={loading}
-        aria-label={loading ? "Loading peer directory" : "Peer directory"}
+        aria-label={loading ? "İcma kataloqu yüklənir" : "İcma kataloqu"}
       >
         <span className="sr-only" role="status">
-          {loading ? "Finding thoughtful connections" : "Peer directory loaded"}
+          {loading ? "Sənin üçün uyğun insanlar tapılır" : "İcma kataloqu yükləndi"}
         </span>
         <AnimatePresence mode="popLayout">
           {loading
@@ -113,8 +119,8 @@ export function PeerDirectory({ onMessage }: PeerDirectoryProps) {
                     transition={{ duration: 0.48, delay: index * 0.035, ease: [0.22, 1, 0.36, 1] }}
                   >
                     <div className="peer-card-topline">
-                      <span className={`peer-status ${peer.status}`}><i />{peer.status}</span>
-                      <span>{String(peer.mutuals).padStart(2, "0")} mutual</span>
+                      <span className={`peer-status ${peer.status}`}><i />{statusLabels[peer.status]}</span>
+                      <span>{String(peer.mutuals).padStart(2, "0")} ortaq tanış</span>
                     </div>
 
                     <div className="peer-avatar" aria-hidden="true">
@@ -145,10 +151,10 @@ export function PeerDirectory({ onMessage }: PeerDirectoryProps) {
                         aria-pressed={isConnected}
                       >
                         {isConnected ? <Check size={14} /> : <UserPlus size={14} />}
-                        {isConnected ? "Connected" : "Connect"}
+                        {isConnected ? "Əlaqədəsiniz" : "Əlaqə qur"}
                       </button>
                       <button type="button" className="peer-message" onClick={() => onMessage(peer)}>
-                        <MessageCircle size={14} /> Message
+                        <MessageCircle size={14} /> Mesaj yaz
                       </button>
                     </div>
                   </motion.article>

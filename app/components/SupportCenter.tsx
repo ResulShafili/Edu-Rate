@@ -81,10 +81,10 @@ export function SupportCenter() {
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.7, ease }}
       >
-        <span className="support-kicker">04 / Here when you need us</span>
+        <span className="support-kicker">05 / Ehtiyacın olanda yanındayıq</span>
         <div>
-          <h2 id="support-title">A little help.<br /><em>Right on time.</em></h2>
-          <p>Clear answers first. A thoughtful human whenever you need one.</p>
+          <h2 id="support-title">Bir az dəstək.<br /><em>Elə vaxtında.</em></h2>
+          <p>Əvvəlcə aydın cavab. Lazım olanda isə qayğıkeş bir insan.</p>
         </div>
       </motion.div>
 
@@ -97,8 +97,8 @@ export function SupportCenter() {
           transition={{ duration: 0.7, ease }}
         >
           <div className="support-panel-label">
-            <span>Common questions</span>
-            <small>{String(supportFaqs.length).padStart(2, "0")} answers</small>
+            <span>Tez-tez verilən suallar</span>
+            <small>{String(supportFaqs.length).padStart(2, "0")} cavab</small>
           </div>
 
           <div className="faq-list">
@@ -145,7 +145,7 @@ export function SupportCenter() {
 
           <div className="faq-contact-note">
             <LifeBuoy size={17} />
-            <p><strong>Still thinking?</strong> A community host usually replies within one working day.</p>
+            <p><strong>Hələ də sualın var?</strong> İcma nümayəndəmiz adətən bir iş günü ərzində cavab verir.</p>
           </div>
         </motion.div>
 
@@ -158,8 +158,8 @@ export function SupportCenter() {
         >
           <div className="ticket-progress-head">
             <div>
-              <span>Submit a ticket</span>
-              <small>We will take it from here.</small>
+              <span>Dəstək sorğusu göndər</span>
+              <small>Qalanını biz həll edəcəyik.</small>
             </div>
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.strong
@@ -175,11 +175,11 @@ export function SupportCenter() {
           <div
             className="ticket-progress"
             role="progressbar"
-            aria-label="Ticket completion"
+            aria-label="Dəstək sorğusunun tamamlanması"
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={progress}
-            aria-valuetext={`${completedFields} of 4 required fields complete`}
+            aria-valuetext={`4 məcburi xanadan ${completedFields} xana tamamlanıb`}
           >
             <motion.span animate={{ width: `${progress}%` }} transition={{ duration: reduceMotion ? 0 : 0.5, ease }} />
           </div>
@@ -201,11 +201,11 @@ export function SupportCenter() {
                 >
                   <Check size={24} />
                 </motion.span>
-                <small>Ticket received</small>
-                <h3>You are in good hands.</h3>
-                <p>We sent a confirmation to {fields.email}. A community host will be in touch shortly.</p>
+                <small>Dəstək sorğusu qəbul edildi</small>
+                <h3>Etibarlı əllərdəsən.</h3>
+                <p>Təsdiqi {fields.email} ünvanına göndərdik. İcma nümayəndəmiz tezliklə səninlə əlaqə saxlayacaq.</p>
                 <button type="button" onClick={resetTicket}>
-                  Send another request <ArrowRight size={14} />
+                  Yeni sorğu göndər <ArrowRight size={14} />
                 </button>
               </motion.div>
             ) : (
@@ -232,8 +232,8 @@ export function SupportCenter() {
                     aria-describedby={touched.has("name") && !validity.name ? "ticket-name-error" : undefined}
                     required
                   />
-                  <label htmlFor="ticket-name">Your name</label>
-                  {touched.has("name") && !validity.name && <small id="ticket-name-error" className="field-error">Please enter at least 2 characters.</small>}
+                  <label htmlFor="ticket-name">Adın</label>
+                  {touched.has("name") && !validity.name && <small id="ticket-name-error" className="field-error">Ən azı 2 simvol daxil et.</small>}
                 </div>
 
                 <div className={`floating-field${fields.email ? " has-value" : ""}${touched.has("email") && !validity.email ? " has-error" : ""}`}>
@@ -250,8 +250,8 @@ export function SupportCenter() {
                     aria-describedby={touched.has("email") && !validity.email ? "ticket-email-error" : undefined}
                     required
                   />
-                  <label htmlFor="ticket-email">Email address</label>
-                  {touched.has("email") && !validity.email && <small id="ticket-email-error" className="field-error">Enter a valid email address.</small>}
+                  <label htmlFor="ticket-email">E-poçt ünvanın</label>
+                  {touched.has("email") && !validity.email && <small id="ticket-email-error" className="field-error">Düzgün e-poçt ünvanı daxil et.</small>}
                 </div>
 
                 <div className={`floating-field floating-select${fields.topic ? " has-value" : ""}${touched.has("topic") && !validity.topic ? " has-error" : ""}`}>
@@ -265,12 +265,12 @@ export function SupportCenter() {
                     aria-describedby={touched.has("topic") && !validity.topic ? "ticket-topic-error" : undefined}
                     required
                   >
-                    <option value="" disabled aria-label="Choose a topic" />
+                    <option value="" disabled aria-label="Mövzu seç" />
                     {ticketTopics.map((topic) => <option key={topic} value={topic}>{topic}</option>)}
                   </select>
-                  <label htmlFor="ticket-topic">What can we help with?</label>
+                  <label htmlFor="ticket-topic">Sənə nə ilə kömək edə bilərik?</label>
                   <ChevronDown size={15} aria-hidden="true" />
-                  {touched.has("topic") && !validity.topic && <small id="ticket-topic-error" className="field-error">Choose the closest topic.</small>}
+                  {touched.has("topic") && !validity.topic && <small id="ticket-topic-error" className="field-error">Ən uyğun mövzunu seç.</small>}
                 </div>
 
                 <div className={`floating-field floating-textarea${fields.message ? " has-value" : ""}${touched.has("message") && !validity.message ? " has-error" : ""}`}>
@@ -287,19 +287,19 @@ export function SupportCenter() {
                     aria-describedby={touched.has("message") && !validity.message ? "ticket-message-error" : undefined}
                     required
                   />
-                  <label htmlFor="ticket-message">Tell us what happened</label>
-                  {touched.has("message") && !validity.message && <small id="ticket-message-error" className="field-error">Add a little more detail (20 characters minimum).</small>}
+                  <label htmlFor="ticket-message">Nə baş verdiyini bizə yaz</label>
+                  {touched.has("message") && !validity.message && <small id="ticket-message-error" className="field-error">Bir az daha ətraflı yaz (ən azı 20 simvol).</small>}
                 </div>
 
                 <div className="ticket-form-footer">
-                  <span>{progress < 100 ? "Complete each field to send" : "Ready when you are"}</span>
+                  <span>{progress < 100 ? "Göndərmək üçün bütün xanaları doldur" : "Göndərməyə hazırsan"}</span>
                   <motion.button
                     type="submit"
                     disabled={progress < 100 || submitting}
                     whileTap={reduceMotion ? undefined : { scale: 0.97 }}
                   >
                     {submitting ? <i className="ticket-spinner" /> : <Send size={14} />}
-                    {submitting ? "Sending" : "Send ticket"}
+                    {submitting ? "Göndərilir" : "Sorğunu göndər"}
                   </motion.button>
                 </div>
               </motion.form>
