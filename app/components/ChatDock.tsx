@@ -96,9 +96,15 @@ export function ChatDock({ peer, open, onOpenChange }: ChatDockProps) {
   useEffect(() => {
     if (!open) return;
     previousFocusRef.current = document.activeElement as HTMLElement | null;
-    const focusTimer = window.setTimeout(() => composerRef.current?.focus(), reduceMotion ? 0 : 360);
+    const shouldAutoFocus = window.matchMedia(
+      "(min-width: 768px) and (pointer: fine)",
+    ).matches;
+    const focusTimer = shouldAutoFocus
+      ? window.setTimeout(() => composerRef.current?.focus(), reduceMotion ? 0 : 360)
+      : null;
+
     return () => {
-      window.clearTimeout(focusTimer);
+      if (focusTimer !== null) window.clearTimeout(focusTimer);
       previousFocusRef.current?.focus();
     };
   }, [open, reduceMotion]);

@@ -62,6 +62,7 @@ test("altı əsas marşrutu Azərbaycan dilində ayrıca render edir", async () 
 
       const html = await response.text();
       assert.match(html, /<html[^>]+lang="az"/i);
+      assert.match(html, /<meta[^>]+name="viewport"[^>]+width=device-width/i);
       assert.match(html, /<title>[^<]*EduRate/i);
       assert.match(html, heading, `${pathname} öz başlığını göstərməlidir`);
       assert.match(html, /aria-label="Əsas naviqasiya"/);
@@ -279,4 +280,31 @@ test("əvvəlki modulların əsas əlçatanlıq müqavilələrini saxlayır", as
   assert.match(support, /aria-controls=\{answerId\}/);
   assert.match(support, /role="progressbar"/);
   assert.match(support, /<label htmlFor="ticket-name">Adın<\/label>/);
+});
+
+test("dar mobil ekranlarda kompakt, təhlükəsiz və toxunma yönümlü görünüş saxlayır", async () => {
+  const [styles, layout, chat] = await Promise.all([
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/ChatDock.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(styles, /@media \(max-width: 767px\)/);
+  const compactStart = styles.indexOf("@media (max-width: 480px)");
+  const narrowStart = styles.indexOf("@media (max-width: 360px)", compactStart);
+  assert.ok(compactStart > -1 && narrowStart > compactStart);
+  const compact = styles.slice(compactStart, narrowStart);
+
+  assert.match(compact, /\.hero-stamp\s*{\s*display:\s*none/);
+  assert.match(compact, /\.hero-title\s*{[^}]*font-size:\s*clamp\(40px/s);
+  assert.match(compact, /\.peers-grid\[aria-busy="true"\]\s*{\s*min-height:\s*0/);
+  assert.match(compact, /\.criteria-rating-shell \[role="radiogroup"\]/);
+  assert.match(compact, /\.drawer-facts\s*{[^}]*grid-template-columns:\s*1fr/s);
+  assert.match(compact, /\.floating-field input,[^}]*font-size:\s*16px/s);
+  assert.match(compact, /safe-area-inset-top/);
+  assert.match(compact, /safe-area-inset-bottom/);
+  assert.doesNotMatch(compact, /min-height:\s*780px|font-size:\s*52px/);
+
+  assert.match(layout, /viewportFit:\s*"cover"/);
+  assert.match(chat, /\(min-width: 768px\) and \(pointer: fine\)/);
 });

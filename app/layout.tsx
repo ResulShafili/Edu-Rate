@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Instrument_Serif } from "next/font/google";
 import { headers } from "next/headers";
 import { PlatformProvider } from "./components/PlatformProvider";
@@ -19,6 +19,12 @@ const instrumentSerif = Instrument_Serif({
 const title = "EduRate — Birlikdə öyrən, inamla irəli get.";
 const description =
   "Tədbirləri, etibarlı icma əlaqələrini, mentorluğu və bacarıq əsaslı müəllim qiymətləndirməsini bir araya gətirən öyrənmə platforması.";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const incomingHeaders = await headers();
