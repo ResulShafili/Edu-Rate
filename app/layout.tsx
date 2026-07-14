@@ -16,7 +16,7 @@ const instrumentSerif = Instrument_Serif({
 
 const title = "EduRate — Learn together. Go further.";
 const description =
-  "A thoughtful learning community for curated experiences, trusted peer connections, and conversations that keep growing.";
+  "A thoughtful learning community for curated experiences, trusted peer connections, purposeful mentorship, and human support.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const incomingHeaders = await headers();
@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
     incomingHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const socialImage = `${origin}/og.png`;
+  const socialImage = `${origin}/og-phase3.png`;
 
   return {
     title,

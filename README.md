@@ -1,7 +1,7 @@
 # EduRate
 
 EduRate is a premium community platform for curated learning experiences,
-peer discovery, and thoughtful one-to-one conversation.
+peer discovery, thoughtful one-to-one conversation, and guided growth.
 
 ## Product surface
 
@@ -11,6 +11,10 @@ peer discovery, and thoughtful one-to-one conversation.
 - Connect and message interactions for every peer
 - Floating chat with animated messages, typing presence, smooth scrolling,
   compact mode, notification preferences, and conversation controls
+- Expandable mentor profiles with expertise, availability, and animated
+  mentorship-request feedback
+- Accessible FAQ accordions and a support-ticket form with floating labels,
+  validation, animated completion progress, and a polished success state
 - Keyboard, touch, reduced-motion, and mobile support
 
 ## Technology
@@ -41,8 +45,14 @@ npm test
 
 ## Architecture
 
-The site keeps event discovery and community connections modular. Phase 2 is
-composed through `ConnectionsExperience`, with separate peer-directory and
-chat-dock components plus typed domain data. The current conversation demo is
-client-side by design; the component boundary is ready for a realtime transport
-and authenticated persistence when that backend phase is introduced.
+The site keeps event discovery, community connections, mentorship, and support
+modular. Phase 2 is composed through `ConnectionsExperience`, with separate
+peer-directory and chat-dock components plus typed domain data. Phase 3 is
+composed through `GuidanceExperience`, which owns focused mentorship and support
+surfaces without coupling them to the landing-page shell.
+
+Chat, mentorship requests, and support-ticket submission are currently
+frontend interaction boundaries by design. Their states demonstrate the full
+user experience, but they are not durable backend workflows yet. Each component
+is ready to connect to authenticated persistence, realtime transport, and
+support or mentorship APIs when those services are introduced.

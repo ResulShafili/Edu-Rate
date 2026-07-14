@@ -8,6 +8,7 @@ import { EventCard } from "./EventCard";
 import { EventDrawer } from "./EventDrawer";
 import { MagneticButton } from "./MagneticButton";
 import { ConnectionsExperience } from "./ConnectionsExperience";
+import { GuidanceExperience } from "./GuidanceExperience";
 
 const reveal = {
   hidden: { opacity: 0, y: 28 },
@@ -38,8 +39,8 @@ export function EventExperience() {
     document.getElementById("events")?.scrollIntoView({ behavior: "smooth" });
   }
 
-  function scrollToPeers() {
-    document.getElementById("peers")?.scrollIntoView({ behavior: "smooth" });
+  function scrollToMentors() {
+    document.getElementById("mentors")?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
@@ -53,11 +54,12 @@ export function EventExperience() {
         <div className="nav-links">
           <a href="#events">Discover</a>
           <a href="#peers">Community</a>
-          <a href="#about">Our approach</a>
+          <a href="#mentors">Mentors</a>
+          <a href="#support">Support</a>
         </div>
 
-        <MagneticButton className="nav-cta" onClick={scrollToPeers}>
-          Meet your circle <ArrowRight size={15} />
+        <MagneticButton className="nav-cta" onClick={scrollToMentors}>
+          Find a mentor <ArrowRight size={15} />
         </MagneticButton>
 
         <button
@@ -80,7 +82,8 @@ export function EventExperience() {
             >
               <a href="#events" onClick={() => setMenuOpen(false)}>Discover</a>
               <a href="#peers" onClick={() => setMenuOpen(false)}>Community</a>
-              <a href="#about" onClick={() => setMenuOpen(false)}>Our approach</a>
+              <a href="#mentors" onClick={() => setMenuOpen(false)}>Mentors</a>
+              <a href="#support" onClick={() => setMenuOpen(false)}>Support</a>
             </motion.div>
           )}
         </AnimatePresence>
@@ -204,6 +207,8 @@ export function EventExperience() {
       </section>
 
       <ConnectionsExperience />
+
+      <GuidanceExperience />
 
       <section id="about" className="manifesto-section">
         <motion.div
