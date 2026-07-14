@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { platformRoutes } from "../data/navigation";
 
 type RouteTransitionProps = {
@@ -27,6 +27,10 @@ export function RouteTransition({ children }: RouteTransitionProps) {
   const routeLabel = pathname === "/"
     ? "Ana səhifə"
     : platformRoutes.find((route) => pathname === route.href || pathname.startsWith(`${route.href}/`))?.label ?? "Səhifə";
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
 
   function focusCurrentPage() {
     frameRef.current?.querySelector<HTMLElement>("#main-content")?.focus({ preventScroll: true });

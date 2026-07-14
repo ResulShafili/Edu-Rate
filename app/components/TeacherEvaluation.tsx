@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, CircleAlert, Send, Sparkles, Star } from "lucide-react";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -23,6 +24,7 @@ import {
 } from "./CriteriaRating";
 import { ReviewCard } from "./ReviewCard";
 import { TeacherCard } from "./TeacherCard";
+import { TeacherProfileDrawer } from "./TeacherProfileDrawer";
 
 const confettiPieces = Array.from({ length: 12 }, (_, index) => index);
 const numberFormatter = new Intl.NumberFormat("az-AZ");
@@ -36,7 +38,8 @@ type ReviewValidationResponse = {
 };
 
 export function TeacherEvaluation() {
-  const [selectedId, setSelectedId] = useState(teachers[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState<Teacher["id"] | null>(null);
+  const [profileTeacher, setProfileTeacher] = useState<Teacher | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [criteriaRatings, setCriteriaRatings] = useState<CriteriaRatings>({ ...defaultCriteriaRatings });
   const [reviewText, setReviewText] = useState("");
@@ -45,16 +48,20 @@ export function TeacherEvaluation() {
   const [reviewError, setReviewError] = useState<ReviewValidationResponse | null>(null);
   const [newReviews, setNewReviews] = useState<TeacherReview[]>([]);
   const trackRef = useRef<HTMLDivElement>(null);
+  const ratingPanelRef = useRef<HTMLDivElement>(null);
   const confirmationTimer = useRef<number | null>(null);
   const scrollFrame = useRef<number | null>(null);
+  const ratingScrollFrame = useRef<number | null>(null);
+  const ratingScrollPending = useRef(false);
   const reduceMotion = useReducedMotion();
-  const selectedTeacher = teachers.find((teacher) => teacher.id === selectedId) ?? teachers[0];
+  const selectedTeacher = teachers.find((teacher) => teacher.id === selectedId) ?? null;
   const allReviews = [...newReviews, ...teacherReviews];
   const rating = calculateCriteriaAverage(criteriaRatings);
   const localModeration = useMemo(() => moderateReview(reviewText), [reviewText]);
   const visibleModerationIssue = reviewText.trim() && !localModeration.accepted ? localModeration : null;
   const displayedError = reviewError ?? visibleModerationIssue;
-  const canSubmit = areCriteriaComplete(criteriaRatings)
+  const canSubmit = Boolean(selectedTeacher)
+    && areCriteriaComplete(criteriaRatings)
     && reviewText.trim().length >= 12
     && localModeration.accepted
     && !reviewSent
@@ -63,18 +70,47 @@ export function TeacherEvaluation() {
   useEffect(() => () => {
     if (confirmationTimer.current) window.clearTimeout(confirmationTimer.current);
     if (scrollFrame.current) window.cancelAnimationFrame(scrollFrame.current);
+    if (ratingScrollFrame.current) window.cancelAnimationFrame(ratingScrollFrame.current);
   }, []);
 
-  function selectTeacher(teacher: Teacher) {
-    setSelectedId(teacher.id);
-    setCriteriaRatings({ ...defaultCriteriaRatings });
-    setReviewText("");
-    setReviewSent(false);
-    setReviewError(null);
-    document.getElementById("teacher-rating-panel")?.scrollIntoView({
-      behavior: reduceMotion ? "auto" : "smooth",
-      block: "center",
+  const openTeacherProfile = useCallback((teacher: Teacher) => {
+    setProfileTeacher(teacher);
+  }, []);
+
+  const closeTeacherProfile = useCallback(() => {
+    setProfileTeacher(null);
+  }, []);
+
+  const scrollToSelectedTeacherRating = useCallback(() => {
+    if (!ratingScrollPending.current) return;
+    ratingScrollPending.current = false;
+    if (ratingScrollFrame.current) window.cancelAnimationFrame(ratingScrollFrame.current);
+    ratingScrollFrame.current = window.requestAnimationFrame(() => {
+      ratingScrollFrame.current = null;
+      ratingPanelRef.current?.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "start",
+      });
+      ratingPanelRef.current?.focus({ preventScroll: true });
     });
+  }, [reduceMotion]);
+
+  function selectTeacher(teacher: Teacher) {
+    if (reviewChecking) return;
+    const alreadySelected = selectedId === teacher.id;
+    if (!alreadySelected) {
+      if (confirmationTimer.current) {
+        window.clearTimeout(confirmationTimer.current);
+        confirmationTimer.current = null;
+      }
+      setSelectedId(teacher.id);
+      setCriteriaRatings({ ...defaultCriteriaRatings });
+      setReviewText("");
+      setReviewSent(false);
+      setReviewError(null);
+    }
+    ratingScrollPending.current = true;
+    closeTeacherProfile();
   }
 
   function moveCarousel(direction: -1 | 1) {
@@ -202,23 +238,44 @@ export function TeacherEvaluation() {
             key={teacher.id}
             teacher={teacher}
             index={index}
-            selected={selectedId === teacher.id}
+            isRatingTarget={selectedId === teacher.id}
+            isProfileOpen={profileTeacher?.id === teacher.id}
+            disabled={reviewChecking}
             scrollContainer={trackRef}
-            onSelect={selectTeacher}
+            onOpenProfile={openTeacherProfile}
           />
         ))}
         <span className="teachers-track-spacer" aria-hidden="true" />
       </div>
 
-      {selectedTeacher && (
+      <TeacherProfileDrawer
+        teacher={profileTeacher}
+        isRatingTarget={profileTeacher?.id === selectedId}
+        selectionDisabled={reviewChecking}
+        onClose={closeTeacherProfile}
+        onExitComplete={scrollToSelectedTeacherRating}
+        onChooseForRating={selectTeacher}
+      />
+
+      <AnimatePresence mode="wait" initial={false}>
+        {selectedTeacher ? (
         <motion.div
+          ref={ratingPanelRef}
+          key={selectedTeacher.id}
           id="teacher-rating-panel"
           className="teacher-rating-panel"
+          tabIndex={-1}
+          role="region"
+          aria-labelledby="teacher-rating-title"
           style={{ "--selected-accent": selectedTeacher.accent } as CSSProperties}
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.992 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 14, scale: 0.994 }}
+          transition={{ duration: reduceMotion ? 0.01 : 0.42, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="rating-panel-copy">
             <span><Sparkles size={13} /> Təcrübəni qiymətləndir</span>
-            <h3>{selectedTeacher.name} sənə necə kömək etdi?</h3>
+            <h3 id="teacher-rating-title">{selectedTeacher.name} sənə necə kömək etdi?</h3>
             <p>Dörd peşəkar meyar üzrə səmimi rəyin digər tələbələrin daha doğru seçim etməsinə kömək edir.</p>
             <div className="rating-teacher-chip">
               <i>{selectedTeacher.initials}</i>
@@ -311,7 +368,23 @@ export function TeacherEvaluation() {
             </AnimatePresence>
           </form>
         </motion.div>
-      )}
+      ) : (
+        <motion.div
+          key="rating-empty"
+          className="teacher-rating-empty"
+          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+        >
+          <Sparkles size={18} aria-hidden="true" />
+          <div>
+            <span>Hələ müəllim seçilməyib</span>
+            <h3>Əvvəl profillə tanış ol.</h3>
+            <p>Müəllim kartına toxun, profili nəzərdən keçir və sonra qiymətləndirmək üçün seç.</p>
+          </div>
+        </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="reviews-heading">
         <div>

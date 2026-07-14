@@ -127,6 +127,11 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
   assert.match(transition, /<AnimatePresence mode="wait" initial=\{false\}>/);
   assert.match(transition, /key=\{pathname\}/);
   assert.match(transition, /useReducedMotion/);
+  assert.match(transition, /useLayoutEffect/);
+  assert.match(transition, /window\.scrollTo/);
+  assert.match(transition, /top: 0/);
+  assert.match(transition, /left: 0/);
+  assert.match(transition, /behavior: "instant"/);
   assert.match(transition, /aria-live="polite"/);
   assert.match(transition, /#main-content/);
   assert.match(transition, /preventScroll: true/);
@@ -145,14 +150,16 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
 });
 
 test("müəllimi dörd bacarıq meyarı ilə və klaviatura ilə qiymətləndirir", async () => {
-  const [evaluation, criteria, reviewCard, teacherCard, teacherData, styles] =
+  const [evaluation, criteria, reviewCard, teacherCard, profileDrawer, teacherData, styles, teachersHtml] =
     await Promise.all([
       readFile(new URL("../app/components/TeacherEvaluation.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/components/CriteriaRating.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/components/ReviewCard.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/components/TeacherCard.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/components/TeacherProfileDrawer.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/data/teachers.ts", import.meta.url), "utf8"),
       readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+      request("/teachers").then((response) => response.text()),
     ]);
 
   assert.match(evaluation, /<CriteriaRating/);
@@ -161,6 +168,17 @@ test("müəllimi dörd bacarıq meyarı ilə və klaviatura ilə qiymətləndiri
   assert.match(evaluation, /areCriteriaComplete/);
   assert.match(evaluation, /review-confirmation/);
   assert.match(evaluation, /role="status"/);
+  assert.match(evaluation, /useState<Teacher\["id"\] \| null>\(null\)/);
+  assert.match(evaluation, /<TeacherProfileDrawer/);
+  assert.match(evaluation, /disabled=\{reviewChecking\}/);
+  assert.match(evaluation, /if \(reviewChecking\) return/);
+  assert.match(evaluation, /ratingPanelRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(evaluation, /confirmationTimer\.current = null/);
+  assert.match(evaluation, /role="region"/);
+  assert.match(evaluation, /aria-labelledby="teacher-rating-title"/);
+  assert.doesNotMatch(evaluation, /teachers\[0\]\?\.id|\?\?\s*teachers\[0\]/);
+  assert.doesNotMatch(teachersHtml, /id="teacher-rating-panel"/);
+  assert.equal((teachersHtml.match(/aria-haspopup="dialog"/g) ?? []).length, 6);
 
   for (const key of ["clarity", "subjectKnowledge", "objectivity", "communication"]) {
     assert.match(criteria, new RegExp(`\\b${key}\\b`));
@@ -180,11 +198,22 @@ test("müəllimi dörd bacarıq meyarı ilə və klaviatura ilə qiymətləndiri
   assert.doesNotMatch(criteria, /filter:|boxShadow:|width:|height:/);
 
   assert.match(teacherCard, /role="listitem"/);
-  assert.match(teacherCard, /aria-pressed=\{selected\}/);
+  assert.match(teacherCard, /aria-haspopup="dialog"/);
+  assert.match(teacherCard, /aria-controls="teacher-profile-dialog"/);
   assert.match(teacherCard, /useReducedMotion/);
+  assert.doesNotMatch(teacherCard, /aria-pressed|teacher\.bio|teacher\.city|studentsCount|teacher\.experience/);
+  assert.match(profileDrawer, /role="dialog"/);
+  assert.match(profileDrawer, /aria-modal="true"/);
+  assert.match(profileDrawer, /aria-labelledby="teacher-profile-title"/);
+  assert.match(profileDrawer, /keyEvent\.key === "Escape"/);
+  assert.match(profileDrawer, /document\.body\.style\.overflow = "hidden"/);
+  assert.match(profileDrawer, /previousFocus\?\.focus/);
+  assert.match(profileDrawer, /selectionRequestedRef/);
   assert.match(reviewCard, /whileInView/);
   assert.match(reviewCard, /useReducedMotion/);
-  assert.doesNotMatch(teacherCard, /<img\b|from "next\/image"/);
+  for (const component of [teacherCard, profileDrawer]) {
+    assert.doesNotMatch(component, /<img\b|from "next\/image"|https?:\/\//);
+  }
   assert.doesNotMatch(teacherData, /https?:\/\/|\.(?:jpe?g|webp|avif)/i);
   assert.match(styles, /url\("\/teacher-roster-phase4\.webp"\)/);
   assert.match(styles, /scroll-snap-type:\s*x proximity/);

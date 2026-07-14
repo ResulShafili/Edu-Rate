@@ -1,11 +1,10 @@
 "use client";
 
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { Check, MapPin, Star, Users } from "lucide-react";
+import { ArrowUpRight, Check, Star } from "lucide-react";
 import { useRef, type CSSProperties, type RefObject } from "react";
 import type { Teacher } from "../data/teachers";
 
-const studentFormatter = new Intl.NumberFormat("az-AZ");
 const ratingFormatter = new Intl.NumberFormat("az-AZ", {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
@@ -14,12 +13,22 @@ const ratingFormatter = new Intl.NumberFormat("az-AZ", {
 type TeacherCardProps = {
   teacher: Teacher;
   index: number;
-  selected: boolean;
+  isRatingTarget: boolean;
+  isProfileOpen: boolean;
+  disabled: boolean;
   scrollContainer: RefObject<HTMLDivElement | null>;
-  onSelect: (teacher: Teacher) => void;
+  onOpenProfile: (teacher: Teacher) => void;
 };
 
-export function TeacherCard({ teacher, index, selected, scrollContainer, onSelect }: TeacherCardProps) {
+export function TeacherCard({
+  teacher,
+  index,
+  isRatingTarget,
+  isProfileOpen,
+  disabled,
+  scrollContainer,
+  onOpenProfile,
+}: TeacherCardProps) {
   const cardRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
   const { scrollXProgress } = useScroll({
@@ -28,61 +37,60 @@ export function TeacherCard({ teacher, index, selected, scrollContainer, onSelec
     axis: "x",
     offset: ["start end", "end start"],
   });
-  const portraitX = useTransform(scrollXProgress, [0, 1], [-30, 30]);
-  const portraitScale = useTransform(scrollXProgress, [0, 0.5, 1], [1.1, 1.04, 1.1]);
+  const portraitX = useTransform(scrollXProgress, [0, 1], [-10, 10]);
+  const portraitScale = useTransform(scrollXProgress, [0, 0.5, 1], [1.08, 1.02, 1.08]);
 
   return (
     <motion.article
       ref={cardRef}
-      className={`teacher-card${selected ? " is-selected" : ""}`}
+      className={`teacher-card${isRatingTarget ? " is-selected" : ""}`}
       role="listitem"
       style={{
         "--teacher-accent": teacher.accent,
         "--teacher-glow": teacher.glow,
       } as CSSProperties}
-      initial={reduceMotion ? false : { opacity: 0, y: 28 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 22 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.58, delay: index * 0.045, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true, margin: "-32px" }}
+      transition={{ duration: 0.5, delay: index * 0.04, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="teacher-image" aria-hidden="true">
-        <motion.div
-          className="teacher-image-source"
-          style={{
-            x: reduceMotion ? 0 : portraitX,
-            scale: reduceMotion ? 1.04 : portraitScale,
-            backgroundPosition: `${teacher.imagePosition} 54%`,
-          }}
-        />
-        <span className="teacher-index">{String(index + 1).padStart(2, "0")}</span>
-        <span className="teacher-availability"><i /> {teacher.availability}</span>
-        <span className="teacher-rating"><Star size={12} fill="currentColor" /> {ratingFormatter.format(teacher.rating)}</span>
-      </div>
+      <motion.button
+        type="button"
+        className="teacher-card-trigger"
+        onClick={() => onOpenProfile(teacher)}
+        disabled={disabled}
+        aria-haspopup="dialog"
+        aria-expanded={isProfileOpen}
+        aria-controls="teacher-profile-dialog"
+        aria-label={`${teacher.name} — ${teacher.subject} profilini aç${isRatingTarget ? ", qiymətləndirmə üçün seçilib" : ""}`}
+        whileTap={reduceMotion ? undefined : { scale: 0.985 }}
+      >
+        <span className="teacher-avatar" aria-hidden="true">
+          <motion.span
+            className="teacher-avatar-source"
+            style={{
+              x: reduceMotion ? 0 : portraitX,
+              scale: reduceMotion ? 1.03 : portraitScale,
+              backgroundPosition: `${teacher.imagePosition} 54%`,
+            }}
+          />
+          <span className="teacher-index">{String(index + 1).padStart(2, "0")}</span>
+        </span>
 
-      <div className="teacher-card-body">
-        <span className="teacher-subject">{teacher.subject}</span>
-        <h3>{teacher.name}</h3>
-        <p>{teacher.bio}</p>
+        <span className="teacher-card-summary">
+          <span className="teacher-subject">{teacher.subject}</span>
+          <strong>{teacher.name}</strong>
+          <span className="teacher-card-rating">
+            <Star size={12} fill="currentColor" />
+            {ratingFormatter.format(teacher.rating)}
+            <small>reytinq</small>
+          </span>
+        </span>
 
-        <div className="teacher-card-meta">
-          <span><MapPin size={12} /> {teacher.city}</span>
-          <span><Users size={12} /> {studentFormatter.format(teacher.studentsCount)} tələbə</span>
-        </div>
-
-        <div className="teacher-card-footer">
-          <span>{teacher.experience}</span>
-          <button
-            type="button"
-            className={selected ? "is-selected" : ""}
-            onClick={() => onSelect(teacher)}
-            aria-pressed={selected}
-            aria-label={selected ? `${teacher.name} seçilib` : `${teacher.name} müəllimi seç`}
-          >
-            {selected && <Check size={14} />}
-            {selected ? "Seçildi" : "Müəllimi seç"}
-          </button>
-        </div>
-      </div>
+        <span className="teacher-profile-arrow" aria-hidden="true">
+          {isRatingTarget ? <Check size={15} /> : <ArrowUpRight size={16} />}
+        </span>
+      </motion.button>
     </motion.article>
   );
 }

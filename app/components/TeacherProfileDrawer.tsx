@@ -1,0 +1,206 @@
+"use client";
+
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import {
+  ArrowRight,
+  CalendarClock,
+  GraduationCap,
+  MapPin,
+  Star,
+  Users,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
+import type { Teacher } from "../data/teachers";
+
+const numberFormatter = new Intl.NumberFormat("az-AZ");
+const ratingFormatter = new Intl.NumberFormat("az-AZ", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+type TeacherProfileDrawerProps = {
+  teacher: Teacher | null;
+  isRatingTarget: boolean;
+  selectionDisabled: boolean;
+  onClose: () => void;
+  onExitComplete: () => void;
+  onChooseForRating: (teacher: Teacher) => void;
+};
+
+export function TeacherProfileDrawer({
+  teacher,
+  isRatingTarget,
+  selectionDisabled,
+  onClose,
+  onExitComplete,
+  onChooseForRating,
+}: TeacherProfileDrawerProps) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const selectionRequestedRef = useRef(false);
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (!teacher) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    selectionRequestedRef.current = false;
+    document.body.style.overflow = "hidden";
+    const focusTimer = window.setTimeout(() => closeRef.current?.focus(), reduceMotion ? 0 : 220);
+
+    function onKeyDown(keyEvent: KeyboardEvent) {
+      if (keyEvent.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (keyEvent.key !== "Tab") return;
+
+      const focusable = drawerRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable?.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (keyEvent.shiftKey && document.activeElement === first) {
+        keyEvent.preventDefault();
+        last.focus();
+      } else if (!keyEvent.shiftKey && document.activeElement === last) {
+        keyEvent.preventDefault();
+        first.focus();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+      if (!selectionRequestedRef.current) previousFocus?.focus({ preventScroll: true });
+    };
+  }, [teacher, onClose, reduceMotion]);
+
+  const drawer = (
+    <AnimatePresence initial={false} onExitComplete={onExitComplete}>
+      {teacher && (
+        <motion.div
+          className="drawer-layer"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: reduceMotion ? 0.01 : 0.28 }}
+          role="presentation"
+        >
+          <motion.button
+            type="button"
+            className="drawer-backdrop"
+            aria-label="Müəllim profilini bağla"
+            onClick={onClose}
+          />
+
+          <motion.aside
+            ref={drawerRef}
+            id="teacher-profile-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="teacher-profile-title"
+            aria-describedby="teacher-profile-description"
+            className="teacher-profile-drawer"
+            style={{
+              "--teacher-accent": teacher.accent,
+              "--teacher-glow": teacher.glow,
+            } as CSSProperties}
+            initial={reduceMotion ? { opacity: 0 } : { x: "105%" }}
+            animate={reduceMotion ? { opacity: 1 } : { x: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { x: "105%" }}
+            transition={reduceMotion
+              ? { duration: 0.01 }
+              : { type: "spring", stiffness: 170, damping: 25, mass: 0.78 }}
+          >
+            <div className="drawer-noise" aria-hidden="true" />
+            <div className="drawer-topline">
+              <span>Müəllim profili / {teacher.subject}</span>
+              <button
+                ref={closeRef}
+                type="button"
+                onClick={onClose}
+                className="drawer-close"
+                aria-label="Müəllim profilini bağla"
+              >
+                <X size={20} strokeWidth={1.6} />
+              </button>
+            </div>
+
+            <div className="teacher-profile-hero">
+              <div className="teacher-profile-visual" aria-hidden="true">
+                <motion.div
+                  className="teacher-profile-portrait"
+                  style={{ backgroundPosition: `${teacher.imagePosition} 54%` }}
+                  initial={reduceMotion ? false : { scale: 1.08 }}
+                  animate={{ scale: 1.02 }}
+                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                />
+                <span><Star size={13} fill="currentColor" /> {ratingFormatter.format(teacher.rating)}</span>
+              </div>
+
+              <div className="teacher-profile-identity">
+                <span>{teacher.subject}</span>
+                <h2 id="teacher-profile-title">{teacher.name}</h2>
+                <p>{teacher.role}</p>
+              </div>
+            </div>
+
+            <p id="teacher-profile-description" className="teacher-profile-bio">{teacher.bio}</p>
+
+            <dl className="teacher-profile-facts">
+              <div>
+                <dt><GraduationCap size={16} /> Təcrübə</dt>
+                <dd>{teacher.experience}</dd>
+              </div>
+              <div>
+                <dt><MapPin size={16} /> Şəhər</dt>
+                <dd>{teacher.city}</dd>
+              </div>
+              <div>
+                <dt><Users size={16} /> İcma</dt>
+                <dd>{numberFormatter.format(teacher.studentsCount)} tələbə · {numberFormatter.format(teacher.reviewCount)} rəy</dd>
+              </div>
+              <div>
+                <dt><CalendarClock size={16} /> Uyğun vaxt</dt>
+                <dd>{teacher.availability}</dd>
+              </div>
+            </dl>
+
+            <div className="teacher-profile-bottom">
+              <div>
+                <span>Obyektiv qiymətləndirmə</span>
+                <p>İzah, fənn biliyi, obyektivlik və ünsiyyət üzrə rəyini paylaş.</p>
+              </div>
+              <motion.button
+                type="button"
+                onClick={() => {
+                  selectionRequestedRef.current = true;
+                  onChooseForRating(teacher);
+                }}
+                disabled={selectionDisabled}
+                whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+              >
+                {selectionDisabled
+                  ? "Rəy yoxlanılır"
+                  : isRatingTarget
+                    ? "Qiymətləndirməyə keç"
+                    : "Qiymətləndirmək üçün seç"}
+                <ArrowRight size={16} />
+              </motion.button>
+            </div>
+          </motion.aside>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  return typeof document === "undefined" ? null : createPortal(drawer, document.body);
+}
