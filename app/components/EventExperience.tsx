@@ -7,6 +7,7 @@ import { categories, events, type Event, type EventFilter } from "../data/events
 import { EventCard } from "./EventCard";
 import { EventDrawer } from "./EventDrawer";
 import { MagneticButton } from "./MagneticButton";
+import { ConnectionsExperience } from "./ConnectionsExperience";
 
 const reveal = {
   hidden: { opacity: 0, y: 28 },
@@ -37,22 +38,26 @@ export function EventExperience() {
     document.getElementById("events")?.scrollIntoView({ behavior: "smooth" });
   }
 
+  function scrollToPeers() {
+    document.getElementById("peers")?.scrollIntoView({ behavior: "smooth" });
+  }
+
   return (
     <main className="site-shell">
       <nav className="nav-shell" aria-label="Main navigation">
-        <a href="#top" className="brand" aria-label="Gathered home">
+        <a href="#top" className="brand" aria-label="EduRate home">
           <span className="brand-mark"><span /></span>
-          GATHERED
+          EDURATE
         </a>
 
         <div className="nav-links">
           <a href="#events">Discover</a>
+          <a href="#peers">Community</a>
           <a href="#about">Our approach</a>
-          <a href="#journal">Journal</a>
         </div>
 
-        <MagneticButton className="nav-cta" onClick={scrollToEvents}>
-          Find an experience <ArrowRight size={15} />
+        <MagneticButton className="nav-cta" onClick={scrollToPeers}>
+          Meet your circle <ArrowRight size={15} />
         </MagneticButton>
 
         <button
@@ -74,8 +79,8 @@ export function EventExperience() {
               exit={{ opacity: 0, y: -12, scale: 0.98 }}
             >
               <a href="#events" onClick={() => setMenuOpen(false)}>Discover</a>
+              <a href="#peers" onClick={() => setMenuOpen(false)}>Community</a>
               <a href="#about" onClick={() => setMenuOpen(false)}>Our approach</a>
-              <a href="#journal" onClick={() => setMenuOpen(false)}>Journal</a>
             </motion.div>
           )}
         </AnimatePresence>
@@ -98,7 +103,7 @@ export function EventExperience() {
           transition={{ duration: 0.65, delay: 0.15 }}
         >
           <Sparkles size={14} />
-          Curated moments · Autumn ’26
+          EduRate community · Autumn ’26
         </motion.div>
 
         <motion.div
@@ -122,8 +127,8 @@ export function EventExperience() {
           transition={{ duration: 0.8, delay: 0.78, ease: [0.22, 1, 0.36, 1] }}
         >
           <p>
-            Thoughtfully curated gatherings for curious people—where ideas,
-            culture, and genuine connection meet.
+            EduRate brings ambitious learners together through thoughtful
+            experiences, trusted peers, and conversations that keep growing.
           </p>
           <button type="button" onClick={scrollToEvents} className="scroll-cue">
             <span>Explore the season</span>
@@ -198,6 +203,8 @@ export function EventExperience() {
         </motion.div>
       </section>
 
+      <ConnectionsExperience />
+
       <section id="about" className="manifesto-section">
         <motion.div
           className="manifesto-orb"
@@ -213,15 +220,15 @@ export function EventExperience() {
         >
           Less networking.<br />More <em>connecting.</em>
         </motion.p>
-        <span>Every Gathered experience is intentionally sized, thoughtfully hosted, and designed to make room for surprise.</span>
+        <span>Every EduRate connection starts with shared curiosity and leaves enough room for a genuinely useful surprise.</span>
       </section>
 
       <footer id="journal" className="site-footer">
-        <a href="#top" className="brand"><span className="brand-mark"><span /></span>GATHERED</a>
-        <p>Made for people who still believe<br />the best things happen in person.</p>
+        <a href="#top" className="brand"><span className="brand-mark"><span /></span>EDURATE</a>
+        <p>Made for people who believe<br />learning gets better together.</p>
         <div>
-          <span>© 2026 Gathered</span>
-          <a href="mailto:hello@gathered.events">hello@gathered.events</a>
+          <span>© 2026 EduRate</span>
+          <a href="mailto:hello@edurate.community">hello@edurate.community</a>
         </div>
       </footer>
 

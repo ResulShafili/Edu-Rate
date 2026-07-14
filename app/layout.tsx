@@ -14,9 +14,9 @@ const instrumentSerif = Instrument_Serif({
   weight: "400",
 });
 
-const title = "Gathered — Curated experiences for curious people";
+const title = "EduRate — Learn together. Go further.";
 const description =
-  "Thoughtfully curated gatherings where ideas, culture, and genuine connection meet.";
+  "A thoughtful learning community for curated experiences, trusted peer connections, and conversations that keep growing.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const incomingHeaders = await headers();
@@ -42,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       type: "website",
       url: origin,
-      images: [{ url: socialImage, width: 1734, height: 907, alt: "Gathered — Come for the unexpected. Leave changed." }],
+      images: [{ url: socialImage, width: 1734, height: 907, alt: "EduRate — Learn together. Go further." }],
     },
     twitter: {
       card: "summary_large_image",
