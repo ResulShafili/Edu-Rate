@@ -1,40 +1,66 @@
 # EduRate
 
-EduRate seçilmiş öyrənmə təcrübələrini, səmimi icma əlaqələrini, məqsədli
-mentorluğu və qayğıkeş dəstəyi bir araya gətirən yüksək səviyyəli təhsil platformasıdır.
-İnterfeys tam Azərbaycan dilindədir və hər bölmə diqqəti əsas işə yönəldən,
-sakit, əlçatan və axıcı təcrübə təqdim edir.
+EduRate tədbirləri, icma əlaqələrini, müəllim seçimini, mentorluğu və dəstəyi vahid,
+sakit və əlçatan təcrübədə birləşdirən Azərbaycan dilli təhsil platformasıdır.
+İnterfeys geniş nəfəs sahəsi, aydın məzmun iyerarxiyası və məqsədli hərəkətlərlə
+istifadəçini yormadan növbəti addıma aparır.
 
-## Məhsul imkanları
+## Platforma marşrutları
 
-- Mərhələli mətn keçidləri, dərinlik hissi yaradan fon elementləri və maqnit düymələri olan
-  animasiyalı giriş səhifəsi
-- Kateqoriyaya görə süzgəclənən, 3D meyillənmə effekti və şüşəvari məlumat
-  paneli olan tədbir təqvimi
-- Orqanik skelet yüklənməsi, əlaqə qurma və mesaj yazma hərəkətləri olan icma
-  kataloqu
-- Axıcı mesaj animasiyaları, yazma göstəricisi, rahat sürüşmə və yığcam
-  tənzimləmələr menyusu olan üzən söhbət pəncərəsi
-- Profil daxilində genişlənən mentor məlumatları, uyğun vaxtlar və animasiyalı
-  mentorluq müraciəti təsdiqi
-- Axıcı tez-tez verilən suallar akkordeonları, üzən etiketlər, yoxlama mesajları və tamamlanma
-  göstəricisi olan dəstək sorğusu forması
-- Yumşaq yapışma və dərinlik hərəkətli, real şəxs fotoşəkli istifadə etməyən stilizə olunmuş
-  illüstrasiya portretləri ilə üfüqi müəllim karuseli
-- Yay fizikası ilə hərəkət edən əlçatan SVG ulduzları, klaviatura idarəsi və
-  hərəkəti azaltma seçiminə hörmət edən interaktiv qiymətləndirmə
-- Parıltılı uğur halqası, incə konfetti təsdiqi və sürüşdükcə görünən sərbəst
-  sütun düzülüşlü tələbə rəyləri
-- Klaviatura, toxunma, mobil ekran və azaldılmış hərəkət rejimi üçün dəstək
+| Marşrut | Bölmə | Məqsəd |
+| --- | --- | --- |
+| `/` | Ana səhifə | Platformanın istiqamətlərinə qısa giriş |
+| `/events` | Tədbirlər | Kateqoriyaya görə süzgəc, 3D kartlar və məlumat paneli |
+| `/community` | İcma | Orqanik skelet yüklənməsi, əlaqə və mesajlaşma |
+| `/teachers` | Müəllimlər | Müəllim seçimi, meyarlar üzrə qiymətləndirmə və rəylər |
+| `/mentors` | Mentorlar | Genişlənən profillər və mentorluq müraciəti |
+| `/support` | Dəstək | FAQ və tamamlanma göstəricili dəstək sorğusu |
+
+Davamlı naviqasiya qabığı bütün marşrutlarda görünür. `AnimatePresence` əsaslı səhifə
+keçidləri məzmunu yumşaq şəkildə solğunlaşdırır və cüzi miqyaslandırır. Üzən söhbət
+pəncərəsinin vəziyyəti marşrut dəyişəndə qorunur.
+
+## Müəllim qiymətləndirməsi
+
+Müəllimlər tək ümumi ulduzla deyil, dərs təcrübəsini təsvir edən dörd aydın meyarla
+qiymətləndirilir:
+
+- izahın aydınlığı;
+- fənn biliyi;
+- obyektivlik;
+- ünsiyyət və dəstək.
+
+Hər meyar 1–5 bal aralığındadır, klaviatura ilə idarə olunur və yekun bal avtomatik
+hesablanır. Rəy insanın şəxsiyyətini deyil, müşahidə olunan tədris təcrübəsini
+qiymətləndirməlidir. Buna görə nalayiq ifadə, şəxsə yönəlmiş təhqir, reklam, keçid,
+əlaqə məlumatı və həddindən artıq təkrar qəbul edilmir. İnterfeys rəyi rədd etməklə
+kifayətlənmir; fikri konkret və hörmətli şəkildə yenidən yazmaq üçün Azərbaycan
+dilində səbəb və təklif göstərir.
+
+`POST /api/reviews/validate` eyni qaydaları server sərhədində də yoxlayır. Bu yoxlama
+gələcək verilənlər bazasına yazılmadan əvvəl məcburi təhlükəsizlik qatı kimi
+saxlanmalıdır. Avtomatik yoxlama insan nəzarətini tam əvəz etmir.
+
+## Dizayn və hərəkət prinsipləri
+
+- Eyni mürəkkəb, kağız, laym və yumşaq bənövşəyi rəng sistemi bütün modullarda qorunur.
+- Əsas hərəkətlər `transform` və `opacity` üzərində qurulur; bahalı effektlər daimi
+  animasiya edilmir.
+- `prefers-reduced-motion` seçimi olan istifadəçilər üçün parallax, yay və konfetti
+  hərəkətləri azaldılır.
+- Naviqasiya, formalar, akkordeonlar, karusel və qiymətləndirmə klaviatura və toxunma
+  ilə işləyir.
+- Müəllim və mentor təqdimatında real şəxslərin fotoşəkillərindən istifadə olunmur;
+  yalnız stilizə olunmuş, uydurma illüstrasiya və inisiallar göstərilir.
 
 ## Texnologiyalar
 
-- React 19 və Next.js ilə uyğun vinext işləmə mühiti
+- React 19 və Next.js App Router
 - TypeScript
 - Tailwind CSS 4
 - Framer Motion
 - Lucide ikonları
-- Sites hostinqi üçün Cloudflare ilə uyğun ESM çıxışı
+- Sites hostinqi üçün Cloudflare uyğun ESM çıxışı
 
 ## Lokal işə salma
 
@@ -45,7 +71,7 @@ npm install
 npm run dev
 ```
 
-Yoxlama əmrləri:
+Keyfiyyət yoxlamaları:
 
 ```bash
 npm run lint
@@ -55,34 +81,24 @@ npm test
 
 ## Arxitektura
 
-Platforma tədbirləri, icma əlaqələrini, müəllim seçimi və qiymətləndirməni,
-mentorluğu və dəstəyi bir-birindən ayrılmış modul sərhədlərində saxlayır.
-
-- `ConnectionsExperience` icma kataloqunu və söhbət pəncərəsini birləşdirir.
-- `TeacherEvaluation` müəllim karuselini, `TeacherCard` profil kartlarını,
-  `SpringRating` əlçatan qiymətləndirməni və `ReviewCard` rəy axınını idarə edir.
-- `GuidanceExperience` mentorluq və dəstək bölmələrini əsas səhifə qabığından
-  asılı etmədən bir araya gətirir.
-- Domen məlumatları `app/data` daxilində tipləndirilmiş fayllarda saxlanılır;
-  təqdimat və qarşılıqlı əlaqə məntiqi isə ayrıca komponentlərdə qalır.
-
-Əsas səhifədə modul ardıcıllığı istifadəçi yolunu izləyir: tədbirlər → icma →
-müəllim seçimi və qiymətləndirmə → mentorluq → dəstək.
-
-### 4-cü mərhələ: Müəllim seçimi və qiymətləndirmə
-
-Bu mərhələ müəllimləri tək səhifədə kəşf etməyi, müqayisə etməyi, seçməyi və
-qiymətləndirməyi mümkün edir. Üfüqi karusel toxunma, siçan, trekpad və klaviatura
-ilə işləyir. SVG ulduzları yay fizikasına əsaslanan izləmə effekti verir; rəy
-göndərildikdə təsdiq halqası və hərəkəti azaltma seçiminə uyğun konfetti görünür.
-Keçmiş rəylər ekran eninə uyğun sərbəst sütun düzülüşündə təqdim olunur.
+- `PlatformShell` davamlı naviqasiya və alt hissəni saxlayır.
+- `RouteTransition` marşrut keçidini, azaldılmış hərəkəti və yeni səhifəyə fokusun
+  ötürülməsini idarə edir.
+- `PlatformProvider` söhbət vəziyyətini marşrutlardan yuxarıda saxlayır.
+- Hər məhsul modulu `app/events`, `app/community`, `app/teachers`, `app/mentors` və
+  `app/support` daxilində ayrıca marşruta malikdir.
+- `CriteriaRating` bacarıq meyarlarını və orta balı, `review-moderation` isə hörmətli
+  rəy qaydalarını idarə edir.
+- Domen məlumatları `app/data`, təqdimat və qarşılıqlı əlaqə məntiqi isə
+  `app/components` daxilində saxlanır.
 
 ## Məlumatların saxlanması sərhədi
 
-Hazırkı mərhələ istehsal keyfiyyətli ön hissə təcrübəsini nümayiş etdirir.
-Söhbət mesajları, əlaqə vəziyyətləri, müəllim rəyləri, mentorluq müraciətləri və
-dəstək sorğuları brauzer yaddaşındakı müvəqqəti interfeys vəziyyətidir; səhifə
-yenilənəndə davamlı saxlanılmır və serverə göndərilmir.
+Hazırkı mərhələ istehsal keyfiyyətli ön hissəni və rəy yoxlama API-sini təqdim edir.
+Söhbət mesajları, əlaqə vəziyyətləri, təsdiqlənmiş müəllim rəyləri, mentorluq
+müraciətləri və dəstək sorğuları hələ davamlı verilənlər bazasında saxlanmır.
+Səhifə yenilənəndə brauzerdəki müvəqqəti vəziyyət sıfırlana bilər.
 
-Bu sərhədlər gələcəkdə autentifikasiya, verilənlər bazası, real vaxt mesajlaşma
-və müvafiq müəllim, mentorluq və dəstək API-lərinə qoşulmaq üçün açıq saxlanılıb.
+Növbəti istehsal addımı autentifikasiya, verilənlər bazası, real vaxt mesajlaşma və
+moderator növbəsini qoşmaqdır. Müştəri tərəfdəki yoxlama rahatlıq üçündür; etibar
+sərhədi həmişə server və verilənlər bazasına yazma əməliyyatı olmalıdır.

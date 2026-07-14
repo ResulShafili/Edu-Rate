@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { DM_Sans, Instrument_Serif } from "next/font/google";
 import { headers } from "next/headers";
+import { PlatformProvider } from "./components/PlatformProvider";
+import { PlatformShell } from "./components/PlatformShell";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -14,9 +16,9 @@ const instrumentSerif = Instrument_Serif({
   weight: "400",
 });
 
-const title = "EduRate — Birlikdə öyrən, daha irəli get.";
+const title = "EduRate — Birlikdə öyrən, inamla irəli get.";
 const description =
-  "Seçilmiş təcrübələri, etibarlı icma əlaqələrini, məqsədli mentorluğu və qayğıkeş dəstəyi bir araya gətirən öyrənmə platforması.";
+  "Tədbirləri, etibarlı icma əlaqələrini, mentorluğu və bacarıq əsaslı müəllim qiymətləndirməsini bir araya gətirən öyrənmə platforması.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const incomingHeaders = await headers();
@@ -28,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     incomingHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const socialImage = `${origin}/og.png`;
+  const socialImage = `${origin}/og-phase5.png`;
 
   return {
     title,
@@ -48,7 +50,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: socialImage,
           width: 1734,
           height: 907,
-          alt: "EduRate — Birlikdə öyrən, daha irəli get.",
+          alt: "EduRate — Birlikdə öyrən, inamla irəli get.",
         },
       ],
     },
@@ -69,7 +71,9 @@ export default function RootLayout({
   return (
     <html lang="az">
       <body className={`${dmSans.variable} ${instrumentSerif.variable} antialiased`}>
-        {children}
+        <PlatformProvider>
+          <PlatformShell>{children}</PlatformShell>
+        </PlatformProvider>
       </body>
     </html>
   );

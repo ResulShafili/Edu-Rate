@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Quote, Star } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { TeacherReview } from "../data/teachers";
+import { criteriaLabels, type ReviewCriterionKey } from "./CriteriaRating";
 
 type ReviewCardProps = {
   review: TeacherReview;
@@ -12,6 +13,11 @@ type ReviewCardProps = {
 
 export function ReviewCard({ review, index }: ReviewCardProps) {
   const reduceMotion = useReducedMotion();
+  const criterionHighlights = review.criteria
+    ? (Object.entries(review.criteria) as Array<[ReviewCriterionKey, number]>)
+        .sort(([, first], [, second]) => second - first)
+        .slice(0, 2)
+    : [];
 
   return (
     <motion.article
@@ -32,6 +38,16 @@ export function ReviewCard({ review, index }: ReviewCardProps) {
           <Star key={star} size={12} fill={star < review.rating ? "currentColor" : "none"} />
         ))}
       </div>
+      {criterionHighlights.length > 0 && (
+        <dl className="review-criteria" aria-label="Rəydə önə çıxan meyarlar">
+          {criterionHighlights.map(([criterion, score]) => (
+            <div key={criterion}>
+              <dt>{criteriaLabels[criterion]}</dt>
+              <dd>{score}/5</dd>
+            </div>
+          ))}
+        </dl>
+      )}
       <div className="review-author">
         <span>{review.initials}</span>
         <div>

@@ -36,6 +36,12 @@ export type TeacherReview = {
   course: string;
   accent: string;
   featured?: boolean;
+  criteria?: {
+    clarity: number;
+    subjectKnowledge: number;
+    objectivity: number;
+    communication: number;
+  };
 };
 
 export const teachers: Teacher[] = [

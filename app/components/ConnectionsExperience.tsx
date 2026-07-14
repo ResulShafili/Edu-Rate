@@ -1,23 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { peers, type Peer } from "../data/peers";
-import { ChatDock } from "./ChatDock";
 import { PeerDirectory } from "./PeerDirectory";
+import { usePlatform } from "./PlatformProvider";
 
 export function ConnectionsExperience() {
-  const [activePeer, setActivePeer] = useState<Peer>(peers[0]);
-  const [chatOpen, setChatOpen] = useState(false);
+  const { openConversation } = usePlatform();
 
-  function openConversation(peer: Peer) {
-    setActivePeer(peer);
-    setChatOpen(true);
-  }
-
-  return (
-    <>
-      <PeerDirectory onMessage={openConversation} />
-      <ChatDock peer={activePeer} open={chatOpen} onOpenChange={setChatOpen} />
-    </>
-  );
+  return <PeerDirectory onMessage={openConversation} />;
 }

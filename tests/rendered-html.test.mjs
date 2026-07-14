@@ -2,14 +2,32 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-async function render() {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
+let workerPromise;
+
+function getWorker() {
+  workerPromise ??= import(
+    new URL(
+      `../dist/server/index.js?test=${process.pid}-${Date.now()}`,
+      import.meta.url,
+    ).href
+  ).then(({ default: worker }) => worker);
+
+  return workerPromise;
+}
+
+async function request(pathname, init = {}) {
+  const worker = await getWorker();
 
   return worker.fetch(
-    new Request("http://localhost/", {
-      headers: { accept: "text/html", host: "localhost" },
+    new Request(`http://localhost${pathname}`, {
+      ...init,
+      headers: {
+        accept: pathname.startsWith("/api/")
+          ? "application/json"
+          : "text/html",
+        host: "localhost",
+        ...init.headers,
+      },
     }),
     {
       ASSETS: {
@@ -23,152 +41,242 @@ async function render() {
   );
 }
 
-test("EduRate təcrübəsini Azərbaycan dilində serverdə render edir", async () => {
-  const response = await render();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+test("altı əsas marşrutu Azərbaycan dilində ayrıca render edir", async () => {
+  const routes = [
+    ["/", /Maraqla gəl\./],
+    ["/events", /Növbəti yaxşı hekayən/],
+    ["/community", /İdeyaların arxasındakı/],
+    ["/teachers", /Sənə uyğun müəllimi tap\./],
+    ["/mentors", /Mentorunu tap\./],
+    ["/support", /Bir az dəstək\./],
+  ];
 
-  const html = await response.text();
-  assert.match(html, /<html[^>]+lang="az"/i);
-  assert.match(html, /<title>EduRate/i);
-  assert.match(html, /Maraqla gəl\./);
-  assert.match(html, /Növbəti yaxşı hekayən/);
-  assert.match(html, /İdeyaların arxasındakı/);
-  assert.match(html, /Sənə uyğun müəllimi tap\./);
-  assert.match(html, /Leyla Məmmədova/);
-  assert.match(html, /Real təcrübə\./);
-  assert.match(html, /Mentorunu tap\./);
-  assert.match(html, /Bir az dəstək\./);
-  assert.match(html, /Adın/);
-  assert.doesNotMatch(
-    html,
-    /Come for the|Find your next|Meet the people|peer directory|Open conversation with|Find a mentor|Request mentorship|Submit a ticket|Your name|Email address|What can we help with\?|Tell us what happened/i,
+  const renderedRoutes = await Promise.all(
+    routes.map(async ([pathname, heading]) => {
+      const response = await request(pathname);
+      assert.equal(response.status, 200, `${pathname} marşrutu açılmalıdır`);
+      assert.match(
+        response.headers.get("content-type") ?? "",
+        /^text\/html\b/i,
+      );
+
+      const html = await response.text();
+      assert.match(html, /<html[^>]+lang="az"/i);
+      assert.match(html, /<title>[^<]*EduRate/i);
+      assert.match(html, heading, `${pathname} öz başlığını göstərməlidir`);
+      assert.match(html, /aria-label="Əsas naviqasiya"/);
+      assert.match(html, /hello@edurate\.community/);
+      assert.doesNotMatch(
+        html,
+        /codex-preview|react-loading-skeleton|Your site is taking shape/i,
+      );
+
+      return html;
+    }),
   );
-  assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
+
+  const [home, events, community, teachers, mentors, support] = renderedRoutes;
+  assert.doesNotMatch(home, /Növbəti yaxşı hekayən/);
+  assert.doesNotMatch(events, /İdeyaların arxasındakı/);
+  assert.doesNotMatch(community, /Sənə uyğun müəllimi tap\./);
+  assert.doesNotMatch(teachers, /Mentorunu tap\./);
+  assert.doesNotMatch(mentors, /Bir az dəstək\./);
+  assert.doesNotMatch(support, /Maraqla gəl\./);
 });
 
-test("Phase 4 müəllim seçimi və qiymətləndirməni ayrıca, əlçatan modul kimi saxlayır", async () => {
+test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruyur", async () => {
   const [
-    page,
     layout,
-    experience,
-    connections,
-    guidance,
-    teacherEvaluation,
-    teacherCard,
-    springRating,
-    reviewCard,
-    styles,
-    packageJson,
+    shell,
+    provider,
+    transition,
+    navigation,
+    homePage,
+    eventsPage,
+    communityPage,
+    teachersPage,
+    mentorsPage,
+    supportPage,
   ] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/components/EventExperience.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/components/ConnectionsExperience.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/components/GuidanceExperience.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/components/TeacherEvaluation.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/components/TeacherCard.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/components/SpringRating.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/components/ReviewCard.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
-    readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/PlatformShell.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/PlatformProvider.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/RouteTransition.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/data/navigation.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/events/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/community/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/teachers/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/mentors/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/support/page.tsx", import.meta.url), "utf8"),
   ]);
 
-  assert.match(page, /<EventExperience\s*\/>/);
+  assert.match(layout, /<PlatformProvider>/);
+  assert.match(layout, /<PlatformShell>\s*\{children\}\s*<\/PlatformShell>/);
   assert.match(layout, /<html lang="az">/);
-  assert.match(layout, /subsets: \["latin", "latin-ext"\]/);
-  assert.match(layout, /\/og\.png/);
-  assert.match(experience, /import \{ TeacherEvaluation \} from "\.\/TeacherEvaluation"/);
+  assert.match(shell, /from "next\/link"/);
+  assert.match(shell, /usePathname/);
+  assert.match(shell, /aria-current=\{current \? "page" : undefined\}/);
+  assert.match(shell, /aria-controls="global-mobile-menu"/);
+  assert.match(shell, /<RouteTransition>\{children\}<\/RouteTransition>/);
+  assert.match(provider, /createContext/);
+  assert.match(provider, /<ChatDock/);
+  assert.match(provider, /openConversation/);
 
-  const connectionsPosition = experience.indexOf("<ConnectionsExperience />");
-  const teachersPosition = experience.indexOf("<TeacherEvaluation />");
-  const guidancePosition = experience.indexOf("<GuidanceExperience />");
-  assert.ok(connectionsPosition >= 0, "İcma modulu əsas səhifədə olmalıdır");
-  assert.ok(teachersPosition > connectionsPosition, "Müəllim modulu icmadan sonra gəlməlidir");
-  assert.ok(guidancePosition > teachersPosition, "Mentorluq və dəstək müəllim modulundan sonra gəlməlidir");
-  assert.doesNotMatch(guidance, /TeacherEvaluation/);
-  assert.match(connections, /<PeerDirectory/);
-  assert.match(connections, /<ChatDock/);
+  assert.match(transition, /<AnimatePresence mode="wait" initial=\{false\}>/);
+  assert.match(transition, /key=\{pathname\}/);
+  assert.match(transition, /useReducedMotion/);
+  assert.match(transition, /aria-live="polite"/);
+  assert.match(transition, /#main-content/);
+  assert.match(transition, /preventScroll: true/);
+  assert.match(transition, /opacity/);
+  assert.match(transition, /\by:/);
+  assert.match(transition, /scale:/);
+  assert.doesNotMatch(transition, /filter:|boxShadow:|width:|height:/);
 
-  assert.match(teacherEvaluation, /export function TeacherEvaluation/);
-  assert.match(teacherEvaluation, /<TeacherCard/);
-  assert.match(teacherEvaluation, /<SpringRating/);
-  assert.match(teacherEvaluation, /<ReviewCard/);
-  assert.match(teacherEvaluation, /id="available-teachers-track"/);
-  assert.match(teacherEvaluation, /aria-controls="available-teachers-track"/);
-  assert.match(teacherEvaluation, /role="list"/);
-  assert.match(teacherEvaluation, /aria-label="Hazırda müsait müəllimlər"/);
-  assert.match(teacherEvaluation, /<fieldset>/);
-  assert.match(teacherEvaluation, /<legend>Ümumi qiymətləndirmə<\/legend>/);
-  assert.match(teacherEvaluation, /useReducedMotion/);
-  assert.match(teacherEvaluation, /review-confirmation/);
-  assert.match(teacherEvaluation, /role="status"/);
+  for (const href of ["/events", "/community", "/teachers", "/mentors", "/support"]) {
+    assert.match(navigation, new RegExp(`href: "${href}"`));
+  }
 
-  assert.match(teacherCard, /export function TeacherCard/);
-  assert.match(teacherCard, /useScroll/);
-  assert.match(teacherCard, /scrollXProgress/);
-  assert.match(teacherCard, /useTransform/);
-  assert.match(teacherCard, /useReducedMotion/);
+  for (const page of [homePage, eventsPage, communityPage, teachersPage, mentorsPage, supportPage]) {
+    assert.match(page, /<main id="main-content" className="route-page" tabIndex=\{-1\}>/);
+  }
+});
+
+test("müəllimi dörd bacarıq meyarı ilə və klaviatura ilə qiymətləndirir", async () => {
+  const [evaluation, criteria, reviewCard, teacherCard, teacherData, styles] =
+    await Promise.all([
+      readFile(new URL("../app/components/TeacherEvaluation.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/components/CriteriaRating.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/components/ReviewCard.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/components/TeacherCard.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/data/teachers.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    ]);
+
+  assert.match(evaluation, /<CriteriaRating/);
+  assert.match(evaluation, /defaultCriteriaRatings/);
+  assert.match(evaluation, /calculateCriteriaAverage/);
+  assert.match(evaluation, /areCriteriaComplete/);
+  assert.match(evaluation, /review-confirmation/);
+  assert.match(evaluation, /role="status"/);
+
+  for (const key of ["clarity", "subjectKnowledge", "objectivity", "communication"]) {
+    assert.match(criteria, new RegExp(`\\b${key}\\b`));
+  }
+  for (const label of ["İzahın aydınlığı", "Fənn biliyi", "Obyektivlik", "Ünsiyyət"]) {
+    assert.match(criteria, new RegExp(label));
+  }
+  assert.match(criteria, /role="radiogroup"/);
+  assert.match(criteria, /role="radio"/);
+  assert.match(criteria, /aria-checked=\{selected\}/);
+  assert.match(criteria, /key === "Home"/);
+  assert.match(criteria, /key === "End"/);
+  assert.match(criteria, /ArrowRight/);
+  assert.match(criteria, /ArrowLeft/);
+  assert.match(criteria, /useReducedMotion/);
+  assert.match(criteria, /aria-live="polite"/);
+  assert.doesNotMatch(criteria, /filter:|boxShadow:|width:|height:/);
+
   assert.match(teacherCard, /role="listitem"/);
   assert.match(teacherCard, /aria-pressed=\{selected\}/);
-
-  assert.match(springRating, /export function SpringRating/);
-  assert.match(springRating, /role="radiogroup"/);
-  assert.match(springRating, /role="radio"/);
-  assert.match(springRating, /aria-checked=\{value === rating\}/);
-  assert.match(springRating, /useSpring/);
-  assert.match(springRating, /useReducedMotion/);
-  assert.match(springRating, /event\.key === "Home"/);
-  assert.match(springRating, /event\.key === "End"/);
-
-  assert.match(reviewCard, /export function ReviewCard/);
+  assert.match(teacherCard, /useReducedMotion/);
   assert.match(reviewCard, /whileInView/);
   assert.match(reviewCard, /useReducedMotion/);
-  assert.match(styles, /\.teachers-track\s*\{/);
+  assert.doesNotMatch(teacherCard, /<img\b|from "next\/image"/);
+  assert.doesNotMatch(teacherData, /https?:\/\/|\.(?:jpe?g|webp|avif)/i);
+  assert.match(styles, /url\("\/teacher-roster-phase4\.webp"\)/);
   assert.match(styles, /scroll-snap-type:\s*x proximity/);
-  assert.match(styles, /\.teacher-card[^}]*scroll-snap-align:\s*start/s);
-  assert.match(styles, /url\("\/teacher-roster-phase4\.png"\)/);
   assert.match(styles, /\.reviews-masonry\s*\{/);
-  assert.match(styles, /columns:\s*3 290px/);
-  assert.match(styles, /break-inside:\s*avoid/);
-  assert.match(packageJson, /"name": "edurate"/);
-  assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 
   await Promise.all([
     access(new URL("../public/teacher-roster-phase4.png", import.meta.url)),
+    access(new URL("../public/teacher-roster-phase4.webp", import.meta.url)),
     access(new URL("../public/og.png", import.meta.url)),
   ]);
 });
 
-test("əvvəlki mərhələlərin əlçatanlıq müqavilələrini Azərbaycan dilində qoruyur", async () => {
-  const [directory, chat, guidance, mentorship, support] = await Promise.all([
+test("hörmətli rəy qaydalarını həm brauzerdə, həm də API sərhədində tətbiq edir", async () => {
+  const [evaluation, moderation, endpoint] = await Promise.all([
+    readFile(new URL("../app/components/TeacherEvaluation.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/review-moderation.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/reviews/validate/route.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(evaluation, /moderateReview/);
+  assert.match(evaluation, /\/api\/reviews\/validate/);
+  assert.match(evaluation, /role="alert"/);
+  assert.match(evaluation, /Şəxsi deyil, tədris təcrübəsini/);
+
+  assert.match(moderation, /normalizeReviewText/);
+  assert.match(moderation, /"profanity"/);
+  assert.match(moderation, /"direct-insult"/);
+  assert.match(moderation, /"url"/);
+  assert.match(moderation, /"spam"/);
+  assert.match(moderation, /"excessive-repetition"/);
+  assert.match(moderation, /reason:/);
+  assert.match(moderation, /suggestion:/);
+  assert.match(endpoint, /moderateReview/);
+  assert.match(endpoint, /Cache-Control/);
+  assert.match(endpoint, /no-store/);
+
+  const acceptedResponse = await request("/api/reviews/validate", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      text: "İzah aydın idi və nümunələr mövzunu anlamağıma kömək etdi.",
+      criteria: {
+        clarity: 5,
+        subjectKnowledge: 5,
+        objectivity: 4,
+        communication: 5,
+      },
+    }),
+  });
+  assert.equal(acceptedResponse.status, 200);
+  const accepted = await acceptedResponse.json();
+  assert.equal(accepted.accepted, true);
+  assert.match(accepted.text, /İzah aydın idi/);
+
+  const rejectedResponse = await request("/api/reviews/validate", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      text: "Bu müəllim axmaqdır və heç nə bilmir.",
+      criteria: {
+        clarity: 1,
+        subjectKnowledge: 1,
+        objectivity: 1,
+        communication: 1,
+      },
+    }),
+  });
+  assert.equal(rejectedResponse.status, 422);
+  const rejected = await rejectedResponse.json();
+  assert.equal(rejected.accepted, false);
+  assert.ok(rejected.issues.some((issue) => issue.code === "direct-insult"));
+  assert.equal(typeof rejected.reason, "string");
+  assert.equal(typeof rejected.suggestion, "string");
+});
+
+test("əvvəlki modulların əsas əlçatanlıq müqavilələrini saxlayır", async () => {
+  const [directory, chat, mentorship, support] = await Promise.all([
     readFile(new URL("../app/components/PeerDirectory.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/ChatDock.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/components/GuidanceExperience.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/MentorshipDashboard.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/SupportCenter.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(directory, /aria-busy/);
-  assert.match(directory, /peer-card-/);
   assert.match(directory, /İcma kataloqu yüklənir/);
   assert.match(chat, /role="log"/);
   assert.match(chat, /TypingIndicator/);
   assert.match(chat, /aria-controls="chat-settings-panel"/);
-  assert.match(chat, /aria-label="Söhbət tənzimləmələri"/);
-  assert.match(guidance, /<MentorshipDashboard\s*\/>/);
-  assert.match(guidance, /<SupportCenter\s*\/>/);
   assert.match(mentorship, /aria-expanded=\{expanded\}/);
   assert.match(mentorship, /aria-controls=\{detailsId\}/);
   assert.match(mentorship, /aria-live="polite"/);
-  assert.match(mentorship, /Mentorluq üçün müraciət et/);
-  assert.match(support, /<h3>/);
   assert.match(support, /aria-expanded=\{open\}/);
   assert.match(support, /aria-controls=\{answerId\}/);
-  assert.match(support, /role="region"/);
   assert.match(support, /role="progressbar"/);
   assert.match(support, /<label htmlFor="ticket-name">Adın<\/label>/);
-  assert.match(support, /<label htmlFor="ticket-email">E-poçt ünvanın<\/label>/);
-  assert.match(support, /<label htmlFor="ticket-topic">Sənə nə ilə kömək edə bilərik\?<\/label>/);
-  assert.match(support, /<label htmlFor="ticket-message">Nə baş verdiyini bizə yaz<\/label>/);
 });

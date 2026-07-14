@@ -64,7 +64,7 @@ export function PeerDirectory({ onMessage }: PeerDirectoryProps) {
   }
 
   return (
-    <section id="peers" className="peers-section">
+    <section id="peers" className="peers-section route-module-section" aria-labelledby="peers-title">
       <motion.div
         className="peers-heading"
         initial={reduceMotion ? false : { opacity: 0, y: 34 }}
@@ -74,7 +74,7 @@ export function PeerDirectory({ onMessage }: PeerDirectoryProps) {
       >
         <div>
           <span className="section-kicker section-kicker-dark">02 / Sənin çevrən</span>
-          <h2>İdeyaların arxasındakı<br /><em>insanlarla tanış ol.</em></h2>
+          <h1 id="peers-title">İdeyaların arxasındakı<br /><em>insanlarla tanış ol.</em></h1>
         </div>
         <div className="peers-heading-aside">
           <p>Ortaq maraqlara əsaslanan səmimi tanışlıqlar: öyrənənlər, yaradıcılar və mentorlar bir arada.</p>

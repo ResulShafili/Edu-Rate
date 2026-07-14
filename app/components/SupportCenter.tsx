@@ -73,7 +73,7 @@ export function SupportCenter() {
   }
 
   return (
-    <section id="support" className="support-section" aria-labelledby="support-title">
+    <section id="support" className="support-section route-module-section" aria-labelledby="support-title">
       <motion.div
         className="support-heading"
         initial={reduceMotion ? false : { opacity: 0, y: 30 }}
@@ -83,7 +83,7 @@ export function SupportCenter() {
       >
         <span className="support-kicker">05 / Ehtiyacın olanda yanındayıq</span>
         <div>
-          <h2 id="support-title">Bir az dəstək.<br /><em>Elə vaxtında.</em></h2>
+          <h1 id="support-title">Bir az dəstək.<br /><em>Elə vaxtında.</em></h1>
           <p>Əvvəlcə aydın cavab. Lazım olanda isə qayğıkeş bir insan.</p>
         </div>
       </motion.div>
@@ -181,7 +181,11 @@ export function SupportCenter() {
             aria-valuenow={progress}
             aria-valuetext={`4 məcburi xanadan ${completedFields} xana tamamlanıb`}
           >
-            <motion.span animate={{ width: `${progress}%` }} transition={{ duration: reduceMotion ? 0 : 0.5, ease }} />
+            <motion.span
+              style={{ transformOrigin: "left center" }}
+              animate={{ scaleX: progress / 100 }}
+              transition={{ duration: reduceMotion ? 0 : 0.5, ease }}
+            />
           </div>
 
           <AnimatePresence mode="wait" initial={false}>

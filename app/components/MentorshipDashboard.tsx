@@ -24,7 +24,7 @@ export function MentorshipDashboard() {
   }
 
   return (
-    <section id="mentors" className="mentor-section" aria-labelledby="mentor-title">
+    <section id="mentors" className="mentor-section route-module-section" aria-labelledby="mentor-title">
       <div className="mentor-ambient mentor-ambient-one" aria-hidden="true" />
       <div className="mentor-ambient mentor-ambient-two" aria-hidden="true" />
 
@@ -37,10 +37,10 @@ export function MentorshipDashboard() {
       >
         <div>
           <span className="mentor-kicker">04 / İnkişaf yolunda bələdçi</span>
-          <h2 id="mentor-title">
+          <h1 id="mentor-title">
             Mentorunu tap.<br />
             Növbəti addımı <em>özün seç.</em>
-          </h2>
+          </h1>
         </div>
         <div className="mentor-heading-aside">
           <span><Sparkles size={13} /> Diqqətlə uyğunlaşdırılır</span>
