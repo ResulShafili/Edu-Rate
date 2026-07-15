@@ -66,7 +66,7 @@ export function HomeExperience() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.78, delay: 0.72, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p>EduRate tədbirləri, icmanı, klubları, müəllimləri, mentorluğu və universitet şəbəkəsini bir sakit, düşünülmüş təcrübədə birləşdirir.</p>
+          <p>EduRate tədbirləri, icmanı, klubları, müəllimləri, mentorluğu, universitet şəbəkəsini və idarəetməni bir sakit, düşünülmüş təcrübədə birləşdirir.</p>
           <Link href="/events" className="scroll-cue home-journey-link">
             <span>Öyrənmə yoluna başla</span>
             <i><ArrowUpRight size={16} /></i>
@@ -80,7 +80,7 @@ export function HomeExperience() {
           transition={{ type: "spring", delay: 0.92, stiffness: 110, damping: 14 }}
           aria-hidden="true"
         >
-          <span>07</span>
+          <span>08</span>
           <small>istiqamət</small>
         </motion.div>
       </motion.section>

@@ -41,7 +41,7 @@ async function request(pathname, init = {}) {
   );
 }
 
-test("on bir əsas marşrutu Azərbaycan dilində ayrıca render edir", async () => {
+test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async () => {
   const routes = [
     ["/", /Maraqla gəl\./],
     ["/events", /Növbəti yaxşı hekayən/],
@@ -53,6 +53,7 @@ test("on bir əsas marşrutu Azərbaycan dilində ayrıca render edir", async ()
     ["/auth", /Yenidən xoş gəldin\./],
     ["/profile", /Profilin səni gözləyir\./],
     ["/clubs", /Öz yerini tap\./],
+    ["/admin", /İdarəetmə mərkəzi/],
     ["/clubs/innovasiya-robototexnika", /İnnovasiya və Robototexnika Klubu/],
   ];
 
@@ -81,7 +82,7 @@ test("on bir əsas marşrutu Azərbaycan dilində ayrıca render edir", async ()
     }),
   );
 
-  const [home, events, community, teachers, mentors, support, feed, auth, profile, clubs, clubDetail] = renderedRoutes;
+  const [home, events, community, teachers, mentors, support, feed, auth, profile, clubs, admin, clubDetail] = renderedRoutes;
   assert.doesNotMatch(home, /Növbəti yaxşı hekayən/);
   assert.doesNotMatch(events, /İdeyaların arxasındakı/);
   assert.doesNotMatch(community, /Sənə uyğun müəllimi tap\./);
@@ -92,6 +93,7 @@ test("on bir əsas marşrutu Azərbaycan dilində ayrıca render edir", async ()
   assert.doesNotMatch(auth, /Profilin səni gözləyir\./);
   assert.doesNotMatch(profile, /Kampusdan xəbərdar ol\./);
   assert.doesNotMatch(clubs, /Yenidən xoş gəldin\./);
+  assert.doesNotMatch(admin, /Öz yerini tap\./);
   assert.doesNotMatch(clubDetail, /Öz yerini tap\./);
 });
 
@@ -112,6 +114,7 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
     authPage,
     profilePage,
     clubsPage,
+    adminPage,
     clubDetailPage,
   ] = await Promise.all([
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
@@ -129,6 +132,7 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
     readFile(new URL("../app/auth/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/profile/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/clubs/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/clubs/[slug]/page.tsx", import.meta.url), "utf8"),
   ]);
 
@@ -165,11 +169,11 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
   assert.match(transition, /scale:/);
   assert.doesNotMatch(transition, /filter:|boxShadow:|width:|height:/);
 
-  for (const href of ["/events", "/community", "/teachers", "/mentors", "/support", "/feed", "/clubs", "/profile", "/auth"]) {
+  for (const href of ["/events", "/community", "/teachers", "/mentors", "/support", "/feed", "/clubs", "/admin", "/profile", "/auth"]) {
     assert.match(navigation, new RegExp(`href: "${href}"`));
   }
 
-  for (const page of [homePage, eventsPage, communityPage, teachersPage, mentorsPage, supportPage, feedPage, authPage, profilePage, clubsPage, clubDetailPage]) {
+  for (const page of [homePage, eventsPage, communityPage, teachersPage, mentorsPage, supportPage, feedPage, authPage, profilePage, clubsPage, adminPage, clubDetailPage]) {
     assert.match(page, /<main id="main-content" className="route-page" tabIndex=\{-1\}>/);
   }
 });
@@ -560,6 +564,131 @@ test("klub, təşkilat və maraq icmalarını premium və əlçatan qarşılıql
   assert.match(styles, /@media \(max-width: 480px\)[\s\S]*\.magnetic-join-button\s*\{[^}]*min-height:\s*48px/);
   assert.match(styles, /@media \(hover: none\)[\s\S]*\.community-card-shell\.is-dimmed\s*\{[^}]*opacity:\s*1/);
   await access(new URL("../public/og-phase7.png", import.meta.url));
+});
+
+test("idarəetmə mərkəzini real API sərhədi, əlçatan cədvəllər və yüngül analitika ilə qurur", async () => {
+  const [
+    dashboard,
+    sidebar,
+    charts,
+    dataTable,
+    recordForm,
+    skeleton,
+    dataControls,
+    adminHook,
+    tableQueryHook,
+    apiClient,
+    adminAccess,
+    adminSession,
+    clientAccessGate,
+    adminService,
+    adminPage,
+    navigation,
+    styles,
+  ] = await Promise.all([
+    readFile(new URL("../app/components/AdminDashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AdminSidebar.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AdminCharts.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AdminDataTable.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AdminRecordFormSheet.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AdminSkeleton.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AdminDataControls.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/hooks/useAdminData.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/hooks/useAdminTableQuery.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/api/client.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/auth/admin-access.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/auth/admin-session.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AdminClientAccessGate.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/services/admin.service.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/data/navigation.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  const adminUi = [dashboard, sidebar, charts, dataTable, skeleton].join("\n");
+
+  assert.match(navigation, /href: "\/admin"[\s\S]*number: "08"/);
+  assert.match(adminPage, /<AdminDashboard/);
+  assert.match(adminPage, /resolveAdminAccess/);
+  assert.match(adminPage, /access\.status === "granted"/);
+  assert.match(adminPage, /access\.status === "client-check"/);
+  assert.match(adminPage, /<AdminClientAccessGate/);
+  assert.match(adminAccess, /\/auth\/session/);
+  assert.match(adminSession, /role === "admin"/);
+  assert.match(adminAccess, /cache: "no-store"/);
+  assert.match(adminAccess, /readSessionCookie/);
+  assert.match(clientAccessGate, /credentials: "include"/);
+  assert.match(clientAccessGate, /cache: "no-store"/);
+  assert.match(clientAccessGate, /AbortController/);
+  assert.match(clientAccessGate, /controller\.abort\(\)/);
+  assert.match(clientAccessGate, /<AdminDashboard/);
+  assert.match(clientAccessGate, /<AdminSkeleton scope="gate"/);
+  assert.doesNotMatch(
+    [adminAccess, adminSession, clientAccessGate].join("\n"),
+    /localStorage|sessionStorage|document\.cookie/,
+  );
+  assert.match(adminUi, /useReducedMotion/);
+  assert.match(charts, /from "recharts"/);
+  assert.match(charts, /(?:AreaChart|BarChart|LineChart|PieChart)/);
+  assert.match(sidebar, /aria-expanded/);
+  assert.match(sidebar, /(?:collapsed|collapse|isCollapsed|onToggle)/i);
+
+  assert.match(dataTable, /<table\b/);
+  assert.match(dataTable, /<thead\b/);
+  assert.match(dataTable, /<th\b/);
+  assert.match(dataTable, /motion\.tr/);
+  assert.match(dataTable, /(?:delay|stagger)/);
+  assert.match(dataTable, /<AdminDataControls/);
+  assert.doesNotMatch(dataTable, /useDeferredValue|visibleRows\s*=\s*rows\.filter/);
+  assert.match(dataTable, /onCreate/);
+  assert.match(dataTable, /onEdit/);
+  assert.match(dataTable, /onDelete/);
+  assert.match(recordForm, /role="dialog"/);
+  assert.match(recordForm, /aria-modal="true"/);
+  assert.match(recordForm, /event\.key === "Escape"/);
+  assert.match(recordForm, /admin-delete-confirmation/);
+  assert.match(styles, /\.admin[^{}]*(?:table|data)[^{]*\{[\s\S]{0,2600}position:\s*sticky/i);
+
+  assert.match(adminHook, /useSWR/);
+  assert.match(adminHook, /useSWRMutation/);
+  assert.match(adminHook, /mutate/);
+  assert.match(adminHook, /keepPreviousData/);
+  assert.match(adminHook, /optimisticData/);
+  assert.match(adminHook, /rollbackOnError:\s*true/);
+  assert.match(adminHook, /revalidateAdminData/);
+  assert.match(dashboard, /useAdminUserMutations/);
+  assert.match(dashboard, /AdminRecordFormSheet/);
+  assert.match(dashboard, /useAdminTableQuery/);
+  assert.match(dashboard, /activeCollection\.data\?\.total/);
+  assert.match(tableQueryHook, /SEARCH_DEBOUNCE_MS\s*=\s*320/);
+  assert.match(tableQueryHook, /window\.setTimeout/);
+  assert.match(tableQueryHook, /setPageState\(1\)/);
+  assert.match(tableQueryHook, /search:\s*search \|\| undefined/);
+  assert.match(tableQueryHook, /status,/);
+  assert.match(dataControls, /<select/);
+  assert.match(dataControls, /onStatusChange/);
+  assert.match(dataControls, /aria-label="Əvvəlki səhifə"/);
+  assert.match(dataControls, /aria-label="Növbəti səhifə"/);
+  assert.match(dataControls, /totalPages/);
+  assert.match(apiClient, /fetch\(/);
+  assert.match(apiClient, /NEXT_PUBLIC_API_BASE_URL/);
+  assert.match(apiClient, /credentials:\s*"include"/);
+  for (const operation of ["create", "update", "delete"]) {
+    assert.match(adminService, new RegExp(`\\b${operation}\\b`, "i"));
+  }
+  assert.match(adminService, /function filterRecords/);
+  assert.match(adminService, /query\.get\("search"\)/);
+  assert.match(adminService, /query\.get\("status"\)/);
+  assert.match(adminService, /function paginate/);
+  assert.match(adminService, /total:\s*records\.length/);
+
+  assert.match(skeleton, /skeleton/i);
+  assert.match(skeleton, /aria-(?:busy|hidden)/);
+  assert.match(styles, /@keyframes\s+admin[^\s{]*(?:shimmer|pulse)|@keyframes\s+(?:admin-)?(?:shimmer|pulse)/i);
+  assert.match(styles, /\.admin-record-sheet\s*\{/);
+  assert.match(styles, /\.admin-crud-create-button\s*\{/);
+  assert.doesNotMatch(adminUi, /spinner|LoaderCircle|animate-spin/i);
+  assert.doesNotMatch(adminUi, /<img\b|from "next\/image"|https?:\/\/|\.(?:jpe?g|webp|avif)/i);
 });
 
 test("əvvəlki modulların əsas əlçatanlıq müqavilələrini saxlayır", async () => {

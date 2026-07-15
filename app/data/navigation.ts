@@ -62,6 +62,15 @@ export const platformRoutes = [
     metric: "6 klub · 8 maraq icması",
     accent: "#ff9e7a",
   },
+  {
+    href: "/admin",
+    label: "İdarəetmə",
+    number: "08",
+    title: "Platformanı aydın idarə et",
+    description: "İstifadəçi, klub, tədbir və müraciət axınlarını bir sakit idarəetmə mərkəzində izlə.",
+    metric: "canlı analitika · çevik nəzarət",
+    accent: "#72ddf7",
+  },
 ] as const;
 
 export type PlatformRoute = (typeof platformRoutes)[number];

@@ -15,6 +15,11 @@ istifadəçini yormadan növbəti addıma aparır.
 | `/teachers` | Müəllimlər | Müəllim seçimi, meyarlar üzrə qiymətləndirmə və rəylər |
 | `/mentors` | Mentorlar | Genişlənən profillər və mentorluq müraciəti |
 | `/support` | Dəstək | FAQ və tamamlanma göstəricili dəstək sorğusu |
+| `/auth` | Giriş və qeydiyyat | Yumşaq keçidli autentifikasiya təcrübəsi |
+| `/profile` | Profil | Tələbə məlumatları və fəaliyyət xülasəsi |
+| `/feed` | Tələbə lenti | Xəbərlər, bildirişlər və kateqoriyalı elanlar |
+| `/clubs` | Klublar | Tələbə təşkilatları və klub profilləri |
+| `/admin` | İdarəetmə | Analitika, istifadəçi, klub və tədbir nəzarəti |
 
 Davamlı naviqasiya qabığı bütün marşrutlarda görünür. `AnimatePresence` əsaslı səhifə
 keçidləri məzmunu yumşaq şəkildə solğunlaşdırır və cüzi miqyaslandırır. Üzən söhbət
@@ -59,6 +64,8 @@ saxlanmalıdır. Avtomatik yoxlama insan nəzarətini tam əvəz etmir.
 - TypeScript
 - Tailwind CSS 4
 - Framer Motion
+- Recharts
+- SWR və native Fetch
 - Lucide ikonları
 - Sites hostinqi üçün Cloudflare uyğun ESM çıxışı
 
@@ -70,6 +77,10 @@ Node.js 22.13 və ya daha yeni versiya tələb olunur.
 npm install
 npm run dev
 ```
+
+Real Node.js + Express API-yə qoşulmaq üçün `.env.example` faylını `.env.local`
+adı ilə köçürün və `NEXT_PUBLIC_API_BASE_URL` dəyərini backend ünvanına dəyişin.
+Bu dəyişən verilmədikdə admin panel təhlükəsiz demo adapterindən istifadə edir.
 
 Hostinq çıxışları ayrı saxlanılır: `npm run build` Sites/Cloudflare üçün `dist/`,
 `npm run build:vercel` isə Vercel üçün `.next/` çıxışı yaradır.
@@ -90,11 +101,40 @@ npm test
   ötürülməsini idarə edir.
 - `PlatformProvider` söhbət vəziyyətini marşrutlardan yuxarıda saxlayır.
 - Hər məhsul modulu `app/events`, `app/community`, `app/teachers`, `app/mentors` və
-  `app/support` daxilində ayrıca marşruta malikdir.
+  `app/support` daxilində ayrıca marşruta malikdir; Phase 6–8 marşrutları eyni
+  davamlı qabıq və keçid sisteminə qoşulur.
 - `CriteriaRating` bacarıq meyarlarını və orta balı, `review-moderation` isə hörmətli
   rəy qaydalarını idarə edir.
 - Domen məlumatları `app/data`, təqdimat və qarşılıqlı əlaqə məntiqi isə
   `app/components` daxilində saxlanır.
+
+## REST API müqaviləsi
+
+`app/lib/api/client.ts` vahid Fetch client-i, strukturlaşdırılmış `ApiError`, sorğunun
+ləğvi, cookie əsaslı sessiya və həm birbaşa JSON, həm də `{ "data": ... }` cavab
+formatını təmin edir. `app/services/admin.service.ts` endpoint müqaviləsini,
+`app/hooks/useAdminData.ts` isə SWR keşini, təkrar yoxlamanı və skeleton vəziyyətlərini
+UI qatından ayırır.
+
+Express backend üçün gözlənilən admin endpoint-ləri:
+
+- `GET /auth/session` — `role: "admin"` olan təhlükəsiz sessiya yoxlaması;
+- `GET /admin/overview`;
+- `GET`, `POST /admin/users`, `/admin/clubs`, `/admin/events`;
+- `PATCH`, `DELETE /admin/users/:id`, `/admin/clubs/:id`, `/admin/events/:id`.
+
+`/auth/session` cavabı `{ "user": { "displayName": "...", "email": "...", "role": "admin" } }`
+və ya eyni məlumatın `data` envelope-u daxilindəki forması ola bilər. Admin səhifəsi real
+API rejimində bu yoxlamanı serverdə aparır və icazə xidməti əlçatan olmadıqda bağlı
+qalır. `EDURATE_API_BASE_URL` sessiya sorğusu üçün server-only override,
+`EDURATE_SESSION_COOKIE_NAME` isə HttpOnly sessiya cookie-sinin adıdır.
+
+Səhvlər üçün tövsiyə olunan format
+`{ "message": "...", "code": "...", "details": {}, "requestId": "..." }` şəklindədir.
+Backend cookie sessiyasından istifadə edirsə CORS-da yalnız etibarlı frontend origin-i
+və credentials dəstəyini aktiv etməlidir. Administrator rolu və hər bir CRUD icazəsi
+mütləq Express middleware-də yenidən yoxlanmalıdır; frontend menyusunun gizlədilməsi
+təhlükəsizlik sərhədi deyil.
 
 ## Məlumatların saxlanması sərhədi
 

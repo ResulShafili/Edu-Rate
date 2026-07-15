@@ -24,7 +24,7 @@ const instrumentSerif = Instrument_Serif({
 
 const title = "EduRate — Birlikdə öyrən, inamla irəli get.";
 const description =
-  "Tədbirləri, tələbə klublarını, etibarlı icma əlaqələrini, mentorluğu, müəllim qiymətləndirməsini və universitet şəbəkəsini bir araya gətirən öyrənmə platforması.";
+  "Tədbirləri, tələbə klublarını, etibarlı icma əlaqələrini, mentorluğu, müəllim qiymətləndirməsini və ağıllı idarəetməni bir araya gətirən öyrənmə platforması.";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -42,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
     incomingHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const socialImage = `${origin}/og-phase7.png`;
+  const socialImage = `${origin}/og-phase8.png`;
 
   return {
     title,
@@ -60,9 +60,9 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [
         {
           url: socialImage,
-          width: 1733,
-          height: 907,
-          alt: "EduRate — Klubunu tap. İcmanı qur.",
+          width: 1662,
+          height: 946,
+          alt: "EduRate — İdarəetmə. Aydın. Etibarlı.",
         },
       ],
     },
