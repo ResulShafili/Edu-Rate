@@ -1,11 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { LogIn, Menu, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { platformRoutes } from "../data/navigation";
+import { accountRoutes, platformRoutes } from "../data/navigation";
+import { useAuth } from "./AuthProvider";
 import { RouteTransition } from "./RouteTransition";
 
 type PlatformShellProps = {
@@ -18,6 +19,7 @@ function isCurrentRoute(pathname: string, href: string) {
 
 export function PlatformShell({ children }: PlatformShellProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -60,8 +62,12 @@ export function PlatformShell({ children }: PlatformShellProps) {
           })}
         </div>
 
-        <Link href="/teachers" className={`nav-cta${isCurrentRoute(pathname, "/teachers") ? " is-active" : ""}`} aria-current={isCurrentRoute(pathname, "/teachers") ? "page" : undefined}>
-          Müəllim tap <ArrowRight size={15} />
+        <Link
+          href={user ? "/profile" : "/auth"}
+          className={`nav-cta${isCurrentRoute(pathname, user ? "/profile" : "/auth") ? " is-active" : ""}`}
+          aria-current={isCurrentRoute(pathname, user ? "/profile" : "/auth") ? "page" : undefined}
+        >
+          {user ? <><span className="nav-user-initials" aria-hidden="true">{user.initials}</span>Profilim</> : <>Daxil ol <LogIn size={15} /></>}
         </Link>
 
         <button
@@ -97,6 +103,23 @@ export function PlatformShell({ children }: PlatformShellProps) {
                     aria-current={current ? "page" : undefined}
                   >
                     <span>{route.number}</span>{route.label}
+                  </Link>
+                );
+              })}
+              <span className="mobile-menu-group-label">Hesab</span>
+              {accountRoutes.map((route) => {
+                const current = isCurrentRoute(pathname, route.href);
+                return (
+                  <Link
+                    key={route.href}
+                    href={route.href}
+                    className="mobile-account-link"
+                    onClick={closeMenu}
+                    onNavigate={closeMenu}
+                    aria-current={current ? "page" : undefined}
+                  >
+                    <span aria-hidden="true">{route.href === "/profile" ? <UserRound size={14} /> : <LogIn size={14} />}</span>
+                    {route.label}
                   </Link>
                 );
               })}

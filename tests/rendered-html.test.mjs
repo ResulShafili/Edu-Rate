@@ -41,7 +41,7 @@ async function request(pathname, init = {}) {
   );
 }
 
-test("altı əsas marşrutu Azərbaycan dilində ayrıca render edir", async () => {
+test("doqquz əsas marşrutu Azərbaycan dilində ayrıca render edir", async () => {
   const routes = [
     ["/", /Maraqla gəl\./],
     ["/events", /Növbəti yaxşı hekayən/],
@@ -49,6 +49,9 @@ test("altı əsas marşrutu Azərbaycan dilində ayrıca render edir", async () 
     ["/teachers", /Sənə uyğun müəllimi tap\./],
     ["/mentors", /Mentorunu tap\./],
     ["/support", /Bir az dəstək\./],
+    ["/feed", /Kampusdan xəbərdar ol\./],
+    ["/auth", /Yenidən xoş gəldin\./],
+    ["/profile", /Profilin səni gözləyir\./],
   ];
 
   const renderedRoutes = await Promise.all(
@@ -76,13 +79,16 @@ test("altı əsas marşrutu Azərbaycan dilində ayrıca render edir", async () 
     }),
   );
 
-  const [home, events, community, teachers, mentors, support] = renderedRoutes;
+  const [home, events, community, teachers, mentors, support, feed, auth, profile] = renderedRoutes;
   assert.doesNotMatch(home, /Növbəti yaxşı hekayən/);
   assert.doesNotMatch(events, /İdeyaların arxasındakı/);
   assert.doesNotMatch(community, /Sənə uyğun müəllimi tap\./);
   assert.doesNotMatch(teachers, /Mentorunu tap\./);
   assert.doesNotMatch(mentors, /Bir az dəstək\./);
   assert.doesNotMatch(support, /Maraqla gəl\./);
+  assert.doesNotMatch(feed, /Yenidən xoş gəldin\./);
+  assert.doesNotMatch(auth, /Profilin səni gözləyir\./);
+  assert.doesNotMatch(profile, /Kampusdan xəbərdar ol\./);
 });
 
 test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruyur", async () => {
@@ -98,6 +104,9 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
     teachersPage,
     mentorsPage,
     supportPage,
+    feedPage,
+    authPage,
+    profilePage,
   ] = await Promise.all([
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/PlatformShell.tsx", import.meta.url), "utf8"),
@@ -110,8 +119,12 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
     readFile(new URL("../app/teachers/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/mentors/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/support/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/feed/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/auth/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/profile/page.tsx", import.meta.url), "utf8"),
   ]);
 
+  assert.match(layout, /<AuthProvider initialUser=\{initialUser\} signOutHref=\{signOutHref\}>/);
   assert.match(layout, /<PlatformProvider>/);
   assert.match(layout, /<PlatformShell>\s*\{children\}\s*<\/PlatformShell>/);
   assert.match(layout, /<html lang="az">/);
@@ -144,11 +157,11 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
   assert.match(transition, /scale:/);
   assert.doesNotMatch(transition, /filter:|boxShadow:|width:|height:/);
 
-  for (const href of ["/events", "/community", "/teachers", "/mentors", "/support"]) {
+  for (const href of ["/events", "/community", "/teachers", "/mentors", "/support", "/feed", "/profile", "/auth"]) {
     assert.match(navigation, new RegExp(`href: "${href}"`));
   }
 
-  for (const page of [homePage, eventsPage, communityPage, teachersPage, mentorsPage, supportPage]) {
+  for (const page of [homePage, eventsPage, communityPage, teachersPage, mentorsPage, supportPage, feedPage, authPage, profilePage]) {
     assert.match(page, /<main id="main-content" className="route-page" tabIndex=\{-1\}>/);
   }
 });
@@ -291,6 +304,154 @@ test("hörmətli rəy qaydalarını həm brauzerdə, həm də API sərhədində 
   assert.ok(rejected.issues.some((issue) => issue.code === "direct-insult"));
   assert.equal(typeof rejected.reason, "string");
   assert.equal(typeof rejected.suggestion, "string");
+});
+
+test("universitet şəbəkəsinin auth, profil, lent və elan müqavilələrini qoruyur", async () => {
+  const [
+    auth,
+    authProvider,
+    profile,
+    feed,
+    feedCard,
+    announcementsBoard,
+    networkData,
+    userData,
+    navigation,
+    layout,
+    styles,
+  ] = await Promise.all([
+    readFile(new URL("../app/components/AuthExperience.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AuthProvider.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/UserProfileDashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/StudentFeed.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/FeedCard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AnnouncementsBoard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/data/network.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/data/user.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/data/navigation.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(layout, /<AuthProvider initialUser=\{initialUser\} signOutHref=\{signOutHref\}>/);
+  assert.match(layout, /getChatGPTAuthContext/);
+  assert.match(navigation, /href: "\/feed"/);
+  assert.match(navigation, /href: "\/profile"/);
+  assert.match(navigation, /href: "\/auth"/);
+
+  assert.match(auth, /role="tablist"/);
+  assert.match(auth, /role="tab"/);
+  assert.match(auth, /role="tabpanel"/);
+  assert.match(auth, /aria-selected=\{active\}/);
+  assert.match(auth, /autoComplete="email"/);
+  assert.match(auth, /current-password/);
+  assert.match(auth, /new-password/);
+  assert.match(auth, /useReducedMotion/);
+  assert.match(auth, /mode="popLayout"/);
+  assert.doesNotMatch(auth, /mode="wait"|localStorage|sessionStorage|console\./);
+  assert.match(authProvider, /type AuthGateway/);
+  assert.match(authProvider, /AUTH_PROVIDER_NOT_CONFIGURED/);
+  assert.match(authProvider, /gateway \?\? unavailableAuthGateway/);
+  assert.match(authProvider, /if \(!user\) throw new Error\("AUTH_REQUIRED"\)/);
+  assert.doesNotMatch(authProvider, /demoAuthGateway|waitForDemoResponse|localStorage|sessionStorage|console\./);
+
+  assert.match(profile, /role="progressbar"/);
+  assert.match(profile, /aria-valuenow=\{user\.completion\}/);
+  assert.match(profile, /aria-expanded=\{editing\}/);
+  assert.match(profile, /whileInView/);
+  assert.match(profile, /useReducedMotion/);
+
+  assert.match(feed, /IntersectionObserver/);
+  assert.match(feed, /aria-busy=\{isAppending\}/);
+  assert.match(feed, /role="feed"/);
+  assert.match(feed, /aria-live="polite"/);
+  assert.match(feed, /Daha çox göstər/);
+  assert.match(feed, /AnimatePresence initial=\{false\} mode="popLayout"/);
+  assert.match(feedCard, /layout=\{reducedMotion \? false : "position"\}/);
+
+  for (const label of ["Hamısı", "Rəsmi", "Klublar", "Fakültələr"]) {
+    assert.match(networkData, new RegExp(label));
+  }
+  assert.match(announcementsBoard, /aria-pressed=\{active\}/);
+  assert.match(announcementsBoard, /layoutId="active-network-filter"/);
+  assert.match(announcementsBoard, /mode="popLayout"/);
+
+  for (const source of [auth, profile, feed, feedCard, announcementsBoard, networkData, userData]) {
+    assert.doesNotMatch(source, /<img\b|from "next\/image"|https?:\/\/|\.(?:jpe?g|webp|avif)/i);
+  }
+
+  assert.match(styles, /\.auth-section\s*\{/);
+  assert.match(styles, /\.profile-section\s*\{/);
+  assert.match(styles, /\.nav-user-initials\s*\{/);
+  await access(new URL("../public/og-phase6.png", import.meta.url));
+});
+
+test("auth sərhədi yalnız Sites kimliyinə etibar edir və konfiqurasiyasız halda bağlı qalır", async () => {
+  const [chatgptAuth, authPage, auth, authProvider, profile, userData] = await Promise.all([
+    readFile(new URL("../app/chatgpt-auth.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/auth/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AuthExperience.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/AuthProvider.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/UserProfileDashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/data/user.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(chatgptAuth, /requestHeaders\.get\("host"\)/);
+  assert.match(chatgptAuth, /isTrustedChatGPTSitesHost/);
+  assert.match(chatgptAuth, /hostname\.endsWith\(CHATGPT_SITES_HOST_SUFFIX\)/);
+  assert.doesNotMatch(chatgptAuth, /get\("x-forwarded-host"\)/);
+  assert.match(authPage, /dynamic = "force-dynamic"/);
+  assert.match(authPage, /chatGPTSignInPath\("\/profile"\)/);
+  assert.match(auth, /ChatGPT ilə davam et/);
+  assert.match(auth, /passwordInput\.value = ""/);
+  assert.ok(
+    (auth.match(/disabled=\{!credentialAuthAvailable \|\| submitting\}/g) ?? []).length >= 5,
+    "konfiqurasiyasız credential sahələri məlumat toplamamalıdır",
+  );
+  assert.match(auth, /disabled=\{submitting \|\| !credentialAuthAvailable\}/);
+  assert.match(authProvider, /AUTH_PROVIDER_NOT_CONFIGURED/);
+  assert.match(profile, /<a href=\{signOutHref\} className="profile-signout-button">/);
+  assert.match(profile, /\{credentialAuthAvailable && \(/);
+  assert.doesNotMatch(userData, /demoUserProfile|createRegisteredProfile|student-aylin/);
+
+  for (const source of [auth, authProvider, profile, userData]) {
+    assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|document\.cookie|console\./);
+  }
+
+  const untrustedResponse = await request("/profile", {
+    headers: {
+      host: "edu-rate-nu.vercel.app",
+      "oai-authenticated-user-email": "saxta@numune.az",
+      "oai-authenticated-user-full-name": "Saxta%20Istifad%C9%99%C3%A7i",
+      "oai-authenticated-user-full-name-encoding": "percent-encoded-utf-8",
+    },
+  });
+  assert.equal(untrustedResponse.status, 200);
+  const untrustedHtml = await untrustedResponse.text();
+  assert.match(untrustedHtml, /Profilin səni gözləyir\./);
+  assert.doesNotMatch(untrustedHtml, /saxta@numune\.az|Saxta Istifadəçi/);
+
+  const sitesAnonymousResponse = await request("/auth", {
+    headers: { host: "gathered-autumn-26.capkan8204-ocalan.chatgpt.site" },
+  });
+  assert.equal(sitesAnonymousResponse.status, 200);
+  const sitesAnonymousHtml = await sitesAnonymousResponse.text();
+  assert.match(sitesAnonymousHtml, /ChatGPT ilə davam et/);
+  assert.match(sitesAnonymousHtml, /\/signin-with-chatgpt\?return_to=%2Fprofile/);
+
+  const sitesProfileResponse = await request("/profile", {
+    headers: {
+      host: "gathered-autumn-26.capkan8204-ocalan.chatgpt.site",
+      "oai-authenticated-user-email": "resul@numune.az",
+      "oai-authenticated-user-full-name": "Resul%20%C5%9E%C9%99fili",
+      "oai-authenticated-user-full-name-encoding": "percent-encoded-utf-8",
+    },
+  });
+  assert.equal(sitesProfileResponse.status, 200);
+  const sitesProfileHtml = await sitesProfileResponse.text();
+  assert.match(sitesProfileHtml, /Resul Şəfili/);
+  assert.match(sitesProfileHtml, /\/signout-with-chatgpt\?return_to=%2F/);
+  assert.doesNotMatch(sitesProfileHtml, /Profilə düzəliş et/);
 });
 
 test("əvvəlki modulların əsas əlçatanlıq müqavilələrini saxlayır", async () => {

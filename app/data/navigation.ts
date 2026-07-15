@@ -44,6 +44,22 @@ export const platformRoutes = [
     metric: "1 iş günü ərzində cavab",
     accent: "#7de5d1",
   },
+  {
+    href: "/feed",
+    label: "Lent",
+    number: "06",
+    title: "Universitetin nəbzini izlə",
+    description: "Tələbə paylaşımları, vacib elanlar və kampusdakı yeniliklər bir sakit lentdə.",
+    metric: "gündəlik yenilənən şəbəkə",
+    accent: "#ffcf66",
+  },
 ] as const;
 
 export type PlatformRoute = (typeof platformRoutes)[number];
+
+export const accountRoutes = [
+  { href: "/profile", label: "Profilim", number: "P" },
+  { href: "/auth", label: "Daxil ol", number: "A" },
+] as const;
+
+export const allPlatformRoutes = [...platformRoutes, ...accountRoutes] as const;

@@ -1,8 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Instrument_Serif } from "next/font/google";
 import { headers } from "next/headers";
+import {
+  chatGPTSignOutPath,
+  getChatGPTAuthContext,
+} from "./chatgpt-auth";
+import { AuthProvider } from "./components/AuthProvider";
 import { PlatformProvider } from "./components/PlatformProvider";
 import { PlatformShell } from "./components/PlatformShell";
+import { createIdentityProfile } from "./data/user";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -18,7 +24,7 @@ const instrumentSerif = Instrument_Serif({
 
 const title = "EduRate — Birlikdə öyrən, inamla irəli get.";
 const description =
-  "Tədbirləri, etibarlı icma əlaqələrini, mentorluğu və bacarıq əsaslı müəllim qiymətləndirməsini bir araya gətirən öyrənmə platforması.";
+  "Tədbirləri, etibarlı icma əlaqələrini, mentorluğu, müəllim qiymətləndirməsini və universitet şəbəkəsini bir araya gətirən öyrənmə platforması.";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -36,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
     incomingHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const socialImage = `${origin}/og-phase5.png`;
+  const socialImage = `${origin}/og-phase6.png`;
 
   return {
     title,
@@ -54,8 +60,8 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [
         {
           url: socialImage,
-          width: 1734,
-          height: 907,
+          width: 1731,
+          height: 909,
           alt: "EduRate — Birlikdə öyrən, inamla irəli get.",
         },
       ],
@@ -69,17 +75,25 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { user: identity } = await getChatGPTAuthContext();
+  const initialUser = identity
+    ? createIdentityProfile(identity.displayName, identity.email)
+    : null;
+  const signOutHref = identity ? chatGPTSignOutPath("/") : null;
+
   return (
     <html lang="az">
       <body className={`${dmSans.variable} ${instrumentSerif.variable} antialiased`}>
-        <PlatformProvider>
-          <PlatformShell>{children}</PlatformShell>
-        </PlatformProvider>
+        <AuthProvider initialUser={initialUser} signOutHref={signOutHref}>
+          <PlatformProvider>
+            <PlatformShell>{children}</PlatformShell>
+          </PlatformProvider>
+        </AuthProvider>
       </body>
     </html>
   );

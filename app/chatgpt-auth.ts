@@ -7,6 +7,11 @@ export type ChatGPTUser = {
   fullName: string | null;
 };
 
+export type ChatGPTAuthContext = {
+  isSitesRequest: boolean;
+  user: ChatGPTUser | null;
+};
+
 const USER_EMAIL_HEADER = "oai-authenticated-user-email";
 const USER_FULL_NAME_HEADER = "oai-authenticated-user-full-name";
 const USER_FULL_NAME_ENCODING_HEADER =
@@ -15,11 +20,25 @@ const PERCENT_ENCODED_UTF8 = "percent-encoded-utf-8";
 const SIGN_IN_PATH = "/signin-with-chatgpt";
 const SIGN_OUT_PATH = "/signout-with-chatgpt";
 const CALLBACK_PATH = "/callback";
+const CHATGPT_SITES_HOST_SUFFIX = ".chatgpt.site";
 
 export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
+  return (await getChatGPTAuthContext()).user;
+}
+
+export async function getChatGPTAuthContext(): Promise<ChatGPTAuthContext> {
   const requestHeaders = await headers();
-  const email = requestHeaders.get(USER_EMAIL_HEADER);
-  if (!email) return null;
+  const isSitesRequest = isTrustedChatGPTSitesHost(requestHeaders.get("host"));
+
+  // The dispatcher identity headers are authoritative only on the platform-owned
+  // Sites hostname. In particular, never use x-forwarded-host as a trust signal:
+  // a public multi-host runtime may forward a client-controlled value.
+  if (!isSitesRequest) {
+    return { isSitesRequest: false, user: null };
+  }
+
+  const email = normalizeEmail(requestHeaders.get(USER_EMAIL_HEADER));
+  if (!email) return { isSitesRequest: true, user: null };
 
   const encodedFullName = requestHeaders.get(USER_FULL_NAME_HEADER);
   const fullName =
@@ -28,11 +47,13 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
       ? safeDecodeURIComponent(encodedFullName)
       : null;
 
-  return {
+  const user = {
     displayName: fullName ?? email,
     email,
     fullName,
   };
+
+  return { isSitesRequest: true, user };
 }
 
 export async function requireChatGPTUser(
@@ -52,6 +73,23 @@ export function chatGPTSignInPath(returnTo: string): string {
 export function chatGPTSignOutPath(returnTo = "/"): string {
   const safeReturnTo = safeRelativeReturnPath(returnTo);
   return `${SIGN_OUT_PATH}?return_to=${encodeURIComponent(safeReturnTo)}`;
+}
+
+export function isTrustedChatGPTSitesHost(host: string | null): boolean {
+  if (!host || /[\r\n]/.test(host)) return false;
+
+  try {
+    const hostname = new URL(`https://${host}`).hostname
+      .toLocaleLowerCase("en-US")
+      .replace(/\.$/, "");
+
+    return (
+      hostname !== "chatgpt.site" &&
+      hostname.endsWith(CHATGPT_SITES_HOST_SUFFIX)
+    );
+  } catch {
+    return false;
+  }
 }
 
 function safeRelativeReturnPath(value: string): string {
@@ -79,8 +117,27 @@ function isReservedAuthPath(pathname: string): boolean {
 
 function safeDecodeURIComponent(value: string): string | null {
   try {
-    return decodeURIComponent(value);
+    const decoded = decodeURIComponent(value).trim();
+    if (!decoded || decoded.length > 160 || /[\r\n\u0000]/.test(decoded)) {
+      return null;
+    }
+    return decoded;
   } catch {
     return null;
   }
+}
+
+function normalizeEmail(value: string | null): string | null {
+  if (!value) return null;
+
+  const email = value.trim().toLocaleLowerCase("en-US");
+  if (
+    email.length > 254 ||
+    /[\r\n\u0000]/.test(email) ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  ) {
+    return null;
+  }
+
+  return email;
 }

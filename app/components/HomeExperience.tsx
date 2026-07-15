@@ -66,7 +66,7 @@ export function HomeExperience() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.78, delay: 0.72, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p>EduRate tədbirləri, icmanı, müəllimləri, mentorluğu və dəstəyi bir sakit, düşünülmüş təcrübədə birləşdirir.</p>
+          <p>EduRate tədbirləri, icmanı, müəllimləri, mentorluğu və universitet şəbəkəsini bir sakit, düşünülmüş təcrübədə birləşdirir.</p>
           <Link href="/events" className="scroll-cue home-journey-link">
             <span>Öyrənmə yoluna başla</span>
             <i><ArrowUpRight size={16} /></i>
@@ -80,7 +80,7 @@ export function HomeExperience() {
           transition={{ type: "spring", delay: 0.92, stiffness: 110, damping: 14 }}
           aria-hidden="true"
         >
-          <span>05</span>
+          <span>06</span>
           <small>istiqamət</small>
         </motion.div>
       </motion.section>
@@ -104,7 +104,7 @@ export function HomeExperience() {
           {platformRoutes.map((route, index) => (
             <motion.li
               key={route.href}
-              className={index < 2 ? "is-featured" : ""}
+              className={index < 2 ? "is-featured" : index === platformRoutes.length - 1 ? "is-network" : ""}
               style={{ "--module-accent": route.accent } as CSSProperties}
               initial={reduceMotion ? false : { opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
