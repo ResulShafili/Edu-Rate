@@ -53,6 +53,15 @@ export const platformRoutes = [
     metric: "gündəlik yenilənən şəbəkə",
     accent: "#ffcf66",
   },
+  {
+    href: "/clubs",
+    label: "Klublar",
+    number: "07",
+    title: "Maraq dairəni icmaya çevir",
+    description: "Tələbə klubları, təşkilatlar və ortaq maraqlardan yaranan canlı icmalar.",
+    metric: "6 klub · 8 maraq icması",
+    accent: "#ff9e7a",
+  },
 ] as const;
 
 export type PlatformRoute = (typeof platformRoutes)[number];
