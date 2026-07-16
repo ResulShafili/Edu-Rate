@@ -40,12 +40,20 @@ export function PlatformShell({ children }: PlatformShellProps) {
     setMenuOpen(false);
   }
 
+  const accountHref = user ? "/profile" : "/auth";
+  const accountIsCurrent = isCurrentRoute(pathname, accountHref);
+
   return (
     <div className="site-shell">
       <a className="skip-link" href="#main-content">Əsas məzmuna keç</a>
 
       <nav className="nav-shell" aria-label="Əsas naviqasiya">
-        <Link href="/" className="brand" aria-label="EduRate ana səhifəsi" aria-current={pathname === "/" ? "page" : undefined}>
+        <Link
+          href="/"
+          className="brand"
+          aria-label="EduRate ana səhifəsi"
+          aria-current={pathname === "/" ? "page" : undefined}
+        >
           <span className="brand-mark"><span /></span>
           EDURATE
         </Link>
@@ -54,20 +62,40 @@ export function PlatformShell({ children }: PlatformShellProps) {
           {platformRoutes.map((route) => {
             const current = isCurrentRoute(pathname, route.href);
             return (
-              <Link key={route.href} href={route.href} className={current ? "is-active" : ""} aria-current={current ? "page" : undefined}>
+              <Link
+                key={route.href}
+                href={route.href}
+                className={current ? "is-active" : ""}
+                aria-current={current ? "page" : undefined}
+              >
                 <span>{route.label}</span>
-                {current && <motion.i layoutId="active-navigation-route" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
+                {current && (
+                  <motion.i
+                    layoutId="active-navigation-route"
+                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  />
+                )}
               </Link>
             );
           })}
         </div>
 
         <Link
-          href={user ? "/profile" : "/auth"}
-          className={`nav-cta${isCurrentRoute(pathname, user ? "/profile" : "/auth") ? " is-active" : ""}`}
-          aria-current={isCurrentRoute(pathname, user ? "/profile" : "/auth") ? "page" : undefined}
+          href={accountHref}
+          className={`nav-cta${accountIsCurrent ? " is-active" : ""}`}
+          aria-current={accountIsCurrent ? "page" : undefined}
         >
-          {user ? <><span className="nav-user-initials" aria-hidden="true">{user.initials}</span>Profilim</> : <>Daxil ol <LogIn size={15} /></>}
+          {user ? (
+            <>
+              <span className="nav-user-initials" aria-hidden="true">{user.initials}</span>
+              Profilim
+            </>
+          ) : (
+            <>
+              Daxil ol
+              <LogIn size={15} />
+            </>
+          )}
         </Link>
 
         <button
@@ -102,7 +130,8 @@ export function PlatformShell({ children }: PlatformShellProps) {
                     onNavigate={closeMenu}
                     aria-current={current ? "page" : undefined}
                   >
-                    <span>{route.number}</span>{route.label}
+                    <span>{route.number}</span>
+                    {route.label}
                   </Link>
                 );
               })}
@@ -118,7 +147,9 @@ export function PlatformShell({ children }: PlatformShellProps) {
                     onNavigate={closeMenu}
                     aria-current={current ? "page" : undefined}
                   >
-                    <span aria-hidden="true">{route.href === "/profile" ? <UserRound size={14} /> : <LogIn size={14} />}</span>
+                    <span aria-hidden="true">
+                      {route.href === "/profile" ? <UserRound size={14} /> : <LogIn size={14} />}
+                    </span>
                     {route.label}
                   </Link>
                 );

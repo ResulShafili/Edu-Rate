@@ -43,13 +43,13 @@ async function request(pathname, init = {}) {
 
 test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async () => {
   const routes = [
-    ["/", /Maraqla gəl\./],
+    ["/", /Kampus həyatını daha rahat idarə et/],
     ["/events", /Növbəti yaxşı hekayən/],
     ["/community", /İdeyaların arxasındakı/],
     ["/teachers", /Sənə uyğun müəllimi tap\./],
     ["/mentors", /Mentorunu tap\./],
     ["/support", /Bir az dəstək\./],
-    ["/feed", /Kampusdan xəbərdar ol\./],
+    ["/feed", /Kampus həyatını daha rahat idarə et/],
     ["/auth", /Yenidən xoş gəldin\./],
     ["/profile", /Profilin səni gözləyir\./],
     ["/clubs", /Öz yerini tap\./],
@@ -88,7 +88,7 @@ test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async ()
   assert.doesNotMatch(community, /Sənə uyğun müəllimi tap\./);
   assert.doesNotMatch(teachers, /Mentorunu tap\./);
   assert.doesNotMatch(mentors, /Bir az dəstək\./);
-  assert.doesNotMatch(support, /Maraqla gəl\./);
+  assert.doesNotMatch(support, /Kampus həyatını daha rahat idarə et/);
   assert.doesNotMatch(feed, /Yenidən xoş gəldin\./);
   assert.doesNotMatch(auth, /Profilin səni gözləyir\./);
   assert.doesNotMatch(profile, /Kampusdan xəbərdar ol\./);
