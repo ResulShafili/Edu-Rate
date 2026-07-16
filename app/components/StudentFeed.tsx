@@ -93,11 +93,11 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
 
   return (
     <section
-      className="feed-section relative z-[2] min-h-[80svh] rounded-t-[38px] bg-[var(--paper)] px-[clamp(18px,5.2vw,84px)] pb-[clamp(96px,10vw,150px)] pt-[clamp(108px,10vw,140px)] text-[var(--ink)] max-[480px]:rounded-t-[22px] max-[480px]:pb-[calc(88px+env(safe-area-inset-bottom))] max-[480px]:pt-[82px]"
+      className="feed-section relative z-[2] min-h-[80svh] bg-[#0b0b0c] px-[clamp(18px,5.2vw,84px)] pb-[clamp(96px,10vw,150px)] pt-[clamp(108px,10vw,140px)] text-[var(--paper)] max-[480px]:pb-[calc(88px+env(safe-area-inset-bottom))] max-[480px]:pt-[82px]"
       aria-labelledby="student-feed-title"
     >
       <motion.header
-        className="student-feed-heading mx-auto grid w-full max-w-[1320px] grid-cols-[minmax(0,1fr)_minmax(240px,0.38fr)] items-end gap-10 border-b border-black/[0.15] pb-12 max-[767px]:grid-cols-1 max-[767px]:gap-5 max-[767px]:pb-8"
+        className="student-feed-heading mx-auto grid w-full max-w-[1420px] grid-cols-[minmax(0,1fr)_minmax(240px,0.38fr)] items-end gap-10 border-b border-white/[0.12] pb-12 max-[767px]:grid-cols-1 max-[767px]:gap-5 max-[767px]:pb-8"
         initial={reducedMotion ? false : { opacity: 0.76, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={
@@ -107,7 +107,7 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
         }
       >
         <div>
-          <span className="mb-5 inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[#0d0e0d]/[0.48]">
+          <span className="mb-5 inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--lime)]">
             <Sparkles size={13} aria-hidden="true" />
             06 / Universitet həyatı
           </span>
@@ -121,12 +121,12 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
             </em>
           </h1>
         </div>
-        <p className="m-0 max-w-[340px] text-[13px] leading-[1.72] text-[#0d0e0d]/[0.56] max-[480px]:text-[12px] max-[480px]:leading-[1.62]">
+        <p className="m-0 max-w-[340px] text-[13px] leading-[1.72] text-[color:rgba(244,243,237,0.56)] max-[480px]:text-[12px] max-[480px]:leading-[1.62]">
           Rəsmi elanlar, klub yenilikləri və fakültə xəbərləri bir sakit lentdə — yalnız ehtiyacın olan qədər.
         </p>
       </motion.header>
 
-      <div className="feed-layout mx-auto mt-12 w-full max-w-[1040px] max-[480px]:mt-8">
+      <div className="feed-layout mx-auto mt-12 w-full max-w-[1320px] max-[480px]:mt-8">
         <AnnouncementsBoard
           items={announcements}
           activeFilter={activeFilter}
@@ -138,9 +138,9 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
           className="student-feed-stream mt-[clamp(72px,8vw,108px)]"
           aria-labelledby="student-feed-stream-title"
         >
-          <header className="feed-stream-heading mb-7 flex items-end justify-between gap-5 border-b border-black/[0.12] pb-5">
+          <header className="feed-stream-heading mb-7 flex items-end justify-between gap-5 border-b border-white/[0.1] pb-5">
             <div>
-              <span className="mb-2 block text-[9px] font-bold uppercase tracking-[0.14em] text-[#0d0e0d]/[0.42]">
+              <span className="mb-2 block text-[9px] font-bold uppercase tracking-[0.14em] text-[color:rgba(244,243,237,0.42)]">
                 {networkFilterLabels[activeFilter]}
               </span>
               <h2
@@ -150,7 +150,7 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
                 Tələbə lenti
               </h2>
             </div>
-            <span className="text-[9px] font-bold uppercase tracking-[0.11em] text-[#0d0e0d]/40">
+            <span className="text-[9px] font-bold uppercase tracking-[0.11em] text-[color:rgba(244,243,237,0.4)]">
               {filteredItems.length} paylaşım
             </span>
           </header>
@@ -186,7 +186,7 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
             {hasMore ? (
               <button
                 type="button"
-                className="feed-load-more inline-flex min-h-11 items-center gap-2 rounded-full border border-black/[0.14] bg-white/[0.45] px-5 text-[10px] font-semibold text-[#0d0e0d]/[0.68] transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-black/[0.24] hover:bg-white/75 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#6750d2] disabled:cursor-wait disabled:opacity-[0.55]"
+                className="feed-load-more inline-flex min-h-11 items-center gap-2 rounded-full border border-white/[0.13] bg-white/[0.045] px-5 text-[10px] font-semibold text-[color:rgba(244,243,237,0.68)] transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[var(--lime)]/40 hover:bg-[var(--lime)]/[0.07] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--lime)] disabled:cursor-wait disabled:opacity-[0.55]"
                 onClick={loadMore}
                 disabled={isAppending}
                 aria-controls="student-feed-list"
@@ -203,7 +203,7 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
                 {isAppending ? "Lent genişlənir" : "Daha çox göstər"}
               </button>
             ) : (
-              <p className="feed-end-state m-0 text-center text-[10px] leading-[1.6] tracking-[0.04em] text-[#0d0e0d]/[0.42]">
+              <p className="feed-end-state m-0 text-center text-[10px] leading-[1.6] tracking-[0.04em] text-[color:rgba(244,243,237,0.42)]">
                 Bu kateqoriyadakı bütün yenilikləri gördün.
               </p>
             )}

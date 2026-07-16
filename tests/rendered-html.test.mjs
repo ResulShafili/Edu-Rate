@@ -43,14 +43,14 @@ async function request(pathname, init = {}) {
 
 test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async () => {
   const routes = [
-    ["/", /Kampus həyatını daha rahat idarə et/],
+    ["/", /Maraqla gəl./],
     ["/events", /Növbəti yaxşı hekayən/],
     ["/community", /İdeyaların arxasındakı/],
     ["/teachers", /Sənə uyğun müəllimi tap\./],
     ["/mentors", /Mentorunu tap\./],
     ["/support", /Bir az dəstək\./],
-    ["/feed", /Kampus həyatını daha rahat idarə et/],
-    ["/auth", /Yenidən xoş gəldin\./],
+    ["/feed", /Kampusdan xəbərdar ol./],
+    ["/auth", /Yenidən[\s\S]{0,80}xoş gəldin\./],
     ["/profile", /Profilin səni gözləyir\./],
     ["/clubs", /Öz yerini tap\./],
     ["/admin", /İdarəetmə mərkəzi/],
@@ -72,6 +72,10 @@ test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async ()
       assert.match(html, /<title>[^<]*EduRate/i);
       assert.match(html, heading, `${pathname} öz başlığını göstərməlidir`);
       assert.match(html, /aria-label="Əsas naviqasiya"/);
+      assert.match(html, /aria-label="Platforma bölmələri"/);
+      assert.match(html, /aria-label="Səhifə alətləri"/);
+      assert.match(html, /class="platform-left-rail"/);
+      assert.doesNotMatch(html, /class="nav-shell"|id="global-mobile-menu"/);
       assert.match(html, /hello@edurate\.community/);
       assert.doesNotMatch(
         html,
@@ -88,7 +92,7 @@ test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async ()
   assert.doesNotMatch(community, /Sənə uyğun müəllimi tap\./);
   assert.doesNotMatch(teachers, /Mentorunu tap\./);
   assert.doesNotMatch(mentors, /Bir az dəstək\./);
-  assert.doesNotMatch(support, /Kampus həyatını daha rahat idarə et/);
+  assert.doesNotMatch(support, /Kampusdan xəbərdar ol./);
   assert.doesNotMatch(feed, /Yenidən xoş gəldin\./);
   assert.doesNotMatch(auth, /Profilin səni gözləyir\./);
   assert.doesNotMatch(profile, /Kampusdan xəbərdar ol\./);
@@ -101,9 +105,13 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
   const [
     layout,
     shell,
+    navigationRail,
+    utilityRail,
     provider,
     transition,
     navigation,
+    shellData,
+    homeExperience,
     homePage,
     eventsPage,
     communityPage,
@@ -119,9 +127,13 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
   ] = await Promise.all([
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/PlatformShell.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/PlatformNavigationRail.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/PlatformUtilityRail.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/PlatformProvider.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/RouteTransition.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/data/navigation.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/data/platform-shell.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/HomeExperience.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/events/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/community/page.tsx", import.meta.url), "utf8"),
@@ -142,11 +154,35 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
   assert.match(layout, /<html lang="az">/);
   assert.match(shell, /from "next\/link"/);
   assert.match(shell, /usePathname/);
-  assert.match(shell, /aria-current=\{current \? "page" : undefined\}/);
-  assert.match(shell, /aria-controls="global-mobile-menu"/);
-  assert.match(shell, /onClick=\{closeMenu\}/);
-  assert.match(shell, /onNavigate=\{closeMenu\}/);
+  assert.match(shell, /aria-controls="platform-mobile-navigation"/);
+  assert.match(shell, /aria-controls="platform-mobile-utility-sheet"/);
+  assert.match(shell, /<PlatformNavigationRail/);
+  assert.match(shell, /mobileOpen=\{navigationOpen\}/);
+  assert.match(shell, /onMobileClose=\{closeNavigation\}/);
+  assert.match(shell, /<PlatformUtilityRail/);
+  assert.match(shell, /mobileOpen=\{toolsOpen\}/);
+  assert.match(shell, /onMobileClose=\{closeTools\}/);
   assert.match(shell, /<RouteTransition>\{children\}<\/RouteTransition>/);
+  assert.match(shell, /document\.body\.style\.overflow = "hidden"/);
+  assert.doesNotMatch(shell, /global-mobile-menu|nav-shell|platform-topbar/);
+  assert.match(navigationRail, /isPlatformRouteCurrent/);
+  assert.match(navigationRail, /layoutId="platform-left-rail-active"/);
+  assert.match(navigationRail, /<aside className="platform-left-rail" aria-label="Əsas naviqasiya">/);
+  assert.match(navigationRail, /aria-label="Platforma bölmələri"/);
+  assert.match(navigationRail, /id="platform-mobile-navigation"/);
+  assert.match(navigationRail, /role="dialog"/);
+  assert.match(navigationRail, /aria-modal="true"/);
+  assert.match(navigationRail, /onNavigate=\{onMobileClose\}/);
+  assert.match(utilityRail, /role="search"/);
+  assert.match(utilityRail, /role="tablist"/);
+  assert.match(utilityRail, /aria-modal="true"/);
+  assert.match(utilityRail, /router\.push\(firstSearchResult\.href\)/);
+  assert.match(utilityRail, /events\.slice\(0, 3\)/);
+  assert.match(utilityRail, /announcements\.slice\(0, 3\)/);
+  assert.match(shellData, /platformSearchItems/);
+  assert.match(shellData, /getPlatformRouteContext/);
+  assert.doesNotMatch(homeExperience, /dashboard-(?:foundation|left-rail|right-rail)/);
+  assert.match(feedPage, /<StudentFeed announcements=\{announcements\} items=\{studentFeedItems\} \/>/);
   assert.match(provider, /createContext/);
   assert.match(provider, /<ChatDock/);
   assert.match(provider, /openConversation/);

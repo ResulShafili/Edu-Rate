@@ -69,23 +69,23 @@ export function AnnouncementsBoard({
     >
       <header className="announcements-board-heading mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <span className="mb-3 inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[#0d0e0d]/[0.46]">
+          <span className="mb-3 inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--lime)]">
             <Megaphone size={13} aria-hidden="true" />
             Universitet şəbəkəsi
           </span>
           <h2
             id="announcements-title"
-            className="text-[clamp(31px,5vw,46px)] font-medium leading-none tracking-[-0.055em] text-[#0d0e0d]"
+            className="text-[clamp(31px,5vw,46px)] font-medium leading-none tracking-[-0.055em] text-[var(--paper)]"
           >
             Vacib elanlar
           </h2>
         </div>
-        <p className="max-w-[330px] text-[11px] leading-[1.65] text-[#0d0e0d]/[0.52] sm:text-right">
+        <p className="max-w-[330px] text-[11px] leading-[1.65] text-[color:rgba(244,243,237,0.52)] sm:text-right">
           Kampusdakı əsas yenilikləri bir baxışda gör, sonra lentdə sənə uyğun mövzulara davam et.
         </p>
       </header>
 
-      <div className="announcement-filter-bar sticky top-[calc(80px+env(safe-area-inset-top))] z-30 mb-6 flex items-center gap-3 rounded-[18px] border border-white/50 bg-[#f3f1e9]/[0.88] p-2 shadow-[0_14px_42px_rgba(13,14,13,0.10)] backdrop-blur-xl md:top-[106px]">
+      <div className="announcement-filter-bar sticky top-[calc(16px+env(safe-area-inset-top))] z-30 mb-6 flex items-center gap-3 rounded-[18px] border border-white/10 bg-[#141415]/[0.9] p-2 shadow-[0_18px_55px_rgba(0,0,0,0.32)] backdrop-blur-xl">
         <span
           className="hidden h-10 w-10 shrink-0 place-items-center rounded-full bg-[#0d0e0d] text-[#f3f1e9] sm:grid"
           aria-hidden="true"
@@ -104,14 +104,14 @@ export function AnnouncementsBoard({
               <button
                 key={filter}
                 type="button"
-                className={`relative min-h-11 shrink-0 cursor-pointer rounded-full px-4 text-[10px] font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6750d2] ${active ? "text-[#f3f1e9]" : "text-[#0d0e0d]/[0.58] hover:text-[#0d0e0d]"}`}
+                className={`relative min-h-11 shrink-0 cursor-pointer rounded-full px-4 text-[10px] font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--lime)] ${active ? "text-[#0b0b0c]" : "text-[color:rgba(244,243,237,0.56)] hover:text-[var(--paper)]"}`}
                 onClick={() => onFilterChange(filter)}
                 aria-pressed={active}
                 aria-controls="announcements-list student-feed-list"
               >
                 {active && (
                   <motion.span
-                    className="absolute inset-0 rounded-full bg-[#0d0e0d]"
+                    className="absolute inset-0 rounded-full bg-[var(--lime)]"
                     layoutId="active-network-filter"
                     transition={
                       reducedMotion
@@ -129,7 +129,7 @@ export function AnnouncementsBoard({
           })}
         </div>
 
-        <span className="hidden shrink-0 pr-2 text-[9px] font-bold uppercase tracking-[0.1em] text-[#0d0e0d]/[0.42] md:block">
+        <span className="hidden shrink-0 pr-2 text-[9px] font-bold uppercase tracking-[0.1em] text-[color:rgba(244,243,237,0.4)] md:block">
           {visibleAnnouncements.length} elan
         </span>
       </div>
@@ -151,7 +151,7 @@ export function AnnouncementsBoard({
               <motion.article
                 key={item.id}
                 layout={reducedMotion ? false : "position"}
-                className="announcement-card relative min-h-[260px] snap-start overflow-hidden rounded-[20px] border border-black/10 bg-white/[0.48] p-5 pb-20 shadow-[0_16px_50px_rgba(13,14,13,0.045)]"
+                className="announcement-card relative min-h-[260px] snap-start overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.035] p-5 pb-20 shadow-[0_22px_65px_rgba(0,0,0,0.22)] backdrop-blur-xl"
                 initial={reducedMotion ? false : { opacity: 0.64, y: 16, scale: 0.99 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={reducedMotion ? undefined : { opacity: 0, y: -10, scale: 0.985 }}
@@ -166,6 +166,7 @@ export function AnnouncementsBoard({
                         delay: Math.min(index, 2) * 0.045,
                       }
                 }
+                whileHover={reducedMotion ? undefined : { y: -5, scale: 1.012 }}
                 aria-labelledby={titleId}
               >
                 <span
@@ -182,7 +183,7 @@ export function AnnouncementsBoard({
                   </span>
                   <time
                     dateTime={item.publishedAt}
-                    className="text-[9px] tracking-[0.04em] text-[#0d0e0d]/[0.38]"
+                    className="text-[9px] tracking-[0.04em] text-[color:rgba(244,243,237,0.38)]"
                   >
                     {item.timeLabel}
                   </time>
@@ -190,22 +191,22 @@ export function AnnouncementsBoard({
 
                 <h3
                   id={titleId}
-                  className="mt-6 text-[22px] font-medium leading-[1.04] tracking-[-0.045em] text-[#0d0e0d]"
+                  className="mt-6 text-[22px] font-medium leading-[1.04] tracking-[-0.045em] text-[var(--paper)]"
                 >
                   {item.title}
                 </h3>
-                <p className="mt-3 text-[11px] leading-[1.65] text-[#0d0e0d]/[0.54]">
+                <p className="mt-3 text-[11px] leading-[1.65] text-[color:rgba(244,243,237,0.54)]">
                   {item.summary}
                 </p>
 
-                <footer className="absolute inset-x-5 bottom-5 flex items-center gap-2 border-t border-black/[0.08] pt-3">
+                <footer className="absolute inset-x-5 bottom-5 flex items-center gap-2 border-t border-white/[0.08] pt-3">
                   <span
                     className={`grid h-7 w-7 place-items-center rounded-full text-[8px] font-bold text-[#0d0e0d] ${tone.initials}`}
                     aria-hidden="true"
                   >
                     {item.sourceInitials}
                   </span>
-                  <span className="truncate text-[9px] font-semibold text-[#0d0e0d]/[0.52]">
+                  <span className="truncate text-[9px] font-semibold text-[color:rgba(244,243,237,0.52)]">
                     {item.source}
                   </span>
                 </footer>

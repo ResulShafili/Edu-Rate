@@ -148,7 +148,9 @@ export function AuthExperience({ chatGPTSignInHref }: AuthExperienceProps) {
     }
   }
 
-  const panelHeading = mode === "login" ? "Yenidən xoş gəldin." : "EduRate icmasına qoşul.";
+  const panelHeading = mode === "login"
+    ? <>Yenidən <em>xoş gəldin.</em></>
+    : <>EduRate icmasına <em>qoşul.</em></>;
   const panelDescription = mode === "login"
     ? "Dərslər, elanlar və öyrənmə çevrən bir addım uzaqdadır."
     : "Universitet həyatını daha əlaqəli və məqsədli etmək üçün profilini yarat.";

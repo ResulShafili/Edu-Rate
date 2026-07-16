@@ -81,7 +81,7 @@ const FeedCardBase = forwardRef<HTMLElement, FeedCardProps>(function FeedCard(
     <motion.article
       ref={ref}
       layout={reducedMotion ? false : "position"}
-      className={`feed-card ${tone.accent} relative overflow-hidden rounded-[22px] border border-black/10 bg-white/60 p-5 shadow-[0_18px_55px_rgba(13,14,13,0.055)] before:absolute before:inset-y-0 before:left-0 before:w-[3px] sm:p-6`}
+      className={`feed-card ${tone.accent} relative overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.035] p-5 shadow-[0_22px_65px_rgba(0,0,0,0.24)] backdrop-blur-xl before:absolute before:inset-y-0 before:left-0 before:w-[3px] sm:p-6`}
       initial={reducedMotion ? false : { opacity: 0.62, y: 20, scale: 0.992 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={reducedMotion ? undefined : { opacity: 0, y: -12, scale: 0.986 }}
@@ -96,6 +96,7 @@ const FeedCardBase = forwardRef<HTMLElement, FeedCardProps>(function FeedCard(
               delay: Math.min((position - 1) % 5, 4) * 0.04,
             }
       }
+      whileHover={reducedMotion ? undefined : { y: -5, scale: 1.01 }}
       aria-labelledby={titleId}
       aria-posinset={position}
       aria-setsize={total}
@@ -110,11 +111,11 @@ const FeedCardBase = forwardRef<HTMLElement, FeedCardProps>(function FeedCard(
             {item.sourceInitials}
           </span>
           <div className="min-w-0">
-            <p className="truncate text-[12px] font-semibold text-[#0d0e0d]">
+            <p className="truncate text-[12px] font-semibold text-[var(--paper)]">
               {item.source}
             </p>
             <time
-              className="mt-1 block text-[10px] tracking-[0.04em] text-[#0d0e0d]/[0.45]"
+              className="mt-1 block text-[10px] tracking-[0.04em] text-[color:rgba(244,243,237,0.45)]"
               dateTime={item.publishedAt}
             >
               {item.timeLabel}
@@ -133,20 +134,20 @@ const FeedCardBase = forwardRef<HTMLElement, FeedCardProps>(function FeedCard(
       <div className="feed-card-body mt-6">
         <h3
           id={titleId}
-          className="max-w-[640px] text-[clamp(23px,4vw,31px)] font-medium leading-[1.04] tracking-[-0.045em] text-[#0d0e0d]"
+          className="max-w-[780px] text-[clamp(23px,4vw,34px)] font-medium leading-[1.04] tracking-[-0.045em] text-[var(--paper)]"
         >
           {item.title}
         </h3>
-        <p className="mt-3 max-w-[660px] text-[12px] leading-[1.7] text-[#0d0e0d]/[0.58] sm:text-[13px]">
+        <p className="mt-3 max-w-[780px] text-[12px] leading-[1.7] text-[color:rgba(244,243,237,0.56)] sm:text-[13px]">
           {item.summary}
         </p>
       </div>
 
-      <footer className="feed-card-footer mt-6 flex flex-wrap items-center gap-2 border-t border-black/[0.08] pt-4">
+      <footer className="feed-card-footer mt-6 flex flex-wrap items-center gap-2 border-t border-white/[0.08] pt-4">
         {item.tags.map((tag) => (
           <span
             key={tag}
-            className="rounded-full border border-black/10 px-3 py-1.5 text-[9px] font-semibold tracking-[0.05em] text-[#0d0e0d]/[0.54]"
+            className="rounded-full border border-white/10 px-3 py-1.5 text-[9px] font-semibold tracking-[0.05em] text-[color:rgba(244,243,237,0.52)]"
           >
             {tag}
           </span>

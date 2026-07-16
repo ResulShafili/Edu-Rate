@@ -43,7 +43,6 @@ import {
   type AdminRecordSheetMode,
   type AdminRecordSubmission,
 } from "./AdminRecordFormSheet";
-import { AdminSidebar, type AdminSection } from "./AdminSidebar";
 import { AdminSkeleton } from "./AdminSkeleton";
 
 const metricIcons: Record<AdminMetric["id"], LucideIcon> = {
@@ -104,6 +103,7 @@ function MetricCard({ index, metric }: MetricCardProps) {
       className={`admin-metric-card is-${metric.id}`}
       initial={reducedMotion ? false : { opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={reducedMotion ? undefined : { y: -5, scale: 1.012 }}
       transition={{
         duration: reducedMotion ? 0 : 0.46,
         delay: reducedMotion ? 0 : 0.06 + index * 0.055,
@@ -155,8 +155,6 @@ function getInitials(name: string): string {
 
 export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps) {
   const reducedMotion = useReducedMotion();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeSection, setActiveSection] = useState<AdminSection>("overview");
   const [activeTable, setActiveTable] = useState<AdminTableKind>("users");
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -190,16 +188,10 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
     return () => window.clearTimeout(timeout);
   }, [feedback]);
 
-  function selectSection(section: AdminSection) {
-    setActiveSection(section);
-    if (section !== "overview") setActiveTable(section);
-  }
-
   function selectTable(kind: AdminTableKind) {
     setEditor(null);
     setFormError(null);
     setActiveTable(kind);
-    setActiveSection(kind);
   }
 
   function openEditor(mode: AdminRecordSheetMode, id?: string) {
@@ -260,16 +252,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
   }
 
   return (
-    <div
-      className={`admin-dashboard${sidebarCollapsed ? " has-collapsed-sidebar" : ""}`}
-    >
-      <AdminSidebar
-        activeSection={activeSection}
-        collapsed={sidebarCollapsed}
-        onSelect={selectSection}
-        onToggle={() => setSidebarCollapsed((current) => !current)}
-      />
-
+    <div className="admin-dashboard">
       <div className="admin-main">
         <motion.header
           className="admin-header"
@@ -282,7 +265,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
               <ShieldCheck size={14} strokeWidth={1.8} aria-hidden="true" />
               08 / İdarəetmə mərkəzi
             </span>
-            <h1>Sakit nəzarət. Aydın qərarlar.</h1>
+            <h1>Sakit nəzarət. <em>Aydın qərarlar.</em></h1>
           </div>
 
           <div className="admin-header__utilities">

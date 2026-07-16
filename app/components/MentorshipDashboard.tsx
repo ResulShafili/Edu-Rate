@@ -69,6 +69,7 @@ export function MentorshipDashboard() {
               } as CSSProperties}
               initial={reduceMotion ? false : { opacity: 0, y: 32, scale: 0.98 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              whileHover={reduceMotion || expanded ? undefined : { y: -5, scale: 1.012 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{
                 layout: { duration: reduceMotion ? 0 : 0.52, ease },

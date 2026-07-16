@@ -255,6 +255,7 @@ export function UserProfileDashboard() {
           className="profile-info-card profile-about-card"
           initial={reduceMotion ? false : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
+          whileHover={reduceMotion ? undefined : { y: -5, scale: 1.008 }}
           viewport={viewportOnce}
           transition={enterTransition}
         >
@@ -275,6 +276,7 @@ export function UserProfileDashboard() {
           className="profile-info-card profile-progress-card"
           initial={reduceMotion ? false : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
+          whileHover={reduceMotion ? undefined : { y: -5, scale: 1.008 }}
           viewport={viewportOnce}
           transition={{ ...enterTransition, delay: reduceMotion ? 0 : 0.06 }}
         >
@@ -305,6 +307,7 @@ export function UserProfileDashboard() {
           className="profile-info-card profile-interests-card"
           initial={reduceMotion ? false : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
+          whileHover={reduceMotion ? undefined : { y: -5, scale: 1.008 }}
           viewport={viewportOnce}
           transition={enterTransition}
         >
@@ -326,6 +329,7 @@ export function UserProfileDashboard() {
           className="profile-info-card profile-activity-card"
           initial={reduceMotion ? false : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
+          whileHover={reduceMotion ? undefined : { y: -5, scale: 1.008 }}
           viewport={viewportOnce}
           transition={{ ...enterTransition, delay: reduceMotion ? 0 : 0.06 }}
         >

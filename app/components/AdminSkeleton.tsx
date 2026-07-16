@@ -115,14 +115,10 @@ export function AdminSkeleton({
       <span className="sr-only" role="status">
         Administrator paneli hazırlanır.
       </span>
-      <aside className="admin-sidebar admin-skeleton__sidebar" aria-hidden="true">
-        <div className="admin-skeleton admin-skeleton--brand" />
-        <div className="admin-skeleton admin-skeleton--identity" />
-        <div className="admin-skeleton admin-skeleton--nav" />
-        <div className="admin-skeleton admin-skeleton--nav" />
-        <div className="admin-skeleton admin-skeleton--nav" />
-      </aside>
-      <div className="admin-main">
+      <div
+        className="admin-main admin-skeleton__main"
+        style={{ gridColumn: "1 / -1" }}
+      >
         <header className="admin-header admin-skeleton__header" aria-hidden="true">
           <div>
             <span className="admin-skeleton admin-skeleton--eyebrow" />

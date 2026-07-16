@@ -74,6 +74,7 @@ export function TeacherCard({
               backgroundPosition: `${teacher.imagePosition} 54%`,
             }}
           />
+          <i className="teacher-avatar-orbit" />
           <span className="teacher-index">{String(index + 1).padStart(2, "0")}</span>
         </span>
 
