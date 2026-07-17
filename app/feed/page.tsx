@@ -3,9 +3,9 @@ import { StudentFeed } from "../components/StudentFeed";
 import { announcements, studentFeedItems } from "../data/network";
 
 export const metadata: Metadata = {
-  title: "Tələbə lenti — EduRate",
+  title: "Elanlar — EduRate",
   description:
-    "Rəsmi elanları, klub yeniliklərini və fakültə xəbərlərini sakit, aydın bir tələbə lentində izlə.",
+    "Rəsmi elanları, klub yeniliklərini və fakültə xəbərlərini Elanlar bölməsində izlə.",
 };
 
 export default function FeedPage() {

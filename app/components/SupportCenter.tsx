@@ -81,9 +81,9 @@ export function SupportCenter() {
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.7, ease }}
       >
-        <span className="support-kicker">05 / Ehtiyacın olanda yanındayıq</span>
+        <span className="support-kicker">05 / Dəstək</span>
         <div>
-          <h1 id="support-title">Bir az dəstək.<br /><em>Elə vaxtında.</em></h1>
+          <h1 id="support-title" className="module-page-title">Dəstək</h1>
           <p>Əvvəlcə aydın cavab. Lazım olanda isə qayğıkeş bir insan.</p>
         </div>
       </motion.div>

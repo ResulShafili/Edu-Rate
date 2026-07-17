@@ -85,14 +85,14 @@ const routeContexts: Record<string, PlatformRouteContext> = {
     ],
   },
   "/feed": {
-    label: "Lent",
+    label: "Elanlar",
     number: "06",
-    title: "Lent alətləri",
+    title: "Elanlar alətləri",
     description: "Rəsmi elanları, klub yeniliklərini və fakültə xəbərlərini izlə.",
     metric: "Gündəlik yenilənən şəbəkə",
     shortcuts: [
       { href: "/feed#announcements-title", label: "Vacib elanlar", description: "Ən yeni rəsmi məlumatlara bax." },
-      { href: "/feed#student-feed-stream-title", label: "Tələbə lenti", description: "Paylaşım və xəbərlərə davam et." },
+      { href: "/feed#student-feed-stream-title", label: "Tələbə yenilikləri", description: "Paylaşım və xəbərlərə davam et." },
     ],
   },
   "/clubs": {

@@ -37,10 +37,7 @@ export function ClubsExperience({ clubs, communities }: ClubsExperienceProps) {
             <Sparkles size={13} strokeWidth={1.8} aria-hidden="true" />
             07 / Tələbə birlikləri
           </span>
-          <h1 id="clubs-directory-title">
-            Öz yerini tap.
-            <em>Birlikdə yarat.</em>
-          </h1>
+          <h1 id="clubs-directory-title" className="module-page-title">Klublar</h1>
         </motion.div>
 
         <motion.p
@@ -69,7 +66,7 @@ export function ClubsExperience({ clubs, communities }: ClubsExperienceProps) {
         <header className="clubs-section-heading">
           <div>
             <span>Klublar və təşkilatlar</span>
-            <h2 id="clubs-list-title">İştirak etməyin yeni yolu.</h2>
+            <h2 id="clubs-list-title">Klub kataloqu</h2>
           </div>
           <p>
             Hər kartın arxasında açıq görüşlər, şəffaf proqram və səni gözləyən
@@ -92,12 +89,9 @@ export function ClubsExperience({ clubs, communities }: ClubsExperienceProps) {
           <div>
             <span className="communities-eyebrow">
               <Compass size={13} strokeWidth={1.8} aria-hidden="true" />
-              Maraq icmaları
+              Maraq qrupları
             </span>
-            <h2 id="communities-title">
-              Marağını paylaş.
-              <em>Ritmini seç.</em>
-            </h2>
+            <h2 id="communities-title">Maraq icmaları</h2>
           </div>
           <p>
             Rəsmi üzvlük olmadan söhbətə qoşul, mövzunu izlə və öz tempində

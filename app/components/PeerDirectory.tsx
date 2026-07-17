@@ -73,8 +73,8 @@ export function PeerDirectory({ onMessage }: PeerDirectoryProps) {
         transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
       >
         <div>
-          <span className="section-kicker section-kicker-dark">02 / Sənin çevrən</span>
-          <h1 id="peers-title">İdeyaların arxasındakı<br /><em>insanlarla tanış ol.</em></h1>
+          <span className="section-kicker section-kicker-dark">02 / İcma</span>
+          <h1 id="peers-title" className="module-page-title">İcma</h1>
         </div>
         <div className="peers-heading-aside">
           <p>Ortaq maraqlara əsaslanan səmimi tanışlıqlar: öyrənənlər, yaradıcılar və mentorlar bir arada.</p>

@@ -209,7 +209,7 @@ export function TeacherEvaluation() {
       >
         <div>
           <span className="teachers-kicker">03 / Müəllim seçimi</span>
-          <h1 id="teachers-title">Sənə uyğun müəllimi tap.<br /><em>Öyrənmə yolun dəyişsin.</em></h1>
+          <h1 id="teachers-title" className="module-page-title">Müəllimlər</h1>
         </div>
         <div className="teachers-heading-aside">
           <p>Təcrübəsi, yanaşması və uyğun vaxtları sənə uyğun olan müəllimlə inamla irəlilə.</p>

@@ -10,7 +10,7 @@ import {
   Home,
   LayoutDashboard,
   LogIn,
-  MessageCircleMore,
+  Megaphone,
   ShieldCheck,
   UserRound,
   UsersRound,
@@ -36,7 +36,7 @@ const routeIcons: Record<string, LucideIcon> = {
   "/teachers": GraduationCap,
   "/mentors": HeartHandshake,
   "/support": CircleHelp,
-  "/feed": MessageCircleMore,
+  "/feed": Megaphone,
   "/clubs": Compass,
   "/admin": ShieldCheck,
 };

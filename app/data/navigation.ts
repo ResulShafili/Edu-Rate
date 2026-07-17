@@ -46,10 +46,10 @@ export const platformRoutes = [
   },
   {
     href: "/feed",
-    label: "Lent",
+    label: "Elanlar",
     number: "06",
     title: "Universitetin nəbzini izlə",
-    description: "Tələbə paylaşımları, vacib elanlar və kampusdakı yeniliklər bir sakit lentdə.",
+    description: "Tələbə paylaşımlarını, vacib elanları və kampus yeniliklərini bir yerdə izlə.",
     metric: "gündəlik yenilənən şəbəkə",
     accent: "#ffcf66",
   },

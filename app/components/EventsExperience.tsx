@@ -31,8 +31,8 @@ export function EventsExperience() {
           transition={{ duration: 0.68, ease: [0.22, 1, 0.36, 1] }}
         >
           <div>
-            <span className="section-kicker">01 / Təqvim</span>
-            <h1 id="events-title">Növbəti yaxşı hekayən<br /><em>burada başlasın.</em></h1>
+            <span className="section-kicker">01 / Tədbirlər</span>
+            <h1 id="events-title" className="module-page-title">Tədbirlər</h1>
           </div>
           <p>Kiçik qruplar, böyük ideyalar və tanış olduğuna sevinəcəyin insanlar.</p>
         </motion.div>

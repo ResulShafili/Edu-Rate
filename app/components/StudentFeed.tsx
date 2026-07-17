@@ -113,16 +113,13 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
           </span>
           <h1
             id="student-feed-title"
-            className="m-0 text-[clamp(46px,6.5vw,96px)] font-medium leading-[0.91] tracking-[-0.068em] max-[480px]:text-[clamp(38px,11.4vw,48px)] max-[480px]:leading-[0.94]"
+            className="module-page-title m-0 text-[clamp(46px,6.5vw,96px)] font-medium leading-[0.91] tracking-[-0.068em] max-[480px]:text-[clamp(38px,11.4vw,48px)] max-[480px]:leading-[0.94]"
           >
-            Kampusdan xəbərdar ol.<br />
-            <em className="[font-family:var(--font-instrument-serif),Georgia,serif] font-normal tracking-[-0.045em] text-[var(--violet)]">
-              Öz axarınla.
-            </em>
+            Elanlar
           </h1>
         </div>
         <p className="m-0 max-w-[340px] text-[13px] leading-[1.72] text-[color:rgba(244,243,237,0.56)] max-[480px]:text-[12px] max-[480px]:leading-[1.62]">
-          Rəsmi elanlar, klub yenilikləri və fakültə xəbərləri bir sakit lentdə — yalnız ehtiyacın olan qədər.
+          Rəsmi elanlar, klub yenilikləri və fakültə xəbərləri bir yerdə — yalnız ehtiyacın olan qədər.
         </p>
       </motion.header>
 
@@ -147,7 +144,7 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
                 id="student-feed-stream-title"
                 className="text-[clamp(29px,4vw,42px)] font-medium leading-none tracking-[-0.05em]"
               >
-                Tələbə lenti
+                Tələbə yenilikləri
               </h2>
             </div>
             <span className="text-[9px] font-bold uppercase tracking-[0.11em] text-[color:rgba(244,243,237,0.4)]">
@@ -156,14 +153,14 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
           </header>
 
           <p className="sr-only" role="status" aria-live="polite">
-            {networkFilterLabels[activeFilter]} kateqoriyasında {filteredItems.length} lent elementi göstərilir.
+            {networkFilterLabels[activeFilter]} kateqoriyasında {filteredItems.length} yenilik göstərilir.
           </p>
 
           <motion.div
             id="student-feed-list"
             className="feed-list grid gap-3 sm:gap-4"
             role="feed"
-            aria-label={`${networkFilterLabels[activeFilter]} tələbə lenti`}
+            aria-label={`${networkFilterLabels[activeFilter]} tələbə yenilikləri`}
             aria-busy={isAppending}
           >
             <AnimatePresence initial={false} mode="popLayout">
@@ -200,7 +197,7 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
                 ) : (
                   <ArrowDown size={14} aria-hidden="true" />
                 )}
-                {isAppending ? "Lent genişlənir" : "Daha çox göstər"}
+                {isAppending ? "Yeniliklər yüklənir" : "Daha çox göstər"}
               </button>
             ) : (
               <p className="feed-end-state m-0 text-center text-[10px] leading-[1.6] tracking-[0.04em] text-[color:rgba(244,243,237,0.42)]">

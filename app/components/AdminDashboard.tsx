@@ -265,7 +265,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
               <ShieldCheck size={14} strokeWidth={1.8} aria-hidden="true" />
               08 / İdarəetmə mərkəzi
             </span>
-            <h1>Sakit nəzarət. <em>Aydın qərarlar.</em></h1>
+            <h1 className="module-page-title">İdarəetmə</h1>
           </div>
 
           <div className="admin-header__utilities">

@@ -36,11 +36,8 @@ export function MentorshipDashboard() {
         transition={{ duration: 0.75, ease }}
       >
         <div>
-          <span className="mentor-kicker">04 / İnkişaf yolunda bələdçi</span>
-          <h1 id="mentor-title">
-            Mentorunu tap.<br />
-            Növbəti addımı <em>özün seç.</em>
-          </h1>
+          <span className="mentor-kicker">04 / Mentorluq</span>
+          <h1 id="mentor-title" className="module-page-title">Mentorlar</h1>
         </div>
         <div className="mentor-heading-aside">
           <span><Sparkles size={13} /> Diqqətlə uyğunlaşdırılır</span>

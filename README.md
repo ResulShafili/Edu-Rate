@@ -17,7 +17,7 @@ istifadəçini yormadan növbəti addıma aparır.
 | `/support` | Dəstək | FAQ və tamamlanma göstəricili dəstək sorğusu |
 | `/auth` | Giriş və qeydiyyat | Yumşaq keçidli autentifikasiya təcrübəsi |
 | `/profile` | Profil | Tələbə məlumatları və fəaliyyət xülasəsi |
-| `/feed` | Tələbə lenti | Xəbərlər, bildirişlər və kateqoriyalı elanlar |
+| `/feed` | Elanlar | Xəbərlər, bildirişlər və kateqoriyalı elanlar |
 | `/clubs` | Klublar | Tələbə təşkilatları və klub profilləri |
 | `/admin` | İdarəetmə | Analitika, istifadəçi, klub və tədbir nəzarəti |
 

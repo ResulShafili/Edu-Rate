@@ -81,7 +81,7 @@ export function AnnouncementsBoard({
           </h2>
         </div>
         <p className="max-w-[330px] text-[11px] leading-[1.65] text-[color:rgba(244,243,237,0.52)] sm:text-right">
-          Kampusdakı əsas yenilikləri bir baxışda gör, sonra lentdə sənə uyğun mövzulara davam et.
+          Kampusdakı əsas yenilikləri bir baxışda gör, sonra sənə uyğun digər mövzulara keç.
         </p>
       </header>
 
@@ -96,7 +96,7 @@ export function AnnouncementsBoard({
         <div
           className="announcement-filters flex min-w-0 flex-1 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="group"
-          aria-label="Elanları və tələbə lentini kateqoriyaya görə süzgəcdən keçir"
+          aria-label="Elanları və tələbə yeniliklərini kateqoriyaya görə süzgəcdən keçir"
         >
           {networkFilters.map((filter) => {
             const active = activeFilter === filter;

@@ -44,16 +44,16 @@ async function request(pathname, init = {}) {
 test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async () => {
   const routes = [
     ["/", /Maraqla gəl./],
-    ["/events", /Növbəti yaxşı hekayən/],
-    ["/community", /İdeyaların arxasındakı/],
-    ["/teachers", /Sənə uyğun müəllimi tap\./],
-    ["/mentors", /Mentorunu tap\./],
-    ["/support", /Bir az dəstək\./],
-    ["/feed", /Kampusdan xəbərdar ol./],
+    ["/events", /<h1[^>]*module-page-title[^>]*>Tədbirlər<\/h1>/],
+    ["/community", /<h1[^>]*module-page-title[^>]*>İcma<\/h1>/],
+    ["/teachers", /<h1[^>]*module-page-title[^>]*>Müəllimlər<\/h1>/],
+    ["/mentors", /<h1[^>]*module-page-title[^>]*>Mentorlar<\/h1>/],
+    ["/support", /<h1[^>]*module-page-title[^>]*>Dəstək<\/h1>/],
+    ["/feed", /<h1[^>]*module-page-title[^>]*>Elanlar<\/h1>/],
     ["/auth", /Yenidən[\s\S]{0,80}xoş gəldin\./],
     ["/profile", /Profilin səni gözləyir\./],
-    ["/clubs", /Öz yerini tap\./],
-    ["/admin", /İdarəetmə mərkəzi/],
+    ["/clubs", /<h1[^>]*module-page-title[^>]*>Klublar<\/h1>/],
+    ["/admin", /<h1[^>]*module-page-title[^>]*>İdarəetmə<\/h1>/],
     ["/clubs/innovasiya-robototexnika", /İnnovasiya və Robototexnika Klubu/],
   ];
 
@@ -354,7 +354,7 @@ test("hörmətli rəy qaydalarını həm brauzerdə, həm də API sərhədində 
   assert.equal(typeof rejected.suggestion, "string");
 });
 
-test("universitet şəbəkəsinin auth, profil, lent və elan müqavilələrini qoruyur", async () => {
+test("universitet şəbəkəsinin auth, profil və elan müqavilələrini qoruyur", async () => {
   const [
     auth,
     authProvider,
