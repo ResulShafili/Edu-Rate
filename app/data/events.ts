@@ -61,7 +61,7 @@ export const events: Event[] = [
       "Dizayna maraq göstərənlər üçün hiss olunan, canlı bir görüş. Material təcrübələrini, məkan interfeyslərini və daha düşünülmüş bir sabah yaradan insanlarla söhbətləri bir araya gətirən sərgiyə qoşul.",
     accent: "#c8ff4d",
     glow: "rgba(200, 255, 77, 0.28)",
-    speakers: ["Mina Park", "Noah El-Amin", "Eva Krüger"],
+    speakers: ["Ləman Həsənli", "Nihad Əlizadə", "Aytac Hüseynova"],
     capacity: "180 iştirakçı",
   },
   {
@@ -78,7 +78,7 @@ export const events: Event[] = [
       "Səs-küylü trendlərdən kənara çıxan bu yaxın görüş ağıllı alətlərlə münasibətimiz barədə daha düzgün suallar verir. Praktik düşüncə təcrübələrinə, canlı müzakirəyə və açıqfikirli insanlarla dolu bir məkana hazır ol.",
     accent: "#b9a7ff",
     glow: "rgba(185, 167, 255, 0.3)",
-    speakers: ["Iris Bell", "Kaito Mori", "Amara Osei"],
+    speakers: ["İradə Babayeva", "Kamran Məmmədli", "Aysu Quliyeva"],
     capacity: "120 iştirakçı",
   },
   {
@@ -95,7 +95,7 @@ export const events: Event[] = [
       "Muzey qapılarını bağlayanda “İşıqdan sonra” başlayır. Beş qitədən olan sənətçilərin yaratdığı interaktiv instalyasiyalar, canlı performanslar və dəyişən səs mənzərələri arasında sərbəst dolaş.",
     accent: "#ff9e7a",
     glow: "rgba(255, 158, 122, 0.3)",
-    speakers: ["Sora Studio", "León Vale", "Aïcha Rae"],
+    speakers: ["Xəzər Studiyası", "Elvin Vəliyev", "Aynur Rəhimli"],
     capacity: "350 iştirakçı",
   },
   {
@@ -112,7 +112,7 @@ export const events: Event[] = [
       "Daim məşğul düşüncələr üçün yarımgünlük fasilə. Aralıq dənizinə baxan, günəşli bir məkanda yönləndirilən hərəkət, nəfəs məşqləri, faydalı qidalar və şüurlu sakitlik bir araya gəlir.",
     accent: "#7de5d1",
     glow: "rgba(125, 229, 209, 0.28)",
-    speakers: ["Nia Laurent", "Mar Soler", "Studio Still"],
+    speakers: ["Nərmin Əliyeva", "Mahir Soltanlı", "Sakit Studiyası"],
     capacity: "48 iştirakçı",
   },
   {
@@ -129,7 +129,7 @@ export const events: Event[] = [
       "Bir qədər konsert, bir qədər laboratoriya olan “Qəribə dövrlər” yaradıcı texnoloqları səhnədə yeni sistemlər qurmağa, sınaqdan keçirməyə və canlı remiks etməyə dəvət edir. Nəticəni tamaşaçılar da formalaşdırır.",
     accent: "#77b8ff",
     glow: "rgba(119, 184, 255, 0.3)",
-    speakers: ["Ordinal", "Maya Chen", "Tomas Grey"],
+    speakers: ["Sıra Laboratoriyası", "Mələk Cəfərova", "Tural Qarayev"],
     capacity: "220 iştirakçı",
   },
   {
@@ -146,7 +146,7 @@ export const events: Event[] = [
       "Gündəlik həyatın sakit axınından bəhs edən, əşyaların ön planda olduğu səmimi sərgi. Sənətkarlıq, texnologiya və qayğı ilə tanış vərdişlərə yeni məna verən dizaynerlərlə görüş.",
     accent: "#f7d56f",
     glow: "rgba(247, 213, 111, 0.28)",
-    speakers: ["Oona Wells", "Bureau Matin", "Ren Ito"],
+    speakers: ["Nərgiz Vəlizadə", "Səhər Bürosu", "Rauf İsmayılov"],
     capacity: "95 iştirakçı",
   },
 ];

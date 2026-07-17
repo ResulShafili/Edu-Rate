@@ -39,7 +39,7 @@ export async function resolveAdminAccess(): Promise<AdminAccess> {
       status: "granted",
       source: "demo",
       principal: {
-        displayName: "EduRate Demo",
+      displayName: "Nihat Məmmədli",
         email: "demo@edurate.local",
       },
     };
