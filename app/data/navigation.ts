@@ -58,8 +58,8 @@ export const platformRoutes = [
     label: "Klublar",
     number: "07",
     title: "Maraq dairəni icmaya çevir",
-    description: "Tələbə klubları, təşkilatlar və ortaq maraqlardan yaranan canlı icmalar.",
-    metric: "6 klub · 8 maraq icması",
+    description: "Tələbə klubları, təşkilatlar və ortaq məqsədlər ətrafında yaranan birliklər.",
+    metric: "6 tələbə klubu",
     accent: "#ff9e7a",
   },
   {
@@ -70,6 +70,15 @@ export const platformRoutes = [
     description: "İstifadəçi, klub, tədbir və müraciət axınlarını bir sakit idarəetmə mərkəzində izlə.",
     metric: "canlı analitika · çevik nəzarət",
     accent: "#72ddf7",
+  },
+  {
+    href: "/technical-presentation",
+    label: "Təqdimat",
+    number: "09",
+    title: "Layihəni aydın izah et",
+    description: "Rəhbər görüşləri üçün texniki vəziyyət, API hazırlığı və növbəti addımlar.",
+    metric: "rəhbərlər üçün hazır skript",
+    accent: "#d4ff00",
   },
 ] as const;
 

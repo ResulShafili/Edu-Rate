@@ -41,7 +41,7 @@ async function request(pathname, init = {}) {
   );
 }
 
-test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async () => {
+test("əsas marşrutları Azərbaycan dilində ayrıca render edir", async () => {
   const routes = [
     ["/", /Maraqla gəl./],
     ["/events", /<h1[^>]*module-page-title[^>]*>Tədbirlər<\/h1>/],
@@ -52,8 +52,9 @@ test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async ()
     ["/feed", /<h1[^>]*module-page-title[^>]*>Elanlar<\/h1>/],
     ["/auth", /Yenidən[\s\S]{0,80}xoş gəldin\./],
     ["/profile", /Profilin səni gözləyir\./],
-    ["/clubs", /<h1[^>]*module-page-title[^>]*>Klublar<\/h1>/],
+    ["/clubs", /<h1[^>]*module-page-title[^>]*>\s*Klublar və icmalar\s*<\/h1>/],
     ["/admin", /<h1[^>]*module-page-title[^>]*>İdarəetmə<\/h1>/],
+    ["/technical-presentation", /Rəhbərlərə aydın[\s\S]{0,80}texniki hekayə\./],
     ["/clubs/innovasiya-robototexnika", /İnnovasiya və Robototexnika Klubu/],
   ];
 
@@ -86,7 +87,7 @@ test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async ()
     }),
   );
 
-  const [home, events, community, teachers, mentors, support, feed, auth, profile, clubs, admin, clubDetail] = renderedRoutes;
+  const [home, events, community, teachers, mentors, support, feed, auth, profile, clubs, admin, technicalPresentation, clubDetail] = renderedRoutes;
   assert.doesNotMatch(home, /Növbəti yaxşı hekayən/);
   assert.doesNotMatch(events, /İdeyaların arxasındakı/);
   assert.doesNotMatch(community, /Sənə uyğun müəllimi tap\./);
@@ -98,6 +99,8 @@ test("on iki əsas marşrutu Azərbaycan dilində ayrıca render edir", async ()
   assert.doesNotMatch(profile, /Kampusdan xəbərdar ol\./);
   assert.doesNotMatch(clubs, /Yenidən xoş gəldin\./);
   assert.doesNotMatch(admin, /Öz yerini tap\./);
+  assert.match(technicalPresentation, /Rəhbərlərə deyiləcək qısa mətn/);
+  assert.match(technicalPresentation, /GET \/auth\/session/);
   assert.doesNotMatch(clubDetail, /Öz yerini tap\./);
 });
 
@@ -124,6 +127,9 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
     clubsPage,
     adminPage,
     clubDetailPage,
+    technicalPresentationPage,
+    technicalPresentation,
+    technicalPresentationData,
   ] = await Promise.all([
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/PlatformShell.tsx", import.meta.url), "utf8"),
@@ -146,6 +152,9 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
     readFile(new URL("../app/clubs/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/clubs/[slug]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/technical-presentation/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/TechnicalPresentation.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/data/technical-presentation.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(layout, /<AuthProvider initialUser=\{initialUser\} signOutHref=\{signOutHref\}>/);
@@ -205,11 +214,18 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
   assert.match(transition, /scale:/);
   assert.doesNotMatch(transition, /filter:|boxShadow:|width:|height:/);
 
-  for (const href of ["/events", "/community", "/teachers", "/mentors", "/support", "/feed", "/clubs", "/admin", "/profile", "/auth"]) {
+  for (const href of ["/events", "/community", "/teachers", "/mentors", "/support", "/feed", "/clubs", "/admin", "/technical-presentation", "/profile", "/auth"]) {
     assert.match(navigation, new RegExp(`href: "${href}"`));
   }
 
-  for (const page of [homePage, eventsPage, communityPage, teachersPage, mentorsPage, supportPage, feedPage, authPage, profilePage, clubsPage, adminPage, clubDetailPage]) {
+  assert.match(technicalPresentationPage, /<TechnicalPresentation \/>/);
+  assert.match(technicalPresentation, /presentationQuestions/);
+  assert.match(technicalPresentation, /leadershipScript/);
+  assert.match(technicalPresentationData, /EduRate hansı problemi həll edir\?/);
+  assert.match(technicalPresentationData, /GET \/auth\/session/);
+  assert.match(technicalPresentationData, /İzahın aydınlığı/);
+
+  for (const page of [homePage, eventsPage, communityPage, teachersPage, mentorsPage, supportPage, feedPage, authPage, profilePage, clubsPage, adminPage, technicalPresentationPage, clubDetailPage]) {
     assert.match(page, /<main id="main-content" className="route-page" tabIndex=\{-1\}>/);
   }
 });
@@ -502,11 +518,10 @@ test("auth sərhədi yalnız Sites kimliyinə etibar edir və konfiqurasiyasız 
   assert.doesNotMatch(sitesProfileHtml, /Profilə düzəliş et/);
 });
 
-test("klub, təşkilat və maraq icmalarını premium və əlçatan qarşılıqlı əlaqələrlə təqdim edir", async () => {
+test("klub və təşkilatları premium və əlçatan qarşılıqlı əlaqələrlə təqdim edir", async () => {
   const [
     clubsExperience,
     clubCard,
-    communityCard,
     detail,
     joinButton,
     clubData,
@@ -519,7 +534,6 @@ test("klub, təşkilat və maraq icmalarını premium və əlçatan qarşılıql
   ] = await Promise.all([
     readFile(new URL("../app/components/ClubsExperience.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/ClubCard.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/components/CommunityCard.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/ClubDetailExperience.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/MagneticJoinButton.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/data/clubs.ts", import.meta.url), "utf8"),
@@ -532,29 +546,21 @@ test("klub, təşkilat və maraq icmalarını premium və əlçatan qarşılıql
   ]);
 
   assert.match(navigation, /href: "\/clubs"/);
-  assert.match(directoryPage, /<ClubsExperience clubs=\{clubs\} communities=\{communities\} \/>/);
+  assert.match(directoryPage, /<ClubsExperience clubs=\{clubs\} \/>/);
   assert.match(detailPage, /params: Promise<\{ slug: string \}>/);
   assert.match(detailPage, /generateStaticParams/);
   assert.match(detailPage, /generateMetadata/);
   assert.match(detailPage, /notFound\(\)/);
 
   assert.doesNotMatch(clubsExperience, /<main\b/);
-  assert.match(clubsExperience, /useState<string \| null>\(null\)/);
-  assert.match(clubsExperience, /isDimmed=\{activeCommunity !== null/);
+  assert.match(clubsExperience, /Klublar və icmalar/);
+  assert.doesNotMatch(clubsExperience, /communities-section|CommunityCard/);
   assert.match(clubCard, /useMotionValue/);
   assert.match(clubCard, /useSpring/);
   assert.match(clubCard, /useTransform/);
   assert.match(clubCard, /event\.pointerType !== "mouse"/);
   assert.match(clubCard, /href=\{`\/clubs\/\$\{club\.slug\}`\}/);
   assert.match(clubCard, /useReducedMotion/);
-
-  assert.match(communityCard, /rotateX/);
-  assert.match(communityCard, /rotateY/);
-  assert.match(communityCard, /transformPerspective/);
-  assert.match(communityCard, /aria-pressed=\{isActive\}/);
-  assert.match(communityCard, /onFocusCapture/);
-  assert.match(communityCard, /is-dimmed/);
-  assert.match(communityCard, /useReducedMotion/);
 
   assert.match(detail, /useScroll/);
   assert.match(detail, /role="tablist"/);
@@ -581,11 +587,11 @@ test("klub, təşkilat və maraq icmalarını premium və əlçatan qarşılıql
     assert.match(clubDetailHtml, new RegExp(label));
   }
   assert.equal((clubsHtml.match(/səhifəsinə keç/g) ?? []).length, 6);
-  assert.equal((clubsHtml.match(/icmasını vurğula/g) ?? []).length, 8);
+  assert.doesNotMatch(clubsHtml, /Maraq icmaları|icmasını vurğula/);
   assert.match(clubDetailHtml, /Kluba qoşul/);
   assert.match(clubDetailHtml, /İnnovasiya və Robototexnika Klubu/);
 
-  for (const source of [clubsExperience, clubCard, communityCard, detail, joinButton, clubData]) {
+  for (const source of [clubsExperience, clubCard, detail, joinButton, clubData]) {
     assert.doesNotMatch(source, /<img\b|from "next\/image"|https?:\/\/|\.(?:jpe?g|webp|avif)/i);
   }
   const memberType = clubData.match(/export type ClubMember = \{([\s\S]*?)\n\};/)?.[1] ?? "";
@@ -593,12 +599,10 @@ test("klub, təşkilat və maraq icmalarını premium və əlçatan qarşılıql
 
   assert.match(styles, /\.clubs-hero\s*\{/);
   assert.match(styles, /\.club-directory-card\s*\{/);
-  assert.match(styles, /\.community-card-shell\.is-active/);
   assert.match(styles, /\.club-detail-tabs\s*\{/);
   assert.match(styles, /\.magnetic-join-button\s*\{/);
   assert.match(styles, /@media \(max-width: 480px\)[\s\S]*\.club-detail-tabs\s*\{[^}]*overflow-x:\s*auto/);
   assert.match(styles, /@media \(max-width: 480px\)[\s\S]*\.magnetic-join-button\s*\{[^}]*min-height:\s*48px/);
-  assert.match(styles, /@media \(hover: none\)[\s\S]*\.community-card-shell\.is-dimmed\s*\{[^}]*opacity:\s*1/);
   await access(new URL("../public/og-phase7.png", import.meta.url));
 });
 

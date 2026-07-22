@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LogIn,
   Megaphone,
+  FileText,
   ShieldCheck,
   UserRound,
   UsersRound,
@@ -39,6 +40,7 @@ const routeIcons: Record<string, LucideIcon> = {
   "/feed": Megaphone,
   "/clubs": Compass,
   "/admin": ShieldCheck,
+  "/technical-presentation": FileText,
 };
 
 export function PlatformNavigationRail({

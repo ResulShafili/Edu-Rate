@@ -20,6 +20,7 @@ istifadəçini yormadan növbəti addıma aparır.
 | `/feed` | Elanlar | Xəbərlər, bildirişlər və kateqoriyalı elanlar |
 | `/clubs` | Klublar | Tələbə təşkilatları və klub profilləri |
 | `/admin` | İdarəetmə | Analitika, istifadəçi, klub və tədbir nəzarəti |
+| `/technical-presentation` | Texniki təqdimat | Rəhbər görüşləri üçün texniki xülasə və danışıq skripti |
 
 Davamlı naviqasiya qabığı bütün marşrutlarda görünür. `AnimatePresence` əsaslı səhifə
 keçidləri məzmunu yumşaq şəkildə solğunlaşdırır və cüzi miqyaslandırır. Üzən söhbət

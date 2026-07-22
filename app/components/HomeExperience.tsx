@@ -80,7 +80,7 @@ export function HomeExperience() {
           transition={{ type: "spring", delay: 0.92, stiffness: 110, damping: 14 }}
           aria-hidden="true"
         >
-          <span>08</span>
+          <span>09</span>
           <small>istiqamət</small>
         </motion.div>
       </motion.section>

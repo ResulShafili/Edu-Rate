@@ -1,24 +1,16 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Compass, Sparkles } from "lucide-react";
-import { useState } from "react";
-import type { Club, Community } from "../data/clubs";
+import { Sparkles } from "lucide-react";
+import type { Club } from "../data/clubs";
 import { ClubCard } from "./ClubCard";
-import { CommunityCard } from "./CommunityCard";
 
 type ClubsExperienceProps = {
   clubs: readonly Club[];
-  communities: readonly Community[];
 };
 
-export function ClubsExperience({ clubs, communities }: ClubsExperienceProps) {
+export function ClubsExperience({ clubs }: ClubsExperienceProps) {
   const reducedMotion = useReducedMotion();
-  const [activeCommunity, setActiveCommunity] = useState<string | null>(null);
-
-  function deactivateCommunity(slug: string) {
-    setActiveCommunity((current) => (current === slug ? null : current));
-  }
 
   return (
     <div className="clubs-experience">
@@ -37,7 +29,9 @@ export function ClubsExperience({ clubs, communities }: ClubsExperienceProps) {
             <Sparkles size={13} strokeWidth={1.8} aria-hidden="true" />
             07 / Tələbə birlikləri
           </span>
-          <h1 id="clubs-directory-title" className="module-page-title">Klublar</h1>
+          <h1 id="clubs-directory-title" className="module-page-title">
+            Klublar və icmalar
+          </h1>
         </motion.div>
 
         <motion.p
@@ -81,44 +75,6 @@ export function ClubsExperience({ clubs, communities }: ClubsExperienceProps) {
         </div>
       </section>
 
-      <section
-        className={`communities-section${activeCommunity ? " has-active-card" : ""}`}
-        aria-labelledby="communities-title"
-      >
-        <header className="communities-heading">
-          <div>
-            <span className="communities-eyebrow">
-              <Compass size={13} strokeWidth={1.8} aria-hidden="true" />
-              Maraq qrupları
-            </span>
-            <h2 id="communities-title">Maraq icmaları</h2>
-          </div>
-          <p>
-            Rəsmi üzvlük olmadan söhbətə qoşul, mövzunu izlə və öz tempində
-            iştirak et.
-          </p>
-        </header>
-
-        <p className="sr-only" aria-live="polite">
-          {activeCommunity
-            ? `${communities.find((community) => community.slug === activeCommunity)?.name ?? "İcma"} vurğulandı.`
-            : "Heç bir icma vurğulanmayıb."}
-        </p>
-
-        <div className="communities-grid">
-          {communities.map((community, index) => (
-            <CommunityCard
-              key={community.slug}
-              community={community}
-              index={index}
-              isActive={activeCommunity === community.slug}
-              isDimmed={activeCommunity !== null && activeCommunity !== community.slug}
-              onActivate={setActiveCommunity}
-              onDeactivate={deactivateCommunity}
-            />
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

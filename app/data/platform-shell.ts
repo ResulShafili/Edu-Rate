@@ -20,7 +20,7 @@ const homeContext: PlatformRouteContext = {
   number: "00",
   title: "Platformanın mərkəzi",
   description: "EduRate-in bütün imkanlarına sakit və sürətli başlanğıc nöqtəsi.",
-  metric: "8 əsas istiqamət",
+  metric: "9 əsas istiqamət",
   shortcuts: [
     { href: "/events", label: "Tədbirləri kəşf et", description: "Yeni görüş və təcrübələrə bax." },
     { href: "/community", label: "İcmanı aç", description: "Ortaq maraqları olan insanları tap." },
@@ -99,11 +99,10 @@ const routeContexts: Record<string, PlatformRouteContext> = {
     label: "Klublar",
     number: "07",
     title: "Klub alətləri",
-    description: "Tələbə klublarını və maraq icmalarını bir kataloqda kəşf et.",
-    metric: "6 klub · 8 maraq icması",
+    description: "Tələbə klublarını və təşkilatlarını bir kataloqda kəşf et.",
+    metric: "6 tələbə klubu",
     shortcuts: [
       { href: "/clubs#clubs-list-title", label: "Klub kataloqu", description: "Bütün tələbə klublarına bax." },
-      { href: "/clubs#communities-title", label: "Maraq icmaları", description: "Sənə yaxın mövzuları seç." },
     ],
   },
   "/admin": {
@@ -115,6 +114,18 @@ const routeContexts: Record<string, PlatformRouteContext> = {
     shortcuts: [
       { href: "/admin#admin-overview", label: "Ümumi göstəricilər", description: "Platformanın cari vəziyyətini izlə." },
       { href: "/admin#admin-data", label: "Məlumat cədvəlləri", description: "İstifadəçi, klub və tədbirləri idarə et." },
+    ],
+  },
+  "/technical-presentation": {
+    label: "Təqdimat",
+    number: "09",
+    title: "Təqdimat alətləri",
+    description: "Layihəni rəhbər şəxslərə aydın və texniki dürüst izah etmək üçün hazır struktur.",
+    metric: "Hazır danışıq skripti",
+    shortcuts: [
+      { href: "/technical-presentation#technical-presentation-title", label: "Təqdimat xülasəsi", description: "Layihənin əsas mesajını aç." },
+      { href: "/technical-presentation#technical-script-title", label: "Qısa danışıq mətni", description: "Görüşdə deyiləcək hazır skripti oxu." },
+      { href: "/technical-presentation#technical-readiness-title", label: "Hazır vəziyyət", description: "Nəyin hazır, nəyin növbəti mərhələ olduğunu göstər." },
     ],
   },
   "/profile": {
