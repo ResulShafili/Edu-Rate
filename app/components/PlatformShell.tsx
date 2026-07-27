@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "./AuthProvider";
+import { PlatformHeader } from "./PlatformHeader";
 import { PlatformNavigationRail } from "./PlatformNavigationRail";
 import { PlatformUtilityRail } from "./PlatformUtilityRail";
 import { RouteTransition } from "./RouteTransition";
@@ -24,10 +25,12 @@ export function PlatformShell({ children }: PlatformShellProps) {
   const { user } = useAuth();
   const [navigationState, setNavigationState] = useState({ pathname, open: false });
   const [toolsState, setToolsState] = useState({ pathname, open: false });
+  const [desktopToolsState, setDesktopToolsState] = useState({ pathname, open: false });
   const navigationButtonRef = useRef<HTMLButtonElement>(null);
   const toolsButtonRef = useRef<HTMLButtonElement>(null);
   const navigationOpen = navigationState.pathname === pathname && navigationState.open;
   const toolsOpen = toolsState.pathname === pathname && toolsState.open;
+  const desktopToolsOpen = desktopToolsState.pathname === pathname && desktopToolsState.open;
   const accountHref: "/profile" | "/auth" = user ? "/profile" : "/auth";
   const accountLabel = user ? "Profilim" : "Daxil ol";
 
@@ -69,7 +72,33 @@ export function PlatformShell({ children }: PlatformShellProps) {
     };
   }, [navigationOpen, toolsOpen]);
 
+  useEffect(() => {
+    function handleQuickSearch(event: KeyboardEvent) {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLocaleLowerCase("az") !== "k") {
+        return;
+      }
+
+      event.preventDefault();
+      setNavigationState({ pathname, open: false });
+      if (window.matchMedia("(max-width: 767px)").matches) {
+        setToolsState((current) => ({
+          pathname,
+          open: current.pathname === pathname ? !current.open : true,
+        }));
+      } else {
+        setDesktopToolsState((current) => ({
+          pathname,
+          open: current.pathname === pathname ? !current.open : true,
+        }));
+      }
+    }
+
+    window.addEventListener("keydown", handleQuickSearch);
+    return () => window.removeEventListener("keydown", handleQuickSearch);
+  }, [pathname]);
+
   function toggleNavigation() {
+    setDesktopToolsState({ pathname, open: false });
     setToolsState({ pathname, open: false });
     setNavigationState((current) => ({
       pathname,
@@ -79,14 +108,24 @@ export function PlatformShell({ children }: PlatformShellProps) {
 
   function toggleTools() {
     setNavigationState({ pathname, open: false });
-    setToolsState((current) => ({
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      setDesktopToolsState({ pathname, open: false });
+      setToolsState((current) => ({
+        pathname,
+        open: current.pathname === pathname ? !current.open : true,
+      }));
+      return;
+    }
+
+    setToolsState({ pathname, open: false });
+    setDesktopToolsState((current) => ({
       pathname,
       open: current.pathname === pathname ? !current.open : true,
     }));
   }
 
   return (
-    <div className="site-shell">
+    <div className="site-shell kuds-shell">
       <a className="skip-link" href="#main-content">Əsas məzmuna keç</a>
 
       <button
@@ -121,20 +160,29 @@ export function PlatformShell({ children }: PlatformShellProps) {
         mobileOpen={navigationOpen}
         onMobileClose={closeNavigation}
       />
-      <PlatformUtilityRail key={pathname} mobileOpen={toolsOpen} onMobileClose={closeTools} />
+      <div className="platform-workspace">
+        <PlatformHeader toolsOpen={desktopToolsOpen} onToolsToggle={toggleTools} />
 
-      <div className="platform-route-content">
-        <RouteTransition>{children}</RouteTransition>
+        <div className="platform-route-content">
+          <RouteTransition>{children}</RouteTransition>
 
-        <footer className="site-footer">
-          <Link href="/" className="brand"><span className="brand-mark"><span /></span>EDURATE</Link>
-          <p>Birlikdə öyrənməyin daha yaxşı olduğuna<br />inanan insanlar üçün yaradılıb.</p>
-          <div>
-            <span>© 2026 EduRate</span>
-            <a href="mailto:hello@edurate.community">hello@edurate.community</a>
-          </div>
-        </footer>
+          <footer className="site-footer">
+            <Link href="/" className="brand"><span className="brand-mark"><span /></span>EDURATE</Link>
+            <p>Universitet həyatını vahid və əlçatan rəqəmsal təcrübədə birləşdiririk.</p>
+            <div>
+              <span>© 2026 EduRate</span>
+              <a href="mailto:hello@edurate.az">hello@edurate.az</a>
+            </div>
+          </footer>
+        </div>
       </div>
+      <PlatformUtilityRail
+        key={pathname}
+        mobileOpen={toolsOpen}
+        onMobileClose={closeTools}
+        desktopOpen={desktopToolsOpen}
+        onDesktopOpenChange={(open) => setDesktopToolsState({ pathname, open })}
+      />
     </div>
   );
 }

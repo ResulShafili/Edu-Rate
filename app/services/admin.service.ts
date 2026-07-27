@@ -49,6 +49,7 @@ const overviewMetricBaselines = {
 };
 
 const adminApi = createApiClient({
+  baseUrl: "/api",
   mockAdapter: handleAdminMockRequest,
   mockDelayMs: 560,
 });
@@ -205,7 +206,7 @@ function toEventQuery(query: AdminEventQuery): ApiQuery {
   };
 }
 
-function handleAdminMockRequest(request: ApiMockRequest): unknown {
+export function handleAdminMockRequest(request: ApiMockRequest): unknown {
   const segments = request.path.split("/").filter(Boolean).map(decodeURIComponent);
   const [, collection, id] = segments;
 

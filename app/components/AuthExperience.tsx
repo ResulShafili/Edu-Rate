@@ -135,6 +135,8 @@ export function AuthExperience({ chatGPTSignInHref }: AuthExperienceProps) {
     } catch (error) {
       if (isAuthProviderUnavailable(error)) {
         setFormMessage(unavailableMessage);
+      } else if (error instanceof Error && error.message) {
+        setFormMessage(error.message);
       } else {
         setFormMessage(
           mode === "login"

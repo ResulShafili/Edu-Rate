@@ -34,6 +34,8 @@ type UtilityTab = "search" | "shortcuts" | "updates";
 type PlatformUtilityRailProps = {
   mobileOpen: boolean;
   onMobileClose: () => void;
+  desktopOpen: boolean;
+  onDesktopOpenChange: (open: boolean) => void;
 };
 
 type UtilityContentProps = {
@@ -184,7 +186,12 @@ function UtilityContent({
   );
 }
 
-export function PlatformUtilityRail({ mobileOpen, onMobileClose }: PlatformUtilityRailProps) {
+export function PlatformUtilityRail({
+  mobileOpen,
+  onMobileClose,
+  desktopOpen,
+  onDesktopOpenChange,
+}: PlatformUtilityRailProps) {
   const pathname = usePathname();
   const router = useRouter();
   const reducedMotion = useReducedMotion();
@@ -195,11 +202,13 @@ export function PlatformUtilityRail({ mobileOpen, onMobileClose }: PlatformUtili
   const mobileSearchRef = useRef<HTMLInputElement>(null);
   const context = getPlatformRouteContext(pathname);
   const displayedMobileTab = activeTab ?? "search";
+  const displayedDesktopTab = desktopOpen ? activeTab ?? "search" : null;
 
   const closeDesktopPanel = useCallback((restoreFocus = true) => {
     setActiveTab(null);
+    onDesktopOpenChange(false);
     if (restoreFocus) lastDesktopTriggerRef.current?.focus();
-  }, []);
+  }, [onDesktopOpenChange]);
 
   const closeAllPanels = useCallback(() => {
     closeDesktopPanel(false);
@@ -237,7 +246,11 @@ export function PlatformUtilityRail({ mobileOpen, onMobileClose }: PlatformUtili
 
   function toggleDesktopTab(tab: UtilityTab, trigger: HTMLButtonElement) {
     lastDesktopTriggerRef.current = trigger;
-    setActiveTab((current) => current === tab ? null : tab);
+    setActiveTab((current) => {
+      const next = current === tab ? null : tab;
+      onDesktopOpenChange(Boolean(next));
+      return next;
+    });
   }
 
   function submitSearch() {
@@ -275,7 +288,7 @@ export function PlatformUtilityRail({ mobileOpen, onMobileClose }: PlatformUtili
       </aside>
 
       <AnimatePresence>
-        {activeTab && !mobileOpen && (
+        {displayedDesktopTab && !mobileOpen && (
           <motion.aside
             id="platform-desktop-utility-panel"
             className="platform-utility-panel"
@@ -283,14 +296,14 @@ export function PlatformUtilityRail({ mobileOpen, onMobileClose }: PlatformUtili
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 18, scale: 0.99 }}
             transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 34 }}
-            aria-label={`${utilityTabs.find((tab) => tab.id === activeTab)?.label} paneli`}
+            aria-label={`${utilityTabs.find((tab) => tab.id === displayedDesktopTab)?.label} paneli`}
           >
             <header className="platform-utility-panel-header">
-              <div><span>Səhifə alətləri</span><h2>{utilityTabs.find((tab) => tab.id === activeTab)?.label}</h2></div>
+              <div><span>Səhifə alətləri</span><h2>{utilityTabs.find((tab) => tab.id === displayedDesktopTab)?.label}</h2></div>
               <button type="button" onClick={() => closeDesktopPanel()} aria-label="Alətlər panelini bağla"><X size={17} /></button>
             </header>
             <UtilityContent
-              activeTab={activeTab}
+              activeTab={displayedDesktopTab}
               context={context}
               query={query}
               onQueryChange={setQuery}

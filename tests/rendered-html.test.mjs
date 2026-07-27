@@ -43,7 +43,7 @@ async function request(pathname, init = {}) {
 
 test("əsas marşrutları Azərbaycan dilində ayrıca render edir", async () => {
   const routes = [
-    ["/", /Maraqla gəl./],
+    ["/", /Universitet həyatın bir yerdə\./],
     ["/events", /<h1[^>]*module-page-title[^>]*>Tədbirlər<\/h1>/],
     ["/community", /<h1[^>]*module-page-title[^>]*>İcma<\/h1>/],
     ["/teachers", /<h1[^>]*module-page-title[^>]*>Müəllimlər<\/h1>/],
@@ -74,10 +74,10 @@ test("əsas marşrutları Azərbaycan dilində ayrıca render edir", async () =>
       assert.match(html, heading, `${pathname} öz başlığını göstərməlidir`);
       assert.match(html, /aria-label="Əsas naviqasiya"/);
       assert.match(html, /aria-label="Platforma bölmələri"/);
-      assert.match(html, /aria-label="Səhifə alətləri"/);
+      assert.match(html, /Səhifə başlığı/);
       assert.match(html, /class="platform-left-rail"/);
       assert.doesNotMatch(html, /class="nav-shell"|id="global-mobile-menu"/);
-      assert.match(html, /hello@edurate\.community/);
+      assert.match(html, /hello@edurate\.az/);
       assert.doesNotMatch(
         html,
         /codex-preview|react-loading-skeleton|Your site is taking shape/i,
@@ -100,7 +100,7 @@ test("əsas marşrutları Azərbaycan dilində ayrıca render edir", async () =>
   assert.doesNotMatch(clubs, /Yenidən xoş gəldin\./);
   assert.doesNotMatch(admin, /Öz yerini tap\./);
   assert.match(technicalPresentation, /Rəhbərlərə deyiləcək qısa mətn/);
-  assert.match(technicalPresentation, /GET \/auth\/session/);
+  assert.match(technicalPresentation, /GET \/api\/auth\/session/);
   assert.doesNotMatch(clubDetail, /Öz yerini tap\./);
 });
 
@@ -222,7 +222,7 @@ test("davamlı platforma qabığını və əlçatan marşrut keçidlərini qoruy
   assert.match(technicalPresentation, /presentationQuestions/);
   assert.match(technicalPresentation, /leadershipScript/);
   assert.match(technicalPresentationData, /EduRate hansı problemi həll edir\?/);
-  assert.match(technicalPresentationData, /GET \/auth\/session/);
+  assert.match(technicalPresentationData, /GET \/api\/auth\/session/);
   assert.match(technicalPresentationData, /İzahın aydınlığı/);
 
   for (const page of [homePage, eventsPage, communityPage, teachersPage, mentorsPage, supportPage, feedPage, authPage, profilePage, clubsPage, adminPage, technicalPresentationPage, clubDetailPage]) {
@@ -414,8 +414,9 @@ test("universitet şəbəkəsinin auth, profil və elan müqavilələrini qoruyu
   assert.match(auth, /mode="popLayout"/);
   assert.doesNotMatch(auth, /mode="wait"|localStorage|sessionStorage|console\./);
   assert.match(authProvider, /type AuthGateway/);
-  assert.match(authProvider, /AUTH_PROVIDER_NOT_CONFIGURED/);
-  assert.match(authProvider, /gateway \?\? unavailableAuthGateway/);
+  assert.match(authProvider, /credentialAuthGateway/);
+  assert.match(authProvider, /getCredentialSession/);
+  assert.match(authProvider, /credentialAuthAvailable = !signOutHref/);
   assert.match(authProvider, /if \(!user\) throw new Error\("AUTH_REQUIRED"\)/);
   assert.doesNotMatch(authProvider, /demoAuthGateway|waitForDemoResponse|localStorage|sessionStorage|console\./);
 

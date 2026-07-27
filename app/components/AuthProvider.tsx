@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type PropsWithChildren,
@@ -15,6 +16,7 @@ import {
   type SignInInput,
   type UserProfile,
 } from "../data/user";
+import { credentialAuthGateway, getCredentialSession } from "../lib/auth/credential-api";
 
 type AuthStatus = "idle" | "submitting";
 
@@ -39,21 +41,6 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AUTH_PROVIDER_UNAVAILABLE_CODE = "AUTH_PROVIDER_NOT_CONFIGURED";
 
-const unavailableAuthGateway: AuthGateway = {
-  async signIn() {
-    throw createProviderUnavailableError();
-  },
-  async register() {
-    throw createProviderUnavailableError();
-  },
-  async signOut() {
-    throw createProviderUnavailableError();
-  },
-  async updateProfile() {
-    throw createProviderUnavailableError();
-  },
-};
-
 export function AuthProvider({
   children,
   gateway,
@@ -62,8 +49,24 @@ export function AuthProvider({
 }: AuthProviderProps) {
   const [user, setUser] = useState<UserProfile | null>(initialUser);
   const [status, setStatus] = useState<AuthStatus>("idle");
-  const activeGateway = gateway ?? unavailableAuthGateway;
-  const credentialAuthAvailable = Boolean(gateway);
+  const activeGateway = gateway ?? credentialAuthGateway;
+  // ChatGPT Sites identity is intentionally separate from the local MVP cookie.
+  // Those users can browse with their trusted platform identity, while profile
+  // mutations stay disabled until a matching local API session exists.
+  const credentialAuthAvailable = !signOutHref;
+
+  useEffect(() => {
+    if (initialUser) return;
+    let cancelled = false;
+
+    void getCredentialSession().then((sessionUser) => {
+      if (!cancelled && sessionUser) setUser(sessionUser);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialUser]);
 
   const signIn = useCallback(async (input: SignInInput) => {
     setStatus("submitting");
@@ -137,8 +140,4 @@ export function isAuthProviderUnavailable(error: unknown): boolean {
     error instanceof Error &&
     error.message === AUTH_PROVIDER_UNAVAILABLE_CODE
   );
-}
-
-function createProviderUnavailableError(): Error {
-  return new Error(AUTH_PROVIDER_UNAVAILABLE_CODE);
 }

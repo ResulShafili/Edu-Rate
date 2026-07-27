@@ -26,8 +26,8 @@ export const presentationStack = [
   },
   {
     label: "UI sistemi",
-    value: "Tailwind CSS və qlobal dark premium dizayn dili",
-    detail: "Sabit rəng palitrası, responsive spacing, sol naviqasiya və vahid komponent davranışı.",
+    value: "KUDS, Tailwind CSS və vahid komponent sistemi",
+    detail: "Qarabağ Universiteti yaşıl palitrası, Poppins tipografiyası, 4–96 px spacing, sol naviqasiya və 72 px header.",
   },
   {
     label: "Hərəkət",
@@ -36,20 +36,19 @@ export const presentationStack = [
   },
   {
     label: "API hazırlığı",
-    value: "Fetch client, service layer və SWR hook-ları",
-    detail: "Node.js + Express backend-ə qoşulmaq üçün hazır sorğu, cache və error strukturu.",
+    value: "REST Route Handlers, Fetch client və OpenAPI 3.1",
+    detail: "MVP endpoint-ləri işləkdir; eyni kontrakt Node.js + Express və davamlı database qatına daşına bilər.",
   },
 ] as const;
 
 export const plannedApiContracts = [
-  "GET /auth/session",
-  "GET /admin/overview",
-  "GET /admin/users",
-  "POST /admin/users",
-  "PATCH /admin/users/:id",
-  "DELETE /admin/users/:id",
-  "GET, POST, PATCH, DELETE /admin/clubs",
-  "GET, POST, PATCH, DELETE /admin/events",
+  "GET /api/health",
+  "POST /api/auth/signup və /api/auth/login",
+  "GET /api/auth/session və PATCH /api/auth/profile",
+  "GET /api/admin/overview",
+  "GET, POST, PATCH, DELETE /api/admin/users",
+  "GET, POST, PATCH, DELETE /api/admin/clubs və /api/admin/events",
+  "GET /api/openapi.json",
 ] as const;
 
 export const reviewCriteria = [
@@ -67,18 +66,18 @@ export const readinessNotes = [
   },
   {
     label: "Backend",
-    status: "Qoşulmağa hazır",
-    detail: "REST API müqaviləsi düşünülüb, real Express servisləri ayrıca yazılmalıdır.",
+    status: "MVP hazır",
+    detail: "Giriş, sessiya, profil, idarəetmə və OpenAPI endpoint-ləri işlək demo yaddaş anbarı ilə təqdim edilir.",
   },
   {
     label: "Database",
     status: "Növbəti mərhələ",
-    detail: "Production məlumat bazası aktiv deyil; demo məlumatlar təqdimat üçündür.",
+    detail: "Davamlı production məlumat bazası aktiv deyil; sprint MVP-də məlumatlar demo yaddaş anbarında saxlanır.",
   },
   {
     label: "Təhlükəsizlik",
-    status: "Serverdə tamamlanmalıdır",
-    detail: "Admin rolu, rəy moderasiyası və icazələr backend middleware-də yoxlanmalıdır.",
+    status: "Qismən hazır",
+    detail: "Sessiya HttpOnly cookie ilə yaradılır, rəy moderasiyası API-də yoxlanır; admin rol və database icazələri növbəti mərhələdir.",
   },
 ] as const;
 
@@ -92,4 +91,4 @@ export const presentationChecklist = [
 ] as const;
 
 export const leadershipScript =
-  "EduRate universitet daxilində tələbə təcrübəsini birləşdirən rəqəmsal platformadır. Frontend tərəfi React, Next.js və TypeScript ilə hazırlanıb. Sistem modullar şəklində qurulduğu üçün tədbirlər, elanlar, klublar, mentorluq, müəllim qiymətləndirməsi və admin panel ayrıca inkişaf etdirilə bilir. Hazırda interfeys və əsas istifadəçi axınları hazırdır, API strukturu isə Node.js və Express backend-ə qoşulmaq üçün əvvəlcədən düşünülüb. Növbəti mərhələdə real autentifikasiya, database, admin icazələri və rəy moderasiya sistemi əlavə edilməlidir.";
+  "EduRate Qarabağ Universiteti üçün tələbə təcrübəsini birləşdirən rəqəmsal platformadır. Frontend React, Next.js və TypeScript ilə, interfeys isə universitetin vahid KUDS dizayn sistemi ilə hazırlanıb. Tədbirlər, elanlar, klublar, mentorluq, müəllim qiymətləndirməsi və admin panel ayrı modullar kimi inkişaf etdirilir. Sprint MVP-də giriş, sessiya, profil, idarəetmə və OpenAPI endpoint-ləri işləkdir. Növbəti mərhələdə davamlı database, rol əsaslı admin icazələri və Express backend-in daimi servis qatı əlavə ediləcək.";

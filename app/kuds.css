@@ -1,0 +1,1295 @@
+/*
+ * Karabakh University Digital Design System (KUDS)
+ * Shared visual language for every EduRate route. This layer intentionally
+ * follows the existing stylesheet so legacy module markup inherits one system.
+ */
+
+:root {
+  --font-dm-sans: "Poppins", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-instrument-serif: Georgia, "Times New Roman", serif;
+  --ku-green: #44766c;
+  --ku-dark-green: #16423c;
+  --ku-soft-green: #d3e8bf;
+  --ku-light-blue: #caeaf1;
+  --ku-cream: #f0f3bf;
+  --kuds-bg: #f8fafc;
+  --kuds-surface: #ffffff;
+  --kuds-border: #e2e8f0;
+  --kuds-text: #1e293b;
+  --kuds-muted: #64748b;
+  --kuds-success: #10b981;
+  --kuds-warning: #f59e0b;
+  --kuds-danger: #ef4444;
+  --kuds-shadow-xs: 0 1px 2px rgb(15 23 42 / 4%);
+  --kuds-shadow-sm: 0 2px 6px rgb(15 23 42 / 6%);
+  --kuds-shadow-md: 0 8px 20px rgb(15 23 42 / 8%);
+
+  /* Legacy module variables are mapped to the official system. */
+  --ink: var(--kuds-bg);
+  --paper: var(--kuds-text);
+  --lime: var(--ku-green);
+  --lilac: var(--ku-dark-green);
+  --violet: var(--ku-green);
+  --success: var(--kuds-success);
+  --danger: var(--kuds-danger);
+  --surface-ink: var(--kuds-surface);
+  --line: var(--kuds-border);
+}
+
+html {
+  color-scheme: light;
+  background: var(--kuds-bg);
+  scroll-padding-top: 96px;
+}
+
+body {
+  color: var(--kuds-text);
+  background: var(--kuds-bg);
+  font-family: "Poppins", var(--font-dm-sans), Tahoma, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.kuds-shell {
+  min-height: 100svh;
+  color: var(--kuds-text);
+  background:
+    radial-gradient(circle at 92% 0%, rgb(202 234 241 / 52%), transparent 26rem),
+    radial-gradient(circle at 22% 100%, rgb(211 232 191 / 38%), transparent 32rem),
+    var(--kuds-bg);
+}
+
+.kuds-shell :is(button, input, textarea, select) {
+  font: inherit;
+}
+
+.kuds-shell :is(a, button, input, textarea, select):focus-visible {
+  outline: 3px solid rgb(68 118 108 / 42%);
+  outline-offset: 3px;
+}
+
+.kuds-shell .platform-left-rail {
+  position: fixed;
+  z-index: 80;
+  inset: 0 auto 0 0;
+  display: flex;
+  width: 280px;
+  min-height: 100svh;
+  padding: 24px 16px 18px;
+  flex-direction: column;
+  color: var(--kuds-text);
+  border: 0;
+  border-right: 1px solid var(--kuds-border);
+  border-radius: 0;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: none;
+  backdrop-filter: blur(18px);
+}
+
+.kuds-shell .platform-sidebar-brand {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 10px;
+  margin: 0 8px 22px;
+  padding: 0 2px 22px;
+  color: var(--ku-dark-green);
+  border-bottom: 1px solid var(--kuds-border);
+  letter-spacing: 0.12em;
+}
+
+.kuds-shell .platform-sidebar-brand strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.kuds-shell .brand-mark {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ku-dark-green);
+  box-shadow: none;
+}
+
+.kuds-shell .brand-mark::before,
+.kuds-shell .brand-mark::after,
+.kuds-shell .brand-mark span {
+  background: var(--ku-soft-green);
+}
+
+.kuds-shell .platform-rail-navigation {
+  display: grid;
+  gap: 4px;
+}
+
+.kuds-shell .platform-rail-link {
+  position: relative;
+  z-index: 0;
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  padding: 0 12px;
+  color: var(--kuds-muted);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.kuds-shell .platform-rail-link > svg,
+.kuds-shell .platform-rail-link > span:not(.platform-rail-active) {
+  position: relative;
+  z-index: 1;
+}
+
+.kuds-shell .platform-rail-link > small {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  color: rgb(100 116 139 / 58%);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.kuds-shell .platform-rail-link:hover {
+  color: var(--ku-dark-green);
+  background: rgb(211 232 191 / 42%);
+  transform: translateX(2px);
+}
+
+.kuds-shell .platform-rail-link.is-active {
+  color: var(--ku-dark-green);
+  background: rgb(211 232 191 / 72%);
+  box-shadow: none;
+}
+
+.kuds-shell .platform-rail-active {
+  z-index: 0;
+  inset: 6px auto 6px 0;
+  width: 3px;
+  border-radius: 0 999px 999px 0;
+  background: var(--ku-green);
+}
+
+.kuds-shell .platform-sidebar-account {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+  padding: 20px 8px 0;
+  border-top: 1px solid var(--kuds-border);
+}
+
+.kuds-shell .platform-sidebar-account > span {
+  color: var(--kuds-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kuds-shell .platform-rail-account {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  color: var(--ku-dark-green);
+  border: 1px solid var(--kuds-border);
+  border-radius: 8px;
+  background: var(--kuds-surface);
+  font-size: 13px;
+  font-weight: 600;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.kuds-shell .platform-rail-account:hover {
+  border-color: rgb(68 118 108 / 40%);
+  background: var(--ku-soft-green);
+  transform: translateY(-1px);
+}
+
+.kuds-shell .platform-rail-account i,
+.kuds-shell .platform-header-account > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  color: var(--ku-dark-green);
+  border-radius: 50%;
+  background: var(--ku-soft-green);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.platform-workspace {
+  min-width: 0;
+  min-height: 100svh;
+  margin-left: 280px;
+}
+
+.platform-header {
+  position: sticky;
+  z-index: 60;
+  top: 0;
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 32px;
+  color: var(--kuds-text);
+  border-bottom: 1px solid var(--kuds-border);
+  background: rgb(248 250 252 / 87%);
+  backdrop-filter: blur(16px);
+}
+
+.platform-header-context {
+  min-width: 0;
+}
+
+.platform-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--kuds-muted);
+  font-size: 12px;
+}
+
+.platform-breadcrumb strong {
+  color: var(--ku-dark-green);
+  font-weight: 700;
+}
+
+.platform-header-context p {
+  overflow: hidden;
+  max-width: 560px;
+  margin: 3px 0 0;
+  color: var(--kuds-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.platform-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.platform-header-search {
+  display: flex;
+  width: min(270px, 25vw);
+  min-height: 40px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px;
+  cursor: pointer;
+  color: var(--kuds-muted);
+  border: 1px solid var(--kuds-border);
+  border-radius: 8px;
+  background: var(--kuds-surface);
+  font-size: 12px;
+  text-align: left;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.platform-header-search:hover {
+  border-color: rgb(68 118 108 / 44%);
+  box-shadow: var(--kuds-shadow-xs);
+}
+
+.platform-header-search kbd {
+  margin-left: auto;
+  padding: 2px 5px;
+  color: var(--kuds-muted);
+  border: 1px solid var(--kuds-border);
+  border-radius: 4px;
+  background: var(--kuds-bg);
+  font-size: 10px;
+}
+
+.platform-header-icon {
+  position: relative;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  place-items: center;
+  color: var(--ku-dark-green);
+  border: 1px solid var(--kuds-border);
+  border-radius: 8px;
+  background: var(--kuds-surface);
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.platform-header-icon:hover {
+  background: var(--ku-soft-green);
+  transform: translateY(-1px);
+}
+
+.platform-header-icon i {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--kuds-surface);
+  border-radius: 50%;
+  background: var(--kuds-warning);
+}
+
+.platform-header-account {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  color: var(--kuds-text);
+}
+
+.platform-header-account small {
+  max-width: 124px;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kuds-shell .platform-route-content {
+  min-width: 0;
+  width: auto !important;
+  min-height: calc(100svh - 72px);
+  margin-left: 0 !important;
+  padding: 32px;
+  background: transparent !important;
+}
+
+.kuds-shell .route-frame,
+.kuds-shell .route-page {
+  min-height: auto;
+  color: var(--kuds-text);
+  background: transparent !important;
+}
+
+.kuds-shell :is(
+  .platform-map-section,
+  .events-section,
+  .mentor-section,
+  .feed-section,
+  .clubs-directory,
+  .club-detail-body,
+  .admin-dashboard
+) {
+  background: transparent !important;
+}
+
+.kuds-shell .platform-right-rail {
+  display: none;
+}
+
+.kuds-shell .platform-utility-panel {
+  position: fixed;
+  z-index: 110;
+  top: 84px;
+  right: 32px;
+  width: min(390px, calc(100vw - 344px));
+  max-height: min(680px, calc(100svh - 100px));
+  overflow: auto;
+  padding: 20px;
+  color: var(--kuds-text);
+  border: 1px solid var(--kuds-border);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 97%);
+  box-shadow: 0 20px 42px rgb(15 23 42 / 14%);
+  backdrop-filter: blur(18px);
+}
+
+.kuds-shell .platform-utility-panel-header,
+.kuds-shell .platform-update-group header,
+.kuds-shell .platform-search-results a,
+.kuds-shell .platform-shortcut-list a {
+  color: var(--kuds-text);
+}
+
+.kuds-shell .platform-utility-panel-header > div > span,
+.kuds-shell .platform-context-card > span,
+.kuds-shell .platform-update-group header,
+.kuds-shell .platform-search-summary {
+  color: var(--kuds-muted);
+}
+
+.kuds-shell .platform-utility-panel-header h2,
+.kuds-shell .platform-context-card h3,
+.kuds-shell .platform-update-group h3 {
+  color: var(--ku-dark-green);
+}
+
+.kuds-shell .platform-utility-panel-header button,
+.kuds-shell .platform-global-search {
+  border-color: var(--kuds-border);
+  background: var(--kuds-bg);
+}
+
+.kuds-shell .platform-global-search input {
+  color: var(--kuds-text);
+}
+
+.kuds-shell .platform-context-card,
+.kuds-shell .platform-update-group,
+.kuds-shell .platform-search-results a,
+.kuds-shell .platform-shortcut-list a {
+  border-color: var(--kuds-border);
+  background: var(--kuds-surface);
+}
+
+.kuds-shell .platform-context-card small i,
+.kuds-shell .platform-update-dot {
+  background: var(--ku-green);
+}
+
+.kuds-shell .platform-search-results small,
+.kuds-shell .platform-shortcut-list small,
+.kuds-shell .platform-update-group small,
+.kuds-shell .platform-context-card p {
+  color: var(--kuds-muted);
+}
+
+.kuds-shell .site-footer {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.5fr) minmax(240px, 1fr) auto;
+  gap: 32px;
+  align-items: end;
+  margin-top: 56px;
+  padding: 24px 0 8px;
+  color: var(--kuds-muted);
+  border-top: 1px solid var(--kuds-border);
+  background: transparent;
+}
+
+.kuds-shell .site-footer .brand {
+  color: var(--ku-dark-green);
+}
+
+.kuds-shell .site-footer p,
+.kuds-shell .site-footer div {
+  margin: 0;
+  color: var(--kuds-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.kuds-shell .site-footer div {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+
+/* Shared module hierarchy */
+.kuds-shell :is(.route-module-section, .clubs-experience, .feed-section, .auth-section, .profile-section, .admin-dashboard, .technical-presentation) {
+  color: var(--kuds-text);
+  background: transparent !important;
+}
+
+.kuds-shell .route-module-section {
+  min-height: auto !important;
+  padding: 0 !important;
+}
+
+.kuds-shell .section-heading,
+.kuds-shell .peers-heading,
+.kuds-shell .mentor-heading,
+.kuds-shell .support-heading,
+.kuds-shell .teachers-heading,
+.kuds-shell .clubs-section-heading,
+.kuds-shell .reviews-heading {
+  position: relative;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 0 24px;
+  padding: 0 0 20px;
+  border-bottom: 1px solid var(--kuds-border);
+}
+
+.kuds-shell .section-kicker,
+.kuds-shell .section-kicker-dark,
+.kuds-shell .mentor-kicker,
+.kuds-shell .support-kicker,
+.kuds-shell .teachers-kicker,
+.kuds-shell .clubs-hero-eyebrow,
+.kuds-shell .technical-kicker,
+.kuds-shell .profile-kicker {
+  color: var(--ku-green) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase;
+}
+
+.kuds-shell .module-page-title,
+.kuds-shell :is(.section-heading, .peers-heading, .mentor-heading, .support-heading, .teachers-heading, .clubs-hero-copy) h1 {
+  margin: 8px 0 0 !important;
+  color: var(--kuds-text) !important;
+  font-size: clamp(32px, 3.2vw, 48px) !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.kuds-shell .module-page-title em,
+.kuds-shell .section-heading h1 em,
+.kuds-shell .peers-heading h1 em,
+.kuds-shell .mentor-heading h1 em,
+.kuds-shell .support-heading h1 em,
+.kuds-shell .teachers-heading h1 em {
+  color: var(--ku-green) !important;
+  font-family: inherit !important;
+  font-style: normal !important;
+}
+
+.kuds-shell :is(.section-heading, .peers-heading, .mentor-heading, .support-heading, .teachers-heading, .clubs-section-heading) p,
+.kuds-shell .mentor-heading-aside p,
+.kuds-shell .teachers-heading-aside p {
+  margin: 0 !important;
+  color: var(--kuds-muted) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.kuds-shell :is(.event-card, .peer-card, .mentor-card, .teacher-card, .club-card, .review-card, .faq-panel, .ticket-panel, .teacher-rating-panel, .technical-narrative-card, .technical-question-panel, .technical-script-panel, .profile-info-card, .profile-edit-panel, .admin-chart-card, .admin-data-panel, .admin-metric-card) {
+  color: var(--kuds-text) !important;
+  border: 1px solid var(--kuds-border) !important;
+  border-radius: 12px !important;
+  background: var(--kuds-surface) !important;
+  box-shadow: var(--kuds-shadow-sm) !important;
+  backdrop-filter: none !important;
+}
+
+.kuds-shell :is(.event-card, .peer-card, .mentor-card, .teacher-card, .club-card, .review-card) {
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease !important;
+}
+
+.kuds-shell :is(.event-card, .peer-card, .mentor-card, .teacher-card, .club-card, .review-card):hover {
+  border-color: rgb(68 118 108 / 45%) !important;
+  box-shadow: var(--kuds-shadow-md) !important;
+}
+
+/* Home dashboard */
+.kuds-home {
+  display: grid;
+  gap: 24px;
+}
+
+.kuds-welcome-banner {
+  position: relative;
+  display: grid;
+  min-height: 270px;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 0.36fr);
+  gap: 32px;
+  overflow: hidden;
+  padding: clamp(24px, 4vw, 40px);
+  color: #ffffff;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 88% 12%, rgb(211 232 191 / 32%), transparent 13rem),
+    linear-gradient(125deg, var(--ku-dark-green), #2f625a 62%, var(--ku-green));
+  box-shadow: var(--kuds-shadow-md);
+}
+
+.kuds-welcome-banner::after {
+  position: absolute;
+  width: min(34vw, 410px);
+  height: min(34vw, 410px);
+  content: "";
+  right: -7%;
+  bottom: -52%;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 50%;
+}
+
+.kuds-welcome-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 660px;
+}
+
+.kuds-welcome-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ku-cream);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.kuds-welcome-banner h1 {
+  max-width: 620px;
+  margin: 16px 0 12px;
+  font-size: clamp(34px, 4vw, 54px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.kuds-welcome-banner p {
+  max-width: 590px;
+  margin: 0;
+  color: rgb(255 255 255 / 82%);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.kuds-primary-button,
+.kuds-shell :is(.reserve-button, .mentor-request-button, .rating-submit, .ticket-submit, .auth-submit, .profile-save-button, .admin-crud-create-button, .admin-record-form .is-primary) {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 0 16px;
+  cursor: pointer;
+  color: #ffffff !important;
+  border: 1px solid var(--ku-green) !important;
+  border-radius: 8px !important;
+  background: var(--ku-green) !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease !important;
+}
+
+.kuds-primary-button:hover,
+.kuds-shell :is(.reserve-button, .mentor-request-button, .rating-submit, .ticket-submit, .auth-submit, .profile-save-button, .admin-crud-create-button, .admin-record-form .is-primary):hover {
+  border-color: var(--ku-dark-green) !important;
+  background: var(--ku-dark-green) !important;
+  transform: translateY(-1px) !important;
+}
+
+.kuds-welcome-summary {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: end;
+  gap: 12px;
+}
+
+.kuds-welcome-summary div {
+  padding: 14px;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 10%);
+  backdrop-filter: blur(8px);
+}
+
+.kuds-welcome-summary strong,
+.kuds-welcome-summary span {
+  display: block;
+}
+
+.kuds-welcome-summary strong {
+  color: var(--ku-cream);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.kuds-welcome-summary span {
+  margin-top: 5px;
+  color: rgb(255 255 255 / 78%);
+  font-size: 12px;
+}
+
+.kuds-home-section {
+  padding: 24px;
+  border: 1px solid var(--kuds-border);
+  border-radius: 12px;
+  background: var(--kuds-surface);
+  box-shadow: var(--kuds-shadow-xs);
+}
+
+.kuds-home-section-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.kuds-home-section-header span {
+  display: block;
+  color: var(--ku-green);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kuds-home-section-header h2 {
+  margin: 5px 0 0;
+  color: var(--kuds-text);
+  font-size: 22px;
+  letter-spacing: -0.025em;
+}
+
+.kuds-inline-link {
+  color: var(--ku-green);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.kuds-quick-grid,
+.kuds-module-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kuds-quick-card,
+.kuds-module-card {
+  display: grid;
+  min-height: 126px;
+  align-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  color: var(--kuds-text);
+  border: 1px solid var(--kuds-border);
+  border-radius: 8px;
+  background: var(--kuds-bg);
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.kuds-quick-card:hover,
+.kuds-module-card:hover {
+  border-color: rgb(68 118 108 / 44%);
+  background: rgb(211 232 191 / 35%);
+  transform: translateY(-2px);
+}
+
+.kuds-quick-card > span,
+.kuds-module-card > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: var(--ku-dark-green);
+  border-radius: 8px;
+  background: var(--ku-soft-green);
+}
+
+.kuds-quick-card strong,
+.kuds-module-card strong {
+  font-size: 14px;
+}
+
+.kuds-quick-card small,
+.kuds-module-card small {
+  display: block;
+  margin-top: 3px;
+  color: var(--kuds-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.kuds-stat-grid,
+.kuds-home-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.kuds-stat-card {
+  padding: 18px;
+  border: 1px solid var(--kuds-border);
+  border-radius: 12px;
+  background: var(--kuds-surface);
+  box-shadow: var(--kuds-shadow-xs);
+}
+
+.kuds-stat-card span {
+  display: block;
+  color: var(--kuds-muted);
+  font-size: 12px;
+}
+
+.kuds-stat-card strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--ku-dark-green);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.kuds-home-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+}
+
+.kuds-list-card {
+  min-height: 255px;
+}
+
+.kuds-activity-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+  list-style: none;
+}
+
+.kuds-activity-list li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 11px;
+  align-items: start;
+  padding: 12px 0;
+  border-top: 1px solid var(--kuds-border);
+}
+
+.kuds-activity-list li:first-child { border-top: 0; padding-top: 0; }
+.kuds-activity-list i { width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--ku-green); }
+.kuds-activity-list strong { display: block; font-size: 13px; }
+.kuds-activity-list p { margin: 3px 0 0; color: var(--kuds-muted); font-size: 12px; line-height: 1.45; }
+.kuds-activity-list time { color: var(--kuds-muted); font-size: 11px; white-space: nowrap; }
+
+/* Events */
+.kuds-shell .events-section { padding-bottom: 0 !important; }
+.kuds-shell .filters-row { margin: 0 0 20px !important; padding: 0 !important; border: 0 !important; }
+.kuds-shell .filters { gap: 8px !important; }
+.kuds-shell .filters button {
+  min-height: 38px !important;
+  padding: 0 13px !important;
+  color: var(--kuds-muted) !important;
+  border: 1px solid var(--kuds-border) !important;
+  border-radius: 999px !important;
+  background: var(--kuds-surface) !important;
+  font-size: 12px !important;
+}
+.kuds-shell .filters button.active { color: #fff !important; border-color: var(--ku-green) !important; background: var(--ku-green) !important; }
+.kuds-shell .filter-pill { display: none !important; }
+.kuds-shell .event-count { color: var(--kuds-muted) !important; font-size: 12px !important; }
+.kuds-shell .events-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px !important; min-height: 0 !important; }
+.kuds-shell .event-card { min-height: 0 !important; overflow: hidden; }
+.kuds-shell .event-card-button { color: inherit !important; }
+.kuds-shell .event-art { min-height: 134px !important; background: linear-gradient(135deg, var(--ku-soft-green), var(--ku-light-blue)) !important; }
+.kuds-shell .event-art-orbit { border-color: rgb(22 66 60 / 24%) !important; }
+.kuds-shell .event-art-core { background: var(--ku-green) !important; box-shadow: 0 10px 22px rgb(68 118 108 / 24%) !important; }
+.kuds-shell .event-category { color: var(--ku-dark-green) !important; background: rgb(255 255 255 / 72%) !important; }
+.kuds-shell .event-time { color: var(--ku-dark-green) !important; }
+.kuds-shell .event-card-content { padding: 18px !important; }
+.kuds-shell .event-date,
+.kuds-shell .event-location { color: var(--kuds-muted) !important; }
+.kuds-shell .event-copy h3,
+.kuds-shell .event-title-row h3 { color: var(--kuds-text) !important; font-size: 18px !important; }
+.kuds-shell .event-arrow { color: var(--ku-green) !important; border-color: var(--kuds-border) !important; background: var(--kuds-bg) !important; }
+
+/* Community and mentorship */
+.kuds-shell .peers-heading-aside button,
+.kuds-shell .mentor-heading-aside > span,
+.kuds-shell .teacher-carousel-controls button {
+  color: var(--ku-dark-green) !important;
+  border-color: var(--kuds-border) !important;
+  background: var(--kuds-surface) !important;
+}
+.kuds-shell .directory-meta { color: var(--kuds-muted) !important; }
+.kuds-shell .peers-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px !important; }
+.kuds-shell .peer-card { min-height: 300px !important; padding: 18px !important; }
+.kuds-shell .peer-card-topline { color: var(--kuds-muted) !important; }
+.kuds-shell .peer-status { color: var(--ku-dark-green) !important; }
+.kuds-shell .peer-status i { background: var(--kuds-success) !important; }
+.kuds-shell .peer-avatar,
+.kuds-shell .mentor-avatar,
+.kuds-shell .teacher-avatar { color: var(--ku-dark-green) !important; background: var(--ku-soft-green) !important; box-shadow: none !important; }
+.kuds-shell .peer-avatar-orbit,
+.kuds-shell .mentor-avatar i { border-color: rgb(68 118 108 / 32%) !important; }
+.kuds-shell .peer-identity h3,
+.kuds-shell .peer-identity strong { color: var(--kuds-text) !important; }
+.kuds-shell .peer-identity span,
+.kuds-shell .peer-bio,
+.kuds-shell .peer-location { color: var(--kuds-muted) !important; }
+.kuds-shell .peer-tags span,
+.kuds-shell .mentor-expertise span,
+.kuds-shell .mentor-availability span { color: var(--ku-dark-green) !important; border-color: rgb(68 118 108 / 20%) !important; background: rgb(211 232 191 / 45%) !important; }
+.kuds-shell .peer-actions button { color: var(--ku-dark-green) !important; border-color: var(--kuds-border) !important; border-radius: 8px !important; background: var(--kuds-surface) !important; }
+.kuds-shell .peer-actions button:first-child { color: #fff !important; border-color: var(--ku-green) !important; background: var(--ku-green) !important; }
+
+.kuds-shell .mentor-section { padding-bottom: 0 !important; }
+.kuds-shell .mentor-ambient { display: none; }
+.kuds-shell .mentor-grid { gap: 14px !important; }
+.kuds-shell .mentor-card { border-radius: 12px !important; }
+.kuds-shell .mentor-card-trigger { padding: 18px !important; }
+.kuds-shell .mentor-card-index,
+.kuds-shell .mentor-identity small,
+.kuds-shell .mentor-identity span,
+.kuds-shell .mentor-label,
+.kuds-shell .mentor-facts { color: var(--kuds-muted) !important; }
+.kuds-shell .mentor-identity strong,
+.kuds-shell .mentor-story p,
+.kuds-shell .mentor-story blockquote { color: var(--kuds-text) !important; }
+.kuds-shell .mentor-details { border-color: var(--kuds-border) !important; background: var(--kuds-bg) !important; }
+.kuds-shell .mentor-request-panel { background: var(--kuds-surface) !important; }
+
+/* Support and forms */
+.kuds-shell .support-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 16px !important; margin-top: 0 !important; }
+.kuds-shell .faq-panel,
+.kuds-shell .ticket-panel { padding: 22px !important; }
+.kuds-shell .support-panel-label { color: var(--kuds-muted) !important; border-color: var(--kuds-border) !important; }
+.kuds-shell .faq-item { border-color: var(--kuds-border) !important; }
+.kuds-shell .faq-item button { color: var(--kuds-text) !important; }
+.kuds-shell .faq-number { color: var(--ku-green) !important; }
+.kuds-shell .faq-answer p { color: var(--kuds-muted) !important; }
+.kuds-shell .ticket-panel :is(label, .ticket-label, .ticket-progress-label, .ticket-form > span) { color: var(--kuds-muted) !important; }
+.kuds-shell :is(.ticket-field, .ticket-form-field, .rating-textarea, .auth-input-shell, .profile-edit-field) :is(input, textarea, select),
+.kuds-shell .ticket-field :is(input, textarea, select),
+.kuds-shell .ticket-form :is(input, textarea, select) {
+  color: var(--kuds-text) !important;
+  border: 1px solid var(--kuds-border) !important;
+  border-radius: 8px !important;
+  background: var(--kuds-surface) !important;
+}
+.kuds-shell :is(.ticket-field, .ticket-form-field, .rating-textarea, .auth-input-shell, .profile-edit-field) :is(input, textarea, select):focus,
+.kuds-shell .ticket-form :is(input, textarea, select):focus { border-color: var(--ku-green) !important; box-shadow: 0 0 0 3px rgb(68 118 108 / 12%) !important; }
+.kuds-shell .ticket-progress-track { background: var(--kuds-border) !important; }
+.kuds-shell .ticket-progress-track span { background: var(--ku-green) !important; }
+
+/* Teachers and objective reviews */
+.kuds-shell .teachers-section { padding-bottom: 0 !important; }
+.kuds-shell .teachers-grid-texture { display: none; }
+.kuds-shell .teachers-track { gap: 16px !important; padding: 2px 0 12px !important; }
+.kuds-shell .teacher-card { flex-basis: min(280px, 80vw) !important; min-height: 220px !important; }
+.kuds-shell .teacher-card.is-selected { border-color: var(--ku-green) !important; }
+.kuds-shell .teacher-card-trigger { padding: 18px !important; }
+.kuds-shell .teacher-index,
+.kuds-shell .teacher-subject,
+.kuds-shell .teacher-card-rating small,
+.kuds-shell .teacher-card-summary p { color: var(--kuds-muted) !important; }
+.kuds-shell .teacher-card-summary > strong,
+.kuds-shell .teacher-card-rating strong { color: var(--kuds-text) !important; }
+.kuds-shell .teacher-profile-arrow { color: var(--ku-green) !important; border-color: var(--kuds-border) !important; }
+.kuds-shell .teacher-rating-panel { padding: 24px !important; background: var(--kuds-surface) !important; }
+.kuds-shell .rating-panel-copy :is(h2, h3),
+.kuds-shell .rating-teacher-chip strong { color: var(--kuds-text) !important; }
+.kuds-shell .rating-panel-copy p,
+.kuds-shell .review-guidance,
+.kuds-shell .rating-teacher-chip span { color: var(--kuds-muted) !important; }
+.kuds-shell .criteria-rating-shell { border-color: var(--kuds-border) !important; background: var(--kuds-bg) !important; }
+.kuds-shell .criteria-rating-shell :is(h3, strong, p) { color: var(--kuds-text) !important; }
+.kuds-shell .criteria-rating-shell [class*="border-white"] { border-color: var(--kuds-border) !important; }
+.kuds-shell .reviews-masonry { gap: 16px !important; }
+.kuds-shell .review-card { padding: 20px !important; }
+.kuds-shell .review-card :is(h3, strong) { color: var(--kuds-text) !important; }
+.kuds-shell .review-card :is(p, time, small) { color: var(--kuds-muted) !important; }
+.kuds-shell .teacher-profile-drawer { color: var(--kuds-text) !important; background: var(--kuds-surface) !important; }
+.kuds-shell .teacher-profile-hero,
+.kuds-shell .teacher-profile-bottom { border-color: var(--kuds-border) !important; }
+.kuds-shell .teacher-profile-portrait { background: var(--ku-soft-green) !important; }
+.kuds-shell .teacher-profile-identity :is(h2, p, span),
+.kuds-shell .teacher-profile-bio,
+.kuds-shell .teacher-profile-facts :is(dt, dd),
+.kuds-shell .teacher-profile-bottom :is(span, p) { color: var(--kuds-text) !important; }
+
+/* Clubs */
+.kuds-shell .clubs-experience { display: grid; gap: 24px; }
+.kuds-shell .clubs-hero {
+  position: relative;
+  min-height: 200px !important;
+  padding: 28px !important;
+  overflow: hidden;
+  border: 1px solid var(--kuds-border);
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--kuds-surface), rgb(202 234 241 / 56%)) !important;
+  box-shadow: var(--kuds-shadow-xs);
+}
+.kuds-shell .clubs-hero-copy { position: relative; z-index: 2; max-width: 540px; }
+.kuds-shell .clubs-hero-note { position: relative; z-index: 2; max-width: 530px; margin: 14px 0 0 !important; color: var(--kuds-muted) !important; font-size: 14px !important; }
+.kuds-shell .clubs-hero-art { opacity: 0.58; transform: scale(0.72); transform-origin: right center; }
+.kuds-shell .clubs-directory { padding: 0 !important; background: transparent !important; }
+.kuds-shell .clubs-directory-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px !important; }
+.kuds-shell .club-card { min-height: 330px !important; border-radius: 12px !important; }
+.kuds-shell .club-card :is(h2, h3, strong) { color: var(--kuds-text) !important; }
+.kuds-shell .club-card :is(p, small, time) { color: var(--kuds-muted) !important; }
+.kuds-shell .club-card-visual { min-height: 130px !important; background: linear-gradient(135deg, var(--ku-soft-green), var(--ku-light-blue)) !important; }
+.kuds-shell .magnetic-join-button { color: #fff !important; border-radius: 8px !important; background: var(--ku-green) !important; }
+
+/* Feed */
+.kuds-shell .feed-section { min-height: auto !important; padding: 0 !important; }
+.kuds-shell .student-feed-heading { max-width: none !important; margin: 0 0 24px !important; padding: 0 0 20px !important; border-color: var(--kuds-border) !important; }
+.kuds-shell .student-feed-heading :is(h1, p, span) { color: var(--kuds-text) !important; }
+.kuds-shell .student-feed-heading p { color: var(--kuds-muted) !important; }
+.kuds-shell .feed-layout { max-width: none !important; margin-top: 0 !important; }
+.kuds-shell .announcements-board { color: var(--kuds-text) !important; }
+.kuds-shell .announcements-board-heading :is(h2, h3, p, span) { color: var(--kuds-text) !important; }
+.kuds-shell .announcements-board-heading p { color: var(--kuds-muted) !important; }
+.kuds-shell .announcement-filter-bar { position: static !important; border-color: var(--kuds-border) !important; background: var(--kuds-surface) !important; box-shadow: var(--kuds-shadow-xs) !important; backdrop-filter: none !important; }
+.kuds-shell .announcement-filter-bar button { color: var(--kuds-muted) !important; }
+.kuds-shell .announcement-filter-bar button.text-\[\#0b0b0c\] { color: #fff !important; }
+.kuds-shell .announcement-filter-bar .bg-\[var\(--lime\)\] { background: var(--ku-green) !important; }
+.kuds-shell .announcement-card,
+.kuds-shell .feed-card { color: var(--kuds-text) !important; border-color: var(--kuds-border) !important; background: var(--kuds-surface) !important; box-shadow: var(--kuds-shadow-xs) !important; backdrop-filter: none !important; }
+.kuds-shell .announcement-card :is(h3, p, span, time),
+.kuds-shell .feed-card :is(h2, h3, p, span, time) { color: var(--kuds-text) !important; }
+.kuds-shell .announcement-card p,
+.kuds-shell .announcement-card time,
+.kuds-shell .feed-card p,
+.kuds-shell .feed-card small { color: var(--kuds-muted) !important; }
+.kuds-shell .feed-card-footer,
+.kuds-shell .feed-stream-heading { border-color: var(--kuds-border) !important; }
+.kuds-shell .student-feed-stream { margin-top: 32px !important; }
+.kuds-shell .feed-load-more { color: var(--ku-dark-green) !important; border-color: var(--kuds-border) !important; background: var(--kuds-surface) !important; }
+
+/* Authentication and profile */
+.kuds-shell .auth-section { min-height: auto !important; padding: 0 !important; }
+.kuds-shell .auth-layout { grid-template-columns: minmax(0, 0.8fr) minmax(360px, 1fr) !important; overflow: hidden; border: 1px solid var(--kuds-border); border-radius: 16px; background: var(--kuds-surface); box-shadow: var(--kuds-shadow-md); }
+.kuds-shell .auth-story { min-height: 520px !important; color: #fff !important; background: linear-gradient(145deg, var(--ku-dark-green), var(--ku-green)) !important; }
+.kuds-shell .auth-story :is(h2, p, span) { color: #fff !important; }
+.kuds-shell .auth-story h2 em { color: var(--ku-cream) !important; font-family: inherit !important; font-style: normal !important; }
+.kuds-shell .auth-story-note p { color: rgb(255 255 255 / 72%) !important; }
+.kuds-shell .auth-kicker { color: var(--ku-cream) !important; }
+.kuds-shell .auth-particles { display: none; }
+.kuds-shell .auth-panel { padding: clamp(24px, 4vw, 42px) !important; background: var(--kuds-surface) !important; }
+.kuds-shell .auth-panel-heading :is(span, h1, p, em) { color: var(--kuds-text) !important; font-family: inherit !important; font-style: normal !important; }
+.kuds-shell .auth-panel-heading p,
+.kuds-shell .auth-privacy-note { color: var(--kuds-muted) !important; }
+.kuds-shell .auth-mode-tabs { border-color: var(--kuds-border) !important; background: var(--kuds-bg) !important; }
+.kuds-shell .auth-mode-tabs button { color: var(--kuds-muted) !important; }
+.kuds-shell .auth-mode-tabs button[aria-selected="true"] { color: #fff !important; }
+.kuds-shell .auth-mode-pill { background: var(--ku-green) !important; }
+.kuds-shell .auth-input-shell :is(input, select) { color: var(--kuds-text) !important; border-color: var(--kuds-border) !important; background: var(--kuds-surface) !important; }
+.kuds-shell .auth-field > label { color: var(--kuds-text) !important; }
+.kuds-shell .auth-field-icon { color: var(--kuds-muted) !important; }
+
+.kuds-shell .profile-section { min-height: auto !important; padding: 0 !important; }
+.kuds-shell .profile-ambient { display: none; }
+.kuds-shell .profile-hero { padding: 0 0 24px !important; border-color: var(--kuds-border) !important; }
+.kuds-shell .profile-avatar { color: var(--ku-dark-green) !important; background: var(--ku-soft-green) !important; box-shadow: none !important; }
+.kuds-shell .profile-avatar-orbit { border-color: rgb(68 118 108 / 30%) !important; }
+.kuds-shell .profile-hero-copy :is(h1, p, span),
+.kuds-shell .profile-identity-meta span { color: var(--kuds-text) !important; font-family: inherit !important; font-style: normal !important; }
+.kuds-shell .profile-hero-copy > p,
+.kuds-shell .profile-identity-meta span { color: var(--kuds-muted) !important; }
+.kuds-shell .profile-edit-panel,
+.kuds-shell .profile-info-card { background: var(--kuds-surface) !important; }
+.kuds-shell .profile-edit-heading,
+.kuds-shell .profile-activity-list li { border-color: var(--kuds-border) !important; }
+.kuds-shell .profile-edit-heading :is(h2, p, span),
+.kuds-shell .profile-info-card :is(h2, h3, p, span, dt, dd) { color: var(--kuds-text) !important; }
+.kuds-shell .profile-edit-heading p,
+.kuds-shell .profile-info-card > div > p,
+.kuds-shell .profile-card-number,
+.kuds-shell .profile-facts dt,
+.kuds-shell .profile-activity-list p,
+.kuds-shell .profile-activity-list time { color: var(--kuds-muted) !important; }
+.kuds-shell .profile-stats { gap: 16px !important; margin-top: 24px !important; }
+.kuds-shell .profile-stat-card { color: var(--kuds-text) !important; border: 1px solid var(--kuds-border) !important; border-radius: 12px !important; background: var(--kuds-surface) !important; box-shadow: var(--kuds-shadow-xs) !important; }
+
+/* Admin and technical page */
+.kuds-shell .admin-dashboard { display: block !important; min-height: auto !important; padding: 0 !important; }
+.kuds-shell .admin-main { min-width: 0 !important; padding: 0 !important; }
+.kuds-shell .admin-sidebar { display: none !important; }
+.kuds-shell .admin-header { margin: 0 0 24px !important; padding: 0 0 20px !important; border-color: var(--kuds-border) !important; }
+.kuds-shell .admin-header :is(h1, h2, p, span) { color: var(--kuds-text) !important; }
+.kuds-shell .admin-header p,
+.kuds-shell .admin-connection-state { color: var(--kuds-muted) !important; }
+.kuds-shell .admin-account-chip { color: var(--ku-dark-green) !important; border-color: var(--kuds-border) !important; background: var(--ku-soft-green) !important; }
+.kuds-shell .admin-metrics-grid { gap: 16px !important; }
+.kuds-shell .admin-metric-card { padding: 20px !important; }
+.kuds-shell .admin-metric-card :is(strong, span, p) { color: var(--kuds-text) !important; }
+.kuds-shell .admin-metric-card p,
+.kuds-shell .admin-metric-card footer { color: var(--kuds-muted) !important; }
+.kuds-shell .admin-charts-grid { gap: 16px !important; }
+.kuds-shell .admin-chart-card { padding: 20px !important; }
+.kuds-shell .admin-chart-card :is(h2, h3, p, span) { color: var(--kuds-text) !important; }
+.kuds-shell .admin-data-section { margin-top: 24px !important; }
+.kuds-shell .admin-data-panel { overflow: hidden; }
+.kuds-shell .admin-data-table { color: var(--kuds-text) !important; }
+.kuds-shell .admin-data-table :is(th, td) { border-color: var(--kuds-border) !important; }
+.kuds-shell .admin-data-table th { color: var(--kuds-muted) !important; background: var(--kuds-bg) !important; }
+.kuds-shell .admin-data-table td { background: var(--kuds-surface) !important; }
+.kuds-shell .admin-data-search,
+.kuds-shell .admin-status-filter,
+.kuds-shell .admin-data-refresh-button,
+.kuds-shell .admin-data-tabs { border-color: var(--kuds-border) !important; background: var(--kuds-surface) !important; }
+.kuds-shell .admin-data-search input,
+.kuds-shell .admin-status-filter select { color: var(--kuds-text) !important; }
+
+.kuds-shell .technical-presentation { min-height: auto !important; padding: 0 !important; }
+.kuds-shell .technical-presentation-grid { display: none; }
+.kuds-shell .technical-presentation-hero { min-height: 240px !important; padding: 28px !important; color: #fff !important; border-radius: 12px !important; background: linear-gradient(130deg, var(--ku-dark-green), var(--ku-green)) !important; }
+.kuds-shell .technical-presentation-hero :is(h1, p, span, em) { color: #fff !important; font-family: inherit !important; font-style: normal !important; }
+.kuds-shell .technical-question-panel { margin-top: 16px !important; padding: 20px !important; }
+.kuds-shell .technical-question-panel :is(h2, p, strong, span) { color: var(--kuds-text) !important; }
+.kuds-shell .technical-section-layout,
+.kuds-shell .technical-readiness-grid { gap: 16px !important; }
+.kuds-shell .technical-narrative-card,
+.kuds-shell .technical-script-panel { padding: 22px !important; }
+.kuds-shell .technical-narrative-card :is(h2, h3, p, li, strong, span),
+.kuds-shell .technical-script-panel :is(h2, p, li, strong, span) { color: var(--kuds-text) !important; }
+.kuds-shell .technical-narrative-card p,
+.kuds-shell .technical-narrative-card li,
+.kuds-shell .technical-script-panel p,
+.kuds-shell .technical-script-panel li { color: var(--kuds-muted) !important; }
+.kuds-shell .technical-chip-list li,
+.kuds-shell .technical-api-list li { color: var(--ku-dark-green) !important; border-color: rgb(68 118 108 / 20%) !important; background: rgb(211 232 191 / 40%) !important; }
+
+/* OpenAPI explorer */
+.kuds-shell .api-explorer { display: grid; gap: 20px; }
+.kuds-shell .api-explorer-hero { padding: 28px; color: #fff; border-radius: 12px; background: linear-gradient(130deg, var(--ku-dark-green), var(--ku-green)); box-shadow: var(--kuds-shadow-md); }
+.kuds-shell .api-explorer-hero > span,
+.kuds-shell .api-test-panel > div > span { display: inline-flex; align-items: center; gap: 7px; color: var(--ku-cream); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.kuds-shell .api-explorer-hero h1 { margin: 13px 0 10px; font-size: clamp(32px, 4vw, 48px); line-height: 1.1; letter-spacing: -.035em; }
+.kuds-shell .api-explorer-hero p { max-width: 720px; margin: 0; color: rgb(255 255 255 / 82%); font-size: 14px; line-height: 1.65; }
+.kuds-shell .api-explorer-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.kuds-shell .api-explorer-hero .kuds-primary-button { margin-top: 20px; color: var(--ku-dark-green) !important; border-color: var(--ku-cream) !important; background: var(--ku-cream) !important; }
+.kuds-shell .api-secondary-button { display: inline-flex; min-height: 42px; align-items: center; gap: 8px; margin-top: 20px; padding: 0 16px; cursor: pointer; color: #fff; border: 1px solid rgb(255 255 255 / 36%); border-radius: 8px; background: transparent; font-size: 13px; font-weight: 700; }
+.kuds-shell .api-test-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center; padding: 22px; border: 1px solid var(--kuds-border); border-radius: 12px; background: var(--kuds-surface); box-shadow: var(--kuds-shadow-xs); }
+.kuds-shell .api-test-panel > div > span { color: var(--ku-green); }
+.kuds-shell .api-test-panel h2 { margin: 6px 0; color: var(--kuds-text); font-size: 21px; }
+.kuds-shell .api-test-panel p { margin: 0; color: var(--kuds-muted); font-size: 13px; }
+.kuds-shell .api-test-panel .kuds-primary-button { margin-top: 0; }
+.kuds-shell .api-test-result { grid-column: 1 / -1; display: flex; max-height: 250px; gap: 9px; overflow: auto; margin: 0; padding: 14px; color: var(--kuds-text); border: 1px solid var(--kuds-border); border-radius: 8px; background: var(--kuds-bg); font-size: 12px; line-height: 1.5; }
+.kuds-shell .api-test-result.is-success { border-color: rgb(16 185 129 / 35%); }
+.kuds-shell .api-test-result.is-error { border-color: rgb(239 68 68 / 35%); }
+.kuds-shell .api-endpoint-groups { display: grid; gap: 16px; }
+.kuds-shell .api-endpoint-group { overflow: hidden; border: 1px solid var(--kuds-border); border-radius: 12px; background: var(--kuds-surface); box-shadow: var(--kuds-shadow-xs); }
+.kuds-shell .api-endpoint-group h2 { margin: 0; padding: 16px 20px; color: var(--ku-dark-green); border-bottom: 1px solid var(--kuds-border); font-size: 18px; }
+.kuds-shell .api-endpoint-row { display: grid; grid-template-columns: 88px minmax(180px, .7fr) minmax(0, 1fr); gap: 16px; align-items: center; padding: 14px 20px; border-top: 1px solid var(--kuds-border); }
+.kuds-shell .api-endpoint-row:first-child { border-top: 0; }
+.kuds-shell .api-endpoint-row code { color: var(--ku-dark-green); font-size: 13px; font-weight: 700; }
+.kuds-shell .api-endpoint-row p { margin: 0; color: var(--kuds-muted); font-size: 13px; line-height: 1.45; }
+.kuds-shell .api-method { display: inline-flex; justify-content: center; padding: 5px 7px; color: var(--ku-dark-green); border-radius: 999px; background: var(--ku-soft-green); font-size: 10px; font-weight: 800; letter-spacing: .05em; }
+.kuds-shell .api-method.is-post { color: #fff; background: var(--ku-green); }
+.kuds-shell .api-method.is-patch { color: #7c4a03; background: #fef3c7; }
+@media (max-width: 767px) {
+  .kuds-shell .api-test-panel { grid-template-columns: 1fr; align-items: start; }
+  .kuds-shell .api-endpoint-row { grid-template-columns: 1fr; gap: 7px; }
+  .kuds-shell .api-method { width: fit-content; }
+}
+
+/* Dialogs */
+.kuds-shell :is(.drawer-backdrop, .platform-mobile-navigation-backdrop, .platform-mobile-utility-backdrop) { background: rgb(15 23 42 / 38%) !important; }
+.kuds-shell :is(.event-drawer, .admin-record-sheet, .teacher-profile-drawer) { color: var(--kuds-text) !important; border-color: var(--kuds-border) !important; background: var(--kuds-surface) !important; }
+.kuds-shell .drawer-noise { display: none; }
+.kuds-shell .drawer-content :is(h2, h3, p, span, strong),
+.kuds-shell .drawer-topline { color: var(--kuds-text) !important; }
+.kuds-shell .drawer-description,
+.kuds-shell .drawer-facts { color: var(--kuds-muted) !important; }
+
+@media (max-width: 1279px) {
+  .kuds-shell .platform-left-rail { width: 232px; }
+  .platform-workspace { margin-left: 232px; }
+  .kuds-shell .platform-route-content { padding: 24px; }
+  .kuds-shell .platform-header { padding-inline: 24px; }
+  .kuds-shell .events-grid,
+  .kuds-shell .clubs-directory-grid,
+  .kuds-shell .peers-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .kuds-quick-grid,
+  .kuds-module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 767px) {
+  .kuds-shell { background: var(--kuds-bg); }
+  .kuds-shell .platform-left-rail { display: none; }
+  .platform-workspace { margin-left: 0; }
+  .kuds-shell .platform-header {
+    min-height: 64px;
+    padding: 11px 16px 11px 64px;
+    gap: 12px;
+  }
+  .platform-header-context p,
+  .platform-header-search > span,
+  .platform-header-search kbd,
+  .platform-header-account small { display: none; }
+  .platform-header-search { width: 40px; padding: 0; justify-content: center; }
+  .platform-header-account { min-height: 36px; }
+  .kuds-shell .platform-header-account > span { width: 30px; height: 30px; }
+  .kuds-shell .platform-route-content { padding: 16px; }
+  .kuds-shell .platform-mobile-nav-trigger,
+  .kuds-shell .platform-mobile-tools-trigger {
+    position: fixed;
+    z-index: 130;
+    top: 12px;
+    display: grid;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    place-items: center;
+    color: var(--ku-dark-green);
+    border: 1px solid var(--kuds-border);
+    border-radius: 8px;
+    background: var(--kuds-surface);
+    box-shadow: var(--kuds-shadow-xs);
+  }
+  .kuds-shell .platform-mobile-nav-trigger { left: 16px; }
+  .kuds-shell .platform-mobile-tools-trigger { right: 16px; display: none; }
+  .kuds-shell .platform-mobile-navigation-layer,
+  .kuds-shell .platform-mobile-utility-layer { z-index: 160; }
+  .kuds-shell .platform-mobile-navigation,
+  .kuds-shell .platform-mobile-utility-sheet {
+    width: min(320px, calc(100vw - 30px));
+    color: var(--kuds-text);
+    border-color: var(--kuds-border);
+    background: var(--kuds-surface);
+  }
+  .kuds-shell .platform-mobile-navigation :is(header, footer),
+  .kuds-shell .platform-mobile-navigation nav a { border-color: var(--kuds-border); }
+  .kuds-shell .platform-mobile-navigation nav a { color: var(--kuds-muted); }
+  .kuds-shell .platform-mobile-navigation nav a.is-active { color: var(--ku-dark-green); background: var(--ku-soft-green); }
+  .kuds-shell .platform-mobile-navigation nav a small { color: var(--kuds-muted); }
+  .kuds-shell .platform-mobile-utility-tabs button { color: var(--kuds-muted); border-color: var(--kuds-border); }
+  .kuds-shell .platform-mobile-utility-tabs button.is-active { color: #fff; background: var(--ku-green); }
+  .kuds-shell .platform-utility-panel { display: none; }
+  .kuds-shell .site-footer { grid-template-columns: 1fr; gap: 12px; margin-top: 32px; padding-top: 20px; }
+  .kuds-shell .site-footer div { text-align: left; }
+  .kuds-welcome-banner { min-height: 0; grid-template-columns: 1fr; padding: 24px; }
+  .kuds-welcome-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kuds-welcome-banner h1 { font-size: 34px; }
+  .kuds-home-section { padding: 18px; }
+  .kuds-home-section-header { align-items: start; flex-direction: column; }
+  .kuds-quick-grid,
+  .kuds-module-grid,
+  .kuds-stat-grid,
+  .kuds-home-grid { grid-template-columns: 1fr; }
+  .kuds-shell :is(.section-heading, .peers-heading, .mentor-heading, .support-heading, .teachers-heading, .clubs-section-heading, .reviews-heading) { align-items: start; flex-direction: column; gap: 12px; margin-bottom: 18px; padding-bottom: 16px; }
+  .kuds-shell .module-page-title,
+  .kuds-shell :is(.section-heading, .peers-heading, .mentor-heading, .support-heading, .teachers-heading, .clubs-hero-copy) h1 { font-size: 32px !important; }
+  .kuds-shell .events-grid,
+  .kuds-shell .clubs-directory-grid,
+  .kuds-shell .peers-grid,
+  .kuds-shell .support-layout { grid-template-columns: 1fr !important; }
+  .kuds-shell .event-art { min-height: 118px !important; }
+  .kuds-shell .teacher-card { flex-basis: min(258px, 84vw) !important; }
+  .kuds-shell .clubs-hero { min-height: 180px !important; padding: 22px !important; }
+  .kuds-shell .clubs-hero-art { right: -120px !important; transform: scale(0.56); }
+  .kuds-shell .student-feed-heading { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .kuds-shell .auth-layout { grid-template-columns: 1fr !important; }
+  .kuds-shell .auth-story { display: none; }
+  .kuds-shell .auth-panel { padding: 24px 18px !important; }
+  .kuds-shell .auth-form-register { grid-template-columns: 1fr !important; }
+  .kuds-shell .profile-hero { grid-template-columns: 74px minmax(0, 1fr) !important; gap: 16px !important; }
+  .kuds-shell .profile-avatar-shell { width: 74px; height: 74px; }
+  .kuds-shell .profile-avatar { width: 62px; height: 62px; font-size: 17px; }
+  .kuds-shell .profile-hero-actions { grid-column: 1 / -1; align-items: flex-start; flex-direction: row; }
+  .kuds-shell .profile-stats,
+  .kuds-shell .profile-dashboard-grid { grid-template-columns: 1fr !important; }
+  .kuds-shell .technical-presentation-hero { min-height: 0 !important; padding: 22px !important; }
+  .kuds-shell .technical-section-layout,
+  .kuds-shell .technical-readiness-grid { grid-template-columns: 1fr !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kuds-shell *,
+  .kuds-shell *::before,
+  .kuds-shell *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

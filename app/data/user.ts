@@ -60,6 +60,7 @@ export type AuthGateway = {
 };
 
 export const universities = [
+  "Qarabağ Universiteti",
   "Bakı Dövlət Universiteti",
   "Azərbaycan Dövlət İqtisad Universiteti",
   "Azərbaycan Texniki Universiteti",

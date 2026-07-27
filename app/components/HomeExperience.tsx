@@ -1,151 +1,136 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import {
+  ArrowRight,
+  CalendarDays,
+  GraduationCap,
+  Megaphone,
+  Sparkles,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
-import { useRef, type CSSProperties } from "react";
+import { announcements } from "../data/network";
+import { events } from "../data/events";
 import { platformRoutes } from "../data/navigation";
 
-const reveal = {
-  hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0 },
-};
+const ease = [0.22, 1, 0.36, 1] as const;
+
+const quickActions = [
+  { href: "/events", label: "Tədbirlər", description: "Yaxın görüşləri kəşf et", icon: CalendarDays },
+  { href: "/feed", label: "Elanlar", description: "Vacib yenilikləri oxu", icon: Megaphone },
+  { href: "/community", label: "İcma", description: "Yeni əlaqələr qur", icon: UsersRound },
+  { href: "/teachers", label: "Müəllimlər", description: "Meyarlar üzrə müqayisə et", icon: GraduationCap },
+] as const;
 
 export function HomeExperience() {
-  const heroRef = useRef<HTMLElement>(null);
-  const reduceMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-  const orbY = useTransform(scrollYProgress, [0, 1], [0, reduceMotion ? 0 : 180]);
-  const rightOrbY = useTransform(scrollYProgress, [0, 1], [0, reduceMotion ? 0 : -90]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.86], [1, 0.25]);
-  const heroScale = useTransform(scrollYProgress, [0, 1], [1, reduceMotion ? 1 : 0.975]);
+  const reducedMotion = Boolean(useReducedMotion());
 
   return (
-    <>
+    <div className="kuds-home">
       <motion.section
-        ref={heroRef}
-        className="hero-section"
-        style={{ opacity: heroOpacity, scale: heroScale }}
+        className="kuds-welcome-banner"
         aria-labelledby="home-title"
+        initial={reducedMotion ? false : { opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.54, ease }}
       >
-        <motion.div className="hero-orb hero-orb-left" style={{ y: orbY }} aria-hidden="true" />
-        <motion.div className="hero-orb hero-orb-right" style={{ y: rightOrbY }} aria-hidden="true" />
-        <div className="hero-grid" aria-hidden="true" />
-
-        <motion.div
-          className="hero-eyebrow"
-          initial={reduceMotion ? false : { opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, delay: 0.12 }}
-        >
-          <Sparkles size={14} />
-          EduRate · Vahid öyrənmə məkanı
-        </motion.div>
-
-        <motion.h1
-          id="home-title"
-          className="hero-title"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: reduceMotion ? 0 : 0.1, delayChildren: 0.2 } },
-          }}
-        >
-          <span className="title-line"><motion.span variants={reveal}>Maraqla gəl.</motion.span></span>
-          <span className="title-line title-line-accent"><motion.span variants={reveal}>Birlikdə öyrən.</motion.span></span>
-          <span className="title-line title-line-last"><motion.span variants={reveal}>İnamla <em>irəli get.</em></motion.span></span>
-        </motion.h1>
-
-        <motion.div
-          className="hero-bottom"
-          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.78, delay: 0.72, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <p>EduRate tədbirləri, icmanı, klubları, müəllimləri, mentorluğu, universitet şəbəkəsini və idarəetməni bir sakit, düşünülmüş təcrübədə birləşdirir.</p>
-          <Link href="/events" className="scroll-cue home-journey-link">
-            <span>Öyrənmə yoluna başla</span>
-            <i><ArrowUpRight size={16} /></i>
+        <div className="kuds-welcome-copy">
+          <span className="kuds-welcome-kicker"><Sparkles size={14} aria-hidden="true" /> EduRate tələbə portalı</span>
+          <h1 id="home-title">Universitet həyatın bir yerdə.</h1>
+          <p>
+            Tədbirlər, elanlar, klublar, mentorluq və müəllim qiymətləndirməsi üçün
+            sadə, ardıcıl və rahat rəqəmsal məkan.
+          </p>
+          <Link href="/events" className="kuds-primary-button">
+            Tədbirlərə bax <ArrowRight size={16} aria-hidden="true" />
           </Link>
-        </motion.div>
+        </div>
 
-        <motion.div
-          className="hero-stamp"
-          initial={reduceMotion ? false : { opacity: 0, rotate: -10, scale: 0.82 }}
-          animate={{ opacity: 1, rotate: 5, scale: 1 }}
-          transition={{ type: "spring", delay: 0.92, stiffness: 110, damping: 14 }}
-          aria-hidden="true"
-        >
-          <span>09</span>
-          <small>istiqamət</small>
-        </motion.div>
+        <div className="kuds-welcome-summary" aria-label="Platforma göstəriciləri">
+          <div><strong>9</strong><span>əsas bölmə</span></div>
+          <div><strong>6</strong><span>aktiv tələbə klubu</span></div>
+          <div><strong>4</strong><span>obyektiv rəy meyarı</span></div>
+        </div>
       </motion.section>
 
-      <section className="platform-map-section" aria-labelledby="platform-map-title">
-        <motion.div
-          className="platform-map-heading"
-          initial={reduceMotion ? false : { opacity: 0, y: 28 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        >
+      <section className="kuds-home-section" aria-labelledby="quick-actions-title">
+        <header className="kuds-home-section-header">
           <div>
-            <span className="section-kicker">Platformanı kəşf et</span>
-            <h2 id="platform-map-title">Sənin öyrənmə yolun.<br /><em>Bir yerdə.</em></h2>
+            <span>Tez keçidlər</span>
+            <h2 id="quick-actions-title">Nədən başlamaq istəyirsən?</h2>
           </div>
-          <p>Diqqətini yayındırmadan, ehtiyacın olan hissəyə birbaşa keç.</p>
-        </motion.div>
-
-        <ol className="module-map-grid">
-          {platformRoutes.map((route, index) => (
-            <motion.li
-              key={route.href}
-              className={index < 2 ? "is-featured" : index === platformRoutes.length - 1 ? "is-network" : ""}
-              style={{ "--module-accent": route.accent } as CSSProperties}
-              initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.55, delay: index * 0.055, ease: [0.22, 1, 0.36, 1] }}
+        </header>
+        <div className="kuds-quick-grid">
+          {quickActions.map(({ href, label, description, icon: Icon }, index) => (
+            <motion.div
+              key={href}
+              initial={reducedMotion ? false : { opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: index * 0.06, ease }}
             >
-              <Link href={route.href}>
-                <span className="module-map-number">{route.number}</span>
-                <div>
-                  <small>{route.label}</small>
-                  <h3>{route.title}</h3>
-                  <p>{route.description}</p>
-                </div>
-                <footer>
-                  <span>{route.metric}</span>
-                  <i aria-hidden="true"><ArrowUpRight size={16} /></i>
-                </footer>
+              <Link href={href} className="kuds-quick-card">
+                <span><Icon size={18} aria-hidden="true" /></span>
+                <div><strong>{label}</strong><small>{description}</small></div>
               </Link>
-            </motion.li>
+            </motion.div>
           ))}
-        </ol>
+        </div>
       </section>
 
-      <section className="manifesto-section home-manifesto">
-        <motion.div
-          className="manifesto-orb"
-          aria-hidden="true"
-          whileInView={reduceMotion ? undefined : { x: [0, 22, 0], y: [0, -18, 0] }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 4.8, ease: "easeInOut" }}
-        />
-        <motion.p
-          initial={reduceMotion ? false : { opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-20%" }}
-          transition={{ duration: 0.8 }}
-        >
-          Bir platforma.<br />Hər addımda <em>yanında.</em>
-        </motion.p>
-        <span>Seçimdən söhbətə, rəydən mentorluğa qədər bütün yol eyni aydın və etibarlı dil ilə qurulub.</span>
+      <section className="kuds-stat-grid" aria-label="EduRate göstəriciləri">
+        <article className="kuds-stat-card"><span>Yaxın tədbirlər</span><strong>{events.length}</strong></article>
+        <article className="kuds-stat-card"><span>Yeni elanlar</span><strong>{announcements.length}</strong></article>
+        <article className="kuds-stat-card"><span>İnkişaf imkanları</span><strong>3</strong></article>
       </section>
-    </>
+
+      <section className="kuds-home-grid" aria-label="Son fəaliyyətlər">
+        <article className="kuds-home-section kuds-list-card">
+          <header className="kuds-home-section-header">
+            <div><span>Yaxın tədbirlər</span><h2>Bu həftə</h2></div>
+            <Link href="/events" className="kuds-inline-link">Hamısına bax</Link>
+          </header>
+          <ul className="kuds-activity-list">
+            {events.slice(0, 3).map((event) => (
+              <li key={event.id}>
+                <i aria-hidden="true" />
+                <div><strong>{event.title}</strong><p>{event.location} · {event.category}</p></div>
+                <time>{event.date} {event.month}</time>
+              </li>
+            ))}
+          </ul>
+        </article>
+
+        <article className="kuds-home-section kuds-list-card">
+          <header className="kuds-home-section-header">
+            <div><span>Son elanlar</span><h2>Kampusdan xəbərlər</h2></div>
+            <Link href="/feed" className="kuds-inline-link">Elanlara keç</Link>
+          </header>
+          <ul className="kuds-activity-list">
+            {announcements.slice(0, 3).map((announcement) => (
+              <li key={announcement.id}>
+                <i aria-hidden="true" />
+                <div><strong>{announcement.title}</strong><p>{announcement.source}</p></div>
+                <time>{announcement.dateLabel}</time>
+              </li>
+            ))}
+          </ul>
+        </article>
+      </section>
+
+      <section className="kuds-home-section" aria-labelledby="platform-modules-title">
+        <header className="kuds-home-section-header">
+          <div><span>Platforma bölmələri</span><h2 id="platform-modules-title">Bütün imkanlar</h2></div>
+        </header>
+        <div className="kuds-module-grid">
+          {platformRoutes.slice(4).map((route) => (
+            <Link key={route.href} href={route.href} className="kuds-module-card">
+              <span>{route.number}</span>
+              <div><strong>{route.label}</strong><small>{route.description}</small></div>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }

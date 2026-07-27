@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Instrument_Serif } from "next/font/google";
 import { headers } from "next/headers";
 import {
   chatGPTSignOutPath,
@@ -10,19 +9,9 @@ import { PlatformProvider } from "./components/PlatformProvider";
 import { PlatformShell } from "./components/PlatformShell";
 import { createIdentityProfile } from "./data/user";
 import "./globals.css";
+import "./kuds.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin", "latin-ext"],
-});
-
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  subsets: ["latin", "latin-ext"],
-  weight: "400",
-});
-
-const title = "EduRate — Birlikdə öyrən, inamla irəli get.";
+const title = "EduRate — Universitet həyatın bir yerdə.";
 const description =
   "Tədbirləri, tələbə klublarını, etibarlı icma əlaqələrini, mentorluğu, müəllim qiymətləndirməsini və ağıllı idarəetməni bir araya gətirən öyrənmə platforması.";
 
@@ -88,7 +77,7 @@ export default async function RootLayout({
 
   return (
     <html lang="az">
-      <body className={`${dmSans.variable} ${instrumentSerif.variable} antialiased`}>
+      <body className="antialiased">
         <AuthProvider initialUser={initialUser} signOutHref={signOutHref}>
           <PlatformProvider>
             <PlatformShell>{children}</PlatformShell>
