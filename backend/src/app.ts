@@ -23,25 +23,29 @@ export function createApp() {
       crossOriginResourcePolicy: { policy: "cross-origin" },
     }),
   );
-  app.use(
-    cors({
-      origin(origin, callback) {
-        if (!origin || env.ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-        return callback(new Error("Bu origin üçün CORS icazəsi yoxdur."));
-      },
-      methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
-      credentials: true,
-      maxAge: 86_400,
-    }),
-  );
-  app.use(express.json({ limit: "256kb" }));
   app.use((request, response, next) => {
     const requestId = request.header("x-request-id") || randomUUID();
     response.locals.requestId = requestId;
     response.setHeader("X-Request-Id", requestId);
     next();
   });
+  app.use(
+    cors((request, callback) => {
+      const origin = request.header("origin");
+      const currentOrigin = `${request.protocol}://${request.get("host")}`;
+      const isAllowed =
+        !origin || origin === currentOrigin || env.ALLOWED_ORIGINS.includes(origin);
+
+      callback(null, {
+        origin: isAllowed,
+        methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
+        credentials: true,
+        maxAge: 86_400,
+      });
+    }),
+  );
+  app.use(express.json({ limit: "256kb" }));
 
   app.get("/", (_request, response) => {
     response.json({

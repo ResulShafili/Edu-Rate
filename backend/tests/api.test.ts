@@ -6,6 +6,7 @@ import request from "supertest";
 process.env.NODE_ENV = "test";
 process.env.JWT_SECRET = "edurate-test-secret-with-at-least-32-characters";
 process.env.FRONTEND_URL = "http://localhost:3000";
+process.env.TRUST_PROXY = "true";
 
 let app: Express;
 
@@ -25,6 +26,21 @@ describe("EduRate API", () => {
     const response = await request(app).get("/api/openapi.json").expect(200);
     assert.equal(response.body.openapi, "3.1.0");
     assert.ok(response.body.paths["/api/auth/signup"]);
+  });
+
+  it("Swagger-in cari API domenindən CORS sorğusuna icazə verir", async () => {
+    const response = await request(app)
+      .options("/api/auth/signup")
+      .set("Host", "edurate-api.onrender.com")
+      .set("X-Forwarded-Proto", "https")
+      .set("Origin", "https://edurate-api.onrender.com")
+      .set("Access-Control-Request-Method", "POST")
+      .expect(204);
+
+    assert.equal(
+      response.headers["access-control-allow-origin"],
+      "https://edurate-api.onrender.com",
+    );
   });
 
   it("qeydiyyat, giriş və sessiya axınını tamamlayır", async () => {
