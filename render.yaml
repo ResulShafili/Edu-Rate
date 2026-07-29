@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: edurate-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: edurate-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: FRONTEND_URL
+        value: https://edu-rate-nu.vercel.app
+      - key: TRUST_PROXY
+        value: "true"
+
+databases:
+  - name: edurate-db
+    databaseName: edurate
+    user: edurate
+    plan: free
+    region: frankfurt

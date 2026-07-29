@@ -53,6 +53,16 @@ npm run dev
 
 Sonra tətbiq `http://localhost:3000`, API sənədləri isə `http://localhost:3000/api-docs` ünvanında açılır.
 
+Ayrı Express backend-i `backend/` qovluğundadır:
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Server `http://localhost:3001`, Swagger UI isə `http://localhost:3001/api-docs` ünvanında açılır. Render deployment addımları `backend/README.md` faylında verilib.
+
 `.env.example` faylını `.env.local` adı ilə kopyalayın və production-da güclü sessiya sirri verin:
 
 ```bash
