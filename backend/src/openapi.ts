@@ -6,10 +6,7 @@ export const openApiDocument = {
     description:
       "EduRate tələbə portalının Express və PostgreSQL əsaslı REST API sənədləri.",
   },
-  servers: [
-    { url: "http://localhost:3001", description: "Lokal server" },
-    { url: "https://edurate-api.up.railway.app", description: "Railway serveri" },
-  ],
+  servers: [{ url: "/", description: "Cari EduRate API serveri" }],
   tags: [
     { name: "System", description: "Server vəziyyəti" },
     { name: "Authentication", description: "Qeydiyyat və giriş" },
