@@ -27,33 +27,14 @@ export function ClubsExperience({ clubs }: ClubsExperienceProps) {
         >
           <span className="clubs-hero-eyebrow">
             <Sparkles size={13} strokeWidth={1.8} aria-hidden="true" />
-            07 / Tələbə birlikləri
+            Tələbə birlikləri
           </span>
           <h1 id="clubs-directory-title" className="module-page-title">
             Klublar və icmalar
           </h1>
         </motion.div>
 
-        <motion.p
-          className="clubs-hero-note"
-          initial={reducedMotion ? false : { opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={
-            reducedMotion
-              ? { duration: 0 }
-              : { duration: 0.62, delay: 0.12, ease: [0.22, 1, 0.36, 1] }
-          }
-        >
-          Yeni bacarıq, ortaq fikir və mənalı tanışlıq üçün kampusun açıq
-          tələbə məkanlarını sakit bir kataloqda kəşf et.
-        </motion.p>
-
-        <div className="clubs-hero-art" aria-hidden="true">
-          <span className="clubs-hero-art-orbit clubs-hero-art-orbit-one" />
-          <span className="clubs-hero-art-orbit clubs-hero-art-orbit-two" />
-          <span className="clubs-hero-art-core" />
-          <span className="clubs-hero-art-label">EDU / 07</span>
-        </div>
+        <p className="clubs-hero-note">Maraq dairənə uyğun tələbə birliyini tap və fəaliyyətinə qoşul.</p>
       </section>
 
       <section className="clubs-directory" aria-labelledby="clubs-list-title">

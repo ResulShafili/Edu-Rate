@@ -1,6 +1,7 @@
 import { ApiError, type ApiMockRequest } from "../../../lib/api/client";
 import { ApiHttpError, apiError, apiNoContent, apiSuccess, readJsonBody } from "../../../lib/api/http";
-import { handleAdminMockRequest } from "../../../services/admin.service";
+import { handleAdminMockRequest } from "../../../services/admin-mock.server";
+import { getRequestIdentity, isAdminEmail } from "../../../lib/auth/request-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,14 @@ type Context = {
 
 async function handle(request: Request, context: Context) {
   try {
+    const identity = await getRequestIdentity(request);
+    if (!identity) {
+      throw new ApiHttpError(401, "UNAUTHENTICATED", "İdarəetmə API-si üçün daxil olmalısan.");
+    }
+    if (!isAdminEmail(identity.email)) {
+      throw new ApiHttpError(403, "FORBIDDEN", "Bu əməliyyat üçün administrator icazəsi yoxdur.");
+    }
+
     const { path } = await context.params;
     const method = request.method as ApiMockRequest["method"];
     const body = method === "POST" || method === "PATCH" || method === "PUT"

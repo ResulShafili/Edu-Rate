@@ -10,6 +10,8 @@ export type Mentor = {
   experience: string;
   responseTime: string;
   availability: string[];
+  mode: "Onlayn" | "Əyani" | "Hibrid";
+  languages: string[];
   expertise: string[];
   outcome: string;
   accent: string;
@@ -29,6 +31,8 @@ export const mentors: Mentor[] = [
     experience: "Məhsul sahəsində 12 il",
     responseTime: "Adətən 4 saat ərzində cavab verir",
     availability: ["Çərşənbə axşamı · 17:00–19:00", "Cümə axşamı · 16:00–18:00"],
+    mode: "Hibrid",
+    languages: ["Azərbaycan dili", "İngilis dili"],
     expertise: ["Məhsul strategiyası", "İstifadəçi araşdırması", "Hekayələndirmə", "Yol xəritəsi"],
     outcome: "“Aygün dağınıq tezisimi nəhayət inamla izah edə bildiyim aydın məhsul istiqamətinə çevirməyimə kömək etdi.”",
     accent: "#c8ff4d",
@@ -46,6 +50,8 @@ export const mentors: Mentor[] = [
     experience: "İnteraktiv təcrübələrin hazırlanmasında 10 il",
     responseTime: "Adətən bir gün ərzində cavab verir",
     availability: ["Çərşənbə · 18:00–20:00", "Şənbə · 10:00–12:00"],
+    mode: "Əyani",
+    languages: ["Azərbaycan dili"],
     expertise: ["Yaradıcı proqramlaşdırma", "Məkan interfeysləri", "Prototipləşdirmə", "Qarşılıqlı əlaqə dizaynı"],
     outcome: "“Murad ilə bir düşünülmüş görüş prototipimizdə həftələrdir tapa bilmədiyimiz qarşılıqlı əlaqəni üzə çıxardı.”",
     accent: "#ff9e7a",
@@ -63,6 +69,8 @@ export const mentors: Mentor[] = [
     experience: "Süni intellekt araşdırmalarında 14 il",
     responseTime: "Adətən 8 saat ərzində cavab verir",
     availability: ["Bazar ertəsi · 17:30–19:30", "Cümə · 15:00–17:00"],
+    mode: "Onlayn",
+    languages: ["Azərbaycan dili", "İngilis dili"],
     expertise: ["Məsuliyyətli süni intellekt", "Araşdırma dizaynı", "Model qiymətləndirilməsi", "Etika"],
     outcome: "“Pərvin ideyanın gücünü azaltmadan fərziyyələrimi sorğuladı və qürurla müdafiə edə biləcəyim araşdırma hazırlamağıma kömək etdi.”",
     accent: "#b9a7ff",
@@ -80,6 +88,8 @@ export const mentors: Mentor[] = [
     experience: "Sistem yanaşmaları sahəsində 11 il",
     responseTime: "Adətən 6 saat ərzində cavab verir",
     availability: ["Çərşənbə axşamı · 14:00–16:00", "Cümə · 13:00–15:00"],
+    mode: "Hibrid",
+    languages: ["Azərbaycan dili"],
     expertise: ["Sistem xəritələndirməsi", "Fasilitasiya", "Sosial innovasiya", "Xidmət ekosistemləri"],
     outcome: "“Kənan komandamıza problem haqqında ortaq dil və elə ertəsi səhər ata biləcəyimiz praktik ilk addım verdi.”",
     accent: "#7de5d1",
@@ -97,6 +107,8 @@ export const mentors: Mentor[] = [
     experience: "Xidmət dizaynında 13 il",
     responseTime: "Adətən 12 saat ərzində cavab verir",
     availability: ["Çərşənbə · 19:00–21:00", "Bazar · 09:00–11:00"],
+    mode: "Onlayn",
+    languages: ["Azərbaycan dili", "İngilis dili"],
     expertise: ["Xidmət dizaynı", "İstifadəçi yolu xəritəsi", "Dizayn təhlili", "Təcrübə strategiyası"],
     outcome: "“Yeganə başqalarının gözdən qaçırdığı üç kiçik məqamı gördü; onları düzəltmək bütün təcrübəni dəyişdi.”",
     accent: "#77b8ff",
@@ -114,6 +126,8 @@ export const mentors: Mentor[] = [
     experience: "Yaradıcı mütəxəssislərlə kouçinq sahəsində 9 il",
     responseTime: "Adətən bir gün ərzində cavab verir",
     availability: ["Cümə axşamı · 18:00–20:00", "Şənbə · 11:00–13:00"],
+    mode: "Hibrid",
+    languages: ["Azərbaycan dili"],
     expertise: ["Karyera aydınlığı", "Portfolio hekayələri", "Yaradıcı biznes", "Davamlı iş yanaşması"],
     outcome: "“Sevinc mənə layihələri sadalamağı dayandırıb çevrildiyim peşəkarın hekayəsini danışmağa başlamaqda kömək etdi.”",
     accent: "#f7d56f",

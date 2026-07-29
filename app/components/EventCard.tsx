@@ -9,6 +9,7 @@ import {
   eventMonthLongLabels,
   type Event,
 } from "../data/events";
+import { getDeadlineStatus, getTemporalStatus } from "../lib/date";
 
 type EventCardProps = {
   event: Event;
@@ -29,6 +30,8 @@ export function EventCard({ event, index, onSelect }: EventCardProps) {
     stiffness: 220,
     damping: 26,
   });
+  const temporalStatus = getTemporalStatus(event.startAt, event.endAt);
+  const registrationOpen = getDeadlineStatus(event.registrationDeadline) === "open" && event.availableSpots > 0 && temporalStatus !== "finished";
 
   function handleMove(event: MouseEvent<HTMLElement>) {
     if (reduceMotion) return;
@@ -100,10 +103,15 @@ export function EventCard({ event, index, onSelect }: EventCardProps) {
               </span>
             </div>
             <p>{event.description}</p>
+            <span className={`event-registration-status${registrationOpen ? " is-open" : " is-closed"}`}>
+              {registrationOpen ? `${event.availableSpots} yer qalıb` : temporalStatus === "finished" ? "Tədbir bitib" : "Qeydiyyat bağlıdır"}
+            </span>
             <span className="event-location">
               <MapPin size={13} strokeWidth={1.8} />
               {event.city} · {event.location}
             </span>
+            <span className="event-organizer">{event.organizer}</span>
+            <span className="event-primary-action">Ətraflı bax</span>
           </div>
         </div>
       </button>

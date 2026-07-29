@@ -62,31 +62,20 @@ export const platformRoutes = [
     metric: "6 tələbə klubu",
     accent: "#ff9e7a",
   },
-  {
-    href: "/admin",
-    label: "İdarəetmə",
-    number: "08",
-    title: "Platformanı aydın idarə et",
-    description: "İstifadəçi, klub, tədbir və müraciət axınlarını bir sakit idarəetmə mərkəzində izlə.",
-    metric: "canlı analitika · çevik nəzarət",
-    accent: "#72ddf7",
-  },
-  {
-    href: "/technical-presentation",
-    label: "Təqdimat",
-    number: "09",
-    title: "Layihəni aydın izah et",
-    description: "Rəhbər görüşləri üçün texniki vəziyyət, API hazırlığı və növbəti addımlar.",
-    metric: "rəhbərlər üçün hazır skript",
-    accent: "#d4ff00",
-  },
 ] as const;
 
 export type PlatformRoute = (typeof platformRoutes)[number];
 
 export const accountRoutes = [
-  { href: "/profile", label: "Profilim", number: "P" },
-  { href: "/auth", label: "Daxil ol", number: "A" },
+  { href: "/profile", label: "Profil" },
+  { href: "/settings", label: "Parametrlər" },
+  { href: "/auth", label: "Daxil ol" },
+] as const;
+
+export const primaryNavigationGroups = [
+  { label: "Kəşf et", routes: ["/events", "/feed", "/clubs"] },
+  { label: "İnsanlar", routes: ["/community", "/teachers", "/mentors"] },
+  { label: "Kömək", routes: ["/support"] },
 ] as const;
 
 export const allPlatformRoutes = [...platformRoutes, ...accountRoutes] as const;

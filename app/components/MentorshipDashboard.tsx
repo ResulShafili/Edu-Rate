@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import Link from "next/link";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -9,18 +10,54 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
-import { useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { mentors } from "../data/mentors";
+import { useAuth } from "./AuthProvider";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function MentorshipDashboard() {
-  const [expandedId, setExpandedId] = useState<string | null>(mentors[0]?.id ?? null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [requestedIds, setRequestedIds] = useState<Set<string>>(() => new Set());
+  const [requestingId, setRequestingId] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState("");
+  const [query, setQuery] = useState("");
+  const [mode, setMode] = useState("all");
+  const [day, setDay] = useState("all");
+  const [language, setLanguage] = useState("all");
+  const [response, setResponse] = useState("all");
   const reduceMotion = useReducedMotion();
+  const { user } = useAuth();
+  const filteredMentors = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase("az");
+    return mentors.filter((mentor) => {
+      const matchesQuery = !normalized || `${mentor.name} ${mentor.role} ${mentor.expertise.join(" ")}`.toLocaleLowerCase("az").includes(normalized);
+      const matchesDay = day === "all" || mentor.availability.some((slot) => slot.startsWith(day));
+      const matchesLanguage = language === "all" || mentor.languages.includes(language);
+      const fastResponse = /4 saat|6 saat|8 saat/.test(mentor.responseTime);
+      const matchesResponse = response === "all" || (response === "fast" ? fastResponse : !fastResponse);
+      return matchesQuery && matchesDay && matchesLanguage && matchesResponse && (mode === "all" || mentor.mode === mode);
+    });
+  }, [day, language, mode, query, response]);
 
-  function requestMentorship(mentorId: string) {
-    setRequestedIds((current) => new Set(current).add(mentorId));
+  async function requestMentorship(mentorId: string) {
+    if (requestingId) return;
+    setRequestingId(mentorId);
+    setRequestError("");
+    try {
+      const response = await fetch("/api/mentorship/requests", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mentorId }),
+      });
+      const payload = await response.json() as { error?: { message?: string } };
+      if (!response.ok) throw new Error(payload.error?.message ?? "Müraciət göndərilmədi.");
+      setRequestedIds((current) => new Set(current).add(mentorId));
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "Müraciət göndərilmədi.");
+    } finally {
+      setRequestingId(null);
+    }
   }
 
   return (
@@ -36,11 +73,11 @@ export function MentorshipDashboard() {
         transition={{ duration: 0.75, ease }}
       >
         <div>
-          <span className="mentor-kicker">04 / Mentorluq</span>
+          <span className="mentor-kicker">Mentorluq</span>
           <h1 id="mentor-title" className="module-page-title">Mentorlar</h1>
         </div>
         <div className="mentor-heading-aside">
-          <span><Sparkles size={13} /> Diqqətlə uyğunlaşdırılır</span>
+          <span><Sparkles size={13} /> Uyğun mentorunu tap</span>
           <p>
             Hazırda verdiyin suallarla vaxtilə üzləşmiş biri ilə birlikdə öyrən.
             Soyuq tanışlıqlar da, süni əlaqələr də yoxdur.
@@ -48,8 +85,16 @@ export function MentorshipDashboard() {
         </div>
       </motion.div>
 
+      <div className="mentor-filters" aria-label="Mentor filtrləri">
+        <label><span>Ad və ya ixtisas</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Məsələn, məhsul strategiyası" /></label>
+        <label><span>Görüş formatı</span><select value={mode} onChange={(event) => setMode(event.target.value)}><option value="all">Bütün formatlar</option><option value="Onlayn">Onlayn</option><option value="Əyani">Əyani</option><option value="Hibrid">Hibrid</option></select></label>
+        <label><span>Uyğun gün</span><select value={day} onChange={(event) => setDay(event.target.value)}><option value="all">Bütün günlər</option><option value="Bazar ertəsi">Bazar ertəsi</option><option value="Çərşənbə axşamı">Çərşənbə axşamı</option><option value="Çərşənbə">Çərşənbə</option><option value="Cümə axşamı">Cümə axşamı</option><option value="Cümə">Cümə</option><option value="Şənbə">Şənbə</option><option value="Bazar">Bazar</option></select></label>
+        <label><span>Dil</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option value="all">Bütün dillər</option><option value="Azərbaycan dili">Azərbaycan dili</option><option value="İngilis dili">İngilis dili</option></select></label>
+        <label><span>Cavab vaxtı</span><select value={response} onChange={(event) => setResponse(event.target.value)}><option value="all">Fərq etmir</option><option value="fast">8 saata qədər</option><option value="daily">Bir günədək</option></select></label>
+      </div>
+
       <motion.div layout className="mentor-grid" aria-label="Mentor siyahısı">
-        {mentors.map((mentor, index) => {
+        {filteredMentors.map((mentor, index) => {
           const expanded = expandedId === mentor.id;
           const requested = requestedIds.has(mentor.id);
           const detailsId = `mentor-details-${mentor.id}`;
@@ -82,7 +127,6 @@ export function MentorshipDashboard() {
                 aria-expanded={expanded}
                 aria-controls={detailsId}
               >
-                <span className="mentor-card-index">{String(index + 1).padStart(2, "0")}</span>
                 <motion.span
                   layout="position"
                   className="mentor-avatar"
@@ -96,6 +140,7 @@ export function MentorshipDashboard() {
                   <small>{mentor.role}</small>
                   <strong>{mentor.name}</strong>
                   <span>{mentor.focus}</span>
+                  <span className="mentor-summary-facts">{mentor.mode} · {mentor.responseTime.replace("Adətən ", "")}</span>
                 </motion.span>
 
                 <span className="mentor-expand-icon" aria-hidden="true">
@@ -137,15 +182,17 @@ export function MentorshipDashboard() {
                         <div className="mentor-facts">
                           <span><MapPin size={13} /> {mentor.location} · {mentor.timezone}</span>
                           <span><Clock3 size={13} /> {mentor.responseTime}</span>
-                          <span>{mentor.experience}</span>
+                          <span>{mentor.experience} · {mentor.mode}</span>
+                          <span>{mentor.languages.join(" · ")}</span>
                         </div>
 
-                        <motion.button
+                        {user ? <motion.button
                           type="button"
                           className={`mentor-request${requested ? " is-requested" : ""}`}
-                          onClick={() => !requested && requestMentorship(mentor.id)}
+                          onClick={() => !requested && void requestMentorship(mentor.id)}
                           aria-pressed={requested}
-                          aria-disabled={requested}
+                          aria-disabled={requested || requestingId === mentor.id}
+                          disabled={requested || requestingId === mentor.id}
                           whileTap={reduceMotion ? undefined : { scale: 0.96 }}
                           animate={requested && !reduceMotion ? { scale: [1, 1.06, 1] } : undefined}
                           transition={{ duration: reduceMotion ? 0 : 0.42, ease, times: [0, 0.52, 1] }}
@@ -159,7 +206,7 @@ export function MentorshipDashboard() {
                               transition={{ duration: 0.2 }}
                             >
                               {requested ? <Check size={16} strokeWidth={2.4} /> : <Sparkles size={15} />}
-                              {requested ? "Müraciət göndərildi" : "Mentorluq üçün müraciət et"}
+                              {requested ? "Müraciət göndərildi" : requestingId === mentor.id ? "Göndərilir…" : "Mentorluq üçün müraciət et"}
                             </motion.span>
                           </AnimatePresence>
                           {requested && !reduceMotion && (
@@ -167,7 +214,8 @@ export function MentorshipDashboard() {
                               <i /><i /><i /><i />
                             </span>
                           )}
-                        </motion.button>
+                        </motion.button> : <Link className="mentor-request" href="/auth?returnTo=%2Fmentors">Müraciət üçün daxil ol <ArrowUpRight size={15} /></Link>}
+                        {requestError && expanded && <p className="mentor-request-error" role="alert">{requestError}</p>}
                         <span className="sr-only" aria-live="polite">
                           {requested ? `${mentor.name} üçün mentorluq müraciəti göndərildi.` : ""}
                         </span>
@@ -179,6 +227,7 @@ export function MentorshipDashboard() {
             </motion.article>
           );
         })}
+        {filteredMentors.length === 0 && <div className="mentor-filter-empty">Bu filtrlərə uyğun mentor tapılmadı.</div>}
       </motion.div>
     </section>
   );

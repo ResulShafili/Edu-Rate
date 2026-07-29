@@ -8,7 +8,6 @@ export type PlatformShortcut = {
 
 export type PlatformRouteContext = {
   label: string;
-  number: string;
   title: string;
   description: string;
   metric: string;
@@ -17,7 +16,6 @@ export type PlatformRouteContext = {
 
 const homeContext: PlatformRouteContext = {
   label: "Ana səhifə",
-  number: "00",
   title: "Platformanın mərkəzi",
   description: "EduRate-in bütün imkanlarına sakit və sürətli başlanğıc nöqtəsi.",
   metric: "9 əsas istiqamət",
@@ -31,7 +29,6 @@ const homeContext: PlatformRouteContext = {
 const routeContexts: Record<string, PlatformRouteContext> = {
   "/events": {
     label: "Tədbirlər",
-    number: "01",
     title: "Tədbir alətləri",
     description: "Kateqoriyaları süzgəcdən keçir və uyğun görüşün detallarını aç.",
     metric: "6 seçilmiş tədbir",
@@ -42,7 +39,6 @@ const routeContexts: Record<string, PlatformRouteContext> = {
   },
   "/community": {
     label: "İcma",
-    number: "02",
     title: "İcma alətləri",
     description: "Tələbələri maraq sahəsinə görə kəşf et, əlaqə qur və söhbətə başla.",
     metric: "2 418 aktiv üzv",
@@ -53,7 +49,6 @@ const routeContexts: Record<string, PlatformRouteContext> = {
   },
   "/teachers": {
     label: "Müəllimlər",
-    number: "03",
     title: "Müəllim alətləri",
     description: "Müəllimi seç, bacarıqlar üzrə qiymətləndir və əsaslandırılmış rəy yaz.",
     metric: "4 obyektiv meyar",
@@ -64,7 +59,6 @@ const routeContexts: Record<string, PlatformRouteContext> = {
   },
   "/mentors": {
     label: "Mentorlar",
-    number: "04",
     title: "Mentorluq alətləri",
     description: "Təcrübə sahəsini və uyğun vaxtı yoxla, sonra mentorluq sorğusu göndər.",
     metric: "6 təcrübəli mentor",
@@ -75,7 +69,6 @@ const routeContexts: Record<string, PlatformRouteContext> = {
   },
   "/support": {
     label: "Dəstək",
-    number: "05",
     title: "Dəstək alətləri",
     description: "Tez-tez verilən suallara bax və ehtiyac olarsa müraciət yarat.",
     metric: "1 iş günü ərzində cavab",
@@ -86,7 +79,6 @@ const routeContexts: Record<string, PlatformRouteContext> = {
   },
   "/feed": {
     label: "Elanlar",
-    number: "06",
     title: "Elanlar alətləri",
     description: "Rəsmi elanları, klub yeniliklərini və fakültə xəbərlərini izlə.",
     metric: "Gündəlik yenilənən şəbəkə",
@@ -97,7 +89,6 @@ const routeContexts: Record<string, PlatformRouteContext> = {
   },
   "/clubs": {
     label: "Klublar",
-    number: "07",
     title: "Klub alətləri",
     description: "Tələbə klublarını və təşkilatlarını bir kataloqda kəşf et.",
     metric: "6 tələbə klubu",
@@ -107,7 +98,6 @@ const routeContexts: Record<string, PlatformRouteContext> = {
   },
   "/admin": {
     label: "İdarəetmə",
-    number: "08",
     title: "İdarəetmə alətləri",
     description: "Platforma göstəricilərinə, cədvəllərə və idarəetmə axınlarına keç.",
     metric: "Canlı analitika · çevik nəzarət",
@@ -116,21 +106,8 @@ const routeContexts: Record<string, PlatformRouteContext> = {
       { href: "/admin#admin-data", label: "Məlumat cədvəlləri", description: "İstifadəçi, klub və tədbirləri idarə et." },
     ],
   },
-  "/technical-presentation": {
-    label: "Təqdimat",
-    number: "09",
-    title: "Təqdimat alətləri",
-    description: "Layihəni rəhbər şəxslərə aydın və texniki dürüst izah etmək üçün hazır struktur.",
-    metric: "Hazır danışıq skripti",
-    shortcuts: [
-      { href: "/technical-presentation#technical-presentation-title", label: "Təqdimat xülasəsi", description: "Layihənin əsas mesajını aç." },
-      { href: "/technical-presentation#technical-script-title", label: "Qısa danışıq mətni", description: "Görüşdə deyiləcək hazır skripti oxu." },
-      { href: "/technical-presentation#technical-readiness-title", label: "Hazır vəziyyət", description: "Nəyin hazır, nəyin növbəti mərhələ olduğunu göstər." },
-    ],
-  },
   "/profile": {
     label: "Profilim",
-    number: "P",
     title: "Profil alətləri",
     description: "Şəxsi məlumatlarını, maraqlarını və son fəaliyyətini bir yerdə gör.",
     metric: "Şəxsi öyrənmə məkanı",
@@ -139,9 +116,32 @@ const routeContexts: Record<string, PlatformRouteContext> = {
       { href: "/support", label: "Hesab dəstəyi", description: "Hesab ilə bağlı kömək al." },
     ],
   },
+  "/settings": {
+    label: "Parametrlər",
+    title: "Hesab seçimləri",
+    description: "Bildiriş seçimlərini və şəxsi təcrübəni idarə et.",
+    metric: "Cihazda yadda saxlanılır",
+    shortcuts: [
+      { href: "/settings#settings-title", label: "Bildiriş seçimləri", description: "Vacib yenilik və xatırlatmaları idarə et." },
+      { href: "/privacy", label: "Məxfilik", description: "Məlumat istifadəsi prinsiplərinə bax." },
+    ],
+  },
+  "/privacy": {
+    label: "Məxfilik",
+    title: "Məxfilik məlumatları",
+    description: "Şəxsi məlumatların istifadəsi ilə tanış ol.",
+    metric: "Aydın məlumat siyasəti",
+    shortcuts: [],
+  },
+  "/terms": {
+    label: "İstifadə şərtləri",
+    title: "Platforma qaydaları",
+    description: "Təhlükəsiz və hörmətli istifadə qaydalarını oxu.",
+    metric: "İcma qaydaları",
+    shortcuts: [],
+  },
   "/auth": {
     label: "Daxil ol",
-    number: "A",
     title: "Hesab alətləri",
     description: "EduRate hesabına təhlükəsiz daxil ol və ya yeni profil yarat.",
     metric: "Təhlükəsiz giriş",
@@ -168,8 +168,16 @@ export const platformSearchItems = [
   ...accountRoutes.map((route) => ({
     href: route.href,
     label: route.label,
-    description: route.href === "/profile" ? "Şəxsi məlumat və fəaliyyət" : "Giriş və qeydiyyat",
-    keywords: route.href === "/profile" ? "profil hesab məlumat" : "daxil ol qeydiyyat hesab",
+    description: route.href === "/profile"
+      ? "Şəxsi məlumat və fəaliyyət"
+      : route.href === "/settings"
+        ? "Bildiriş və hesab seçimləri"
+        : "Giriş və qeydiyyat",
+    keywords: route.href === "/profile"
+      ? "profil hesab məlumat"
+      : route.href === "/settings"
+        ? "parametrlər bildiriş seçim"
+        : "daxil ol qeydiyyat hesab",
   })),
 ] as const;
 

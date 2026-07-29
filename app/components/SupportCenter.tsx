@@ -3,8 +3,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, ChevronDown, LifeBuoy, Send } from "lucide-react";
 import {
-  useEffect,
-  useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
@@ -36,16 +34,12 @@ export function SupportCenter() {
   const [touched, setTouched] = useState<Set<keyof TicketFields>>(() => new Set());
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const submitTimer = useRef<number | null>(null);
+  const [submitError, setSubmitError] = useState("");
+  const [reference, setReference] = useState("");
   const reduceMotion = useReducedMotion();
 
   const validity = getTicketValidity(fields);
-  const completedFields = Object.values(validity).filter(Boolean).length;
-  const progress = completedFields * 25;
-
-  useEffect(() => () => {
-    if (submitTimer.current) window.clearTimeout(submitTimer.current);
-  }, []);
+  const formValid = Object.values(validity).every(Boolean);
 
   function updateField(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const name = event.target.name as keyof TicketFields;
@@ -56,20 +50,37 @@ export function SupportCenter() {
     setTouched((current) => new Set(current).add(name));
   }
 
-  function submitTicket(event: FormEvent<HTMLFormElement>) {
+  async function submitTicket(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (progress < 100 || submitting) return;
+    if (!formValid || submitting) {
+      setTouched(new Set(["name", "email", "topic", "message"]));
+      return;
+    }
     setSubmitting(true);
-    submitTimer.current = window.setTimeout(() => {
-      setSubmitting(false);
+    setSubmitError("");
+    try {
+      const response = await fetch("/api/support/tickets", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(fields),
+      });
+      const payload = await response.json() as { data?: { reference?: string }; error?: { message?: string } };
+      if (!response.ok) throw new Error(payload.error?.message ?? "Sorğu göndərilmədi.");
+      setReference(payload.data?.reference ?? "");
       setSubmitted(true);
-    }, reduceMotion ? 80 : 720);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Sorğu göndərilmədi. Yenidən yoxla.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function resetTicket() {
     setFields(initialFields);
     setTouched(new Set());
     setSubmitted(false);
+    setSubmitError("");
+    setReference("");
   }
 
   return (
@@ -81,11 +92,11 @@ export function SupportCenter() {
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.7, ease }}
       >
-        <span className="support-kicker">05 / Dəstək</span>
         <div>
+          <span className="support-kicker">Yardım mərkəzi</span>
           <h1 id="support-title" className="module-page-title">Dəstək</h1>
-          <p>Əvvəlcə aydın cavab. Lazım olanda isə qayğıkeş bir insan.</p>
         </div>
+        <p>Tez-tez verilən suallara bax və ehtiyac olduqda dəstək sorğusu göndər.</p>
       </motion.div>
 
       <div className="support-layout">
@@ -159,33 +170,8 @@ export function SupportCenter() {
           <div className="ticket-progress-head">
             <div>
               <span>Dəstək sorğusu göndər</span>
-              <small>Qalanını biz həll edəcəyik.</small>
+              <small>Məcburi xanaları doldur, sorğunu aidiyyəti komandaya çatdıraq.</small>
             </div>
-            <AnimatePresence mode="popLayout" initial={false}>
-              <motion.strong
-                key={progress}
-                initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
-              >
-                {progress}%
-              </motion.strong>
-            </AnimatePresence>
-          </div>
-          <div
-            className="ticket-progress"
-            role="progressbar"
-            aria-label="Dəstək sorğusunun tamamlanması"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progress}
-            aria-valuetext={`4 məcburi xanadan ${completedFields} xana tamamlanıb`}
-          >
-            <motion.span
-              style={{ transformOrigin: "left center" }}
-              animate={{ scaleX: progress / 100 }}
-              transition={{ duration: reduceMotion ? 0 : 0.5, ease }}
-            />
           </div>
 
           <AnimatePresence mode="wait" initial={false}>
@@ -207,7 +193,8 @@ export function SupportCenter() {
                 </motion.span>
                 <small>Dəstək sorğusu qəbul edildi</small>
                 <h3>Etibarlı əllərdəsən.</h3>
-                <p>Təsdiqi {fields.email} ünvanına göndərdik. İcma nümayəndəmiz tezliklə səninlə əlaqə saxlayacaq.</p>
+                <p>Sorğun qəbul edildi. İcma nümayəndəmiz {fields.email} ünvanı ilə bir iş günü ərzində əlaqə saxlayacaq.</p>
+                {reference && <small>Müraciət kodu: {reference}</small>}
                 <button type="button" onClick={resetTicket}>
                   Yeni sorğu göndər <ArrowRight size={14} />
                 </button>
@@ -296,16 +283,17 @@ export function SupportCenter() {
                 </div>
 
                 <div className="ticket-form-footer">
-                  <span>{progress < 100 ? "Göndərmək üçün bütün xanaları doldur" : "Göndərməyə hazırsan"}</span>
+                  <span>{formValid ? "Sorğu göndərilməyə hazırdır" : "Bütün məcburi xanaları doldur"}</span>
                   <motion.button
                     type="submit"
-                    disabled={progress < 100 || submitting}
+                    disabled={submitting}
                     whileTap={reduceMotion ? undefined : { scale: 0.97 }}
                   >
                     {submitting ? <i className="ticket-spinner" /> : <Send size={14} />}
                     {submitting ? "Göndərilir" : "Sorğunu göndər"}
                   </motion.button>
                 </div>
+                {submitError && <p className="ticket-submit-error" role="alert">{submitError}</p>}
               </motion.form>
             )}
           </AnimatePresence>

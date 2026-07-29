@@ -263,7 +263,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
           <div className="admin-header__copy">
             <span>
               <ShieldCheck size={14} strokeWidth={1.8} aria-hidden="true" />
-              08 / İdarəetmə mərkəzi
+              İdarəetmə mərkəzi
             </span>
             <h1 className="module-page-title">İdarəetmə</h1>
           </div>

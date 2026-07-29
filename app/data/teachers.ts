@@ -16,6 +16,8 @@ export type Teacher = {
   city: string;
   experience: string;
   availability: string;
+  teachingMode: "Onlayn" | "Əyani" | "Hibrid";
+  language: "Azərbaycan dili" | "İngilis dili";
   studentsCount: number;
   rating: number;
   reviewCount: number;
@@ -55,6 +57,8 @@ export const teachers: Teacher[] = [
     city: "Bakı",
     experience: "11 il təcrübə",
     availability: "Bu gün · 18:30-dan sonra",
+    teachingMode: "Hibrid",
+    language: "Azərbaycan dili",
     studentsCount: 286,
     rating: 4.9,
     reviewCount: 94,
@@ -72,6 +76,8 @@ export const teachers: Teacher[] = [
     city: "Gəncə",
     experience: "8 il təcrübə",
     availability: "Sabah · 10:00–14:00",
+    teachingMode: "Onlayn",
+    language: "Azərbaycan dili",
     studentsCount: 214,
     rating: 4.8,
     reviewCount: 76,
@@ -89,6 +95,8 @@ export const teachers: Teacher[] = [
     city: "Sumqayıt",
     experience: "9 il təcrübə",
     availability: "Bu həftə · 3 boş vaxt aralığı",
+    teachingMode: "Hibrid",
+    language: "İngilis dili",
     studentsCount: 341,
     rating: 5,
     reviewCount: 128,
@@ -106,6 +114,8 @@ export const teachers: Teacher[] = [
     city: "Şəki",
     experience: "13 il təcrübə",
     availability: "Cümə · 16:00–20:00",
+    teachingMode: "Əyani",
+    language: "Azərbaycan dili",
     studentsCount: 198,
     rating: 4.9,
     reviewCount: 82,
@@ -123,6 +133,8 @@ export const teachers: Teacher[] = [
     city: "Lənkəran",
     experience: "10 il təcrübə",
     availability: "Şənbə · 11:00–15:00",
+    teachingMode: "Onlayn",
+    language: "Azərbaycan dili",
     studentsCount: 173,
     rating: 4.8,
     reviewCount: 67,
@@ -140,6 +152,8 @@ export const teachers: Teacher[] = [
     city: "Naxçıvan",
     experience: "7 il təcrübə",
     availability: "Bazar · 12:00–17:00",
+    teachingMode: "Hibrid",
+    language: "Azərbaycan dili",
     studentsCount: 149,
     rating: 4.7,
     reviewCount: 51,

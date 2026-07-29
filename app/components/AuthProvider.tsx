@@ -25,6 +25,7 @@ type AuthContextValue = {
   status: AuthStatus;
   credentialAuthAvailable: boolean;
   signOutHref: string | null;
+  isAdmin: boolean;
   signIn: (input: SignInInput) => Promise<UserProfile>;
   register: (input: RegisterInput) => Promise<UserProfile>;
   signOut: () => Promise<void>;
@@ -35,6 +36,7 @@ type AuthProviderProps = PropsWithChildren<{
   gateway?: AuthGateway;
   initialUser?: UserProfile | null;
   signOutHref?: string | null;
+  initialIsAdmin?: boolean;
 }>;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -46,6 +48,7 @@ export function AuthProvider({
   gateway,
   initialUser = null,
   signOutHref = null,
+  initialIsAdmin = false,
 }: AuthProviderProps) {
   const [user, setUser] = useState<UserProfile | null>(initialUser);
   const [status, setStatus] = useState<AuthStatus>("idle");
@@ -116,13 +119,14 @@ export function AuthProvider({
   const value = useMemo<AuthContextValue>(() => ({
     credentialAuthAvailable,
     signOutHref,
+    isAdmin: initialIsAdmin,
     user,
     status,
     signIn,
     register,
     signOut,
     updateProfile,
-  }), [credentialAuthAvailable, register, signIn, signOut, signOutHref, status, updateProfile, user]);
+  }), [credentialAuthAvailable, initialIsAdmin, register, signIn, signOut, signOutHref, status, updateProfile, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,14 +1,14 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, CalendarDays, Clock3, MapPin, Sparkles, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import {
   eventCategoryLabels,
-  eventMonthLongLabels,
   type Event,
 } from "../data/events";
+import { formatAzDate, getDeadlineStatus, getTemporalStatus } from "../lib/date";
 
 type EventDrawerProps = {
   event: Event | null;
@@ -18,6 +18,10 @@ type EventDrawerProps = {
 export function EventDrawer({ event, onClose }: EventDrawerProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
+  const reduceMotion = useReducedMotion();
+  const registrationOpen = event
+    ? getDeadlineStatus(event.registrationDeadline) === "open" && event.availableSpots > 0 && getTemporalStatus(event.startAt, event.endAt) !== "finished"
+    : false;
 
   useEffect(() => {
     if (!event) return;
@@ -64,7 +68,7 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.35 }}
+          transition={{ duration: reduceMotion ? 0 : 0.25 }}
           role="presentation"
         >
           <motion.button
@@ -84,10 +88,10 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
               "--event-accent": event.accent,
               "--event-glow": event.glow,
             } as CSSProperties}
-            initial={{ x: "105%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "105%" }}
-            transition={{ type: "spring", stiffness: 155, damping: 24, mass: 0.8 }}
+            initial={reduceMotion ? { opacity: 0 } : { x: "105%" }}
+            animate={reduceMotion ? { opacity: 1 } : { x: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { x: "105%" }}
+            transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 155, damping: 24, mass: 0.8 }}
           >
             <div className="drawer-noise" aria-hidden="true" />
             <div className="drawer-topline">
@@ -109,41 +113,47 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
             >
               <motion.div
                 className="drawer-orb drawer-orb-one"
-                animate={{ rotate: 360 }}
+                animate={reduceMotion ? undefined : { rotate: 360 }}
                 transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
               />
               <motion.div
                 className="drawer-orb drawer-orb-two"
-                animate={{ rotate: -360 }}
+                animate={reduceMotion ? undefined : { rotate: -360 }}
                 transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
               />
               <Sparkles size={26} strokeWidth={1.25} />
             </div>
 
             <div className="drawer-content">
-              <span className="drawer-kicker">Birlikdə yaşanan təcrübə</span>
+              <span className="drawer-kicker">Tədbir məlumatı</span>
               <h2 id="event-drawer-title">{event.title}</h2>
               <p className="drawer-description">{event.longDescription}</p>
 
               <div className="drawer-facts">
                 <div>
                   <CalendarDays size={17} />
-                  <span>{event.date} {eventMonthLongLabels[event.month]}</span>
+                  <span>{formatAzDate(event.startAt)}</span>
                 </div>
                 <div><Clock3 size={17} /><span>{event.time}</span></div>
                 <div><MapPin size={17} /><span>{event.location}, {event.city}</span></div>
               </div>
 
               <div className="drawer-hosts">
+                <span>Təşkilatçı</span>
+                <p>{event.organizer}</p>
                 <span>Qonaqlar</span>
                 <p>{event.speakers.join(" · ")}</p>
               </div>
 
               <div className="drawer-bottom">
                 <span>{event.capacity}</span>
-                <button type="button" className="reserve-button">
-                  Tədbirə qeydiyyatdan keç <ArrowRight size={17} />
-                </button>
+                {registrationOpen ? (
+                  <a className="reserve-button" href={`mailto:events@edurate.az?subject=${encodeURIComponent(`${event.title} tədbirinə qeydiyyat`)}`}>
+                    Qeydiyyat üçün müraciət et <ArrowRight size={17} />
+                  </a>
+                ) : (
+                  <span className="event-registration-closed">Qeydiyyat bağlıdır</span>
+                )}
               </div>
             </div>
           </motion.aside>

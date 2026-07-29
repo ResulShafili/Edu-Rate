@@ -3,7 +3,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useRef, type ReactNode } from "react";
-import { allPlatformRoutes } from "../data/navigation";
 
 type RouteTransitionProps = {
   children: ReactNode;
@@ -23,9 +22,6 @@ export function RouteTransition({ children }: RouteTransitionProps) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const frameRef = useRef<HTMLDivElement>(null);
-  const routeLabel = pathname === "/"
-    ? "Ana səhifə"
-    : allPlatformRoutes.find((route) => pathname === route.href || pathname.startsWith(`${route.href}/`))?.label ?? "Səhifə";
 
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -42,9 +38,7 @@ export function RouteTransition({ children }: RouteTransitionProps) {
   }, [pathname]);
 
   return (
-    <>
-      <span className="sr-only" aria-live="polite">{routeLabel} açıldı</span>
-      <motion.div
+    <motion.div
         ref={frameRef}
         key={pathname}
         className="route-frame"
@@ -55,6 +49,5 @@ export function RouteTransition({ children }: RouteTransitionProps) {
       >
         {children}
       </motion.div>
-    </>
   );
 }

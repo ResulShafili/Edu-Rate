@@ -1,0 +1,36 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { getDeadlineStatus, getTemporalStatus, getUpcomingItems, isExpired, isThisWeek } from "../app/lib/date.ts";
+
+const now = new Date("2026-07-29T12:00:00+04:00");
+
+test("tədbir statusu sərhəd anlarında düzgün hesablanır", () => {
+  assert.equal(getTemporalStatus("2026-07-29T13:00:00+04:00", "2026-07-29T14:00:00+04:00", now), "upcoming");
+  assert.equal(getTemporalStatus("2026-07-29T11:00:00+04:00", "2026-07-29T12:00:00+04:00", now), "ongoing");
+  assert.equal(getTemporalStatus("2026-07-29T10:00:00+04:00", "2026-07-29T11:59:59+04:00", now), "finished");
+});
+
+test("son qeydiyyat anı daxil olmaqla açıq sayılır", () => {
+  assert.equal(getDeadlineStatus("2026-07-29T12:00:00+04:00", now), "open");
+  assert.equal(getDeadlineStatus("2026-07-29T11:59:59+04:00", now), "closed");
+});
+
+test("həftə və arxiv sərhədləri sabitdir", () => {
+  assert.equal(isThisWeek("2026-07-27T00:00:00+04:00", now), true);
+  assert.equal(isThisWeek("2026-08-03T00:00:00+04:00", now), false);
+  assert.equal(isExpired("2026-07-29T12:00:00+04:00", now), false);
+  assert.equal(isExpired("2026-07-29T11:59:59+04:00", now), true);
+});
+
+test("gələcək və davam edən tədbirlər xronoloji sıralanır", () => {
+  const items = [
+    { id: "later", startAt: "2026-08-02T10:00:00+04:00", endAt: "2026-08-02T12:00:00+04:00" },
+    { id: "past", startAt: "2026-07-20T10:00:00+04:00", endAt: "2026-07-20T12:00:00+04:00" },
+    { id: "soon", startAt: "2026-07-30T10:00:00+04:00", endAt: "2026-07-30T12:00:00+04:00" },
+  ];
+  assert.deepEqual(getUpcomingItems(items, now).map((item) => item.id), ["soon", "later"]);
+});
+
+test("etibarsız tarix səssizcə qəbul edilmir", () => {
+  assert.throws(() => getTemporalStatus("yoxdur", "2026-08-01", now), RangeError);
+});

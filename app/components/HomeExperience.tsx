@@ -5,6 +5,7 @@ import {
   ArrowRight,
   CalendarDays,
   GraduationCap,
+  HeartHandshake,
   Megaphone,
   Sparkles,
   UsersRound,
@@ -12,122 +13,100 @@ import {
 import Link from "next/link";
 import { announcements } from "../data/network";
 import { events } from "../data/events";
-import { platformRoutes } from "../data/navigation";
+import {
+  formatAzDate,
+  formatAzDateTime,
+  getUpcomingItems,
+  isExpired,
+} from "../lib/date";
+import { useAuth } from "./AuthProvider";
+import { EmptyState } from "./ui/Primitives";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const quickActions = [
-  { href: "/events", label: "Tədbirlər", description: "Yaxın görüşləri kəşf et", icon: CalendarDays },
-  { href: "/feed", label: "Elanlar", description: "Vacib yenilikləri oxu", icon: Megaphone },
-  { href: "/community", label: "İcma", description: "Yeni əlaqələr qur", icon: UsersRound },
-  { href: "/teachers", label: "Müəllimlər", description: "Meyarlar üzrə müqayisə et", icon: GraduationCap },
+const recommendations = [
+  { href: "/teachers", label: "Müəllimləri müqayisə et", description: "Tədris meyarlarına və təsdiqlənmiş rəylərə bax.", icon: GraduationCap },
+  { href: "/mentors", label: "Mentor tap", description: "Sahə, uyğun vaxt və görüş formatına görə seçim et.", icon: HeartHandshake },
+  { href: "/community", label: "İcmanı kəşf et", description: "Ortaq marağı olan tələbələrlə əlaqə qur.", icon: UsersRound },
 ] as const;
 
 export function HomeExperience() {
   const reducedMotion = Boolean(useReducedMotion());
+  const { user } = useAuth();
+  const upcomingEvents = getUpcomingItems(events).slice(0, 3);
+  const activeAnnouncements = announcements
+    .filter((item) => !isExpired(item.expiresAt))
+    .sort((left, right) => Number(right.priority) - Number(left.priority))
+    .slice(0, 3);
+  const firstName = user?.name.split(/\s+/)[0];
 
   return (
     <div className="kuds-home">
       <motion.section
         className="kuds-welcome-banner"
         aria-labelledby="home-title"
-        initial={reducedMotion ? false : { opacity: 0, y: 18 }}
+        initial={reducedMotion ? false : { opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.54, ease }}
+        transition={{ duration: 0.48, ease }}
       >
         <div className="kuds-welcome-copy">
           <span className="kuds-welcome-kicker"><Sparkles size={14} aria-hidden="true" /> EduRate tələbə portalı</span>
-          <h1 id="home-title">Universitet həyatın bir yerdə.</h1>
-          <p>
-            Tədbirlər, elanlar, klublar, mentorluq və müəllim qiymətləndirməsi üçün
-            sadə, ardıcıl və rahat rəqəmsal məkan.
-          </p>
-          <Link href="/events" className="kuds-primary-button">
-            Tədbirlərə bax <ArrowRight size={16} aria-hidden="true" />
+          <h1 id="home-title">{firstName ? `Salam, ${firstName}.` : "Universitet həyatın bir yerdə."}</h1>
+          <p>{user ? "Yaxın tədbirlərini, vacib elanları və sənə uyğun imkanları bir baxışda izlə." : "Tədbirləri, elanları, icmaları və öyrənmə imkanlarını vahid məkanda kəşf et."}</p>
+          <Link href={user ? "/feed" : "/auth"} className="kuds-primary-button">
+            {user ? "Vacib elanlara bax" : "Hesabına daxil ol"} <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </div>
-
-        <div className="kuds-welcome-summary" aria-label="Platforma göstəriciləri">
-          <div><strong>9</strong><span>əsas bölmə</span></div>
-          <div><strong>6</strong><span>aktiv tələbə klubu</span></div>
-          <div><strong>4</strong><span>obyektiv rəy meyarı</span></div>
+        <div className="kuds-welcome-summary" aria-label="Bu gün üçün xülasə">
+          <div><strong>{upcomingEvents.length}</strong><span>yaxın tədbir</span></div>
+          <div><strong>{activeAnnouncements.length}</strong><span>aktiv elan</span></div>
+          <div><strong>{user ? user.stats[1]?.value ?? 0 : "—"}</strong><span>icma əlaqəsi</span></div>
         </div>
       </motion.section>
 
-      <section className="kuds-home-section" aria-labelledby="quick-actions-title">
-        <header className="kuds-home-section-header">
-          <div>
-            <span>Tez keçidlər</span>
-            <h2 id="quick-actions-title">Nədən başlamaq istəyirsən?</h2>
-          </div>
-        </header>
-        <div className="kuds-quick-grid">
-          {quickActions.map(({ href, label, description, icon: Icon }, index) => (
-            <motion.div
-              key={href}
-              initial={reducedMotion ? false : { opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: index * 0.06, ease }}
-            >
-              <Link href={href} className="kuds-quick-card">
-                <span><Icon size={18} aria-hidden="true" /></span>
-                <div><strong>{label}</strong><small>{description}</small></div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      <section className="kuds-stat-grid" aria-label="EduRate göstəriciləri">
-        <article className="kuds-stat-card"><span>Yaxın tədbirlər</span><strong>{events.length}</strong></article>
-        <article className="kuds-stat-card"><span>Yeni elanlar</span><strong>{announcements.length}</strong></article>
-        <article className="kuds-stat-card"><span>İnkişaf imkanları</span><strong>3</strong></article>
-      </section>
-
-      <section className="kuds-home-grid" aria-label="Son fəaliyyətlər">
+      <section className="kuds-home-grid" aria-label="Əsas yeniliklər">
         <article className="kuds-home-section kuds-list-card">
           <header className="kuds-home-section-header">
-            <div><span>Yaxın tədbirlər</span><h2>Bu həftə</h2></div>
+            <div><span><CalendarDays size={14} aria-hidden="true" /> Təqvim</span><h2>Yaxın tədbirlər</h2></div>
             <Link href="/events" className="kuds-inline-link">Hamısına bax</Link>
           </header>
-          <ul className="kuds-activity-list">
-            {events.slice(0, 3).map((event) => (
-              <li key={event.id}>
-                <i aria-hidden="true" />
-                <div><strong>{event.title}</strong><p>{event.location} · {event.category}</p></div>
-                <time>{event.date} {event.month}</time>
-              </li>
-            ))}
-          </ul>
+          {upcomingEvents.length ? (
+            <ul className="kuds-activity-list">
+              {upcomingEvents.map((event) => (
+                <li key={event.id}>
+                  <i aria-hidden="true" />
+                  <div><strong>{event.title}</strong><p>{event.location} · {event.organizer}</p></div>
+                  <time dateTime={event.startAt}>{formatAzDateTime(event.startAt)}</time>
+                </li>
+              ))}
+            </ul>
+          ) : <EmptyState compact title="Yaxın tədbir yoxdur" description="Yeni tədbirlər əlavə olunanda burada görünəcək." action={<Link href="/events" className="kuds-inline-link">Təqvimə bax</Link>} />}
         </article>
 
         <article className="kuds-home-section kuds-list-card">
           <header className="kuds-home-section-header">
-            <div><span>Son elanlar</span><h2>Kampusdan xəbərlər</h2></div>
+            <div><span><Megaphone size={14} aria-hidden="true" /> Yeniliklər</span><h2>Vacib elanlar</h2></div>
             <Link href="/feed" className="kuds-inline-link">Elanlara keç</Link>
           </header>
-          <ul className="kuds-activity-list">
-            {announcements.slice(0, 3).map((announcement) => (
-              <li key={announcement.id}>
-                <i aria-hidden="true" />
-                <div><strong>{announcement.title}</strong><p>{announcement.source}</p></div>
-                <time>{announcement.dateLabel}</time>
-              </li>
-            ))}
-          </ul>
+          {activeAnnouncements.length ? (
+            <ul className="kuds-activity-list">
+              {activeAnnouncements.map((announcement) => (
+                <li key={announcement.id}>
+                  <i aria-hidden="true" />
+                  <div><strong>{announcement.title}</strong><p>{announcement.source}</p></div>
+                  <time dateTime={announcement.expiresAt}>{formatAzDate(announcement.expiresAt)}</time>
+                </li>
+              ))}
+            </ul>
+          ) : <EmptyState compact title="Aktiv elan yoxdur" description="Arxiv elanlarına Elanlar bölməsindən baxa bilərsən." />}
         </article>
       </section>
 
-      <section className="kuds-home-section" aria-labelledby="platform-modules-title">
-        <header className="kuds-home-section-header">
-          <div><span>Platforma bölmələri</span><h2 id="platform-modules-title">Bütün imkanlar</h2></div>
-        </header>
-        <div className="kuds-module-grid">
-          {platformRoutes.slice(4).map((route) => (
-            <Link key={route.href} href={route.href} className="kuds-module-card">
-              <span>{route.number}</span>
-              <div><strong>{route.label}</strong><small>{route.description}</small></div>
-            </Link>
+      <section className="kuds-home-section" aria-labelledby="recommendations-title">
+        <header className="kuds-home-section-header"><div><span>Sənin üçün</span><h2 id="recommendations-title">Faydalı istiqamətlər</h2></div></header>
+        <div className="kuds-recommendation-grid">
+          {recommendations.map(({ href, label, description, icon: Icon }) => (
+            <Link key={href} href={href} className="kuds-recommendation-card"><span><Icon size={19} aria-hidden="true" /></span><div><strong>{label}</strong><small>{description}</small></div><ArrowRight size={16} aria-hidden="true" /></Link>
           ))}
         </div>
       </section>

@@ -17,6 +17,7 @@ import type {
 import { networkFilterLabels } from "../data/network";
 import { AnnouncementsBoard } from "./AnnouncementsBoard";
 import { FeedCard } from "./FeedCard";
+import { EmptyState } from "./ui/Primitives";
 
 type StudentFeedProps = {
   announcements: readonly AnnouncementItem[];
@@ -109,7 +110,7 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
         <div>
           <span className="mb-5 inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--lime)]">
             <Sparkles size={13} aria-hidden="true" />
-            06 / Universitet həyatı
+            Universitet yenilikləri
           </span>
           <h1
             id="student-feed-title"
@@ -156,25 +157,23 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
             {networkFilterLabels[activeFilter]} kateqoriyasında {filteredItems.length} yenilik göstərilir.
           </p>
 
-          <motion.div
-            id="student-feed-list"
-            className="feed-list grid gap-3 sm:gap-4"
-            role="feed"
-            aria-label={`${networkFilterLabels[activeFilter]} tələbə yenilikləri`}
-            aria-busy={isAppending}
-          >
-            <AnimatePresence initial={false} mode="popLayout">
-              {visibleItems.map((item, index) => (
-                <FeedCard
-                  key={item.id}
-                  item={item}
-                  position={index + 1}
-                  total={filteredItems.length}
-                  reducedMotion={reducedMotion}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          {visibleItems.length ? (
+            <motion.div
+              id="student-feed-list"
+              className="feed-list grid gap-3 sm:gap-4"
+              role="feed"
+              aria-label={`${networkFilterLabels[activeFilter]} tələbə yenilikləri`}
+              aria-busy={isAppending}
+            >
+              <AnimatePresence initial={false} mode="popLayout">
+                {visibleItems.map((item, index) => (
+                  <FeedCard key={item.id} item={item} position={index + 1} total={filteredItems.length} reducedMotion={reducedMotion} />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          ) : (
+            <EmptyState title="Bu kateqoriyada paylaşım yoxdur" description="Digər kateqoriyaya keç və ya yeni yeniliklər üçün sonra yenidən bax." />
+          )}
 
           <div
             ref={sentinelRef}

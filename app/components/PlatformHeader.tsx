@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, ChevronRight, Search } from "lucide-react";
+import { Bell, ChevronRight, LogIn, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
+import { useSyncExternalStore } from "react";
 import { getPlatformRouteContext } from "../data/platform-shell";
 
 type PlatformHeaderProps = {
@@ -15,6 +16,11 @@ export function PlatformHeader({ toolsOpen, onToolsToggle }: PlatformHeaderProps
   const pathname = usePathname();
   const { user } = useAuth();
   const context = getPlatformRouteContext(pathname);
+  const shortcutLabel = useSyncExternalStore(
+    () => () => undefined,
+    () => /mac|iphone|ipad/i.test(`${navigator.platform ?? ""} ${navigator.userAgent ?? ""}`) ? "⌘ K" : "Ctrl K",
+    () => "Ctrl K",
+  );
 
   return (
     <header className="platform-header" aria-label="Səhifə başlığı">
@@ -37,7 +43,7 @@ export function PlatformHeader({ toolsOpen, onToolsToggle }: PlatformHeaderProps
         >
           <Search size={17} aria-hidden="true" />
           <span>Platformada axtar</span>
-          <kbd aria-hidden="true">⌘ K</kbd>
+          <kbd aria-hidden="true">{shortcutLabel}</kbd>
         </button>
         <button
           type="button"
@@ -54,7 +60,7 @@ export function PlatformHeader({ toolsOpen, onToolsToggle }: PlatformHeaderProps
           className="platform-header-account"
           aria-label={user ? "Profilim" : "Hesaba daxil ol"}
         >
-          <span>{user?.initials ?? "ER"}</span>
+          {user ? <span>{user.initials}</span> : <LogIn size={18} aria-hidden="true" />}
           <small>{user ? user.name : "Daxil ol"}</small>
         </Link>
       </div>

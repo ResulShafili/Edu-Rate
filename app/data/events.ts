@@ -16,6 +16,11 @@ export type Event = {
   glow: string;
   speakers: string[];
   capacity: string;
+  startAt: string;
+  endAt: string;
+  registrationDeadline: string;
+  organizer: string;
+  availableSpots: number;
 };
 
 export const categories = [
@@ -63,6 +68,11 @@ export const events: Event[] = [
     glow: "rgba(200, 255, 77, 0.28)",
     speakers: ["Ləman Həsənli", "Nihad Əlizadə", "Aytac Hüseynova"],
     capacity: "180 iştirakçı",
+    startAt: "2026-09-18T18:30:00+04:00",
+    endAt: "2026-09-18T20:00:00+04:00",
+    registrationDeadline: "2026-09-17T23:59:59+04:00",
+    organizer: "Dizayn və yaradıcılıq mərkəzi",
+    availableSpots: 42,
   },
   {
     id: "human-machine",
@@ -80,6 +90,11 @@ export const events: Event[] = [
     glow: "rgba(185, 167, 255, 0.3)",
     speakers: ["İradə Babayeva", "Kamran Məmmədli", "Aysu Quliyeva"],
     capacity: "120 iştirakçı",
+    startAt: "2026-09-22T19:00:00+04:00",
+    endAt: "2026-09-22T20:30:00+04:00",
+    registrationDeadline: "2026-09-21T23:59:59+04:00",
+    organizer: "Texnologiya klubu",
+    availableSpots: 18,
   },
   {
     id: "afterlight",
@@ -97,6 +112,11 @@ export const events: Event[] = [
     glow: "rgba(255, 158, 122, 0.3)",
     speakers: ["Xəzər Studiyası", "Elvin Vəliyev", "Aynur Rəhimli"],
     capacity: "350 iştirakçı",
+    startAt: "2026-09-28T21:00:00+04:00",
+    endAt: "2026-09-28T23:00:00+04:00",
+    registrationDeadline: "2026-09-27T23:59:59+04:00",
+    organizer: "Mədəniyyət mərkəzi",
+    availableSpots: 96,
   },
   {
     id: "soft-reset",
@@ -114,6 +134,11 @@ export const events: Event[] = [
     glow: "rgba(125, 229, 209, 0.28)",
     speakers: ["Nərmin Əliyeva", "Mahir Soltanlı", "Sakit Studiyası"],
     capacity: "48 iştirakçı",
+    startAt: "2026-10-04T09:30:00+04:00",
+    endAt: "2026-10-04T12:30:00+04:00",
+    registrationDeadline: "2026-10-02T18:00:00+04:00",
+    organizer: "Tələbə rifahı mərkəzi",
+    availableSpots: 8,
   },
   {
     id: "strange-loops",
@@ -131,6 +156,11 @@ export const events: Event[] = [
     glow: "rgba(119, 184, 255, 0.3)",
     speakers: ["Sıra Laboratoriyası", "Mələk Cəfərova", "Tural Qarayev"],
     capacity: "220 iştirakçı",
+    startAt: "2026-10-11T17:45:00+04:00",
+    endAt: "2026-10-11T20:00:00+04:00",
+    registrationDeadline: "2026-10-10T23:59:59+04:00",
+    organizer: "Açıq laboratoriya",
+    availableSpots: 64,
   },
   {
     id: "new-rituals",
@@ -148,5 +178,10 @@ export const events: Event[] = [
     glow: "rgba(247, 213, 111, 0.28)",
     speakers: ["Nərgiz Vəlizadə", "Səhər Bürosu", "Rauf İsmayılov"],
     capacity: "95 iştirakçı",
+    startAt: "2026-10-16T18:00:00+04:00",
+    endAt: "2026-10-16T19:30:00+04:00",
+    registrationDeadline: "2026-10-15T18:00:00+04:00",
+    organizer: "Memarlıq və dizayn fakültəsi",
+    availableSpots: 27,
   },
 ];

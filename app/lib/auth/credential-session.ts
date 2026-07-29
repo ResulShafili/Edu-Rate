@@ -59,6 +59,14 @@ export async function readCredentialSession(
   }
 }
 
+export function readCookieValue(header: string | null, name: string): string | undefined {
+  if (!header) return undefined;
+  const entry = header
+    .split(";")
+    .find((value) => value.trim().startsWith(`${name}=`));
+  return entry?.split("=").slice(1).join("=").trim();
+}
+
 async function sign(value: string): Promise<string> {
   const cryptoApi = globalThis.crypto;
   const key = await cryptoApi.subtle.importKey(
@@ -80,8 +88,10 @@ function getSessionSecret(): string {
   const configured = process.env.EDURATE_AUTH_SECRET?.trim() ?? process.env.AUTH_SECRET?.trim();
   if (configured && configured.length >= 32) return configured;
 
-  // This fallback only keeps the local MVP usable. Production deployments must
-  // set EDURATE_AUTH_SECRET to a unique value so sessions survive safely.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("EDURATE_AUTH_SECRET production mühitində təyin edilməlidir.");
+  }
+
   return "edurate-local-mvp-secret-change-before-production-2026";
 }
 

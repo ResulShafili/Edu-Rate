@@ -1,4 +1,4 @@
-export const networkFilters = ["all", "official", "clubs", "faculties"] as const;
+export const networkFilters = ["all", "official", "faculties", "clubs", "scholarship", "events"] as const;
 
 export type NetworkFilter = (typeof networkFilters)[number];
 export type NetworkCategory = Exclude<NetworkFilter, "all">;
@@ -10,6 +10,8 @@ export const networkFilterLabels: Record<NetworkFilter, string> = {
   official: "Rəsmi",
   clubs: "Klublar",
   faculties: "Fakültələr",
+  scholarship: "Təqaüd",
+  events: "Tədbirlər",
 };
 
 type NetworkItemBase = {
@@ -27,6 +29,9 @@ type NetworkItemBase = {
 export type AnnouncementItem = NetworkItemBase & {
   kind: "announcement";
   dateLabel: string;
+  startsAt: string;
+  expiresAt: string;
+  priority: boolean;
 };
 
 export type StudentFeedItem = NetworkItemBase & {
@@ -47,6 +52,9 @@ export const announcements = [
     timeLabel: "15 iyul · 09:30",
     dateLabel: "22 iyul",
     tone: "lime",
+    startsAt: "2026-08-03T09:00:00+04:00",
+    expiresAt: "2026-08-05T18:00:00+04:00",
+    priority: true,
   },
   {
     id: "student-card-renewal",
@@ -60,6 +68,9 @@ export const announcements = [
     timeLabel: "14 iyul · 15:10",
     dateLabel: "24–26 iyul",
     tone: "mint",
+    startsAt: "2026-08-04T09:00:00+04:00",
+    expiresAt: "2026-08-06T18:00:00+04:00",
+    priority: true,
   },
   {
     id: "robotics-open-lab",
@@ -73,6 +84,9 @@ export const announcements = [
     timeLabel: "15 iyul · 08:20",
     dateLabel: "18 iyul",
     tone: "blue",
+    startsAt: "2026-08-08T14:00:00+04:00",
+    expiresAt: "2026-08-08T16:00:00+04:00",
+    priority: true,
   },
   {
     id: "debate-club-intake",
@@ -86,6 +100,9 @@ export const announcements = [
     timeLabel: "13 iyul · 18:40",
     dateLabel: "20 iyul",
     tone: "coral",
+    startsAt: "2026-07-20T15:00:00+04:00",
+    expiresAt: "2026-07-20T18:00:00+04:00",
+    priority: false,
   },
   {
     id: "engineering-project-showcase",
@@ -99,6 +116,9 @@ export const announcements = [
     timeLabel: "14 iyul · 11:45",
     dateLabel: "19 iyul",
     tone: "lilac",
+    startsAt: "2026-07-19T11:00:00+04:00",
+    expiresAt: "2026-07-19T17:00:00+04:00",
+    priority: false,
   },
   {
     id: "economics-career-conversation",
@@ -112,6 +132,41 @@ export const announcements = [
     timeLabel: "12 iyul · 13:15",
     dateLabel: "21 iyul",
     tone: "gold",
+    startsAt: "2026-07-21T14:00:00+04:00",
+    expiresAt: "2026-07-21T16:00:00+04:00",
+    priority: false,
+  },
+  {
+    id: "academic-scholarship-autumn",
+    kind: "announcement",
+    category: "scholarship",
+    title: "Akademik nailiyyət təqaüdünə müraciət",
+    summary: "Payız semestri üçün elektron müraciətlər 15 avqustadək qəbul olunur.",
+    source: "Tələbə İşləri Mərkəzi",
+    sourceInitials: "Tİ",
+    publishedAt: "2026-07-28T10:00:00+04:00",
+    timeLabel: "28 iyul · 10:00",
+    dateLabel: "15 avqust",
+    tone: "gold",
+    startsAt: "2026-07-28T10:00:00+04:00",
+    expiresAt: "2026-08-15T18:00:00+04:00",
+    priority: true,
+  },
+  {
+    id: "new-student-orientation",
+    kind: "announcement",
+    category: "events",
+    title: "Yeni tələbələr üçün tanışlıq günü",
+    summary: "Kampus turu, xidmət təqdimatları və tələbə klubları ilə açıq görüş keçiriləcək.",
+    source: "Kampus həyatı komandası",
+    sourceInitials: "KH",
+    publishedAt: "2026-07-27T12:00:00+04:00",
+    timeLabel: "27 iyul · 12:00",
+    dateLabel: "10 avqust",
+    tone: "blue",
+    startsAt: "2026-08-10T10:00:00+04:00",
+    expiresAt: "2026-08-10T17:00:00+04:00",
+    priority: false,
   },
 ] as const satisfies readonly AnnouncementItem[];
 

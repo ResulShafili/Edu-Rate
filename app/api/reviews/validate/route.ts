@@ -2,6 +2,8 @@ import {
   moderateReview,
   REVIEW_MAX_LENGTH,
 } from "../../../lib/review-moderation";
+import { checkRateLimit } from "../../../lib/api/rate-limit";
+import { getRequestIdentity } from "../../../lib/auth/request-identity";
 
 const criterionKeys = [
   "clarity",
@@ -13,7 +15,12 @@ const criterionKeys = [
 type ReviewPayload = {
   text?: unknown;
   criteria?: unknown;
+  teacherId?: unknown;
+  course?: unknown;
+  semester?: unknown;
 };
+
+const submittedReviews = new Set<string>();
 
 function json(body: unknown, status: number) {
   return Response.json(body, {
@@ -35,6 +42,12 @@ function hasValidCriteria(value: unknown) {
 }
 
 export async function POST(request: Request) {
+  const identity = await getRequestIdentity(request);
+  if (!identity) return json({ accepted: false, reason: "Rəy göndərmək üçün hesaba daxil ol." }, 401);
+
+  const limit = checkRateLimit(request, { key: "teacher-review", limit: 5, windowMs: 60 * 60_000 });
+  if (!limit.allowed) return json({ accepted: false, reason: "Çox sayda cəhd edildi. Bir qədər sonra yenidən yoxla." }, 429);
+
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.toLowerCase().includes("application/json")) {
     return json({ accepted: false, reason: "Sorğu JSON formatında olmalıdır." }, 415);
@@ -54,6 +67,15 @@ export async function POST(request: Request) {
 
   if (typeof payload.text !== "string") {
     return json({ accepted: false, reason: "Rəy mətni düzgün deyil." }, 400);
+  }
+
+  if (typeof payload.teacherId !== "string" || typeof payload.course !== "string" || typeof payload.semester !== "string") {
+    return json({ accepted: false, reason: "Müəllim, fənn və semestr məlumatı tam deyil." }, 400);
+  }
+
+  const uniqueKey = `${identity.email.toLowerCase()}:${payload.teacherId}:${payload.semester}`;
+  if (submittedReviews.has(uniqueKey)) {
+    return json({ accepted: false, reason: "Bu müəllim üçün cari semestrdə artıq rəy göndərmisən." }, 409);
   }
 
   if (!hasValidCriteria(payload.criteria)) {
@@ -83,9 +105,12 @@ export async function POST(request: Request) {
     }, 422);
   }
 
+  submittedReviews.add(uniqueKey);
+
   return json({
     accepted: true,
     allowed: true,
     text: payload.text.trim(),
+    status: "pending",
   }, 200);
 }

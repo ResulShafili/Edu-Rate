@@ -1,13 +1,18 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, Megaphone, SlidersHorizontal } from "lucide-react";
-import type {
-  AnnouncementItem,
-  NetworkFilter,
-  NetworkTone,
-} from "../data/network";
+import {
+  Bookmark,
+  CalendarDays,
+  Check,
+  Megaphone,
+  SlidersHorizontal,
+} from "lucide-react";
+import { useState } from "react";
+import type { AnnouncementItem, NetworkFilter, NetworkTone } from "../data/network";
 import { networkFilterLabels, networkFilters } from "../data/network";
+import { formatAzDate, isExpired } from "../lib/date";
+import { EmptyState } from "./ui/Primitives";
 
 type AnnouncementsBoardProps = {
   items: readonly AnnouncementItem[];
@@ -16,205 +21,76 @@ type AnnouncementsBoardProps = {
   reducedMotion: boolean;
 };
 
-const announcementToneClasses: Record<
-  NetworkTone,
-  { marker: string; date: string; initials: string }
-> = {
-  lime: {
-    marker: "bg-[#c8ff4d]",
-    date: "bg-[#c8ff4d]/25 text-[#496500]",
-    initials: "bg-[#c8ff4d]",
-  },
-  lilac: {
-    marker: "bg-[#b9a7ff]",
-    date: "bg-[#b9a7ff]/25 text-[#5540b8]",
-    initials: "bg-[#b9a7ff]",
-  },
-  blue: {
-    marker: "bg-[#77b8ff]",
-    date: "bg-[#77b8ff]/25 text-[#185f9f]",
-    initials: "bg-[#77b8ff]",
-  },
-  coral: {
-    marker: "bg-[#ff9e7a]",
-    date: "bg-[#ff9e7a]/25 text-[#9d4026]",
-    initials: "bg-[#ff9e7a]",
-  },
-  mint: {
-    marker: "bg-[#7de5d1]",
-    date: "bg-[#7de5d1]/25 text-[#176c5f]",
-    initials: "bg-[#7de5d1]",
-  },
-  gold: {
-    marker: "bg-[#f7d56f]",
-    date: "bg-[#f7d56f]/25 text-[#81640a]",
-    initials: "bg-[#f7d56f]",
-  },
+const tones: Record<NetworkTone, { marker: string; date: string; initials: string }> = {
+  lime: { marker: "bg-[#44766c]", date: "bg-[#d3e8bf] text-[#16423c]", initials: "bg-[#d3e8bf]" },
+  lilac: { marker: "bg-[#7c6fc5]", date: "bg-[#ebe8ff] text-[#514394]", initials: "bg-[#ebe8ff]" },
+  blue: { marker: "bg-[#4b8ca1]", date: "bg-[#caeaf1] text-[#16423c]", initials: "bg-[#caeaf1]" },
+  coral: { marker: "bg-[#c8795d]", date: "bg-[#fee7df] text-[#8c452e]", initials: "bg-[#fee7df]" },
+  mint: { marker: "bg-[#3f8d7f]", date: "bg-[#d7f1eb] text-[#176c5f]", initials: "bg-[#d7f1eb]" },
+  gold: { marker: "bg-[#b38b24]", date: "bg-[#f8edc7] text-[#72580a]", initials: "bg-[#f8edc7]" },
 };
 
-export function AnnouncementsBoard({
-  items,
-  activeFilter,
-  onFilterChange,
-  reducedMotion,
-}: AnnouncementsBoardProps) {
-  const visibleAnnouncements = items.filter(
-    (item) => activeFilter === "all" || item.category === activeFilter,
-  );
+export function AnnouncementsBoard({ items, activeFilter, onFilterChange, reducedMotion }: AnnouncementsBoardProps) {
+  const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => new Set());
+  const [compactLimit, setCompactLimit] = useState(4);
+  const filtered = items.filter((item) => activeFilter === "all" || item.category === activeFilter);
+  const active = filtered.filter((item) => !isExpired(item.expiresAt));
+  const archived = filtered.filter((item) => isExpired(item.expiresAt));
+  const priority = active.filter((item) => item.priority).slice(0, 3);
+  const rest = active.filter((item) => !priority.some((priorityItem) => priorityItem.id === item.id));
+
+  function toggle(setter: typeof setReadIds, id: string) {
+    setter((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
   return (
-    <section
-      className="announcements-board"
-      aria-labelledby="announcements-title"
-    >
-      <header className="announcements-board-heading mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <span className="mb-3 inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--lime)]">
-            <Megaphone size={13} aria-hidden="true" />
-            Universitet şəbəkəsi
-          </span>
-          <h2
-            id="announcements-title"
-            className="text-[clamp(31px,5vw,46px)] font-medium leading-none tracking-[-0.055em] text-[var(--paper)]"
-          >
-            Vacib elanlar
-          </h2>
-        </div>
-        <p className="max-w-[330px] text-[11px] leading-[1.65] text-[color:rgba(244,243,237,0.52)] sm:text-right">
-          Kampusdakı əsas yenilikləri bir baxışda gör, sonra sənə uyğun digər mövzulara keç.
-        </p>
+    <section className="announcements-board" aria-labelledby="announcements-title">
+      <header className="announcements-board-heading">
+        <div><span><Megaphone size={14} aria-hidden="true" /> Universitet şəbəkəsi</span><h2 id="announcements-title">Vacib elanlar</h2></div>
+        <p>Aktiv və vaxtı məhdud məlumatlar öncə göstərilir; müddəti bitən elanlar avtomatik arxivə keçir.</p>
       </header>
 
-      <div className="announcement-filter-bar sticky top-[calc(16px+env(safe-area-inset-top))] z-30 mb-6 flex items-center gap-3 rounded-[18px] border border-white/10 bg-[#141415]/[0.9] p-2 shadow-[0_18px_55px_rgba(0,0,0,0.32)] backdrop-blur-xl">
-        <span
-          className="hidden h-10 w-10 shrink-0 place-items-center rounded-full bg-[#0d0e0d] text-[#f3f1e9] sm:grid"
-          aria-hidden="true"
-        >
-          <SlidersHorizontal size={15} />
-        </span>
-
-        <div
-          className="announcement-filters flex min-w-0 flex-1 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          role="group"
-          aria-label="Elanları və tələbə yeniliklərini kateqoriyaya görə süzgəcdən keçir"
-        >
+      <div className="announcement-filter-bar">
+        <span aria-hidden="true"><SlidersHorizontal size={15} /></span>
+        <div className="announcement-filters" role="group" aria-label="Elanları kateqoriyaya görə süzgəcdən keçir">
           {networkFilters.map((filter) => {
-            const active = activeFilter === filter;
-            return (
-              <button
-                key={filter}
-                type="button"
-                className={`relative min-h-11 shrink-0 cursor-pointer rounded-full px-4 text-[10px] font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--lime)] ${active ? "text-[#0b0b0c]" : "text-[color:rgba(244,243,237,0.56)] hover:text-[var(--paper)]"}`}
-                onClick={() => onFilterChange(filter)}
-                aria-pressed={active}
-                aria-controls="announcements-list student-feed-list"
-              >
-                {active && (
-                  <motion.span
-                    className="absolute inset-0 rounded-full bg-[var(--lime)]"
-                    layoutId="active-network-filter"
-                    transition={
-                      reducedMotion
-                        ? { duration: 0 }
-                        : { type: "spring", stiffness: 420, damping: 34 }
-                    }
-                    aria-hidden="true"
-                  />
-                )}
-                <span className="relative z-[1]">
-                  {networkFilterLabels[filter]}
-                </span>
-              </button>
-            );
+            const selected = activeFilter === filter;
+            return <button key={filter} type="button" aria-pressed={selected} onClick={() => onFilterChange(filter)}>{selected && <motion.i layoutId="active-network-filter" transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }} aria-hidden="true" />}<span>{networkFilterLabels[filter]}</span></button>;
           })}
         </div>
-
-        <span className="hidden shrink-0 pr-2 text-[9px] font-bold uppercase tracking-[0.1em] text-[color:rgba(244,243,237,0.4)] md:block">
-          {visibleAnnouncements.length} elan
-        </span>
+        <span className="announcement-count">{active.length} aktiv</span>
       </div>
 
-      <p className="sr-only" role="status" aria-live="polite">
-        {networkFilterLabels[activeFilter]} kateqoriyasında {visibleAnnouncements.length} elan göstərilir.
-      </p>
+      <p className="sr-only" role="status" aria-live="polite">{networkFilterLabels[activeFilter]} kateqoriyasında {active.length} aktiv elan göstərilir.</p>
 
-      <motion.div
-        id="announcements-list"
-        className="announcements-list grid grid-flow-col auto-cols-[min(84vw,330px)] gap-3 overflow-x-auto pb-3 [scrollbar-width:none] snap-x snap-proximity md:grid-flow-row md:grid-cols-2 md:overflow-visible md:pb-0 lg:grid-cols-3 [&::-webkit-scrollbar]:hidden"
-        layout={!reducedMotion}
-      >
-        <AnimatePresence initial={false} mode="popLayout">
-          {visibleAnnouncements.map((item, index) => {
-            const tone = announcementToneClasses[item.tone];
-            const titleId = `announcement-${item.id}-title`;
-            return (
-              <motion.article
-                key={item.id}
-                layout={reducedMotion ? false : "position"}
-                className="announcement-card relative min-h-[260px] snap-start overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.035] p-5 pb-20 shadow-[0_22px_65px_rgba(0,0,0,0.22)] backdrop-blur-xl"
-                initial={reducedMotion ? false : { opacity: 0.64, y: 16, scale: 0.99 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={reducedMotion ? undefined : { opacity: 0, y: -10, scale: 0.985 }}
-                transition={
-                  reducedMotion
-                    ? { duration: 0 }
-                    : {
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 29,
-                        mass: 0.7,
-                        delay: Math.min(index, 2) * 0.045,
-                      }
-                }
-                whileHover={reducedMotion ? undefined : { y: -5, scale: 1.012 }}
-                aria-labelledby={titleId}
-              >
-                <span
-                  className={`absolute left-0 top-5 h-11 w-[3px] rounded-r-full ${tone.marker}`}
-                  aria-hidden="true"
-                />
+      {active.length === 0 ? (
+        <EmptyState title="Bu kateqoriyada aktiv elan yoxdur" description="Müddəti bitmiş məlumatlara aşağıdakı arxivdən baxa bilərsən." />
+      ) : (
+        <>
+          {priority.length > 0 && <div className="announcement-priority-grid"><AnimatePresence mode="popLayout">{priority.map((item, index) => <AnnouncementCard key={item.id} item={item} index={index} reducedMotion={reducedMotion} read={readIds.has(item.id)} bookmarked={bookmarkedIds.has(item.id)} onRead={() => toggle(setReadIds, item.id)} onBookmark={() => toggle(setBookmarkedIds, item.id)} />)}</AnimatePresence></div>}
+          {rest.length > 0 && <section className="announcement-compact-section" aria-labelledby="other-announcements-title"><h3 id="other-announcements-title">Digər elanlar</h3><div className="announcement-compact-list">{rest.slice(0, compactLimit).map((item) => <AnnouncementCompact key={item.id} item={item} read={readIds.has(item.id)} bookmarked={bookmarkedIds.has(item.id)} onRead={() => toggle(setReadIds, item.id)} onBookmark={() => toggle(setBookmarkedIds, item.id)} />)}</div>{compactLimit < rest.length && <button type="button" className="announcement-load-more" onClick={() => setCompactLimit((current) => current + 4)}>Daha çox elan göstər</button>}</section>}
+        </>
+      )}
 
-                <div className="announcement-card-meta flex items-center justify-between gap-3">
-                  <span
-                    className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.08em] ${tone.date}`}
-                  >
-                    <CalendarDays size={12} aria-hidden="true" />
-                    {item.dateLabel}
-                  </span>
-                  <time
-                    dateTime={item.publishedAt}
-                    className="text-[9px] tracking-[0.04em] text-[color:rgba(244,243,237,0.38)]"
-                  >
-                    {item.timeLabel}
-                  </time>
-                </div>
-
-                <h3
-                  id={titleId}
-                  className="mt-6 text-[22px] font-medium leading-[1.04] tracking-[-0.045em] text-[var(--paper)]"
-                >
-                  {item.title}
-                </h3>
-                <p className="mt-3 text-[11px] leading-[1.65] text-[color:rgba(244,243,237,0.54)]">
-                  {item.summary}
-                </p>
-
-                <footer className="absolute inset-x-5 bottom-5 flex items-center gap-2 border-t border-white/[0.08] pt-3">
-                  <span
-                    className={`grid h-7 w-7 place-items-center rounded-full text-[8px] font-bold text-[#0d0e0d] ${tone.initials}`}
-                    aria-hidden="true"
-                  >
-                    {item.sourceInitials}
-                  </span>
-                  <span className="truncate text-[9px] font-semibold text-[color:rgba(244,243,237,0.52)]">
-                    {item.source}
-                  </span>
-                </footer>
-              </motion.article>
-            );
-          })}
-        </AnimatePresence>
-      </motion.div>
+      {archived.length > 0 && <details className="announcement-archive"><summary>Arxiv <span>{archived.length}</span></summary><div>{archived.map((item) => <AnnouncementCompact key={item.id} item={item} archived read bookmarked={false} onRead={() => undefined} onBookmark={() => undefined} />)}</div></details>}
     </section>
   );
+}
+
+function AnnouncementCard({ item, index, reducedMotion, read, bookmarked, onRead, onBookmark }: { item: AnnouncementItem; index: number; reducedMotion: boolean; read: boolean; bookmarked: boolean; onRead: () => void; onBookmark: () => void }) {
+  const tone = tones[item.tone];
+  return <motion.article layout className={`announcement-card${read ? " is-read" : ""}`} initial={reducedMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}><i className={tone.marker} aria-hidden="true" /><div className="announcement-card-meta"><span className={tone.date}><CalendarDays size={12} aria-hidden="true" />{formatAzDate(item.startsAt)}</span>{!read && <b>Yeni</b>}</div><h3>{item.title}</h3><p>{item.summary}</p><footer><span className={tone.initials}>{item.sourceInitials}</span><span>{item.source}</span><AnnouncementActions read={read} bookmarked={bookmarked} onRead={onRead} onBookmark={onBookmark} /></footer></motion.article>;
+}
+
+function AnnouncementCompact({ item, archived = false, read, bookmarked, onRead, onBookmark }: { item: AnnouncementItem; archived?: boolean; read: boolean; bookmarked: boolean; onRead: () => void; onBookmark: () => void }) {
+  return <article className={`announcement-compact${archived || read ? " is-muted" : ""}`}><div><span>{networkFilterLabels[item.category]}</span>{archived && <b>Arxivdə</b>}<h4>{item.title}</h4><p>{item.summary}</p></div><time dateTime={item.startsAt}>{formatAzDate(item.startsAt)}</time>{!archived && <AnnouncementActions read={read} bookmarked={bookmarked} onRead={onRead} onBookmark={onBookmark} />}</article>;
+}
+
+function AnnouncementActions({ read, bookmarked, onRead, onBookmark }: { read: boolean; bookmarked: boolean; onRead: () => void; onBookmark: () => void }) {
+  return <div className="announcement-actions"><button type="button" onClick={onRead} aria-pressed={read} aria-label={read ? "Oxunmamış kimi işarələ" : "Oxunmuş kimi işarələ"}><Check size={15} aria-hidden="true" /></button><button type="button" onClick={onBookmark} aria-pressed={bookmarked} aria-label={bookmarked ? "Yadda saxlananlardan çıxar" : "Yadda saxla"}><Bookmark size={15} fill={bookmarked ? "currentColor" : "none"} aria-hidden="true" /></button></div>;
 }

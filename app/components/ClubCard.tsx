@@ -97,9 +97,6 @@ export function ClubCard({ club, index }: ClubCardProps) {
             <span className="club-card-art-glow" />
             <span className="club-card-visual-mark">{club.visualMark}</span>
           </motion.div>
-          <span className="club-card-visual-index">
-            {String(index + 1).padStart(2, "0")}
-          </span>
           <span className="club-card-visual-label">Açıq tələbə məkanı</span>
         </div>
 
@@ -114,7 +111,6 @@ export function ClubCard({ club, index }: ClubCardProps) {
           <div className="club-card-copy">
             <h2>{club.name}</h2>
             <p className="club-card-tagline">{club.tagline}</p>
-            <p className="club-card-description">{club.description}</p>
           </div>
 
           <div className="club-card-footer">
@@ -128,11 +124,7 @@ export function ClubCard({ club, index }: ClubCardProps) {
                 {club.meeting.cadence}
               </span>
             </div>
-            <ul className="club-card-tags" aria-label="Klubun maraq sahələri">
-              {club.focusTags.slice(0, 3).map((tag) => (
-                <li key={tag}>{tag}</li>
-              ))}
-            </ul>
+            <span className="club-card-action">Kluba bax <ArrowUpRight size={15} aria-hidden="true" /></span>
           </div>
         </motion.div>
       </Link>

@@ -12,7 +12,9 @@ const statusLabels: Record<Peer["status"], string> = {
 };
 
 type PeerDirectoryProps = {
+  canInteract: boolean;
   onMessage: (peer: Peer) => void;
+  onRequireAuth: () => void;
 };
 
 function PeerSkeleton() {
@@ -28,7 +30,7 @@ function PeerSkeleton() {
   );
 }
 
-export function PeerDirectory({ onMessage }: PeerDirectoryProps) {
+export function PeerDirectory({ canInteract, onMessage, onRequireAuth }: PeerDirectoryProps) {
   const [loading, setLoading] = useState(true);
   const [offset, setOffset] = useState(0);
   const [connected, setConnected] = useState<Set<string>>(() => new Set());
@@ -55,6 +57,10 @@ export function PeerDirectory({ onMessage }: PeerDirectoryProps) {
   }
 
   function toggleConnection(peerId: string) {
+    if (!canInteract) {
+      onRequireAuth();
+      return;
+    }
     setConnected((current) => {
       const next = new Set(current);
       if (next.has(peerId)) next.delete(peerId);
@@ -73,7 +79,7 @@ export function PeerDirectory({ onMessage }: PeerDirectoryProps) {
         transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
       >
         <div>
-          <span className="section-kicker section-kicker-dark">02 / İcma</span>
+          <span className="section-kicker section-kicker-dark">Tələbə şəbəkəsi</span>
           <h1 id="peers-title" className="module-page-title">İcma</h1>
         </div>
         <div className="peers-heading-aside">
@@ -151,7 +157,7 @@ export function PeerDirectory({ onMessage }: PeerDirectoryProps) {
                         aria-pressed={isConnected}
                       >
                         {isConnected ? <Check size={14} /> : <UserPlus size={14} />}
-                        {isConnected ? "Əlaqədəsiniz" : "Əlaqə qur"}
+                        {canInteract ? (isConnected ? "Əlaqədəsiniz" : "Əlaqə qur") : "Giriş et"}
                       </button>
                       <button type="button" className="peer-message" onClick={() => onMessage(peer)}>
                         <MessageCircle size={14} /> Mesaj yaz

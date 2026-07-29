@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, CircleAlert, Send, Sparkles, Star } from "lucide-react";
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -25,6 +26,7 @@ import {
 import { ReviewCard } from "./ReviewCard";
 import { TeacherCard } from "./TeacherCard";
 import { TeacherProfileDrawer } from "./TeacherProfileDrawer";
+import { useAuth } from "./AuthProvider";
 
 const confettiPieces = Array.from({ length: 12 }, (_, index) => index);
 const numberFormatter = new Intl.NumberFormat("az-AZ");
@@ -35,6 +37,7 @@ type ReviewValidationResponse = {
   text?: string;
   reason?: string | null;
   suggestion?: string | null;
+  status?: "pending";
 };
 
 export function TeacherEvaluation() {
@@ -47,6 +50,12 @@ export function TeacherEvaluation() {
   const [reviewChecking, setReviewChecking] = useState(false);
   const [reviewError, setReviewError] = useState<ReviewValidationResponse | null>(null);
   const [newReviews, setNewReviews] = useState<TeacherReview[]>([]);
+  const [teacherQuery, setTeacherQuery] = useState("");
+  const [subjectFilter, setSubjectFilter] = useState("all");
+  const [modeFilter, setModeFilter] = useState("all");
+  const [languageFilter, setLanguageFilter] = useState("all");
+  const [teacherSort, setTeacherSort] = useState("rating");
+  const [reviewLimit, setReviewLimit] = useState(6);
   const trackRef = useRef<HTMLDivElement>(null);
   const ratingPanelRef = useRef<HTMLDivElement>(null);
   const confirmationTimer = useRef<number | null>(null);
@@ -54,8 +63,20 @@ export function TeacherEvaluation() {
   const ratingScrollFrame = useRef<number | null>(null);
   const ratingScrollPending = useRef(false);
   const reduceMotion = useReducedMotion();
+  const { user } = useAuth();
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedId) ?? null;
   const allReviews = [...newReviews, ...teacherReviews];
+  const displayedTeachers = useMemo(() => {
+    const query = teacherQuery.trim().toLocaleLowerCase("az");
+    const filtered = teachers.filter((teacher) => {
+      const matchesQuery = !query || `${teacher.name} ${teacher.subject}`.toLocaleLowerCase("az").includes(query);
+      const matchesSubject = subjectFilter === "all" || teacher.subject === subjectFilter;
+      const matchesMode = modeFilter === "all" || teacher.teachingMode === modeFilter;
+      const matchesLanguage = languageFilter === "all" || teacher.language === languageFilter;
+      return matchesQuery && matchesSubject && matchesMode && matchesLanguage;
+    });
+    return [...filtered].sort((left, right) => teacherSort === "reviews" ? right.reviewCount - left.reviewCount : right.rating - left.rating);
+  }, [languageFilter, modeFilter, subjectFilter, teacherQuery, teacherSort]);
   const rating = calculateCriteriaAverage(criteriaRatings);
   const localModeration = useMemo(() => moderateReview(reviewText), [reviewText]);
   const visibleModerationIssue = reviewText.trim() && !localModeration.accepted ? localModeration : null;
@@ -128,7 +149,7 @@ export function TeacherEvaluation() {
       const card = track.querySelector<HTMLElement>(".teacher-card");
       scrollFrame.current = null;
       if (!card) return;
-      const next = Math.min(teachers.length - 1, Math.max(0, Math.round(track.scrollLeft / (card.offsetWidth + 14))));
+      const next = Math.min(displayedTeachers.length - 1, Math.max(0, Math.round(track.scrollLeft / (card.offsetWidth + 14))));
       setActiveIndex((current) => current === next ? current : next);
     });
   }
@@ -150,7 +171,13 @@ export function TeacherEvaluation() {
       const response = await fetch("/api/reviews/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: reviewText, criteria: criteriaRatings }),
+        body: JSON.stringify({
+          text: reviewText,
+          criteria: criteriaRatings,
+          teacherId: selectedTeacher.id,
+          course: selectedTeacher.subject,
+          semester: "2026-payız",
+        }),
       });
       validation = await response.json() as ReviewValidationResponse;
       if (!response.ok || !validation.accepted) {
@@ -208,7 +235,7 @@ export function TeacherEvaluation() {
         transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
       >
         <div>
-          <span className="teachers-kicker">03 / Müəllim seçimi</span>
+          <span className="teachers-kicker">Müəllim seçimi</span>
           <h1 id="teachers-title" className="module-page-title">Müəllimlər</h1>
         </div>
         <div className="teachers-heading-aside">
@@ -226,6 +253,47 @@ export function TeacherEvaluation() {
       </motion.div>
 
       <div
+        className="teacher-directory-filters"
+        aria-label="Müəllim axtarış filtrləri"
+      >
+        <label>
+          <span>Müəllim və ya fənn</span>
+          <input type="search" value={teacherQuery} onChange={(event) => setTeacherQuery(event.target.value)} placeholder="Məsələn, riyaziyyat" />
+        </label>
+        <label>
+          <span>Tədris dili</span>
+          <select value={languageFilter} onChange={(event) => setLanguageFilter(event.target.value)}>
+            <option value="all">Bütün dillər</option>
+            <option value="Azərbaycan dili">Azərbaycan dili</option>
+            <option value="İngilis dili">İngilis dili</option>
+          </select>
+        </label>
+        <label>
+          <span>Sıralama</span>
+          <select value={teacherSort} onChange={(event) => setTeacherSort(event.target.value)}>
+            <option value="rating">Ən yüksək reytinq</option>
+            <option value="reviews">Ən çox rəy</option>
+          </select>
+        </label>
+        <label>
+          <span>Fənn</span>
+          <select value={subjectFilter} onChange={(event) => setSubjectFilter(event.target.value)}>
+            <option value="all">Bütün fənlər</option>
+            {[...new Set(teachers.map((teacher) => teacher.subject))].map((subject) => <option key={subject} value={subject}>{subject}</option>)}
+          </select>
+        </label>
+        <label>
+          <span>Tədris formatı</span>
+          <select value={modeFilter} onChange={(event) => setModeFilter(event.target.value)}>
+            <option value="all">Bütün formatlar</option>
+            <option value="Onlayn">Onlayn</option>
+            <option value="Əyani">Əyani</option>
+            <option value="Hibrid">Hibrid</option>
+          </select>
+        </label>
+      </div>
+
+      <div
         id="available-teachers-track"
         ref={trackRef}
         className="teachers-track"
@@ -233,7 +301,7 @@ export function TeacherEvaluation() {
         aria-label="Hazırda müsait müəllimlər"
         onScroll={updateActiveCard}
       >
-        {teachers.map((teacher, index) => (
+        {displayedTeachers.map((teacher, index) => (
           <TeacherCard
             key={teacher.id}
             teacher={teacher}
@@ -245,6 +313,7 @@ export function TeacherEvaluation() {
             onOpenProfile={openTeacherProfile}
           />
         ))}
+        {displayedTeachers.length === 0 && <div className="teacher-filter-empty">Bu filtrlərə uyğun müəllim tapılmadı.</div>}
         <span className="teachers-track-spacer" aria-hidden="true" />
       </div>
 
@@ -283,7 +352,7 @@ export function TeacherEvaluation() {
             </div>
           </div>
 
-          <form className="rating-form" onSubmit={submitReview}>
+          {user ? <form className="rating-form" onSubmit={submitReview}>
             <CriteriaRating
               value={criteriaRatings}
               onChange={(nextRatings) => {
@@ -313,6 +382,7 @@ export function TeacherEvaluation() {
             <p id="teacher-review-guidance" className="review-guidance">
               Şəxsi deyil, tədris təcrübəsini qiymətləndir: nə aydın idi, nəyi yaxşılaşdırmaq olardı?
             </p>
+            <p className="review-score-explanation">Ümumi bal izahın aydınlığı, fənn biliyi, obyektivlik və ünsiyyət ballarının bərabər çəkili ortasıdır.</p>
             <AnimatePresence initial={false}>
               {displayedError && (
                 <motion.div
@@ -353,8 +423,8 @@ export function TeacherEvaluation() {
                   >
                     <Check size={25} />
                   </motion.i>
-                  <strong>Rəyin göndərildi</strong>
-                  <span>Təşəkkür edirik — meyarlara əsaslanan, hörmətli fikrin icmaya daha doğru seçim etməyə kömək edir.</span>
+                  <strong>Rəyin moderasiyaya göndərildi</strong>
+                  <span>Təşəkkür edirik — rəy qaydalara uyğun təsdiqləndikdən sonra icmada görünəcək.</span>
                   {!reduceMotion && (
                     <b className="review-success-ring" aria-hidden="true" />
                   )}
@@ -366,7 +436,14 @@ export function TeacherEvaluation() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </form>
+          </form> : (
+            <div className="rating-auth-required">
+              <span>Rəylərin etibarlılığını qoruyuruq</span>
+              <h3>Qiymətləndirmək üçün hesabına daxil ol.</h3>
+              <p>Hər tələbə eyni müəllim üçün semestr ərzində yalnız bir rəy göndərə bilər.</p>
+              <Link href="/auth?returnTo=%2Fteachers">Daxil ol <ArrowRight size={15} /></Link>
+            </div>
+          )}
         </motion.div>
       ) : (
         <motion.div
@@ -395,8 +472,13 @@ export function TeacherEvaluation() {
       </div>
 
       <div className="reviews-masonry" aria-label="Müəllimlər haqqında rəylər">
-        {allReviews.map((review, index) => <ReviewCard key={review.id} review={review} index={index} />)}
+        {allReviews.slice(0, reviewLimit).map((review, index) => <ReviewCard key={review.id} review={review} index={index} />)}
       </div>
+      {reviewLimit < allReviews.length && (
+        <button type="button" className="reviews-load-more" onClick={() => setReviewLimit((current) => current + 6)}>
+          Daha çox rəy göstər
+        </button>
+      )}
     </section>
   );
 }

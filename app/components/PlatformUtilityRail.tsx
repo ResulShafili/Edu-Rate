@@ -21,8 +21,9 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { eventMonthLabels, events } from "../data/events";
+import { events } from "../data/events";
 import { announcements } from "../data/network";
+import { formatAzDate, getUpcomingItems, isExpired } from "../lib/date";
 import {
   getPlatformRouteContext,
   platformSearchItems,
@@ -73,6 +74,8 @@ function UtilityContent({
   searchInputRef,
   idPrefix,
 }: UtilityContentProps) {
+  const upcomingEvents = getUpcomingItems(events).slice(0, 3);
+  const activeAnnouncements = announcements.filter((item) => !isExpired(item.expiresAt)).slice(0, 3);
   const filteredItems = useMemo(() => {
     const normalizedQuery = normalizeSearchValue(query);
     if (!normalizedQuery) return platformSearchItems.slice(0, 6);
@@ -103,6 +106,11 @@ function UtilityContent({
             onChange={(event) => onQueryChange(event.target.value)}
             placeholder="Bölmə və ya xüsusiyyət axtar..."
             autoComplete="off"
+            onKeyDown={(event) => {
+              if (event.key !== "ArrowDown") return;
+              const firstResult = event.currentTarget.closest(".platform-utility-content")?.querySelector<HTMLElement>(".platform-search-results a");
+              if (firstResult) { event.preventDefault(); firstResult.focus(); }
+            }}
           />
           <kbd aria-hidden="true">↵</kbd>
         </form>
@@ -112,7 +120,18 @@ function UtilityContent({
           <strong>{filteredItems.length}</strong>
         </div>
 
-        <div className="platform-search-results">
+        <div
+          className="platform-search-results"
+          onKeyDown={(event) => {
+            if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+            const links = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("a"));
+            const index = links.indexOf(document.activeElement as HTMLElement);
+            if (index < 0) return;
+            event.preventDefault();
+            const next = event.key === "ArrowDown" ? Math.min(index + 1, links.length - 1) : Math.max(index - 1, 0);
+            links[next]?.focus();
+          }}
+        >
           {filteredItems.length > 0 ? filteredItems.map((item) => (
             <Link key={item.href} href={item.href} onClick={onNavigate}>
               <span>
@@ -133,16 +152,15 @@ function UtilityContent({
     return (
       <div id={`${idPrefix}-shortcuts`} className="platform-utility-content" role="tabpanel" aria-label="Səhifə qısa yolları">
         <div className="platform-context-card">
-          <span>{context.number} / {context.label}</span>
+          <span>{context.label}</span>
           <h3>{context.title}</h3>
           <p>{context.description}</p>
           <small><i aria-hidden="true" />{context.metric}</small>
         </div>
 
         <div className="platform-shortcut-list">
-          {context.shortcuts.map((shortcut, index) => (
+          {context.shortcuts.map((shortcut) => (
             <Link key={shortcut.href} href={shortcut.href} onClick={onNavigate}>
-              <span className="platform-shortcut-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
               <span>
                 <strong>{shortcut.label}</strong>
                 <small>{shortcut.description}</small>
@@ -162,9 +180,9 @@ function UtilityContent({
           <CalendarDays size={15} aria-hidden="true" />
           <h3 id={`${idPrefix}-events-title`}>Yaxın tədbirlər</h3>
         </header>
-        {events.slice(0, 3).map((event) => (
+        {upcomingEvents.map((event) => (
           <Link key={event.id} href="/events" onClick={onNavigate}>
-            <time><strong>{event.date}</strong>{eventMonthLabels[event.month]}</time>
+            <time dateTime={event.startAt}><strong>{event.date}</strong>{formatAzDate(event.startAt)}</time>
             <span><strong>{event.title}</strong><small>{event.time} · {event.location}</small></span>
           </Link>
         ))}
@@ -175,7 +193,7 @@ function UtilityContent({
           <Sparkles size={15} aria-hidden="true" />
           <h3 id={`${idPrefix}-announcements-title`}>Son elanlar</h3>
         </header>
-        {announcements.slice(0, 3).map((announcement) => (
+        {activeAnnouncements.map((announcement) => (
           <Link key={announcement.id} href="/feed" onClick={onNavigate}>
             <span className="platform-update-dot" aria-hidden="true" />
             <span><strong>{announcement.title}</strong><small>{announcement.dateLabel} · {announcement.source}</small></span>
@@ -205,9 +223,16 @@ export function PlatformUtilityRail({
   const displayedDesktopTab = desktopOpen ? activeTab ?? "search" : null;
 
   const closeDesktopPanel = useCallback((restoreFocus = true) => {
+    const fallbackTrigger = document.querySelector<HTMLElement>(
+      '[aria-controls="platform-desktop-utility-panel"][aria-expanded="true"]',
+    );
     setActiveTab(null);
     onDesktopOpenChange(false);
-    if (restoreFocus) lastDesktopTriggerRef.current?.focus();
+    if (restoreFocus) {
+      window.requestAnimationFrame(() => {
+        (lastDesktopTriggerRef.current ?? fallbackTrigger)?.focus();
+      });
+    }
   }, [onDesktopOpenChange]);
 
   const closeAllPanels = useCallback(() => {
@@ -226,23 +251,35 @@ export function PlatformUtilityRail({
   }, [query]);
 
   useEffect(() => {
-    if ((activeTab ?? (mobileOpen ? "search" : null)) !== "search") return;
+    const visibleTab = activeTab ?? (mobileOpen || desktopOpen ? "search" : null);
+    if (visibleTab !== "search") return;
     const frame = window.requestAnimationFrame(() => {
       (mobileOpen ? mobileSearchRef : desktopSearchRef).current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [activeTab, mobileOpen]);
+  }, [activeTab, desktopOpen, mobileOpen]);
 
   useEffect(() => {
-    if (!activeTab || mobileOpen) return;
+    if (!desktopOpen || mobileOpen) return;
 
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") closeDesktopPanel();
+    function handlePanelKeyboard(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeDesktopPanel();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const panel = document.getElementById("platform-desktop-utility-panel");
+      const focusable = Array.from(panel?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? []);
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }
 
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [activeTab, closeDesktopPanel, mobileOpen]);
+    window.addEventListener("keydown", handlePanelKeyboard);
+    return () => window.removeEventListener("keydown", handlePanelKeyboard);
+  }, [closeDesktopPanel, desktopOpen, mobileOpen]);
 
   function toggleDesktopTab(tab: UtilityTab, trigger: HTMLButtonElement) {
     lastDesktopTriggerRef.current = trigger;
@@ -262,7 +299,7 @@ export function PlatformUtilityRail({
   return (
     <>
       <aside className="platform-right-rail" aria-label="Səhifə alətləri">
-        <span className="platform-rail-status" aria-label={`Hazırkı bölmə: ${context.label}`}>{context.number}</span>
+        <span className="platform-rail-status" aria-label={`Hazırkı bölmə: ${context.label}`}>{context.label.slice(0, 1)}</span>
         <div role="tablist" aria-label="Qlobal alətlər">
           {utilityTabs.map((tab) => {
             const Icon = tab.icon;
@@ -332,7 +369,7 @@ export function PlatformUtilityRail({
               transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 360, damping: 36 }}
             >
               <header className="platform-mobile-utility-header">
-                <div><span>{context.number} / {context.label}</span><strong>Səhifə alətləri</strong></div>
+                <div><span>{context.label}</span><strong>Səhifə alətləri</strong></div>
                 <button type="button" onClick={onMobileClose} aria-label="Alətlər panelini bağla"><X size={19} /></button>
               </header>
 

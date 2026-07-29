@@ -1,7 +1,8 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Quote, Star } from "lucide-react";
+import { Flag, Quote, Star } from "lucide-react";
+import Link from "next/link";
 import type { CSSProperties } from "react";
 import type { TeacherReview } from "../data/teachers";
 import { criteriaLabels, type ReviewCriterionKey } from "./CriteriaRating";
@@ -54,6 +55,7 @@ export function ReviewCard({ review, index }: ReviewCardProps) {
           <strong>{review.author}</strong>
           <small>{review.teacherName} · {review.date}</small>
         </div>
+        <Link href={`/support?topic=review&review=${encodeURIComponent(review.id)}`} className="review-report" aria-label={`${review.teacherName} haqqında rəyi bildir`} title="Rəyi bildir"><Flag size={14} aria-hidden="true" /></Link>
       </div>
     </motion.article>
   );

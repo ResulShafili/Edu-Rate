@@ -75,7 +75,6 @@ export function TeacherCard({
             }}
           />
           <i className="teacher-avatar-orbit" />
-          <span className="teacher-index">{String(index + 1).padStart(2, "0")}</span>
         </span>
 
         <span className="teacher-card-summary">

@@ -54,10 +54,12 @@ const particleAnimation = {
 
 type AuthExperienceProps = {
   chatGPTSignInHref: string | null;
+  initialMode?: AuthMode;
+  returnTo?: string;
 };
 
-export function AuthExperience({ chatGPTSignInHref }: AuthExperienceProps) {
-  const [mode, setMode] = useState<AuthMode>("login");
+export function AuthExperience({ chatGPTSignInHref, initialMode = "login", returnTo = "/profile" }: AuthExperienceProps) {
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formMessage, setFormMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -131,7 +133,7 @@ export function AuthExperience({ chatGPTSignInHref }: AuthExperienceProps) {
       }
 
       form.reset();
-      router.push("/profile");
+      router.push(returnTo);
     } catch (error) {
       if (isAuthProviderUnavailable(error)) {
         setFormMessage(unavailableMessage);
@@ -287,7 +289,7 @@ export function AuthExperience({ chatGPTSignInHref }: AuthExperienceProps) {
 
                 <AuthFieldShell
                   id={`${formId}-email`}
-                  label="Universitet e-poçtu"
+                  label="E-poçt ünvanı"
                   error={errors.email}
                   icon={<Mail size={16} aria-hidden="true" />}
                 >
@@ -384,6 +386,9 @@ export function AuthExperience({ chatGPTSignInHref }: AuthExperienceProps) {
                 )}
 
                 <div className="auth-form-footer">
+                  {mode === "login" && (
+                    <a className="auth-forgot-link" href="/support?topic=account">Şifrəni unutmusansa, dəstək al</a>
+                  )}
                   <p className="auth-privacy-note">
                     <Check size={13} aria-hidden="true" /> Məlumatların yalnız şəxsi təcrübəni qurmaq üçün istifadə olunur.
                   </p>
@@ -412,6 +417,9 @@ export function AuthExperience({ chatGPTSignInHref }: AuthExperienceProps) {
                   aria-live="polite"
                 >
                   {visibleMessage}
+                </p>
+                <p className="auth-legal-links">
+                  Davam etməklə <a href="/terms">istifadə şərtləri</a> və <a href="/privacy">məxfilik siyasəti</a> ilə razılaşırsan.
                 </p>
               </form>
             </motion.div>

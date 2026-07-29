@@ -8,6 +8,7 @@ import { AuthProvider } from "./components/AuthProvider";
 import { PlatformProvider } from "./components/PlatformProvider";
 import { PlatformShell } from "./components/PlatformShell";
 import { createIdentityProfile } from "./data/user";
+import { getServerRequestIdentity, isAdminEmail } from "./lib/auth/request-identity";
 import "./globals.css";
 import "./kuds.css";
 
@@ -31,11 +32,14 @@ export async function generateMetadata(): Promise<Metadata> {
     incomingHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const socialImage = `${origin}/og-dark-premium.png`;
+  const socialImage = `${origin}/og.png`;
 
   return {
+    metadataBase: new URL(origin),
     title,
     description,
+    applicationName: "EduRate",
+    keywords: ["EduRate", "universitet", "tələbə", "tədbirlər", "mentor", "klublar"],
     icons: {
       icon: "/favicon.svg",
       shortcut: "/favicon.svg",
@@ -49,9 +53,9 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [
         {
           url: socialImage,
-          width: 1672,
-          height: 941,
-          alt: "EduRate — Birlikdə öyrən.",
+          width: 1728,
+          height: 909,
+          alt: "EduRate universitet şəbəkəsi",
         },
       ],
     },
@@ -70,15 +74,20 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const { user: identity } = await getChatGPTAuthContext();
-  const initialUser = identity
-    ? createIdentityProfile(identity.displayName, identity.email)
+  const requestIdentity = await getServerRequestIdentity();
+  const initialUser = requestIdentity
+    ? createIdentityProfile(requestIdentity.displayName, requestIdentity.email)
     : null;
   const signOutHref = identity ? chatGPTSignOutPath("/") : null;
 
   return (
     <html lang="az">
       <body className="antialiased">
-        <AuthProvider initialUser={initialUser} signOutHref={signOutHref}>
+        <AuthProvider
+          initialUser={initialUser}
+          initialIsAdmin={Boolean(requestIdentity && isAdminEmail(requestIdentity.email))}
+          signOutHref={signOutHref}
+        >
           <PlatformProvider>
             <PlatformShell>{children}</PlatformShell>
           </PlatformProvider>

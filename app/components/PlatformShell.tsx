@@ -22,7 +22,7 @@ type PlatformShellProps = {
 
 export function PlatformShell({ children }: PlatformShellProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { isAdmin, signOut, signOutHref, user } = useAuth();
   const [navigationState, setNavigationState] = useState({ pathname, open: false });
   const [toolsState, setToolsState] = useState({ pathname, open: false });
   const [desktopToolsState, setDesktopToolsState] = useState({ pathname, open: false });
@@ -31,21 +31,46 @@ export function PlatformShell({ children }: PlatformShellProps) {
   const navigationOpen = navigationState.pathname === pathname && navigationState.open;
   const toolsOpen = toolsState.pathname === pathname && toolsState.open;
   const desktopToolsOpen = desktopToolsState.pathname === pathname && desktopToolsState.open;
-  const accountHref: "/profile" | "/auth" = user ? "/profile" : "/auth";
-  const accountLabel = user ? "Profilim" : "Daxil ol";
 
   const closeNavigation = useCallback(() => {
     setNavigationState({ pathname, open: false });
+    window.requestAnimationFrame(() => navigationButtonRef.current?.focus());
   }, [pathname]);
 
   const closeTools = useCallback(() => {
     setToolsState({ pathname, open: false });
+    window.requestAnimationFrame(() => toolsButtonRef.current?.focus());
   }, [pathname]);
 
   useEffect(() => {
     if (!navigationOpen && !toolsOpen) return;
 
+    const dialog = document.getElementById(
+      navigationOpen ? "platform-mobile-navigation" : "platform-mobile-utility-sheet",
+    );
+    const focusableSelector =
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusFrame = window.requestAnimationFrame(() => {
+      const focusable = dialog?.querySelectorAll<HTMLElement>(focusableSelector);
+      focusable?.[0]?.focus();
+    });
+
     function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Tab" && dialog) {
+        const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector));
+        const first = focusable[0];
+        const last = focusable.at(-1);
+        if (!first || !last) return;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+        return;
+      }
+
       if (event.key !== "Escape") return;
 
       if (toolsOpen) {
@@ -59,7 +84,10 @@ export function PlatformShell({ children }: PlatformShellProps) {
     }
 
     window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      window.removeEventListener("keydown", handleEscape);
+    };
   }, [navigationOpen, pathname, toolsOpen]);
 
   useEffect(() => {
@@ -154,9 +182,14 @@ export function PlatformShell({ children }: PlatformShellProps) {
 
       <PlatformNavigationRail
         pathname={pathname}
-        accountHref={accountHref}
-        accountLabel={accountLabel}
+        authenticated={Boolean(user)}
+        isAdmin={isAdmin}
         accountInitials={user?.initials}
+        signOutHref={signOutHref}
+        onCredentialSignOut={async () => {
+          await signOut();
+          window.location.assign("/");
+        }}
         mobileOpen={navigationOpen}
         onMobileClose={closeNavigation}
       />
