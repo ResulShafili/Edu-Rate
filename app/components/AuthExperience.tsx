@@ -23,6 +23,7 @@ import {
   type ReactNode,
 } from "react";
 import { faculties, universities } from "../data/user";
+import { ApiError } from "../lib/api/client";
 import {
   isAuthProviderUnavailable,
   useAuth,
@@ -100,6 +101,19 @@ export function AuthExperience({ chatGPTSignInHref, initialMode = "login", retur
     document.getElementById(`${formId}-${nextMode}-tab`)?.focus();
   }
 
+  function handleFormChange(event: FormEvent<HTMLFormElement>) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+
+    const field = target.name as AuthField;
+    if (!isAuthField(field)) return;
+
+    if (errors[field]) {
+      setErrors((current) => ({ ...current, [field]: undefined }));
+    }
+    if (formMessage) setFormMessage("");
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting || !credentialAuthAvailable) return;
@@ -137,6 +151,14 @@ export function AuthExperience({ chatGPTSignInHref, initialMode = "login", retur
     } catch (error) {
       if (isAuthProviderUnavailable(error)) {
         setFormMessage(unavailableMessage);
+      } else if (error instanceof ApiError) {
+        const fieldErrors = readApiFieldErrors(error);
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrors((current) => ({ ...current, ...fieldErrors }));
+          const firstErrorField = Object.keys(fieldErrors)[0] as AuthField;
+          (form.elements.namedItem(firstErrorField) as HTMLElement | null)?.focus();
+        }
+        setFormMessage(error.message);
       } else if (error instanceof Error && error.message) {
         setFormMessage(error.message);
       } else {
@@ -146,9 +168,6 @@ export function AuthExperience({ chatGPTSignInHref, initialMode = "login", retur
             : "Hesabı yaratmaq mümkün olmadı. Məlumatlarını yoxlayıb yenidən cəhd et.",
         );
       }
-    } finally {
-      const passwordInput = form.elements.namedItem("password");
-      if (passwordInput instanceof HTMLInputElement) passwordInput.value = "";
     }
   }
 
@@ -265,7 +284,13 @@ export function AuthExperience({ chatGPTSignInHref, initialMode = "login", retur
               exit={reduceMotion ? { opacity: 1 } : { opacity: 0, x: mode === "login" ? 18 : -18 }}
               transition={reduceMotion ? { duration: 0 } : panelTransition}
             >
-              <form className={`auth-form auth-form-${mode}`} noValidate onSubmit={handleSubmit}>
+              <form
+                className={`auth-form auth-form-${mode}`}
+                noValidate
+                aria-busy={submitting}
+                onChange={handleFormChange}
+                onSubmit={handleSubmit}
+              >
                 {mode === "register" && (
                   <AuthFieldShell
                     id={`${formId}-name`}
@@ -347,19 +372,21 @@ export function AuthExperience({ chatGPTSignInHref, initialMode = "login", retur
                       error={errors.university}
                       icon={<Building2 size={16} aria-hidden="true" />}
                     >
-                      <select
+                      <input
                         id={`${formId}-university`}
                         name="university"
+                        type="text"
+                        list={`${formId}-universities`}
                         autoComplete="organization"
-                        defaultValue=""
+                        placeholder="Universitetini seç və ya yaz"
                         aria-invalid={Boolean(errors.university)}
                         aria-describedby={errors.university ? `${formId}-university-error` : undefined}
                         disabled={!credentialAuthAvailable || submitting}
                         required
-                      >
-                        <option value="" disabled>Universitetini seç</option>
+                      />
+                      <datalist id={`${formId}-universities`}>
                         {universities.map((university) => <option key={university} value={university}>{university}</option>)}
-                      </select>
+                      </datalist>
                     </AuthFieldShell>
 
                     <AuthFieldShell
@@ -368,19 +395,21 @@ export function AuthExperience({ chatGPTSignInHref, initialMode = "login", retur
                       error={errors.faculty}
                       icon={<GraduationCap size={16} aria-hidden="true" />}
                     >
-                      <select
+                      <input
                         id={`${formId}-faculty`}
                         name="faculty"
+                        type="text"
+                        list={`${formId}-faculties`}
                         autoComplete="organization-title"
-                        defaultValue=""
+                        placeholder="Fakültəni seç və ya yaz"
                         aria-invalid={Boolean(errors.faculty)}
                         aria-describedby={errors.faculty ? `${formId}-faculty-error` : undefined}
                         disabled={!credentialAuthAvailable || submitting}
                         required
-                      >
-                        <option value="" disabled>Fakültəni seç</option>
+                      />
+                      <datalist id={`${formId}-faculties`}>
                         {faculties.map((faculty) => <option key={faculty} value={faculty}>{faculty}</option>)}
-                      </select>
+                      </datalist>
                     </AuthFieldShell>
                   </>
                 )}
@@ -473,9 +502,40 @@ function validateAuthForm(mode: AuthMode, values: AuthFormValues): FieldErrors {
 
   if (mode === "register" && values.name.length < 2) errors.name = "Ad və soyadını yaz.";
   if (!/^\S+@\S+\.\S+$/.test(values.email)) errors.email = "Düzgün e-poçt ünvanı yaz.";
-  if (values.password.length < 8) errors.password = "Şifrə ən azı 8 simvol olmalıdır.";
-  if (mode === "register" && !values.university) errors.university = "Universitetini seç.";
-  if (mode === "register" && !values.faculty) errors.faculty = "Fakültəni seç.";
+  if (values.password.length < 8) {
+    errors.password = "Şifrə ən azı 8 simvol olmalıdır.";
+  } else if (values.password.length > 72) {
+    errors.password = "Şifrə ən çox 72 simvol ola bilər.";
+  } else if (!/[a-zA-ZƏəÖöÜüĞğŞşÇçİı]/.test(values.password)) {
+    errors.password = "Şifrədə ən azı bir hərf olmalıdır.";
+  } else if (!/\d/.test(values.password)) {
+    errors.password = "Şifrədə ən azı bir rəqəm olmalıdır.";
+  }
+  if (mode === "register" && !values.university) errors.university = "Universitetini seç və ya yaz.";
+  if (mode === "register" && !values.faculty) errors.faculty = "Fakültəni seç və ya yaz.";
 
   return errors;
+}
+
+function isAuthField(value: string): value is AuthField {
+  return ["name", "email", "password", "university", "faculty"].includes(value);
+}
+
+function readApiFieldErrors(error: ApiError): FieldErrors {
+  const fieldErrors: FieldErrors = {};
+  const details = error.details;
+
+  if (details && typeof details === "object" && !Array.isArray(details)) {
+    Object.entries(details).forEach(([field, message]) => {
+      if (isAuthField(field) && typeof message === "string") {
+        fieldErrors[field] = message;
+      }
+    });
+  }
+
+  if (error.code === "EMAIL_EXISTS") {
+    fieldErrors.email = "Bu e-poçtla artıq hesab yaradılıb. Daxil ol bölməsindən istifadə et.";
+  }
+
+  return fieldErrors;
 }
