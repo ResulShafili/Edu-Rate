@@ -196,8 +196,8 @@ export const openApiDocument = {
         type: "object",
         required: ["name", "email", "password", "university", "faculty"],
         properties: {
-          name: { type: "string", example: "Aylin Nəcəfli" },
-          email: { type: "string", format: "email", example: "aylin@edurate.az" },
+          name: { type: "string", example: "Nümunə Tələbə" },
+          email: { type: "string", format: "email", example: "telebe@edurate.az" },
           password: { type: "string", format: "password", minLength: 8 },
           university: { type: "string", example: "Qarabağ Universiteti" },
           faculty: { type: "string", example: "İnformasiya texnologiyaları" },

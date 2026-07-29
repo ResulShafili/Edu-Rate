@@ -66,7 +66,7 @@ export function createApp() {
     swaggerUi.serve,
     swaggerUi.setup(openApiDocument, {
       customSiteTitle: "EduRate API sənədləri",
-      swaggerOptions: { persistAuthorization: true, displayRequestDuration: true },
+      swaggerOptions: { persistAuthorization: false, displayRequestDuration: true },
     }),
   );
 

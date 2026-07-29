@@ -152,8 +152,8 @@ export const openApiDocument = {
         type: "object",
         required: ["name", "email", "password", "faculty"],
         properties: {
-          name: { type: "string", example: "Aylin Nəcəfli" },
-          email: { type: "string", format: "email", example: "aylin@example.az" },
+          name: { type: "string", example: "Nümunə Tələbə" },
+          email: { type: "string", format: "email", example: "telebe@example.az" },
           password: { type: "string", format: "password", minLength: 8, example: "EduRate2026" },
           university: { type: "string", example: "Qarabağ Universiteti" },
           faculty: { type: "string", example: "Mühəndislik fakültəsi" },
@@ -163,7 +163,7 @@ export const openApiDocument = {
         type: "object",
         required: ["email", "password"],
         properties: {
-          email: { type: "string", format: "email", example: "aylin@example.az" },
+          email: { type: "string", format: "email", example: "telebe@example.az" },
           password: { type: "string", format: "password", example: "EduRate2026" },
         },
       },
@@ -171,7 +171,7 @@ export const openApiDocument = {
         type: "object",
         required: ["name", "university", "faculty", "program", "year", "about"],
         properties: {
-          name: { type: "string", example: "Aylin Nəcəfli" },
+          name: { type: "string", example: "Nümunə Tələbə" },
           university: { type: "string", example: "Qarabağ Universiteti" },
           faculty: { type: "string", example: "Mühəndislik fakültəsi" },
           program: { type: "string", example: "Kompüter mühəndisliyi" },
