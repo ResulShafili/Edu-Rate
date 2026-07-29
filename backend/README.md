@@ -29,6 +29,8 @@ npm run dev
 
 `render.yaml` build, start, healthcheck, təhlükəsiz JWT sirri və PostgreSQL bağlantısını avtomatik təmin edir. Pulsuz Render PostgreSQL instansiyası 30 gündən sonra bitdiyi üçün daimi production istifadə üçün sonradan ödənişli database və ya ayrıca idarə olunan PostgreSQL seçilməlidir.
 
+Render build mərhələsində TypeScript və tip paketlərini quraşdırmaq üçün `npm ci --include=dev` istifadə olunur; runtime isə kompilyasiya edilmiş `dist/server.js` faylını başladır.
+
 ## Frontend bağlantısı
 
 Vercel project **Settings → Environment Variables** bölməsində bunları Railway domeni ilə təyin edin:
