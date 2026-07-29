@@ -1,9 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
-import {
-  chatGPTSignOutPath,
-  getChatGPTAuthContext,
-} from "./chatgpt-auth";
 import { AuthProvider } from "./components/AuthProvider";
 import { PlatformProvider } from "./components/PlatformProvider";
 import { PlatformShell } from "./components/PlatformShell";
@@ -73,13 +69,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { user: identity } = await getChatGPTAuthContext();
   const requestIdentity = await getServerRequestIdentity();
   const initialUser = requestIdentity
     ? createIdentityProfile(requestIdentity.displayName, requestIdentity.email)
     : null;
-  const signOutHref = identity ? chatGPTSignOutPath("/") : null;
-
   return (
     <html lang="az">
       <body className="antialiased">
@@ -89,7 +82,6 @@ export default async function RootLayout({
             requestIdentity &&
               (requestIdentity.role === "admin" || isAdminEmail(requestIdentity.email)),
           )}
-          signOutHref={signOutHref}
         >
           <PlatformProvider>
             <PlatformShell>{children}</PlatformShell>

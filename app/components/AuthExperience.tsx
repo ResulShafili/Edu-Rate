@@ -54,12 +54,11 @@ const particleAnimation = {
 };
 
 type AuthExperienceProps = {
-  chatGPTSignInHref: string | null;
   initialMode?: AuthMode;
   returnTo?: string;
 };
 
-export function AuthExperience({ chatGPTSignInHref, initialMode = "login", returnTo = "/profile" }: AuthExperienceProps) {
+export function AuthExperience({ initialMode = "login", returnTo = "/profile" }: AuthExperienceProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formMessage, setFormMessage] = useState("");
@@ -74,9 +73,7 @@ export function AuthExperience({ chatGPTSignInHref, initialMode = "login", retur
     status,
   } = useAuth();
   const submitting = status === "submitting";
-  const unavailableMessage = chatGPTSignInHref
-    ? "E-poçt və şifrə ilə giriş aktiv deyil. Təhlükəsiz giriş üçün ChatGPT düyməsindən istifadə et."
-    : "Təhlükəsiz giriş provayderi hələ qoşulmayıb. Şifrən göndərilmir və saxlanılmır.";
+  const unavailableMessage = "Təhlükəsiz giriş xidməti hazırda əlçatan deyil. Bir qədər sonra yenidən yoxla.";
   const visibleMessage = formMessage || (
     credentialAuthAvailable ? "" : unavailableMessage
   );
@@ -230,22 +227,6 @@ export function AuthExperience({ chatGPTSignInHref, initialMode = "login", retur
             <h1 id="auth-title">{panelHeading}</h1>
             <p>{panelDescription}</p>
           </header>
-
-          {chatGPTSignInHref && (
-            <div className="auth-form-footer">
-              <p className="auth-privacy-note">
-                <Check size={13} aria-hidden="true" /> Sites-in təhlükəsiz giriş axınıdır; şifrən EduRate-a ötürülmür.
-              </p>
-              <motion.a
-                href={chatGPTSignInHref}
-                className="auth-submit"
-                whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-              >
-                <span>ChatGPT ilə davam et</span>
-                <ArrowRight size={16} aria-hidden="true" />
-              </motion.a>
-            </div>
-          )}
 
           <div className="auth-mode-tabs" role="tablist" aria-label="Hesab əməliyyatı">
             {(["login", "register"] as const).map((tabMode) => {

@@ -1,11 +1,4 @@
-import { headers } from "next/headers";
-import { getChatGPTAuthContext } from "../../chatgpt-auth";
-import {
-  credentialSessionCookieName,
-  readCookieValue,
-  readCredentialSession,
-} from "./credential-session";
-import { isAdminEmail } from "./request-identity";
+import { getServerRequestIdentity, isAdminEmail } from "./request-identity";
 
 export type AdminPrincipal = {
   displayName: string;
@@ -24,34 +17,15 @@ export type AdminAccess =
  */
 export async function resolveAdminAccess(): Promise<AdminAccess> {
   try {
-    const sitesAuth = await getChatGPTAuthContext();
-    if (sitesAuth.user) {
-      return isAdminEmail(sitesAuth.user.email)
-        ? {
-            status: "granted",
-            principal: {
-              displayName: sitesAuth.user.displayName,
-              email: sitesAuth.user.email,
-            },
-          }
-        : { status: "forbidden" };
-    }
+    const identity = await getServerRequestIdentity();
+    if (!identity) return { status: "signed-out", signInHref: "/auth?returnTo=%2Fadmin" };
 
-    const requestHeaders = await headers();
-    const session = await readCredentialSession(
-      readCookieValue(
-        requestHeaders.get("cookie"),
-        credentialSessionCookieName,
-      ),
-    );
-    if (!session) return { status: "signed-out", signInHref: "/auth?returnTo=%2Fadmin" };
-
-    return isAdminEmail(session.user.email)
+    return identity.role === "admin" || isAdminEmail(identity.email)
       ? {
           status: "granted",
           principal: {
-            displayName: session.user.name,
-            email: session.user.email,
+            displayName: identity.displayName,
+            email: identity.email,
           },
         }
       : { status: "forbidden" };

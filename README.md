@@ -97,11 +97,9 @@ curl http://localhost:3000/api/health
 npm run lint
 npm test
 npm run build
-npm run build:vercel
 ```
 
-- `npm run build` Cloudflare/Vinext çıxışı üçün `dist/` yaradır.
-- `npm run build:vercel` Vercel üçün Next.js production build-i yaradır.
+- `npm run build` Vercel və standart Node.js mühiti üçün Next.js production build-i yaradır.
 
 ## Production-a keçid qeydləri
 

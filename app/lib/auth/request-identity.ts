@@ -1,4 +1,3 @@
-import { getChatGPTAuthContext } from "../../chatgpt-auth";
 import { cookies } from "next/headers";
 import {
   credentialSessionCookieName,
@@ -13,20 +12,11 @@ import {
 export type RequestIdentity = {
   email: string;
   displayName: string;
-  source: "sites" | "credential";
+  source: "credential";
   role?: "student" | "admin";
 };
 
 export async function getRequestIdentity(request: Request): Promise<RequestIdentity | null> {
-  const sitesAuth = await getChatGPTAuthContext();
-  if (sitesAuth.user) {
-    return {
-      email: sitesAuth.user.email,
-      displayName: sitesAuth.user.displayName,
-      source: "sites",
-    };
-  }
-
   const remoteToken = readCookieValue(
     request.headers.get("cookie"),
     remoteCredentialCookieName,
@@ -58,15 +48,6 @@ export async function getRequestIdentity(request: Request): Promise<RequestIdent
 }
 
 export async function getServerRequestIdentity(): Promise<RequestIdentity | null> {
-  const sitesAuth = await getChatGPTAuthContext();
-  if (sitesAuth.user) {
-    return {
-      email: sitesAuth.user.email,
-      displayName: sitesAuth.user.displayName,
-      source: "sites",
-    };
-  }
-
   const cookieStore = await cookies();
   const remoteToken = cookieStore.get(remoteCredentialCookieName)?.value;
   if (remoteToken) {

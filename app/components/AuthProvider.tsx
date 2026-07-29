@@ -53,9 +53,6 @@ export function AuthProvider({
   const [user, setUser] = useState<UserProfile | null>(initialUser);
   const [status, setStatus] = useState<AuthStatus>("idle");
   const activeGateway = gateway ?? credentialAuthGateway;
-  // ChatGPT Sites identity is intentionally separate from the local MVP cookie.
-  // Those users can browse with their trusted platform identity, while profile
-  // mutations stay disabled until a matching local API session exists.
   const credentialAuthAvailable = !signOutHref;
 
   useEffect(() => {

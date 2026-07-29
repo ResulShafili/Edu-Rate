@@ -1,9 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import {
-  chatGPTSignInPath,
-  getChatGPTAuthContext,
-} from "../chatgpt-auth";
 import { AuthExperience } from "../components/AuthExperience";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +14,6 @@ type AuthPageProps = {
 };
 
 export default async function AuthPage({ searchParams }: AuthPageProps) {
-  const auth = await getChatGPTAuthContext();
-  if (auth.user) redirect("/profile");
-
   const query = await searchParams;
   const initialMode = query.mode === "register" ? "register" : "login";
   const requestedReturnTo = typeof query.returnTo === "string" ? query.returnTo : "/profile";
@@ -29,13 +21,9 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
     ? requestedReturnTo
     : "/profile";
 
-  const chatGPTSignInHref = auth.isSitesRequest
-    ? chatGPTSignInPath(returnTo)
-    : null;
-
   return (
     <main id="main-content" className="route-page" tabIndex={-1}>
-      <AuthExperience chatGPTSignInHref={chatGPTSignInHref} initialMode={initialMode} returnTo={returnTo} />
+      <AuthExperience initialMode={initialMode} returnTo={returnTo} />
     </main>
   );
 }
