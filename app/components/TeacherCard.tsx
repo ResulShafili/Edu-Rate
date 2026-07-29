@@ -4,6 +4,7 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 import { ArrowUpRight, Check, Star } from "lucide-react";
 import { useRef, type CSSProperties, type RefObject } from "react";
 import type { Teacher } from "../data/teachers";
+import { TeacherSilhouette } from "./TeacherSilhouette";
 
 const ratingFormatter = new Intl.NumberFormat("az-AZ", {
   minimumFractionDigits: 1,
@@ -71,9 +72,10 @@ export function TeacherCard({
             style={{
               x: reduceMotion ? 0 : portraitX,
               scale: reduceMotion ? 1.03 : portraitScale,
-              backgroundPosition: `${teacher.imagePosition} 54%`,
             }}
-          />
+          >
+            <TeacherSilhouette />
+          </motion.span>
           <i className="teacher-avatar-orbit" />
         </span>
 

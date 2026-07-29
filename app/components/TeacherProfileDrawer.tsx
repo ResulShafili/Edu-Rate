@@ -13,6 +13,7 @@ import {
 import { useEffect, useRef, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import type { Teacher } from "../data/teachers";
+import { TeacherSilhouette } from "./TeacherSilhouette";
 
 const numberFormatter = new Intl.NumberFormat("az-AZ");
 const ratingFormatter = new Intl.NumberFormat("az-AZ", {
@@ -138,11 +139,12 @@ export function TeacherProfileDrawer({
               <div className="teacher-profile-visual" aria-hidden="true">
                 <motion.div
                   className="teacher-profile-portrait"
-                  style={{ backgroundPosition: `${teacher.imagePosition} 54%` }}
                   initial={reduceMotion ? false : { scale: 1.08 }}
                   animate={{ scale: 1.02 }}
                   transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                />
+                >
+                  <TeacherSilhouette />
+                </motion.div>
                 <span><Star size={13} fill="currentColor" /> {ratingFormatter.format(teacher.rating)}</span>
               </div>
 

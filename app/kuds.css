@@ -1043,6 +1043,7 @@ body {
 .kuds-shell .teacher-profile-hero,
 .kuds-shell .teacher-profile-bottom { border-color: var(--kuds-border) !important; }
 .kuds-shell .teacher-profile-portrait { background: var(--ku-soft-green) !important; }
+.kuds-shell :is(.teacher-avatar-source, .teacher-profile-portrait) { color: #fff !important; }
 .kuds-shell .teacher-profile-identity :is(h2, p, span),
 .kuds-shell .teacher-profile-bio,
 .kuds-shell .teacher-profile-facts :is(dt, dd),

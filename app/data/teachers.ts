@@ -1,11 +1,3 @@
-export type TeacherImagePosition =
-  | "0%"
-  | "20%"
-  | "40%"
-  | "60%"
-  | "80%"
-  | "100%";
-
 export type Teacher = {
   id: string;
   name: string;
@@ -23,7 +15,6 @@ export type Teacher = {
   reviewCount: number;
   accent: string;
   glow: string;
-  imagePosition: TeacherImagePosition;
 };
 
 export type TeacherReview = {
@@ -64,7 +55,6 @@ export const teachers: Teacher[] = [
     reviewCount: 94,
     accent: "#c8ff4d",
     glow: "rgba(200, 255, 77, 0.28)",
-    imagePosition: "0%",
   },
   {
     id: "murad-eliyev",
@@ -83,7 +73,6 @@ export const teachers: Teacher[] = [
     reviewCount: 76,
     accent: "#77b8ff",
     glow: "rgba(119, 184, 255, 0.3)",
-    imagePosition: "20%",
   },
   {
     id: "nigar-huseynli",
@@ -102,7 +91,6 @@ export const teachers: Teacher[] = [
     reviewCount: 128,
     accent: "#b9a7ff",
     glow: "rgba(185, 167, 255, 0.3)",
-    imagePosition: "40%",
   },
   {
     id: "tural-kerimov",
@@ -121,7 +109,6 @@ export const teachers: Teacher[] = [
     reviewCount: 82,
     accent: "#ff9e7a",
     glow: "rgba(255, 158, 122, 0.28)",
-    imagePosition: "60%",
   },
   {
     id: "aysel-rehimova",
@@ -140,7 +127,6 @@ export const teachers: Teacher[] = [
     reviewCount: 67,
     accent: "#7de5d1",
     glow: "rgba(125, 229, 209, 0.28)",
-    imagePosition: "80%",
   },
   {
     id: "emin-seferli",
@@ -159,7 +145,6 @@ export const teachers: Teacher[] = [
     reviewCount: 51,
     accent: "#f7d56f",
     glow: "rgba(247, 213, 111, 0.28)",
-    imagePosition: "100%",
   },
 ];
 
