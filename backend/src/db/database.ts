@@ -11,6 +11,10 @@ export interface UserRecord {
   passwordHash: string;
   university: string;
   faculty: string;
+  program: string;
+  year: string;
+  city: string;
+  about: string;
   role: UserRole;
   createdAt: string;
 }
@@ -22,6 +26,15 @@ interface CreateUserRecord {
   university: string;
   faculty: string;
   role?: UserRole;
+}
+
+export interface UpdateUserRecord {
+  name: string;
+  university: string;
+  faculty: string;
+  program: string;
+  year: string;
+  about: string;
 }
 
 const pool = env.DATABASE_URL
@@ -43,6 +56,10 @@ function mapUser(row: Record<string, unknown>): UserRecord {
     passwordHash: String(row.password_hash),
     university: String(row.university),
     faculty: String(row.faculty),
+    program: String(row.program ?? "İxtisas məlumatı əlavə edilməyib"),
+    year: String(row.year ?? "Kurs məlumatı əlavə edilməyib"),
+    city: String(row.city ?? "Xankəndi"),
+    about: String(row.about ?? "EduRate icmasına xoş gəlmisən."),
     role: row.role as UserRole,
     createdAt: new Date(String(row.created_at)).toISOString(),
   };
@@ -62,12 +79,21 @@ export async function initializeDatabase() {
       password_hash TEXT NOT NULL,
       university VARCHAR(180) NOT NULL,
       faculty VARCHAR(180) NOT NULL,
+      program VARCHAR(180) NOT NULL DEFAULT 'İxtisas məlumatı əlavə edilməyib',
+      year VARCHAR(80) NOT NULL DEFAULT 'Kurs məlumatı əlavə edilməyib',
+      city VARCHAR(120) NOT NULL DEFAULT 'Xankəndi',
+      about VARCHAR(600) NOT NULL DEFAULT 'EduRate icmasına xoş gəlmisən.',
       role VARCHAR(20) NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'admin')),
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
     CREATE INDEX IF NOT EXISTS users_email_idx ON users (email);
+
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS program VARCHAR(180) NOT NULL DEFAULT 'İxtisas məlumatı əlavə edilməyib';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS year VARCHAR(80) NOT NULL DEFAULT 'Kurs məlumatı əlavə edilməyib';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(120) NOT NULL DEFAULT 'Xankəndi';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS about VARCHAR(600) NOT NULL DEFAULT 'EduRate icmasına xoş gəlmisən.';
   `);
 }
 
@@ -109,6 +135,10 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
     passwordHash: input.passwordHash,
     university: input.university.trim(),
     faculty: input.faculty.trim(),
+    program: "İxtisas məlumatı əlavə edilməyib",
+    year: "Kurs məlumatı əlavə edilməyib",
+    city: "Xankəndi",
+    about: "EduRate icmasında universitet həyatını daha əlaqəli yaşamaq üçün buradayam.",
     role: input.role ?? "student",
     createdAt: new Date().toISOString(),
   };
@@ -145,4 +175,44 @@ export async function listUsers(limit = 50): Promise<UserRecord[]> {
     limit,
   ]);
   return result.rows.map(mapUser);
+}
+
+export async function updateUserProfile(
+  id: string,
+  input: UpdateUserRecord,
+): Promise<UserRecord | null> {
+  if (!pool) {
+    const current = [...memoryUsers.values()].find((user) => user.id === id);
+    if (!current) return null;
+    const next = {
+      ...current,
+      name: input.name.trim(),
+      university: input.university.trim(),
+      faculty: input.faculty.trim(),
+      program: input.program.trim(),
+      year: input.year.trim(),
+      about: input.about.trim(),
+    };
+    memoryUsers.set(next.email, next);
+    return next;
+  }
+
+  const result = await pool.query(
+    `UPDATE users
+     SET name = $2, university = $3, faculty = $4, program = $5, year = $6,
+         about = $7, updated_at = NOW()
+     WHERE id = $1
+     RETURNING *`,
+    [
+      id,
+      input.name.trim(),
+      input.university.trim(),
+      input.faculty.trim(),
+      input.program.trim(),
+      input.year.trim(),
+      input.about.trim(),
+    ],
+  );
+
+  return result.rows[0] ? mapUser(result.rows[0]) : null;
 }

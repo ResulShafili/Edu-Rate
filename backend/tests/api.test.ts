@@ -81,6 +81,21 @@ describe("EduRate API", () => {
       .expect(200);
 
     assert.equal(session.body.data.user.email, email);
+
+    const profile = await request(app)
+      .patch("/api/auth/profile")
+      .set("Authorization", `Bearer ${login.body.data.token}`)
+      .send({
+        name: "Aylin Nəcəfli",
+        university: "Qarabağ Universiteti",
+        faculty: "Mühəndislik fakültəsi",
+        program: "Kompüter mühəndisliyi",
+        year: "2-ci kurs",
+        about: "Texnologiya və tələbə icmaları ilə maraqlanıram.",
+      })
+      .expect(200);
+
+    assert.equal(profile.body.data.user.program, "Kompüter mühəndisliyi");
   });
 
   it("kataloq endpoint-lərini təqdim edir", async () => {

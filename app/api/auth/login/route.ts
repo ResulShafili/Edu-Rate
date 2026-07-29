@@ -1,12 +1,13 @@
-import { signInCredential } from "../../../lib/api/credential-store";
-import { apiError, apiSuccess, readJsonBody } from "../../../lib/api/http";
-import {
-  createCredentialSession,
-  credentialSessionCookie,
-  getCredentialSessionCookieOptions,
-} from "../../../lib/auth/credential-session";
 import type { SignInInput } from "../../../data/user";
 import { checkRateLimit } from "../../../lib/api/rate-limit";
+import { apiError, apiSuccess, readJsonBody } from "../../../lib/api/http";
+import {
+  getRemoteCredentialCookieOptions,
+  mapRemoteUserToProfile,
+  remoteCredentialCookie,
+  requestRemoteApi,
+  type RemoteApiUser,
+} from "../../../lib/auth/remote-credential";
 
 export const dynamic = "force-dynamic";
 
@@ -19,11 +20,18 @@ export async function POST(request: Request) {
         { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds), "Cache-Control": "no-store" } },
       );
     }
+
     const input = await readJsonBody<SignInInput>(request);
-    const user = await signInCredential(input);
-    const token = await createCredentialSession(user);
-    const response = apiSuccess({ user });
-    response.cookies.set(credentialSessionCookie.name, token, getCredentialSessionCookieOptions(request));
+    const result = await requestRemoteApi<{ token: string; user: RemoteApiUser }>(
+      "/api/auth/login",
+      { method: "POST", body: input },
+    );
+    const response = apiSuccess({ user: mapRemoteUserToProfile(result.user) });
+    response.cookies.set(
+      remoteCredentialCookie.name,
+      result.token,
+      getRemoteCredentialCookieOptions(request),
+    );
     return response;
   } catch (error) {
     return apiError(error);

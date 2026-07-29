@@ -2,7 +2,7 @@
 
 EduRate Qarabağ Universitetinin tələbə həyatı üçün hazırlanmış Azərbaycan dilli MVP platformasıdır. Platforma tələbəyə tədbirlər, elanlar, klublar, mentorluq, müəllim qiymətləndirməsi və dəstək xidmətlərinə vahid, sadə giriş verir.
 
-> Hazırkı vəziyyət: frontend və ilkin REST API işlək MVP-dir. Demo məlumatları yaddaşda saxlanır; production üçün davamlı verilənlər bazası və rol icazələri növbəti mərhələdə qoşulmalıdır.
+> Hazırkı vəziyyət: frontend Vercel-də, Express REST API isə Render-də işləyir. Qeydiyyat, giriş və profil məlumatları PostgreSQL-də saxlanır; frontend JWT-ni server tərəfli `HttpOnly` cookie vasitəsilə idarə edir.
 
 ## Dizayn sistemi
 
@@ -39,7 +39,8 @@ EduRate Qarabağ Universitetinin tələbə həyatı üçün hazırlanmış Azər
 - Tailwind CSS 4 və KUDS token override-ları
 - Framer Motion və Recharts
 - SWR və Fetch əsaslı service layer
-- Next.js Route Handlers ilə REST API
+- Next.js Route Handlers ilə təhlükəsiz BFF qatı
+- Node.js + Express REST API və PostgreSQL
 - OpenAPI 3.1
 
 ## Lokal işə salma
@@ -106,8 +107,8 @@ npm run build:vercel
 
 Bu sprintdə aşağıdakılar MVP/demo məqsədlidir:
 
-- Qeydiyyat məlumatları və admin CRUD məlumatları server prosesinin yaddaşındadır; proses yenilənəndə silinir.
-- Admin endpoint-ləri UI və kontrakt testləri üçün hazırdır, lakin real rol əsaslı icazə yoxlaması hələ qoşulmayıb.
+- Qeydiyyat, giriş və profil məlumatları PostgreSQL-də qalıcı saxlanılır; tədbir, klub və mentor kataloqları hələ demo məlumatlarıdır.
+- Admin istifadəçi siyahısı rol yoxlaması ilə qorunur; tam idarəetmə CRUD-u növbəti mərhələdə genişləndirilməlidir.
 - Rəy moderasiyası ilkin filtrdir; qərar növbəsi və audit izi server/database qatında qurulmalıdır.
 
-Növbəti mərhələdə Node.js + Express, PostgreSQL, davamlı sessiya storage-i, email təsdiqi, rate limiting, CSRF qoruması və admin RBAC əlavə edilməlidir. Xarici backend qoşulduqda `NEXT_PUBLIC_API_BASE_URL` və `EDURATE_API_BASE_URL` istifadə edilə bilər.
+Növbəti mərhələdə email təsdiqi, şifrə bərpası, refresh-token rotasiyası, tam admin RBAC və moderasiya audit izi əlavə edilməlidir. Xarici backend ünvanı lazım olduqda `EDURATE_API_BASE_URL` ilə dəyişdirilə bilər.

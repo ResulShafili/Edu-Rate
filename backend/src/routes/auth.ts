@@ -1,7 +1,12 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
-import { createUser, findUserByEmail, findUserById } from "../db/database.js";
+import {
+  createUser,
+  findUserByEmail,
+  findUserById,
+  updateUserProfile,
+} from "../db/database.js";
 import { ApiError } from "../lib/api-error.js";
 import {
   createAccessToken,
@@ -47,6 +52,15 @@ const loginSchema = z.object({
   password: z.string().min(1).max(72),
 });
 
+const profileSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  university: z.string().trim().min(2).max(180),
+  faculty: z.string().trim().min(2).max(180),
+  program: z.string().trim().min(2).max(180),
+  year: z.string().trim().min(1).max(80),
+  about: z.string().trim().max(600),
+});
+
 authRouter.post("/signup", signupLimiter, async (request, response) => {
   const input = signupSchema.parse(request.body);
   const existingUser = await findUserByEmail(input.email);
@@ -76,6 +90,17 @@ authRouter.get("/session", authenticate, async (request, response) => {
 
   if (!user) {
     throw new ApiError(401, "SESSION_USER_NOT_FOUND", "Sessiya istifadəçisi tapılmadı.");
+  }
+
+  response.json({ data: { user: toPublicUser(user) } });
+});
+
+authRouter.patch("/profile", authenticate, async (request, response) => {
+  const input = profileSchema.parse(request.body);
+  const user = await updateUserProfile(request.auth!.userId, input);
+
+  if (!user) {
+    throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
   }
 
   response.json({ data: { user: toPublicUser(user) } });

@@ -85,7 +85,10 @@ export default async function RootLayout({
       <body className="antialiased">
         <AuthProvider
           initialUser={initialUser}
-          initialIsAdmin={Boolean(requestIdentity && isAdminEmail(requestIdentity.email))}
+          initialIsAdmin={Boolean(
+            requestIdentity &&
+              (requestIdentity.role === "admin" || isAdminEmail(requestIdentity.email)),
+          )}
           signOutHref={signOutHref}
         >
           <PlatformProvider>

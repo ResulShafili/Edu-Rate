@@ -70,6 +70,24 @@ export const openApiDocument = {
         },
       },
     },
+    "/api/auth/profile": {
+      patch: {
+        tags: ["Authentication"],
+        summary: "Cari istifadəçinin profilini yenilə",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": { schema: { $ref: "#/components/schemas/ProfileInput" } },
+          },
+        },
+        responses: {
+          "200": { description: "Profil yeniləndi" },
+          "401": { description: "Token yoxdur və ya yanlışdır" },
+          "422": { description: "Validasiya xətası" },
+        },
+      },
+    },
     "/api/auth/logout": {
       post: {
         tags: ["Authentication"],
@@ -147,6 +165,18 @@ export const openApiDocument = {
         properties: {
           email: { type: "string", format: "email", example: "aylin@example.az" },
           password: { type: "string", format: "password", example: "EduRate2026" },
+        },
+      },
+      ProfileInput: {
+        type: "object",
+        required: ["name", "university", "faculty", "program", "year", "about"],
+        properties: {
+          name: { type: "string", example: "Aylin Nəcəfli" },
+          university: { type: "string", example: "Qarabağ Universiteti" },
+          faculty: { type: "string", example: "Mühəndislik fakültəsi" },
+          program: { type: "string", example: "Kompüter mühəndisliyi" },
+          year: { type: "string", example: "2-ci kurs" },
+          about: { type: "string", maxLength: 600 },
         },
       },
     },
