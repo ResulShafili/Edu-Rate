@@ -35,6 +35,7 @@
     ".vinext",
     ".wrangler",
     "dist",
+    "backend",
     "db",
     "examples",
     "worker"

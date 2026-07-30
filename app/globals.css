@@ -1756,7 +1756,7 @@ a { color: inherit; text-decoration: none; }
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: 36px 96px minmax(0, 1fr) 38px;
+  grid-template-columns: 96px minmax(0, 1fr) 38px;
   align-items: center;
   gap: 22px;
   width: 100%;
@@ -3570,7 +3570,7 @@ a { color: inherit; text-decoration: none; }
   .rating-panel-copy { border-right: 0; border-bottom: 1px solid rgba(13, 14, 13, 0.1); }
   .rating-panel-copy::after { right: auto; bottom: -1px; left: 0; width: 35%; height: 1px; }
   .mentor-heading { grid-template-columns: 1fr 0.46fr; gap: 42px; }
-  .mentor-card-trigger { grid-template-columns: 30px 76px minmax(0, 1fr) 34px; gap: 15px; padding: 22px; }
+  .mentor-card-trigger { grid-template-columns: 76px minmax(0, 1fr) 34px; gap: 15px; padding: 22px; }
   .mentor-avatar { width: 72px; height: 72px; }
   .support-heading > div { grid-template-columns: 1fr 0.42fr; gap: 42px; }
   .auth-layout { grid-template-columns: 1fr; max-width: 780px; }
@@ -3657,7 +3657,7 @@ a { color: inherit; text-decoration: none; }
   .mentor-grid { grid-template-columns: 1fr; padding-top: 20px; }
   .mentor-card.is-expanded { grid-column: auto; }
   .mentor-card-trigger,
-  .mentor-card.is-expanded .mentor-card-trigger { grid-template-columns: 24px 70px minmax(0, 1fr) 31px; gap: 11px; min-height: 184px; padding: 18px; }
+  .mentor-card.is-expanded .mentor-card-trigger { grid-template-columns: 70px minmax(0, 1fr) 31px; gap: 11px; min-height: 184px; padding: 18px; }
   .mentor-avatar { width: 66px; height: 66px; }
   .mentor-avatar > span { font-size: 22px; }
   .mentor-avatar > i { right: -5px; width: 15px; height: 15px; border-width: 3px; }
