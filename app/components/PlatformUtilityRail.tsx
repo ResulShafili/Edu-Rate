@@ -154,7 +154,6 @@ function UtilityContent({
         <div className="platform-context-card">
           <span>{context.label}</span>
           <h3>{context.title}</h3>
-          <p>{context.description}</p>
           <small><i aria-hidden="true" />{context.metric}</small>
         </div>
 

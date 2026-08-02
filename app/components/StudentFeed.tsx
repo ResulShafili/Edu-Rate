@@ -119,9 +119,6 @@ export function StudentFeed({ announcements, items }: StudentFeedProps) {
             Elanlar
           </h1>
         </div>
-        <p className="m-0 max-w-[340px] text-[13px] leading-[1.72] text-[color:rgba(244,243,237,0.56)] max-[480px]:text-[12px] max-[480px]:leading-[1.62]">
-          Rəsmi elanlar, klub yenilikləri və fakültə xəbərləri bir yerdə — yalnız ehtiyacın olan qədər.
-        </p>
       </motion.header>
 
       <div className="feed-layout mx-auto mt-12 w-full max-w-[1320px] max-[480px]:mt-8">

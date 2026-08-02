@@ -6,107 +6,86 @@ import {
   CalendarDays,
   GraduationCap,
   HeartHandshake,
+  LifeBuoy,
   Megaphone,
   Sparkles,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
-import { announcements } from "../data/network";
-import { events } from "../data/events";
-import {
-  formatAzDate,
-  formatAzDateTime,
-  getUpcomingItems,
-  isExpired,
-} from "../lib/date";
 import { useAuth } from "./AuthProvider";
-import { EmptyState } from "./ui/Primitives";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const recommendations = [
-  { href: "/teachers", label: "Müəllimləri müqayisə et", description: "Tədris meyarlarına və təsdiqlənmiş rəylərə bax.", icon: GraduationCap },
-  { href: "/mentors", label: "Mentor tap", description: "Sahə, uyğun vaxt və görüş formatına görə seçim et.", icon: HeartHandshake },
-  { href: "/community", label: "İcmanı kəşf et", description: "Ortaq marağı olan tələbələrlə əlaqə qur.", icon: UsersRound },
+const modules = [
+  { href: "/events", label: "Tədbirlər", number: "01", icon: CalendarDays },
+  { href: "/feed", label: "Elanlar", number: "02", icon: Megaphone },
+  { href: "/clubs", label: "Klublar", number: "03", icon: Sparkles },
+  { href: "/community", label: "İcma", number: "04", icon: UsersRound },
+  { href: "/teachers", label: "Müəllimlər", number: "05", icon: GraduationCap },
+  { href: "/mentors", label: "Mentorlar", number: "06", icon: HeartHandshake },
+  { href: "/support", label: "Dəstək", number: "07", icon: LifeBuoy },
 ] as const;
 
 export function HomeExperience() {
   const reducedMotion = Boolean(useReducedMotion());
   const { user } = useAuth();
-  const upcomingEvents = getUpcomingItems(events).slice(0, 3);
-  const activeAnnouncements = announcements
-    .filter((item) => !isExpired(item.expiresAt))
-    .sort((left, right) => Number(right.priority) - Number(left.priority))
-    .slice(0, 3);
-  const firstName = user?.name.split(/\s+/)[0];
+  const firstName = user?.name.trim().split(/\s+/)[0];
 
   return (
-    <div className="kuds-home">
+    <div className="kuds-landing">
       <motion.section
-        className="kuds-welcome-banner"
+        className="kuds-landing-hero"
         aria-labelledby="home-title"
-        initial={reducedMotion ? false : { opacity: 0, y: 16 }}
+        initial={reducedMotion ? false : { opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.48, ease }}
+        transition={{ duration: 0.58, ease }}
       >
-        <div className="kuds-welcome-copy">
-          <span className="kuds-welcome-kicker"><Sparkles size={14} aria-hidden="true" /> EduRate tələbə portalı</span>
-          <h1 id="home-title">{firstName ? `Salam, ${firstName}.` : "Universitet həyatın bir yerdə."}</h1>
-          <p>{user ? "Yaxın tədbirlərini, vacib elanları və sənə uyğun imkanları bir baxışda izlə." : "Tədbirləri, elanları, icmaları və öyrənmə imkanlarını vahid məkanda kəşf et."}</p>
-          <Link href={user ? "/feed" : "/auth"} className="kuds-primary-button">
-            {user ? "Vacib elanlara bax" : "Hesabına daxil ol"} <ArrowRight size={16} aria-hidden="true" />
-          </Link>
+        <div className="kuds-landing-copy">
+          <span className="kuds-landing-kicker">
+            <Sparkles size={14} aria-hidden="true" /> EduRate
+          </span>
+          <h1 id="home-title">
+            {firstName ? <><small>Xoş gəldin, {firstName}.</small>Universitet həyatın <em>bir yerdə.</em></> : <>Universitet həyatın <em>bir yerdə.</em></>}
+          </h1>
+          <p>Başlamaq üçün bölmə seç.</p>
+          <div className="kuds-landing-actions">
+            <a href="#home-modules" className="kuds-primary-button">
+              Bölmələrə bax <ArrowRight size={16} aria-hidden="true" />
+            </a>
+            <Link href={user ? "/profile" : "/auth"} className="kuds-landing-secondary">
+              {user ? "Profilim" : "Daxil ol"}
+            </Link>
+          </div>
         </div>
-        <div className="kuds-welcome-summary" aria-label="Bu gün üçün xülasə">
-          <div><strong>{upcomingEvents.length}</strong><span>yaxın tədbir</span></div>
-          <div><strong>{activeAnnouncements.length}</strong><span>aktiv elan</span></div>
-          <div><strong>{user ? user.stats[1]?.value ?? 0 : "—"}</strong><span>icma əlaqəsi</span></div>
+
+        <div className="kuds-landing-visual" aria-hidden="true">
+          <span className="kuds-landing-orbit kuds-landing-orbit-one" />
+          <span className="kuds-landing-orbit kuds-landing-orbit-two" />
+          <span className="kuds-landing-core">EDU</span>
         </div>
       </motion.section>
 
-      <section className="kuds-home-grid" aria-label="Əsas yeniliklər">
-        <article className="kuds-home-section kuds-list-card">
-          <header className="kuds-home-section-header">
-            <div><span><CalendarDays size={14} aria-hidden="true" /> Təqvim</span><h2>Yaxın tədbirlər</h2></div>
-            <Link href="/events" className="kuds-inline-link">Hamısına bax</Link>
-          </header>
-          {upcomingEvents.length ? (
-            <ul className="kuds-activity-list">
-              {upcomingEvents.map((event) => (
-                <li key={event.id}>
-                  <i aria-hidden="true" />
-                  <div><strong>{event.title}</strong><p>{event.location} · {event.organizer}</p></div>
-                  <time dateTime={event.startAt}>{formatAzDateTime(event.startAt)}</time>
-                </li>
-              ))}
-            </ul>
-          ) : <EmptyState compact title="Yaxın tədbir yoxdur" description="Yeni tədbirlər əlavə olunanda burada görünəcək." action={<Link href="/events" className="kuds-inline-link">Təqvimə bax</Link>} />}
-        </article>
-
-        <article className="kuds-home-section kuds-list-card">
-          <header className="kuds-home-section-header">
-            <div><span><Megaphone size={14} aria-hidden="true" /> Yeniliklər</span><h2>Vacib elanlar</h2></div>
-            <Link href="/feed" className="kuds-inline-link">Elanlara keç</Link>
-          </header>
-          {activeAnnouncements.length ? (
-            <ul className="kuds-activity-list">
-              {activeAnnouncements.map((announcement) => (
-                <li key={announcement.id}>
-                  <i aria-hidden="true" />
-                  <div><strong>{announcement.title}</strong><p>{announcement.source}</p></div>
-                  <time dateTime={announcement.expiresAt}>{formatAzDate(announcement.expiresAt)}</time>
-                </li>
-              ))}
-            </ul>
-          ) : <EmptyState compact title="Aktiv elan yoxdur" description="Arxiv elanlarına Elanlar bölməsindən baxa bilərsən." />}
-        </article>
-      </section>
-
-      <section className="kuds-home-section" aria-labelledby="recommendations-title">
-        <header className="kuds-home-section-header"><div><span>Sənin üçün</span><h2 id="recommendations-title">Faydalı istiqamətlər</h2></div></header>
-        <div className="kuds-recommendation-grid">
-          {recommendations.map(({ href, label, description, icon: Icon }) => (
-            <Link key={href} href={href} className="kuds-recommendation-card"><span><Icon size={19} aria-hidden="true" /></span><div><strong>{label}</strong><small>{description}</small></div><ArrowRight size={16} aria-hidden="true" /></Link>
+      <section id="home-modules" className="kuds-landing-directory" aria-labelledby="home-modules-title">
+        <header>
+          <span>EduRate</span>
+          <h2 id="home-modules-title">Bölmələr</h2>
+        </header>
+        <div className="kuds-landing-grid">
+          {modules.map(({ href, label, number, icon: Icon }, index) => (
+            <motion.div
+              key={href}
+              initial={reducedMotion ? false : { opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-24px" }}
+              transition={{ duration: 0.42, delay: reducedMotion ? 0 : index * 0.035, ease }}
+            >
+              <Link href={href} className="kuds-landing-card">
+                <span className="kuds-landing-card-number">{number}</span>
+                <Icon size={21} strokeWidth={1.7} aria-hidden="true" />
+                <strong>{label}</strong>
+                <ArrowRight className="kuds-landing-card-arrow" size={17} aria-hidden="true" />
+              </Link>
+            </motion.div>
           ))}
         </div>
       </section>

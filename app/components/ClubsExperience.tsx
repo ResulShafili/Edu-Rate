@@ -33,8 +33,6 @@ export function ClubsExperience({ clubs }: ClubsExperienceProps) {
             Klublar və icmalar
           </h1>
         </motion.div>
-
-        <p className="clubs-hero-note">Maraq dairənə uyğun tələbə birliyini tap və fəaliyyətinə qoşul.</p>
       </section>
 
       <section className="clubs-directory" aria-labelledby="clubs-list-title">
@@ -43,10 +41,6 @@ export function ClubsExperience({ clubs }: ClubsExperienceProps) {
             <span>Klublar və təşkilatlar</span>
             <h2 id="clubs-list-title">Klub kataloqu</h2>
           </div>
-          <p>
-            Hər kartın arxasında açıq görüşlər, şəffaf proqram və səni gözləyən
-            bir komanda var.
-          </p>
         </header>
 
         <div className="clubs-directory-grid">

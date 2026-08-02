@@ -45,7 +45,7 @@ export function SettingsExperience() {
 
   return (
     <section className="settings-page" aria-labelledby="settings-title">
-      <PageHeader id="settings-title" eyebrow="Hesab" title="Parametrlər" description="Bildiriş seçimlərini bu cihaz üçün idarə et." />
+      <PageHeader id="settings-title" eyebrow="Hesab" title="Parametrlər" />
       <div className="settings-card">
         <div className="settings-list">
           {preferenceItems.map(({ key, title, description, icon: Icon }) => (

@@ -859,6 +859,270 @@ body {
 .kuds-activity-list p { margin: 3px 0 0; color: var(--kuds-muted); font-size: 12px; line-height: 1.45; }
 .kuds-activity-list time { color: var(--kuds-muted); font-size: 11px; white-space: nowrap; }
 
+/* Focused welcome screen */
+.kuds-landing {
+  display: grid;
+  gap: 30px;
+}
+
+.kuds-landing-hero {
+  position: relative;
+  display: grid;
+  min-height: min(600px, calc(100svh - 150px));
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.55fr);
+  align-items: center;
+  gap: clamp(32px, 6vw, 92px);
+  overflow: hidden;
+  padding: clamp(42px, 7vw, 88px);
+  color: #fff;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 86% 18%, rgb(202 234 241 / 28%), transparent 17rem),
+    linear-gradient(135deg, #123c35 0%, var(--ku-dark-green) 55%, #39766b 100%);
+  box-shadow: var(--kuds-shadow-md);
+  isolation: isolate;
+}
+
+.kuds-landing-hero::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  opacity: 0.13;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 16%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 16%) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(115deg, #000, transparent 78%);
+}
+
+.kuds-landing-copy {
+  position: relative;
+  z-index: 2;
+}
+
+.kuds-landing-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ku-cream);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.kuds-landing-copy h1 {
+  max-width: 800px;
+  margin: 22px 0 18px;
+  font-size: clamp(54px, 7vw, 104px);
+  font-weight: 650;
+  line-height: 0.91;
+  letter-spacing: -0.07em;
+}
+
+.kuds-landing-copy h1 small {
+  display: block;
+  margin-bottom: 18px;
+  color: rgb(255 255 255 / 64%);
+  font-size: clamp(15px, 1.5vw, 20px);
+  font-weight: 550;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.kuds-landing-copy h1 em {
+  display: block;
+  color: var(--ku-cream);
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.045em;
+}
+
+.kuds-landing-copy > p {
+  margin: 0;
+  color: rgb(255 255 255 / 70%);
+  font-size: 14px;
+}
+
+.kuds-landing-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.kuds-landing-actions .kuds-primary-button {
+  margin-top: 0;
+  border-color: var(--ku-cream) !important;
+  background: var(--ku-cream) !important;
+  color: var(--ku-dark-green) !important;
+}
+
+.kuds-landing-actions .kuds-primary-button:hover {
+  border-color: #fff !important;
+  background: #fff !important;
+}
+
+.kuds-landing-secondary {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  color: #fff;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.kuds-landing-secondary:hover {
+  border-color: rgb(255 255 255 / 54%);
+  background: rgb(255 255 255 / 8%);
+  transform: translateY(-1px);
+}
+
+.kuds-landing-visual {
+  position: relative;
+  width: min(100%, 420px);
+  aspect-ratio: 1;
+  justify-self: end;
+}
+
+.kuds-landing-orbit {
+  position: absolute;
+  border: 1px solid rgb(234 239 216 / 34%);
+  border-radius: 50%;
+}
+
+.kuds-landing-orbit::after {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  content: "";
+  border-radius: 50%;
+  background: var(--ku-cream);
+  box-shadow: 0 0 22px rgb(234 239 216 / 76%);
+}
+
+.kuds-landing-orbit-one {
+  inset: 8%;
+  transform: rotate(18deg) scaleY(0.58);
+}
+
+.kuds-landing-orbit-one::after { top: 16%; right: 10%; }
+
+.kuds-landing-orbit-two {
+  inset: 24% 2%;
+  transform: rotate(-31deg) scaleY(0.48);
+}
+
+.kuds-landing-orbit-two::after {
+  right: 15%;
+  bottom: 10%;
+  background: var(--ku-light-blue);
+  box-shadow: 0 0 22px rgb(202 234 241 / 75%);
+}
+
+.kuds-landing-core {
+  position: absolute;
+  inset: 34%;
+  display: grid;
+  place-items: center;
+  color: var(--ku-dark-green);
+  border-radius: 38% 62% 55% 45%;
+  background: linear-gradient(145deg, var(--ku-cream), var(--ku-light-blue));
+  box-shadow: 0 0 70px rgb(202 234 241 / 28%);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.kuds-landing-directory {
+  scroll-margin-top: 96px;
+  padding: 4px 0 12px;
+}
+
+.kuds-landing-directory > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--kuds-border);
+}
+
+.kuds-landing-directory > header span {
+  color: var(--ku-green);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.kuds-landing-directory > header h2 {
+  margin: 0;
+  color: var(--kuds-text);
+  font-size: clamp(28px, 3vw, 38px);
+  letter-spacing: -0.045em;
+}
+
+.kuds-landing-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.kuds-landing-card {
+  position: relative;
+  display: grid;
+  min-height: 148px;
+  grid-template-columns: 1fr auto;
+  align-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  color: var(--kuds-text);
+  border: 1px solid var(--kuds-border);
+  border-radius: 12px;
+  background: var(--kuds-surface);
+  box-shadow: var(--kuds-shadow-xs);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.kuds-landing-card:hover {
+  border-color: rgb(68 118 108 / 45%);
+  box-shadow: var(--kuds-shadow-sm);
+  transform: translateY(-3px);
+}
+
+.kuds-landing-card > svg:not(.kuds-landing-card-arrow) {
+  color: var(--ku-green);
+}
+
+.kuds-landing-card-number {
+  color: var(--kuds-muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.kuds-landing-card strong {
+  align-self: end;
+  font-size: 18px;
+  letter-spacing: -0.025em;
+}
+
+.kuds-landing-card-arrow {
+  align-self: end;
+  justify-self: end;
+  color: var(--ku-green);
+  transition: transform 180ms ease;
+}
+
+.kuds-landing-card:hover .kuds-landing-card-arrow { transform: translateX(3px); }
+
 /* Events */
 .kuds-shell .events-section { padding-bottom: 0 !important; }
 .kuds-shell .filters-row { margin: 0 0 20px !important; padding: 0 !important; border: 0 !important; }
@@ -1286,6 +1550,8 @@ body {
   .kuds-shell .peers-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .kuds-quick-grid,
   .kuds-module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kuds-landing-hero { grid-template-columns: minmax(0, 1fr) minmax(240px, .42fr); }
+  .kuds-landing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 767px) {
@@ -1360,6 +1626,26 @@ body {
   .kuds-welcome-banner { min-height: 0; grid-template-columns: 1fr; padding: 24px; }
   .kuds-welcome-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kuds-welcome-banner h1 { font-size: 34px; }
+  .kuds-landing { gap: 24px; }
+  .kuds-landing-hero {
+    min-height: 500px;
+    grid-template-columns: 1fr;
+    align-content: center;
+    padding: 34px 26px;
+  }
+  .kuds-landing-copy { max-width: 92%; }
+  .kuds-landing-copy h1 { font-size: clamp(46px, 14vw, 66px); }
+  .kuds-landing-visual {
+    position: absolute;
+    z-index: 0;
+    right: -96px;
+    bottom: -110px;
+    width: 330px;
+    opacity: .42;
+  }
+  .kuds-landing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kuds-landing-card { min-height: 124px; padding: 15px; }
+  .kuds-landing-card strong { font-size: 16px; }
   .kuds-home-section { padding: 18px; }
   .kuds-home-section-header { align-items: start; flex-direction: column; }
   .kuds-quick-grid,
@@ -1723,6 +2009,11 @@ body {
   .kuds-shell .teacher-card-trigger { grid-template-columns: 68px minmax(0, 1fr) 28px !important; min-height: 116px !important; gap: 9px !important; }
   .kuds-shell .teacher-avatar { width: 68px !important; height: 90px !important; }
   .kuds-shell .settings-row { grid-template-columns: 32px minmax(0, 1fr) auto; }
+  .kuds-landing-hero { min-height: 470px; padding: 28px 20px; }
+  .kuds-landing-copy h1 { font-size: 42px; }
+  .kuds-landing-actions { align-items: stretch; flex-direction: column; }
+  .kuds-landing-grid { grid-template-columns: 1fr; }
+  .kuds-landing-card { min-height: 108px; }
 }
 
 .kuds-shell .event-card-skeleton {

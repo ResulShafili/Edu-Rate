@@ -83,7 +83,6 @@ export function PeerDirectory({ canInteract, onMessage, onRequireAuth }: PeerDir
           <h1 id="peers-title" className="module-page-title">İcma</h1>
         </div>
         <div className="peers-heading-aside">
-          <p>Ortaq maraqlara əsaslanan səmimi tanışlıqlar: öyrənənlər, yaradıcılar və mentorlar bir arada.</p>
           <button type="button" onClick={refreshDirectory} disabled={loading}>
             <RefreshCw size={14} className={loading ? "is-spinning" : ""} />
             Yeni üzlər
@@ -93,7 +92,6 @@ export function PeerDirectory({ canInteract, onMessage, onRequireAuth }: PeerDir
 
       <div className="directory-meta">
         <span><i /> Bu həftə 2 418 icma üzvü aktivdir</span>
-        <span>Ortaq maraqlara əsasən seçilib</span>
       </div>
 
       <div

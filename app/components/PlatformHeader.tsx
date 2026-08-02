@@ -30,7 +30,6 @@ export function PlatformHeader({ toolsOpen, onToolsToggle }: PlatformHeaderProps
           <ChevronRight size={14} aria-hidden="true" />
           <strong>{context.label}</strong>
         </div>
-        <p>{context.description}</p>
       </div>
 
       <div className="platform-header-actions">

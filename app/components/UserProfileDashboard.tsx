@@ -141,7 +141,6 @@ export function UserProfileDashboard() {
         <div className="profile-hero-copy">
           <span className="profile-kicker">Tələbə profili</span>
           <h1 id="profile-title">Salam, <em>{firstName}.</em></h1>
-          <p>Öyrənmə yolun, əlaqələrin və iştirakların bir sakit, aydın məkanda.</p>
           <div className="profile-identity-meta">
             <span><BadgeCheck size={14} aria-hidden="true" /> {user.role}</span>
             <span><MapPin size={14} aria-hidden="true" /> {user.city}</span>
@@ -189,10 +188,9 @@ export function UserProfileDashboard() {
           >
             <div className="profile-edit-heading">
               <div>
-                <span>Profil məlumatları</span>
-                <h2 id="profile-edit-title">Özünü olduğu kimi təqdim et.</h2>
+                <span>Hesab</span>
+                <h2 id="profile-edit-title">Profil məlumatları</h2>
               </div>
-              <p>Dəyişikliklər profil kartında dərhal görünəcək.</p>
             </div>
 
             <form className="profile-edit-form" onSubmit={handleProfileUpdate}>
@@ -336,7 +334,7 @@ export function UserProfileDashboard() {
           <span className="profile-card-number">04</span>
           <div>
             <span className="profile-card-kicker">Son fəaliyyət</span>
-            <h2>Öyrənmə yolundan qeydlər.</h2>
+            <h2>Son fəaliyyətlər</h2>
           </div>
           {user.activities.length > 0 ? (
             <ol className="profile-activity-list">

@@ -238,7 +238,6 @@ export function TeacherEvaluation() {
           <h1 id="teachers-title" className="module-page-title">Müəllimlər</h1>
         </div>
         <div className="teachers-heading-aside">
-          <p>Təcrübəsi, yanaşması və uyğun vaxtları sənə uyğun olan müəllimlə inamla irəlilə.</p>
           <div className="teacher-carousel-controls">
             <button type="button" onClick={() => moveCarousel(-1)} aria-label="Əvvəlki müəllim" aria-controls="available-teachers-track">
               <ArrowLeft size={17} />
@@ -465,7 +464,7 @@ export function TeacherEvaluation() {
       <div className="reviews-heading">
         <div>
           <span className="teachers-kicker">İcmanın rəyləri</span>
-          <h3>Real təcrübə.<br /><em>Daha aydın seçim.</em></h3>
+          <h3>Son rəylər</h3>
         </div>
         <p><Star size={14} fill="currentColor" /> Son 30 gündə {formatInteger(teacherReviews.length + 182)} yeni qiymətləndirmə</p>
       </div>

@@ -75,7 +75,6 @@ export function EventsExperience() {
             <span className="section-kicker">Kampus təqvimi</span>
             <h1 id="events-title" className="module-page-title">Tədbirlər</h1>
           </div>
-          <p>Maraq dairənə uyğun kampus tədbirlərini axtar və qeydiyyat vəziyyətini yoxla.</p>
         </motion.div>
 
         <motion.div

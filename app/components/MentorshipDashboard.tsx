@@ -120,10 +120,6 @@ export function MentorshipDashboard() {
         </div>
         <div className="mentor-heading-aside">
           <span><Sparkles size={13} /> Uyğun mentorunu tap</span>
-          <p>
-            Hazırda verdiyin suallarla vaxtilə üzləşmiş biri ilə birlikdə öyrən.
-            Soyuq tanışlıqlar da, süni əlaqələr də yoxdur.
-          </p>
         </div>
       </motion.div>
 

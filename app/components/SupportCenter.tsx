@@ -96,7 +96,6 @@ export function SupportCenter() {
           <span className="support-kicker">Yardım mərkəzi</span>
           <h1 id="support-title" className="module-page-title">Dəstək</h1>
         </div>
-        <p>Tez-tez verilən suallara bax və ehtiyac olduqda dəstək sorğusu göndər.</p>
       </motion.div>
 
       <div className="support-layout">
