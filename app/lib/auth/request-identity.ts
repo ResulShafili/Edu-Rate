@@ -13,7 +13,7 @@ export type RequestIdentity = {
   email: string;
   displayName: string;
   source: "credential";
-  role?: "student" | "admin";
+  role?: "student" | "mentor" | "teacher" | "admin";
 };
 
 export async function getRequestIdentity(request: Request): Promise<RequestIdentity | null> {

@@ -3,9 +3,11 @@ import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { closeDatabase, initializeDatabase } from "./db/database.js";
 import { initializeBusinessDatabase } from "./db/business.js";
+import { initializePlatformDatabase } from "./db/platform.js";
 
 await initializeDatabase();
 await initializeBusinessDatabase();
+await initializePlatformDatabase();
 
 const server = createServer(createApp());
 

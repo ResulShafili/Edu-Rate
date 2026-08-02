@@ -37,7 +37,7 @@ export const presentationStack = [
   {
     label: "API hazırlığı",
     value: "REST Route Handlers, Fetch client və OpenAPI 3.1",
-    detail: "MVP endpoint-ləri işləkdir; eyni kontrakt Node.js + Express və davamlı database qatına daşına bilər.",
+    detail: "Next.js BFF qatı canlı Node.js + Express API-yə bağlıdır və əsas əməliyyatlar PostgreSQL-də saxlanılır.",
   },
 ] as const;
 
@@ -48,6 +48,10 @@ export const plannedApiContracts = [
   "GET /api/admin/overview",
   "GET, POST, PATCH, DELETE /api/admin/users",
   "GET, POST, PATCH, DELETE /api/admin/clubs və /api/admin/events",
+  "POST, DELETE /api/clubs/:clubId/memberships",
+  "GET, POST, PATCH, DELETE /api/events və /api/events/:eventId",
+  "GET, POST, PATCH, DELETE /api/mentorship/requests",
+  "POST /api/reviews və /api/support/tickets",
   "GET /api/openapi.json",
 ] as const;
 
@@ -67,17 +71,17 @@ export const readinessNotes = [
   {
     label: "Backend",
     status: "MVP hazır",
-    detail: "Giriş, sessiya, profil, idarəetmə və OpenAPI endpoint-ləri işlək demo yaddaş anbarı ilə təqdim edilir.",
+    detail: "Giriş, sessiya, profil, tədbir, klub, mentorluq, rəy, dəstək və idarəetmə endpoint-ləri Render-də işləyir.",
   },
   {
     label: "Database",
-    status: "Növbəti mərhələ",
-    detail: "Davamlı production məlumat bazası aktiv deyil; sprint MVP-də məlumatlar demo yaddaş anbarında saxlanır.",
+    status: "Aktiv",
+    detail: "Render PostgreSQL production bazası istifadəçi və əsas biznes əməliyyatlarını qalıcı saxlayır.",
   },
   {
     label: "Təhlükəsizlik",
-    status: "Qismən hazır",
-    detail: "Sessiya HttpOnly cookie ilə yaradılır, rəy moderasiyası API-də yoxlanır; admin rol və database icazələri növbəti mərhələdir.",
+    status: "MVP hazır",
+    detail: "Sessiya HttpOnly cookie ilə qorunur, server rəy moderasiyası aparır və admin endpoint-ləri rol ilə məhdudlaşdırılır.",
   },
 ] as const;
 
@@ -86,9 +90,9 @@ export const presentationChecklist = [
   "Sol menyudan bütün bölmələrə keçid işləyir.",
   "Tədbir, klub, mentor və müəllim səhifələri vizual olaraq dağılmır.",
   "Müəllim qiymətləndirməsində meyarlar aydın görünür.",
-  "Admin panel demo məlumatları göstərir.",
+  "Admin panel verilənlər bazasından canlı məlumatları göstərir.",
   "Build prosesi uğurla tamamlanır.",
 ] as const;
 
 export const leadershipScript =
-  "EduRate Qarabağ Universiteti üçün tələbə təcrübəsini birləşdirən rəqəmsal platformadır. Frontend React, Next.js və TypeScript ilə, interfeys isə universitetin vahid KUDS dizayn sistemi ilə hazırlanıb. Tədbirlər, elanlar, klublar, mentorluq, müəllim qiymətləndirməsi və admin panel ayrı modullar kimi inkişaf etdirilir. Sprint MVP-də giriş, sessiya, profil, idarəetmə və OpenAPI endpoint-ləri işləkdir. Növbəti mərhələdə davamlı database, rol əsaslı admin icazələri və Express backend-in daimi servis qatı əlavə ediləcək.";
+  "EduRate Qarabağ Universiteti üçün tələbə təcrübəsini birləşdirən rəqəmsal platformadır. Frontend React, Next.js və TypeScript, backend Node.js və Express, qalıcı məlumat qatı isə PostgreSQL ilə hazırlanıb. Tədbir qeydiyyatı, klub üzvlüyü, mentorluq, müəllim rəyi, dəstək müraciəti və admin idarəetməsi canlı API-yə bağlıdır. Sistem HttpOnly sessiya, server validasiyası, moderasiya və rol əsaslı admin qoruması ilə Sprint 2-nin əsas uçdan-uca axınlarını tamamlayır.";

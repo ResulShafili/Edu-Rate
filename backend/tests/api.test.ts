@@ -7,6 +7,7 @@ process.env.NODE_ENV = "test";
 process.env.JWT_SECRET = "edurate-test-secret-with-at-least-32-characters";
 process.env.FRONTEND_URL = "http://localhost:3000";
 process.env.TRUST_PROXY = "true";
+process.env.ADMIN_EMAILS = "admin.test@example.az";
 
 let app: Express;
 
@@ -28,6 +29,9 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/auth/signup"]);
     assert.ok(response.body.paths["/api/events/{eventId}"]);
     assert.ok(response.body.paths["/api/mentorship/requests"]);
+    assert.ok(response.body.paths["/api/clubs/{clubId}/memberships"]);
+    assert.ok(response.body.paths["/api/reviews"]);
+    assert.ok(response.body.paths["/api/support/tickets"]);
   });
 
   it("Swagger-in cari API domenindən CORS sorğusuna icazə verir", async () => {
@@ -198,5 +202,76 @@ describe("EduRate API", () => {
       .set("Authorization", authorization)
       .expect(204);
     await request(app).get(`/api/events/${eventId}`).expect(404);
+  });
+
+  it("klub üzvlüyü, müəllim rəyi və dəstək müraciətini bazada saxlayır", async () => {
+    const signup = await request(app)
+      .post("/api/auth/signup")
+      .send({
+        name: "Aysel Məmmədli",
+        email: `platform.${Date.now()}@example.az`,
+        password: "EduRate2026",
+        university: "Qarabağ Universiteti",
+        faculty: "Humanitar elmlər fakültəsi",
+      })
+      .expect(201);
+    const authorization = `Bearer ${signup.body.data.token}`;
+
+    await request(app)
+      .post("/api/clubs/innovasiya-robototexnika/memberships")
+      .set("Authorization", authorization)
+      .expect(201);
+    const memberships = await request(app)
+      .get("/api/clubs/memberships/me")
+      .set("Authorization", authorization)
+      .expect(200);
+    assert.ok(memberships.body.data.some((club: { slug: string }) => club.slug === "innovasiya-robototexnika"));
+
+    const reviewInput = {
+      teacherId: "nigar-huseynli",
+      course: "İngilis dili",
+      semester: `2026-payız-${Date.now()}`,
+      text: "İzahlar aydın idi və tapşırıqlara faydalı geribildirim verildi.",
+      criteria: { clarity: 5, subjectKnowledge: 5, objectivity: 4, communication: 5 },
+    };
+    await request(app).post("/api/reviews").set("Authorization", authorization).send(reviewInput).expect(201);
+    await request(app).post("/api/reviews").set("Authorization", authorization).send(reviewInput).expect(409);
+    await request(app).post("/api/reviews").set("Authorization", authorization).send({ ...reviewInput, semester: "2027-yaz", text: "Bu müəllim axmaqdır və heç nə bilmir." }).expect(422);
+
+    const ticket = await request(app).post("/api/support/tickets").send({
+      name: "Aysel Məmmədli",
+      email: "aysel.memmedli@example.az",
+      topic: "Tədbir qeydiyyatı",
+      message: "Tədbir qeydiyyatımın vəziyyətini dəqiqləşdirmək istəyirəm.",
+    }).expect(201);
+    assert.match(ticket.body.data.reference, /^EDU-/);
+
+    await request(app)
+      .delete("/api/clubs/innovasiya-robototexnika/memberships")
+      .set("Authorization", authorization)
+      .expect(200);
+  });
+
+  it("admin icmalı və real idarəetmə siyahılarını qorunan API-dən qaytarır", async () => {
+    const signup = await request(app)
+      .post("/api/auth/signup")
+      .send({
+        name: "Test Administratoru",
+        email: "admin.test@example.az",
+        password: "EduRate2026",
+        university: "Qarabağ Universiteti",
+        faculty: "İdarəetmə",
+      })
+      .expect(201);
+    assert.equal(signup.body.data.user.role, "admin");
+    const authorization = `Bearer ${signup.body.data.token}`;
+
+    const overview = await request(app).get("/api/admin/overview").set("Authorization", authorization).expect(200);
+    assert.equal(overview.body.data.metrics.length, 4);
+    const users = await request(app).get("/api/admin/users?page=1&pageSize=5").set("Authorization", authorization).expect(200);
+    assert.equal(users.body.data.page, 1);
+    assert.ok(users.body.data.total >= 1);
+    const clubs = await request(app).get("/api/admin/clubs?page=1&pageSize=5").set("Authorization", authorization).expect(200);
+    assert.ok(clubs.body.data.total >= 1);
   });
 });

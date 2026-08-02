@@ -39,6 +39,12 @@ Render build mərhələsində TypeScript və tip paketlərini quraşdırmaq üç
 - `GET /api/events/registrations/me` — istifadəçinin tədbir qeydiyyatları
 - `GET/POST /api/mentorship/requests` — mentorluq müraciətlərini siyahıla və yarat
 - `PATCH/DELETE /api/mentorship/requests/:requestId` — gözləyən müraciəti yenilə və sil
+- `GET/POST/PATCH/DELETE /api/clubs` — klub kataloqu və admin CRUD
+- `GET /api/clubs/memberships/me` — istifadəçinin klub üzvlükləri
+- `POST/DELETE /api/clubs/:clubId/memberships` — kluba qoşul və üzvlükdən çıx
+- `POST /api/reviews` — moderasiya edilən müəllim rəyini saxla
+- `POST /api/support/tickets` — dəstək müraciətini saxla
+- `GET /api/admin/overview` və admin CRUD endpoint-ləri — canlı idarəetmə məlumatları
 
 Bütün yazma əməliyyatları JWT tələb edir. Tədbiri yalnız onu yaradan istifadəçi və ya admin dəyişə/silə bilər. Endpoint-lərin nümunələri və cavab kodları Swagger UI daxilində test edilə bilər.
 
@@ -49,7 +55,10 @@ Vercel project **Settings → Environment Variables** bölməsində bunları Ren
 ```env
 NEXT_PUBLIC_API_BASE_URL=https://edurate-api.onrender.com
 EDURATE_API_BASE_URL=https://edurate-api.onrender.com
+EDURATE_ADMIN_EMAILS=admin@example.az
 ```
+
+Render servisində eyni ünvanı `ADMIN_EMAILS=admin@example.az` kimi təyin edin. Bu hesab yenidən daxil olduqda admin JWT-si alacaq.
 
 Sonra frontend-i Vercel-də redeploy edin.
 

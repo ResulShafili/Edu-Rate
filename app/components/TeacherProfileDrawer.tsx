@@ -13,13 +13,8 @@ import {
 import { useEffect, useRef, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import type { Teacher } from "../data/teachers";
+import { formatDecimalScore, formatInteger } from "../lib/number-format";
 import { TeacherSilhouette } from "./TeacherSilhouette";
-
-const numberFormatter = new Intl.NumberFormat("az-AZ");
-const ratingFormatter = new Intl.NumberFormat("az-AZ", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
 
 type TeacherProfileDrawerProps = {
   teacher: Teacher | null;
@@ -145,7 +140,7 @@ export function TeacherProfileDrawer({
                 >
                   <TeacherSilhouette />
                 </motion.div>
-                <span><Star size={13} fill="currentColor" /> {ratingFormatter.format(teacher.rating)}</span>
+                <span><Star size={13} fill="currentColor" /> {formatDecimalScore(teacher.rating)}</span>
               </div>
 
               <div className="teacher-profile-identity">
@@ -168,7 +163,7 @@ export function TeacherProfileDrawer({
               </div>
               <div>
                 <dt><Users size={16} /> İcma</dt>
-                <dd>{numberFormatter.format(teacher.studentsCount)} tələbə · {numberFormatter.format(teacher.reviewCount)} rəy</dd>
+                <dd>{formatInteger(teacher.studentsCount)} tələbə · {formatInteger(teacher.reviewCount)} rəy</dd>
               </div>
               <div>
                 <dt><CalendarClock size={16} /> Uyğun vaxt</dt>

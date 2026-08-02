@@ -21,7 +21,7 @@ export type RemoteApiUser = {
   year?: string;
   city?: string;
   about?: string;
-  role: "student" | "admin";
+  role: "student" | "mentor" | "teacher" | "admin";
   createdAt: string;
 };
 

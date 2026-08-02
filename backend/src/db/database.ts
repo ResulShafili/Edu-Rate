@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import { env } from "../config/env.js";
 
-export type UserRole = "student" | "admin";
+export type UserRole = "student" | "mentor" | "teacher" | "admin";
+export type UserStatus = "Aktiv" | "Gözləmədə" | "Məhdudlaşdırılıb";
 
 export interface UserRecord {
   id: string;
@@ -16,16 +17,19 @@ export interface UserRecord {
   city: string;
   about: string;
   role: UserRole;
+  status: UserStatus;
   createdAt: string;
+  updatedAt: string;
 }
 
-interface CreateUserRecord {
+export interface CreateUserRecord {
   name: string;
   email: string;
   passwordHash: string;
   university: string;
   faculty: string;
   role?: UserRole;
+  status?: UserStatus;
 }
 
 export interface UpdateUserRecord {
@@ -61,7 +65,9 @@ function mapUser(row: Record<string, unknown>): UserRecord {
     city: String(row.city ?? "Xankəndi"),
     about: String(row.about ?? "EduRate icmasına xoş gəlmisən."),
     role: row.role as UserRole,
+    status: (row.status ?? "Aktiv") as UserStatus,
     createdAt: new Date(String(row.created_at)).toISOString(),
+    updatedAt: new Date(String(row.updated_at ?? row.created_at)).toISOString(),
   };
 }
 
@@ -83,7 +89,8 @@ export async function initializeDatabase() {
       year VARCHAR(80) NOT NULL DEFAULT 'Kurs məlumatı əlavə edilməyib',
       city VARCHAR(120) NOT NULL DEFAULT 'Xankəndi',
       about VARCHAR(600) NOT NULL DEFAULT 'EduRate icmasına xoş gəlmisən.',
-      role VARCHAR(20) NOT NULL DEFAULT 'student' CHECK (role IN ('student', 'admin')),
+      role VARCHAR(20) NOT NULL DEFAULT 'student',
+      status VARCHAR(32) NOT NULL DEFAULT 'Aktiv',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
@@ -94,7 +101,19 @@ export async function initializeDatabase() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS year VARCHAR(80) NOT NULL DEFAULT 'Kurs məlumatı əlavə edilməyib';
     ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(120) NOT NULL DEFAULT 'Xankəndi';
     ALTER TABLE users ADD COLUMN IF NOT EXISTS about VARCHAR(600) NOT NULL DEFAULT 'EduRate icmasına xoş gəlmisən.';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'Aktiv';
+    ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+    ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('student', 'mentor', 'teacher', 'admin'));
+    ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check;
+    ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('Aktiv', 'Gözləmədə', 'Məhdudlaşdırılıb'));
   `);
+
+  if (env.ADMIN_EMAILS.length > 0) {
+    await databasePool.query(
+      "UPDATE users SET role = 'admin', status = 'Aktiv', updated_at = NOW() WHERE email = ANY($1::text[])",
+      [env.ADMIN_EMAILS],
+    );
+  }
 }
 
 export async function closeDatabase() {
@@ -128,10 +147,11 @@ export async function findUserById(id: string): Promise<UserRecord | null> {
 }
 
 export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
+  const normalizedEmail = input.email.trim().toLowerCase();
   const user: UserRecord = {
     id: randomUUID(),
     name: input.name.trim(),
-    email: input.email.trim().toLowerCase(),
+    email: normalizedEmail,
     passwordHash: input.passwordHash,
     university: input.university.trim(),
     faculty: input.faculty.trim(),
@@ -139,8 +159,10 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
     year: "Kurs məlumatı əlavə edilməyib",
     city: "Xankəndi",
     about: "EduRate icmasında universitet həyatını daha əlaqəli yaşamaq üçün buradayam.",
-    role: input.role ?? "student",
+    role: input.role ?? (env.ADMIN_EMAILS.includes(normalizedEmail) ? "admin" : "student"),
+    status: input.status ?? "Aktiv",
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   if (!databasePool) {
@@ -149,8 +171,8 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
   }
 
   const result = await databasePool.query(
-    `INSERT INTO users (id, name, email, password_hash, university, faculty, role)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO users (id, name, email, password_hash, university, faculty, role, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING *`,
     [
       user.id,
@@ -160,6 +182,7 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
       user.university,
       user.faculty,
       user.role,
+      user.status,
     ],
   );
 
@@ -175,6 +198,48 @@ export async function listUsers(limit = 50): Promise<UserRecord[]> {
     limit,
   ]);
   return result.rows.map(mapUser);
+}
+
+export async function adminUpdateUser(
+  id: string,
+  input: Partial<Pick<UserRecord, "name" | "email" | "role" | "university" | "faculty" | "status">>,
+): Promise<UserRecord | null> {
+  if (!databasePool) {
+    const current = [...memoryUsers.values()].find((user) => user.id === id);
+    if (!current) return null;
+    const previousEmail = current.email;
+    const next: UserRecord = {
+      ...current,
+      ...input,
+      name: input.name?.trim() ?? current.name,
+      email: input.email?.trim().toLowerCase() ?? current.email,
+      university: input.university?.trim() ?? current.university,
+      faculty: input.faculty?.trim() ?? current.faculty,
+      updatedAt: new Date().toISOString(),
+    };
+    memoryUsers.delete(previousEmail);
+    memoryUsers.set(next.email, next);
+    return next;
+  }
+
+  const result = await databasePool.query(
+    `UPDATE users SET
+       name = COALESCE($2, name), email = COALESCE($3, email),
+       role = COALESCE($4, role), university = COALESCE($5, university),
+       faculty = COALESCE($6, faculty), status = COALESCE($7, status), updated_at = NOW()
+     WHERE id = $1 RETURNING *`,
+    [id, input.name?.trim(), input.email?.trim().toLowerCase(), input.role, input.university?.trim(), input.faculty?.trim(), input.status],
+  );
+  return result.rows[0] ? mapUser(result.rows[0]) : null;
+}
+
+export async function deleteUser(id: string): Promise<boolean> {
+  if (!databasePool) {
+    const user = [...memoryUsers.values()].find((entry) => entry.id === id);
+    return user ? memoryUsers.delete(user.email) : false;
+  }
+  const result = await databasePool.query("DELETE FROM users WHERE id = $1", [id]);
+  return (result.rowCount ?? 0) > 0;
 }
 
 export async function updateUserProfile(

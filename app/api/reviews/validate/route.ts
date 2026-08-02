@@ -4,6 +4,7 @@ import {
 } from "../../../lib/review-moderation";
 import { checkRateLimit } from "../../../lib/api/rate-limit";
 import { getRequestIdentity } from "../../../lib/auth/request-identity";
+import { readRemoteCredentialToken, requestRemoteApi } from "../../../lib/auth/remote-credential";
 
 const criterionKeys = [
   "clarity",
@@ -19,8 +20,6 @@ type ReviewPayload = {
   course?: unknown;
   semester?: unknown;
 };
-
-const submittedReviews = new Set<string>();
 
 function json(body: unknown, status: number) {
   return Response.json(body, {
@@ -73,11 +72,6 @@ export async function POST(request: Request) {
     return json({ accepted: false, reason: "Müəllim, fənn və semestr məlumatı tam deyil." }, 400);
   }
 
-  const uniqueKey = `${identity.email.toLowerCase()}:${payload.teacherId}:${payload.semester}`;
-  if (submittedReviews.has(uniqueKey)) {
-    return json({ accepted: false, reason: "Bu müəllim üçün cari semestrdə artıq rəy göndərmisən." }, 409);
-  }
-
   if (!hasValidCriteria(payload.criteria)) {
     return json({
       accepted: false,
@@ -105,7 +99,26 @@ export async function POST(request: Request) {
     }, 422);
   }
 
-  submittedReviews.add(uniqueKey);
+  const token = readRemoteCredentialToken(request);
+  if (!token) return json({ accepted: false, reason: "Sessiyanı yeniləmək üçün yenidən daxil ol." }, 401);
+
+  try {
+    await requestRemoteApi("/api/reviews", {
+      method: "POST",
+      token,
+      body: {
+        teacherId: payload.teacherId.trim(),
+        course: payload.course.trim(),
+        semester: payload.semester.trim(),
+        text: payload.text.trim(),
+        criteria: payload.criteria,
+      },
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Rəy saxlanmadı. Yenidən yoxla.";
+    const status = typeof error === "object" && error && "status" in error ? Number(error.status) : 500;
+    return json({ accepted: false, reason }, Number.isFinite(status) ? status : 500);
+  }
 
   return json({
     accepted: true,

@@ -22,6 +22,7 @@ export type EventRecord = {
   availableSpots: number;
   accent: string;
   glow: string;
+  adminStatus?: "Açıq" | "Qaralama" | "Tamamlanıb";
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
@@ -47,6 +48,7 @@ const memoryEvents = new Map<string, EventRecord>(
     event.id,
     {
       ...event,
+      adminStatus: "Açıq",
       createdBy: null,
       createdAt: "2026-08-01T00:00:00.000Z",
       updatedAt: "2026-08-01T00:00:00.000Z",
@@ -78,6 +80,7 @@ function mapEvent(row: Record<string, unknown>): EventRecord {
     availableSpots: Number(row.available_spots),
     accent: String(row.accent),
     glow: String(row.glow),
+    adminStatus: (row.admin_status ?? "Açıq") as EventRecord["adminStatus"],
     createdBy: row.created_by ? String(row.created_by) : null,
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
@@ -117,6 +120,7 @@ export async function initializeBusinessDatabase() {
       available_spots INTEGER NOT NULL CHECK (available_spots >= 0 AND available_spots <= capacity),
       accent VARCHAR(32) NOT NULL DEFAULT '#c8ff4d',
       glow VARCHAR(80) NOT NULL DEFAULT 'rgba(200, 255, 77, 0.28)',
+      admin_status VARCHAR(24) NOT NULL DEFAULT 'Açıq',
       created_by UUID REFERENCES users(id) ON DELETE SET NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -126,6 +130,9 @@ export async function initializeBusinessDatabase() {
 
     CREATE INDEX IF NOT EXISTS events_start_at_idx ON events (start_at);
     CREATE INDEX IF NOT EXISTS events_category_idx ON events (category);
+    ALTER TABLE events ADD COLUMN IF NOT EXISTS admin_status VARCHAR(24) NOT NULL DEFAULT 'Açıq';
+    ALTER TABLE events DROP CONSTRAINT IF EXISTS events_admin_status_check;
+    ALTER TABLE events ADD CONSTRAINT events_admin_status_check CHECK (admin_status IN ('Açıq', 'Qaralama', 'Tamamlanıb'));
 
     CREATE TABLE IF NOT EXISTS event_registrations (
       id UUID PRIMARY KEY,
@@ -199,6 +206,7 @@ export async function createEvent(input: EventInput, userId: string): Promise<Ev
     ...input,
     id: `event-${randomUUID()}`,
     availableSpots: input.availableSpots ?? input.capacity,
+    adminStatus: input.adminStatus ?? "Açıq",
     createdBy: userId,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -213,14 +221,14 @@ export async function createEvent(input: EventInput, userId: string): Promise<Ev
     `INSERT INTO events (
       id, title, category, description, long_description, location, city, organizer,
       start_at, end_at, registration_deadline, speakers, capacity, available_spots,
-      accent, glow, created_by
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14,$15,$16,$17)
+      accent, glow, created_by, admin_status
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14,$15,$16,$17,$18)
     RETURNING *`,
     [
       event.id, event.title, event.category, event.description, event.longDescription,
       event.location, event.city, event.organizer, event.startAt, event.endAt,
       event.registrationDeadline, JSON.stringify(event.speakers), event.capacity,
-      event.availableSpots, event.accent, event.glow, userId,
+      event.availableSpots, event.accent, event.glow, userId, event.adminStatus,
     ],
   );
   return mapEvent(result.rows[0]);
@@ -234,6 +242,7 @@ export async function updateEvent(id: string, input: EventInput): Promise<EventR
     const next = {
       ...current,
       ...input,
+      adminStatus: input.adminStatus ?? current.adminStatus,
       availableSpots: Math.max(0, input.capacity - registeredCount),
       updatedAt: now(),
     };
@@ -247,13 +256,13 @@ export async function updateEvent(id: string, input: EventInput): Promise<EventR
       city=$7, organizer=$8, start_at=$9, end_at=$10, registration_deadline=$11,
       speakers=$12::jsonb, capacity=$13,
       available_spots=GREATEST(0, $13 - (capacity - available_spots)),
-      accent=$14, glow=$15, updated_at=NOW()
+      accent=$14, glow=$15, admin_status=COALESCE($16, admin_status), updated_at=NOW()
     WHERE id=$1 RETURNING *`,
     [
       id, input.title, input.category, input.description, input.longDescription,
       input.location, input.city, input.organizer, input.startAt, input.endAt,
       input.registrationDeadline, JSON.stringify(input.speakers), input.capacity,
-      input.accent, input.glow,
+      input.accent, input.glow, input.adminStatus,
     ],
   );
   return result.rows[0] ? mapEvent(result.rows[0]) : null;

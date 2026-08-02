@@ -27,10 +27,9 @@ import { ReviewCard } from "./ReviewCard";
 import { TeacherCard } from "./TeacherCard";
 import { TeacherProfileDrawer } from "./TeacherProfileDrawer";
 import { useAuth } from "./AuthProvider";
+import { formatDecimalScore, formatInteger } from "../lib/number-format";
 
 const confettiPieces = Array.from({ length: 12 }, (_, index) => index);
-const numberFormatter = new Intl.NumberFormat("az-AZ");
-const scoreFormatter = new Intl.NumberFormat("az-AZ", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 type ReviewValidationResponse = {
   accepted?: boolean;
@@ -348,7 +347,7 @@ export function TeacherEvaluation() {
             <p>Dörd peşəkar meyar üzrə səmimi rəyin digər tələbələrin daha doğru seçim etməsinə kömək edir.</p>
             <div className="rating-teacher-chip">
               <i>{selectedTeacher.initials}</i>
-              <span><strong>{selectedTeacher.subject}</strong><small>{numberFormatter.format(selectedTeacher.reviewCount)} təsdiqlənmiş rəy</small></span>
+              <span><strong>{selectedTeacher.subject}</strong><small>{formatInteger(selectedTeacher.reviewCount)} təsdiqlənmiş rəy</small></span>
             </div>
           </div>
 
@@ -399,7 +398,7 @@ export function TeacherEvaluation() {
               )}
             </AnimatePresence>
             <div className="rating-form-footer">
-              <small>{rating === 0 ? "Dörd meyarı tamamla" : `Orta qiymət: ${scoreFormatter.format(rating)} / 5`}</small>
+              <small>{rating === 0 ? "Dörd meyarı tamamla" : `Orta qiymət: ${formatDecimalScore(rating)} / 5`}</small>
               <motion.button type="submit" disabled={!canSubmit} whileTap={reduceMotion ? undefined : { scale: 0.96 }}>
                 {reviewSent ? <Check size={15} /> : reviewChecking ? <i className="review-check-spinner" /> : <Send size={14} />}
                 {reviewSent ? "Rəy göndərildi" : reviewChecking ? "Rəy yoxlanılır" : "Rəyi göndər"}
@@ -468,7 +467,7 @@ export function TeacherEvaluation() {
           <span className="teachers-kicker">İcmanın rəyləri</span>
           <h3>Real təcrübə.<br /><em>Daha aydın seçim.</em></h3>
         </div>
-        <p><Star size={14} fill="currentColor" /> Son 30 gündə {numberFormatter.format(teacherReviews.length + 182)} yeni qiymətləndirmə</p>
+        <p><Star size={14} fill="currentColor" /> Son 30 gündə {formatInteger(teacherReviews.length + 182)} yeni qiymətləndirmə</p>
       </div>
 
       <div className="reviews-masonry" aria-label="Müəllimlər haqqında rəylər">

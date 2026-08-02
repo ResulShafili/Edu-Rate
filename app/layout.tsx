@@ -74,7 +74,7 @@ export default async function RootLayout({
     ? createIdentityProfile(requestIdentity.displayName, requestIdentity.email)
     : null;
   return (
-    <html lang="az">
+    <html lang="az" data-scroll-behavior="smooth">
       <body className="antialiased">
         <AuthProvider
           initialUser={initialUser}

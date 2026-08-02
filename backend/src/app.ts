@@ -9,9 +9,12 @@ import { openApiDocument } from "./openapi.js";
 import { adminRouter } from "./routes/admin.js";
 import { authRouter } from "./routes/auth.js";
 import { catalogRouter } from "./routes/catalog.js";
+import { clubsRouter } from "./routes/clubs.js";
 import { eventsRouter } from "./routes/events.js";
 import { healthRouter } from "./routes/health.js";
 import { mentorshipRouter } from "./routes/mentorship.js";
+import { reviewsRouter } from "./routes/reviews.js";
+import { supportRouter } from "./routes/support.js";
 
 export function createApp() {
   const app = express();
@@ -61,7 +64,10 @@ export function createApp() {
   app.use("/api/health", healthRouter);
   app.use("/api/auth", authRouter);
   app.use("/api/events", eventsRouter);
+  app.use("/api/clubs", clubsRouter);
   app.use("/api/mentorship/requests", mentorshipRouter);
+  app.use("/api/reviews", reviewsRouter);
+  app.use("/api/support", supportRouter);
   app.use("/api", catalogRouter);
   app.use("/api/admin", adminRouter);
   app.get("/api/openapi.json", (_request, response) => response.json(openApiDocument));

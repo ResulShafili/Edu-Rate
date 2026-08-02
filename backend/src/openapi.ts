@@ -12,7 +12,10 @@ export const openApiDocument = {
     { name: "Authentication", description: "Qeydiyyat və giriş" },
     { name: "Catalog", description: "EduRate kataloqları" },
     { name: "Events", description: "Tədbir CRUD və iştirak qeydiyyatları" },
+    { name: "Clubs", description: "Klublar və üzvlüklər" },
     { name: "Mentorship", description: "Mentorluq müraciətlərinin idarə edilməsi" },
+    { name: "Reviews", description: "Müəllim rəyləri və moderasiya" },
+    { name: "Support", description: "Dəstək müraciətləri" },
     { name: "Administration", description: "Admin əməliyyatları" },
   ],
   paths: {
@@ -131,10 +134,19 @@ export const openApiDocument = {
     },
     "/api/clubs": {
       get: {
-        tags: ["Catalog"],
+        tags: ["Clubs"],
         summary: "Klubları siyahıla",
         responses: { "200": { description: "Klublar" } },
       },
+      post: { tags: ["Clubs"], summary: "Yeni klub yarat (admin)", security: [{ bearerAuth: [] }], responses: { "201": { description: "Klub yaradıldı" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+    },
+    "/api/clubs/memberships/me": {
+      get: { tags: ["Clubs"], summary: "Üzv olduğum klubları göstər", security: [{ bearerAuth: [] }], responses: { "200": { description: "Klub üzvlükləri" } } },
+    },
+    "/api/clubs/{clubId}/memberships": {
+      parameters: [{ name: "clubId", in: "path", required: true, schema: { type: "string" } }],
+      post: { tags: ["Clubs"], summary: "Kluba qoşul", security: [{ bearerAuth: [] }], responses: { "201": { description: "Üzvlük yaradıldı" }, "409": { description: "Artıq üzvdür" } } },
+      delete: { tags: ["Clubs"], summary: "Klub üzvlüyündən çıx", security: [{ bearerAuth: [] }], responses: { "200": { description: "Üzvlük silindi" }, "404": { description: "Üzvlük tapılmadı" } } },
     },
     "/api/mentors": {
       get: {
@@ -159,6 +171,23 @@ export const openApiDocument = {
         responses: { "200": { description: "Müraciət yeniləndi" }, "404": { description: "Müraciət tapılmadı" } },
       },
       delete: { tags: ["Mentorship"], summary: "Gözləyən müraciəti sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Müraciət silindi" }, "404": { description: "Müraciət tapılmadı" } } },
+    },
+    "/api/reviews": {
+      post: {
+        tags: ["Reviews"], summary: "Moderasiya növbəsinə müəllim rəyi göndər", security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/TeacherReviewInput" } } } },
+        responses: { "201": { description: "Rəy saxlanıldı" }, "409": { description: "Cari semestr üçün rəy mövcuddur" }, "422": { description: "Validasiya və ya moderasiya xətası" } },
+      },
+    },
+    "/api/support/tickets": {
+      post: {
+        tags: ["Support"], summary: "Dəstək müraciəti yarat",
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/SupportTicketInput" } } } },
+        responses: { "201": { description: "Müraciət saxlanıldı" }, "422": { description: "Validasiya xətası" } },
+      },
+    },
+    "/api/admin/overview": {
+      get: { tags: ["Administration"], summary: "Canlı idarəetmə göstəricilərini göstər", security: [{ bearerAuth: [] }], responses: { "200": { description: "İdarəetmə icmalı" }, "403": { description: "Admin icazəsi tələb olunur" } } },
     },
     "/api/admin/users": {
       get: {
@@ -253,6 +282,22 @@ export const openApiDocument = {
         type: "object",
         required: ["mentorId"],
         properties: { mentorId: { type: "string", example: "aygun-rzayeva" }, note: { type: "string", maxLength: 600, example: "Məhsul ideyam üçün istiqamət almaq istəyirəm." } },
+      },
+      TeacherReviewInput: {
+        type: "object",
+        required: ["teacherId", "course", "semester", "text", "criteria"],
+        properties: {
+          teacherId: { type: "string", example: "nigar-huseynli" },
+          course: { type: "string", example: "İngilis dili" },
+          semester: { type: "string", example: "2026-payız" },
+          text: { type: "string", minLength: 12, maxLength: 1200 },
+          criteria: { type: "object", required: ["clarity", "subjectKnowledge", "objectivity", "communication"], properties: { clarity: { type: "integer", minimum: 1, maximum: 5 }, subjectKnowledge: { type: "integer", minimum: 1, maximum: 5 }, objectivity: { type: "integer", minimum: 1, maximum: 5 }, communication: { type: "integer", minimum: 1, maximum: 5 } } },
+        },
+      },
+      SupportTicketInput: {
+        type: "object",
+        required: ["name", "email", "topic", "message"],
+        properties: { name: { type: "string", minLength: 2 }, email: { type: "string", format: "email" }, topic: { type: "string", minLength: 2 }, message: { type: "string", minLength: 20, maxLength: 2000 } },
       },
     },
   },

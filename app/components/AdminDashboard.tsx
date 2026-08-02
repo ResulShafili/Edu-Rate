@@ -61,14 +61,12 @@ function statusTone(status: AdminRecordStatus): AdminTableRow["statusTone"] {
 function formatUpdatedAt(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-
-  return new Intl.DateTimeFormat("az-AZ", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Baku",
-  }).format(date);
+  const bakuDate = new Date(date.getTime() + 4 * 60 * 60 * 1000);
+  const monthNames = ["yan", "fev", "mar", "apr", "may", "iyn", "iyl", "avq", "sen", "okt", "noy", "dek"];
+  const day = String(bakuDate.getUTCDate()).padStart(2, "0");
+  const hour = String(bakuDate.getUTCHours()).padStart(2, "0");
+  const minute = String(bakuDate.getUTCMinutes()).padStart(2, "0");
+  return `${day} ${monthNames[bakuDate.getUTCMonth()]} ${hour}:${minute}`;
 }
 
 function toTableRows(records: readonly AdminCollectionRecord[]): AdminTableRow[] {

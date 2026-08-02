@@ -97,7 +97,7 @@ export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
                 </div>
               ))}
             </dl>
-            <MagneticJoinButton clubName={club.name} />
+            <MagneticJoinButton clubId={club.slug} clubName={club.name} />
           </div>
         </motion.div>
       </header>

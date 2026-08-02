@@ -6,6 +6,7 @@ import {
   useRef,
   type KeyboardEvent,
 } from "react";
+import { formatDecimalScore } from "../lib/number-format";
 
 export type ReviewCriterionKey =
   | "clarity"
@@ -40,10 +41,6 @@ const criteriaDescriptions: Record<ReviewCriterionKey, string> = {
 
 const criterionKeys = Object.keys(criteriaLabels) as ReviewCriterionKey[];
 const ratingOptions = [1, 2, 3, 4, 5] as const;
-const scoreFormatter = new Intl.NumberFormat("az-AZ", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
 
 export function calculateCriteriaAverage(ratings: CriteriaRatings) {
   const selectedRatings = criterionKeys
@@ -220,7 +217,7 @@ export function CriteriaRating({
 
         <motion.output
           className="shrink-0 text-right"
-          aria-label={average > 0 ? `Orta qiymət: ${scoreFormatter.format(average)} bal` : "Qiymət seçilməyib"}
+          aria-label={average > 0 ? `Orta qiymət: ${formatDecimalScore(average)} bal` : "Qiymət seçilməyib"}
           aria-live="polite"
           animate={{ opacity: average > 0 ? 1 : 0.55, scale: average > 0 ? 1 : 0.96 }}
           transition={
@@ -230,7 +227,7 @@ export function CriteriaRating({
           }
         >
           <strong className="block text-xl leading-none text-[var(--paper)]">
-            {average > 0 ? scoreFormatter.format(average) : "—"}
+            {average > 0 ? formatDecimalScore(average) : "—"}
           </strong>
           <span className="mt-1 block text-[0.65rem] text-[color:rgba(243,241,233,0.5)]">
             {selectedCount}/4 meyar

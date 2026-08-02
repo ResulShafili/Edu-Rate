@@ -4,12 +4,8 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 import { ArrowUpRight, Check, Star } from "lucide-react";
 import { useRef, type CSSProperties, type RefObject } from "react";
 import type { Teacher } from "../data/teachers";
+import { formatDecimalScore } from "../lib/number-format";
 import { TeacherSilhouette } from "./TeacherSilhouette";
-
-const ratingFormatter = new Intl.NumberFormat("az-AZ", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
 
 type TeacherCardProps = {
   teacher: Teacher;
@@ -84,7 +80,7 @@ export function TeacherCard({
           <strong>{teacher.name}</strong>
           <span className="teacher-card-rating">
             <Star size={12} fill="currentColor" />
-            {ratingFormatter.format(teacher.rating)}
+            {formatDecimalScore(teacher.rating)}
             <small>reytinq</small>
           </span>
         </span>

@@ -19,8 +19,7 @@ import { createApiClient, type ApiQuery } from "../lib/api/client";
 
 export type AdminRequestOptions = { signal?: AbortSignal };
 
-// Admin data is always requested from the protected server route. Demo fixtures
-// intentionally live in a server-only module and are never bundled into this client.
+// Admin data is requested through the protected BFF route and persisted by the Express API.
 const adminApi = createApiClient({ baseUrl: "/api" });
 
 export const adminCrudOperations = ["create", "update", "delete"] as const;

@@ -21,14 +21,14 @@ EduRate Qarabağ Universitetinin tələbə həyatı üçün hazırlanmış Azər
 | `/` | Ana səhifə | Xoş gəlmisiniz bloku, sürətli keçidlər, tədbir və elan xülasəsi |
 | `/events` | Tədbirlər | Kateqoriya filtri və tədbir təfərrüatları |
 | `/feed` | Elanlar | Universitet yenilikləri və elanlar |
-| `/community` | İcma | Tələbə əlaqələri və mesajlaşma demo axını |
+| `/community` | İcma | Tələbə əlaqələri və mesajlaşma interfeysi |
 | `/teachers` | Müəllimlər | Obyektiv meyarlarla qiymətləndirmə |
 | `/mentors` | Mentorlar | Mentor profilləri və müraciət axını |
 | `/clubs` | Klublar | Klub kataloqu və klub səhifələri |
 | `/support` | Dəstək | FAQ və dəstək sorğusu forması |
 | `/auth` | Giriş və qeydiyyat | Lokal cookie-sessiyalı autentifikasiya |
 | `/profile` | Profil | Tələbə profilinin xülasəsi |
-| `/admin` | İdarəetmə | Demo analitika və idarəetmə cədvəlləri |
+| `/admin` | İdarəetmə | Canlı analitika və verilənlər bazasına bağlı CRUD cədvəlləri |
 | `/api-docs` | API sənədləri | OpenAPI 3.1 endpoint kataloqu və canlı health testi |
 | `/technical-presentation` | Texniki təqdimat | Rəhbər şəxslər üçün hazır təqdimat məzmunu |
 
@@ -80,8 +80,11 @@ EDURATE_AUTH_SECRET=minimum-32-simvolluq-unikal-production-sirriniz
 | `POST` | `/api/auth/logout` | Çıxış |
 | `GET` | `/api/auth/session` | Aktiv sessiya |
 | `PATCH` | `/api/auth/profile` | Profil məlumatlarının yenilənməsi |
-| `GET` | `/api/admin/overview` | Admin dashboard demo göstəriciləri |
-| `GET/POST/PATCH/DELETE` | `/api/admin/users`, `/api/admin/clubs`, `/api/admin/events` | Demo CRUD kontraktı |
+| `GET` | `/api/admin/overview` | Verilənlər bazasından canlı admin göstəriciləri |
+| `GET/POST/PATCH/DELETE` | `/api/admin/users`, `/api/admin/clubs`, `/api/admin/events` | Qorunan real CRUD əməliyyatları |
+| `POST/DELETE` | `/api/clubs/:clubId/memberships` | Kluba qoşulma və üzvlükdən çıxma |
+| `POST` | `/api/reviews` | Moderasiya edilən müəllim rəyinin bazada saxlanması |
+| `POST` | `/api/support/tickets` | Dəstək müraciətinin bazada saxlanması |
 | `GET` | `/api/openapi.json` | OpenAPI 3.1 sənədi |
 | `POST` | `/api/reviews/validate` | Rəy mətninin ilkin moderasiyası |
 
@@ -101,12 +104,11 @@ npm run build
 
 - `npm run build` Vercel və standart Node.js mühiti üçün Next.js production build-i yaradır.
 
-## Production-a keçid qeydləri
+## Production qeydləri
 
-Bu sprintdə aşağıdakılar MVP/demo məqsədlidir:
+- Qeydiyyat, profil, tədbirlər, klub üzvlükləri, mentorluq müraciətləri, müəllim rəyləri və dəstək sorğuları PostgreSQL-də qalıcı saxlanılır.
+- Admin istifadəçi, klub və tədbir CRUD-u JWT rol yoxlaması ilə qorunur.
+- Mentor, müəllim və elan məzmunlarının bir hissəsi idarə olunan kataloq məlumatıdır; istifadəçi əməliyyatları isə real API-yə bağlıdır.
+- Vercel-də `EDURATE_ADMIN_EMAILS`, Render-də isə eyni siyahı `ADMIN_EMAILS` kimi yazılmalıdır.
 
-- Qeydiyyat, giriş və profil məlumatları PostgreSQL-də qalıcı saxlanılır; tədbir, klub və mentor kataloqları hələ demo məlumatlarıdır.
-- Admin istifadəçi siyahısı rol yoxlaması ilə qorunur; tam idarəetmə CRUD-u növbəti mərhələdə genişləndirilməlidir.
-- Rəy moderasiyası ilkin filtrdir; qərar növbəsi və audit izi server/database qatında qurulmalıdır.
-
-Növbəti mərhələdə email təsdiqi, şifrə bərpası, refresh-token rotasiyası, tam admin RBAC və moderasiya audit izi əlavə edilməlidir. Xarici backend ünvanı lazım olduqda `EDURATE_API_BASE_URL` ilə dəyişdirilə bilər.
+Sonrakı təhlükəsizlik mərhələsinə e-poçt təsdiqi, şifrə bərpası, refresh-token rotasiyası və moderasiya audit tarixçəsi daxildir. Xarici backend ünvanı `EDURATE_API_BASE_URL` ilə dəyişdirilə bilər.
