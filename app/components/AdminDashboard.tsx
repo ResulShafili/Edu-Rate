@@ -35,6 +35,8 @@ import { useAdminTableQuery } from "../hooks/useAdminTableQuery";
 import {
   getAdminCapabilities,
   getAdminRoleLabel,
+  canEditUserRole,
+  isAssignableUserRole,
   type AdminAccessRole,
 } from "../lib/auth/admin-role";
 import { AdminCharts } from "./AdminCharts";
@@ -83,6 +85,7 @@ function toTableRows(records: readonly AdminCollectionRecord[]): AdminTableRow[]
     status: record.status,
     statusTone: statusTone(record.status),
     updatedAt: formatUpdatedAt(record.updatedAt),
+    role: record.kind === "users" ? record.role : undefined,
   }));
 }
 
@@ -165,7 +168,6 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
   const [feedback, setFeedback] = useState<CrudFeedback | null>(null);
   const tableQuery = useAdminTableQuery(activeTable);
   const capabilities = getAdminCapabilities(administrator.role);
-  const isUserTableReadOnly = activeTable === "users" && !capabilities.canManageUsers;
   const activeQuery = tableQuery.query;
 
   const overview = useAdminOverview();
@@ -201,16 +203,28 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
   }
 
   function openEditor(mode: AdminRecordSheetMode, id?: string) {
-    if (activeTable === "users" && !capabilities.canManageUsers) {
-      setFeedback({
-        id: Date.now(),
-        message: "İstifadəçi hesablarını yalnız əsas administrator dəyişə bilər.",
-      });
-      return;
-    }
     const record = id
       ? collectionItems.find((item) => item.id === id) ?? null
       : null;
+    if (activeTable === "users" && mode === "create" && !capabilities.canCreateUsers) {
+      setFeedback({
+        id: Date.now(),
+        message: "Yeni istifadəçi hesabını yalnız əsas administrator yarada bilər.",
+      });
+      return;
+    }
+    if (
+      activeTable === "users" &&
+      mode === "edit" &&
+      record?.kind === "users" &&
+      !canEditUserRole(administrator.role, record.role)
+    ) {
+      setFeedback({
+        id: Date.now(),
+        message: "Admin köməkçisi administrator hesablarını və öz hesabını dəyişə bilməz.",
+      });
+      return;
+    }
     if (mode !== "create" && !record) return;
     setFormError(null);
     setEditor({ mode, record });
@@ -222,12 +236,20 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
 
     try {
       if (submission.kind === "users") {
-        if (!capabilities.canManageUsers) {
-          throw new Error("İstifadəçi hesablarını yalnız əsas administrator dəyişə bilər.");
-        }
         if (editor.mode === "edit" && editor.record?.kind === "users") {
-          await userMutations.update(editor.record.id, submission.input);
+          if (administrator.role === "assistant_admin") {
+            const role = submission.input.role;
+            if (!isAssignableUserRole(role) || !canEditUserRole(administrator.role, editor.record.role)) {
+              throw new Error("Bu rolu vermək üçün əsas administrator səlahiyyəti tələb olunur.");
+            }
+            await userMutations.update(editor.record.id, { role });
+          } else {
+            await userMutations.update(editor.record.id, submission.input);
+          }
         } else {
+          if (!capabilities.canCreateUsers) {
+            throw new Error("Yeni istifadəçi hesabını yalnız əsas administrator yarada bilər.");
+          }
           await userMutations.create(submission.input);
         }
       } else if (submission.kind === "clubs") {
@@ -243,7 +265,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
       }
 
       const action = editor.mode === "create" ? "yaradıldı" : "yeniləndi";
-      const name = submission.input.name;
+      const name = submission.input.name || editor.record?.name || "Qeyd";
       setEditor(null);
       setFeedback({ id: Date.now(), message: `${name} uğurla ${action}.` });
     } catch (error) {
@@ -383,12 +405,15 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
           loading={activeCollection.isLoading}
           error={activeCollection.error ?? null}
           mutationPending={mutationPending}
-          canCreate={!isUserTableReadOnly}
-          canEdit={!isUserTableReadOnly}
+          canCreate={activeTable !== "users" || capabilities.canCreateUsers}
+          canEdit
+          canEditRow={(row) =>
+            activeTable !== "users" || canEditUserRole(administrator.role, row.role ?? "")
+          }
           canDelete={activeTable !== "users" || capabilities.canDeleteUsers}
           restrictionMessage={
-            isUserTableReadOnly
-              ? "Admin köməkçisi istifadəçiləri görə bilər, lakin hesab yarada, dəyişə və ya silə bilməz."
+            activeTable === "users" && administrator.role === "assistant_admin"
+              ? "Admin köməkçisi yalnız tələbə, mentor və müəllim rollarını dəyişə bilər; administrator hesabları qorunur."
               : null
           }
           onCreate={() => openEditor("create")}
@@ -416,6 +441,11 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
         pending={mutationPending}
         error={formError}
         canAssignElevatedRoles={capabilities.canAssignElevatedRoles}
+        userRoleOnly={
+          administrator.role === "assistant_admin" &&
+          editor?.mode === "edit" &&
+          editor?.record?.kind === "users"
+        }
         onClose={() => {
           if (mutationPending) return;
           setEditor(null);

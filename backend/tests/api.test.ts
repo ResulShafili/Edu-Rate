@@ -518,12 +518,45 @@ describe("EduRate API", () => {
       .expect(403);
     assert.equal(forbiddenUserCreate.body.error.code, "PRIMARY_ADMIN_REQUIRED");
 
+    const allowedLowerRoleChange = await request(app)
+      .patch(`/api/admin/users/${studentId}`)
+      .set("Authorization", assistantAuthorization)
+      .send({ role: "mentor" })
+      .expect(200);
+    assert.equal(allowedLowerRoleChange.body.data.role, "mentor");
+
     const forbiddenRoleEscalation = await request(app)
-      .patch(`/api/admin/users/${assistantId}`)
+      .patch(`/api/admin/users/${studentId}`)
       .set("Authorization", assistantAuthorization)
       .send({ role: "admin" })
       .expect(403);
-    assert.equal(forbiddenRoleEscalation.body.error.code, "PRIMARY_ADMIN_REQUIRED");
+    assert.equal(forbiddenRoleEscalation.body.error.code, "ROLE_ESCALATION_FORBIDDEN");
+
+    const forbiddenSelfRoleChange = await request(app)
+      .patch(`/api/admin/users/${assistantId}`)
+      .set("Authorization", assistantAuthorization)
+      .send({ role: "student" })
+      .expect(403);
+    assert.equal(
+      forbiddenSelfRoleChange.body.error.code,
+      "PRIVILEGED_USER_MODIFICATION_FORBIDDEN",
+    );
+
+    const forbiddenPrimaryAdminChange = await request(app)
+      .patch(`/api/admin/users/${primaryAdminId}`)
+      .set("Authorization", assistantAuthorization)
+      .send({ role: "teacher" })
+      .expect(403);
+    assert.equal(
+      forbiddenPrimaryAdminChange.body.error.code,
+      "PRIVILEGED_USER_MODIFICATION_FORBIDDEN",
+    );
+
+    await request(app)
+      .patch(`/api/admin/users/${studentId}`)
+      .set("Authorization", assistantAuthorization)
+      .send({ role: "teacher", status: "Aktiv" })
+      .expect(422);
 
     const forbiddenUserDelete = await request(app)
       .delete(`/api/admin/users/${studentId}`)

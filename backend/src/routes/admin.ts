@@ -11,9 +11,11 @@ import {
   type EventRecord,
 } from "../db/business.js";
 import {
+  assistantUpdateUserRole,
   adminUpdateUser,
   createUser,
   deleteUser,
+  findUserById,
   listUsers,
   type UserRecord,
 } from "../db/database.js";
@@ -95,8 +97,39 @@ adminRouter.post("/users", requirePrimaryAdmin, async (request, response) => {
   response.status(201).json({ data: toAdminUser(user) });
 });
 
-adminRouter.patch("/users/:id", requirePrimaryAdmin, async (request, response) => {
+adminRouter.patch("/users/:id", async (request, response) => {
   const id = z.string().parse(request.params.id);
+
+  if (request.auth!.role === "assistant_admin") {
+    const input = z.object({ role: userRole }).strict().parse(request.body);
+    if (input.role === "admin" || input.role === "assistant_admin") {
+      throw new ApiError(
+        403,
+        "ROLE_ESCALATION_FORBIDDEN",
+        "Admin köməkçisi administrator rütbəsi verə bilməz.",
+      );
+    }
+    const target = await findUserById(id);
+    if (!target) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
+    if (target.role === "admin" || target.role === "assistant_admin") {
+      throw new ApiError(
+        403,
+        "PRIVILEGED_USER_MODIFICATION_FORBIDDEN",
+        "Admin köməkçisi administrator hesablarını və öz hesabını dəyişə bilməz.",
+      );
+    }
+    const user = await assistantUpdateUserRole(id, input.role);
+    if (!user) {
+      throw new ApiError(
+        409,
+        "USER_ROLE_CHANGED",
+        "İstifadəçinin rolu dəyişib. Siyahını yeniləyib təkrar yoxlayın.",
+      );
+    }
+    response.json({ data: toAdminUser(user) });
+    return;
+  }
+
   const patch = userSchema.partial().parse(request.body);
   if (
     id === request.auth!.userId &&

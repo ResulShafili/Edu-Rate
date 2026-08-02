@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getAdminCapabilities } from "../app/lib/auth/admin-role.ts";
+import {
+  canEditUserRole,
+  getAdminCapabilities,
+  isAssignableUserRole,
+} from "../app/lib/auth/admin-role.ts";
 import { buildContentSecurityPolicy } from "../app/lib/security/content-security-policy.ts";
 import { isTrustedMutationRequest } from "../app/lib/security/request-origin.ts";
 
@@ -36,12 +40,20 @@ describe("frontend security boundaries", () => {
     assert.match(policy, /object-src 'none'/);
   });
 
-  it("admin köməkçisinə istifadəçi idarəetmə icazəsi vermir", () => {
+  it("admin köməkçisinin istifadəçi səlahiyyətlərini aşağı rollarla məhdudlaşdırır", () => {
     const capabilities = getAdminCapabilities("assistant_admin");
     assert.equal(capabilities.canAccessPanel, true);
     assert.equal(capabilities.canManageContent, true);
-    assert.equal(capabilities.canManageUsers, false);
+    assert.equal(capabilities.canManageUsers, true);
+    assert.equal(capabilities.canCreateUsers, false);
+    assert.equal(capabilities.canEditPrivilegedUsers, false);
     assert.equal(capabilities.canDeleteUsers, false);
     assert.equal(capabilities.canAssignElevatedRoles, false);
+    assert.equal(canEditUserRole("assistant_admin", "student"), true);
+    assert.equal(canEditUserRole("assistant_admin", "mentor"), true);
+    assert.equal(canEditUserRole("assistant_admin", "teacher"), true);
+    assert.equal(canEditUserRole("assistant_admin", "assistant_admin"), false);
+    assert.equal(canEditUserRole("assistant_admin", "admin"), false);
+    assert.equal(isAssignableUserRole("admin"), false);
   });
 });

@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { LockKeyhole, MoreHorizontal, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
 import { useState, type KeyboardEvent } from "react";
 import type { AdminRecordStatus } from "../data/admin";
+import type { AdminUserRole } from "../data/admin";
 import { AdminDataControls } from "./AdminDataControls";
 import { AdminSkeleton } from "./AdminSkeleton";
 
@@ -17,6 +18,7 @@ export type AdminTableRow = {
   status: string;
   statusTone: "positive" | "neutral" | "attention";
   updatedAt: string;
+  role?: AdminUserRole;
 };
 
 type AdminDataTableProps = {
@@ -24,6 +26,7 @@ type AdminDataTableProps = {
   canCreate: boolean;
   canDelete: boolean;
   canEdit: boolean;
+  canEditRow?: (row: AdminTableRow) => boolean;
   error: Error | null;
   loading: boolean;
   mutationPending: boolean;
@@ -80,6 +83,7 @@ export function AdminDataTable({
   canCreate,
   canDelete,
   canEdit,
+  canEditRow,
   error,
   loading,
   mutationPending,
@@ -183,7 +187,7 @@ export function AdminDataTable({
         ) : (
           <span className="admin-permission-badge">
             <LockKeyhole size={14} aria-hidden="true" />
-            Yalnız baxış
+            Məhdud səlahiyyət
           </span>
         )}
       </div>
@@ -339,7 +343,7 @@ export function AdminDataTable({
                     </div>
                   </dl>
                   <div className="admin-row-inspector__actions">
-                    {canEdit && (
+                    {canEdit && (canEditRow?.(selectedRow) ?? true) && (
                     <button
                       type="button"
                       onClick={() => {
@@ -366,7 +370,7 @@ export function AdminDataTable({
                       Sil
                     </button>
                     )}
-                    {!canEdit && !canDelete && (
+                    {(!canEdit || !(canEditRow?.(selectedRow) ?? true)) && !canDelete && (
                       <span className="admin-row-inspector__read-only">
                         <LockKeyhole size={14} aria-hidden="true" />
                         Bu bölmə yalnız baxış üçündür.

@@ -235,6 +235,27 @@ export async function adminUpdateUser(
   return result.rows[0] ? mapUser(result.rows[0]) : null;
 }
 
+export async function assistantUpdateUserRole(
+  id: string,
+  role: Extract<UserRecord["role"], "student" | "mentor" | "teacher">,
+): Promise<UserRecord | null> {
+  if (!databasePool) {
+    const current = [...memoryUsers.values()].find((user) => user.id === id);
+    if (!current || !["student", "mentor", "teacher"].includes(current.role)) return null;
+    const next = { ...current, role, updatedAt: new Date().toISOString() };
+    memoryUsers.set(next.email, next);
+    return next;
+  }
+
+  const result = await databasePool.query(
+    `UPDATE users SET role = $2, updated_at = NOW()
+     WHERE id = $1 AND role IN ('student', 'mentor', 'teacher')
+     RETURNING *`,
+    [id, role],
+  );
+  return result.rows[0] ? mapUser(result.rows[0]) : null;
+}
+
 export async function deleteUser(id: string): Promise<boolean> {
   if (!databasePool) {
     const user = [...memoryUsers.values()].find((entry) => entry.id === id);

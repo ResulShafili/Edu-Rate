@@ -1,10 +1,13 @@
 export type AdminAccessRole = "admin" | "assistant_admin";
+export type AssignableUserRole = "student" | "mentor" | "teacher";
 
 export type AdminCapabilities = {
   role: AdminAccessRole;
   canAccessPanel: true;
   canManageContent: true;
   canManageUsers: boolean;
+  canCreateUsers: boolean;
+  canEditPrivilegedUsers: boolean;
   canDeleteUsers: boolean;
   canAssignElevatedRoles: boolean;
 };
@@ -19,10 +22,23 @@ export function getAdminCapabilities(role: AdminAccessRole): AdminCapabilities {
     role,
     canAccessPanel: true,
     canManageContent: true,
-    canManageUsers: isPrimaryAdmin,
+    canManageUsers: true,
+    canCreateUsers: isPrimaryAdmin,
+    canEditPrivilegedUsers: isPrimaryAdmin,
     canDeleteUsers: isPrimaryAdmin,
     canAssignElevatedRoles: isPrimaryAdmin,
   };
+}
+
+export function isAssignableUserRole(value: unknown): value is AssignableUserRole {
+  return value === "student" || value === "mentor" || value === "teacher";
+}
+
+export function canEditUserRole(
+  actorRole: AdminAccessRole,
+  targetRole: string,
+): boolean {
+  return actorRole === "admin" || isAssignableUserRole(targetRole);
 }
 
 export function getAdminRoleLabel(role: AdminAccessRole): string {

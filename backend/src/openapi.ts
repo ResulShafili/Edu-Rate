@@ -27,7 +27,7 @@ export const openApiDocument = {
     {
       name: "Administration",
       description:
-        "Əsas admin və admin köməkçisi üçün idarəetmə əməliyyatları. İstifadəçi yazma əməliyyatları yalnız əsas adminə açıqdır.",
+        "Əsas admin və admin köməkçisi üçün idarəetmə əməliyyatları. Köməkçi admin yalnız adi istifadəçilərə tələbə, mentor və müəllim rolu verə bilər.",
     },
   ],
   paths: {
@@ -256,11 +256,11 @@ export const openApiDocument = {
       parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
       patch: {
         tags: ["Administration"],
-        summary: "İstifadəçini və rolunu yenilə (yalnız əsas admin)",
+        summary: "İstifadəçini yenilə və ya adi istifadəçi rolunu dəyiş",
         security: [{ bearerAuth: [] }],
         responses: {
           "200": { description: "İstifadəçi yeniləndi" },
-          "403": { description: "Əsas admin icazəsi tələb olunur" },
+          "403": { description: "Administrator hesabı qorunur və ya səlahiyyət yüksəltmə cəhdi rədd edildi" },
           "409": { description: "Aktiv adminin özünü kilidləmə cəhdinin qarşısı alındı" },
           "404": { description: "İstifadəçi tapılmadı" },
         },
@@ -305,7 +305,7 @@ export const openApiDocument = {
         type: "string",
         enum: ["student", "mentor", "teacher", "assistant_admin", "admin"],
         description:
-          "admin: tam səlahiyyət; assistant_admin: admin paneli və klub/tədbir CRUD; digər rollar: standart istifadəçi səlahiyyətləri.",
+          "admin: tam səlahiyyət; assistant_admin: klub/tədbir CRUD və adi istifadəçilərə student/mentor/teacher rolu vermək; digər rollar: standart istifadəçi səlahiyyətləri.",
       },
       HealthResponse: {
         type: "object",

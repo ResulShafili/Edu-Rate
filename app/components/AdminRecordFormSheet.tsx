@@ -45,6 +45,7 @@ type AdminRecordFormSheetProps = {
   open: boolean;
   pending: boolean;
   record: AdminCollectionRecord | null;
+  userRoleOnly: boolean;
 };
 
 const labels: Record<AdminCollectionKind, { singular: string; plural: string }> = {
@@ -64,6 +65,7 @@ export function AdminRecordFormSheet({
   open,
   pending,
   record,
+  userRoleOnly,
 }: AdminRecordFormSheetProps) {
   const reducedMotion = useReducedMotion();
   const titleId = useId();
@@ -196,6 +198,7 @@ export function AdminRecordFormSheet({
                       record={record?.kind === "users" ? record : null}
                       firstFieldRef={firstFieldRef}
                       canAssignElevatedRoles={canAssignElevatedRoles}
+                      roleOnly={userRoleOnly}
                     />
                   )}
                   {kind === "clubs" && (
@@ -246,7 +249,24 @@ function UserFields({
   firstFieldRef,
   record,
   canAssignElevatedRoles,
-}: FieldProps<AdminUser> & { canAssignElevatedRoles: boolean }) {
+  roleOnly,
+}: FieldProps<AdminUser> & { canAssignElevatedRoles: boolean; roleOnly: boolean }) {
+  if (roleOnly) {
+    return (
+      <>
+        <p className="admin-permission-note" role="note">
+          Yalnız adi istifadəçi rolu dəyişdirilə bilər. Administrator rolları əsas administrator tərəfindən idarə olunur.
+        </p>
+        <Field label="Yeni rol" name="role" required>
+          <select name="role" defaultValue={record?.role ?? "student"} autoFocus required>
+            <option value="student">Tələbə</option>
+            <option value="mentor">Mentor</option>
+            <option value="teacher">Müəllim</option>
+          </select>
+        </Field>
+      </>
+    );
+  }
   return (
     <>
       <Field label="Ad və soyad" name="name" required>
