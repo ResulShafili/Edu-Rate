@@ -27,8 +27,12 @@ export const errorHandler: ErrorRequestHandler = (error, request, response, _nex
   }
 
   if (typeof error === "object" && error && "code" in error && error.code === "23505") {
+    const constraint = "constraint" in error ? String(error.constraint) : "";
+    const isEmailConflict = constraint.includes("users_email");
     response.status(409).json({
-      error: { code: "EMAIL_EXISTS", message: "Bu e-poçt artıq istifadə olunur." },
+      error: isEmailConflict
+        ? { code: "EMAIL_EXISTS", message: "Bu e-poçt artıq istifadə olunur." }
+        : { code: "CONFLICT", message: "Bu məlumat artıq mövcuddur." },
       requestId: response.locals.requestId,
     });
     return;

@@ -1,0 +1,399 @@
+import { randomUUID } from "node:crypto";
+import { events as seedEvents } from "../data/catalog.js";
+import { ApiError } from "../lib/api-error.js";
+import { databasePool } from "./database.js";
+
+export type EventCategory = "Design" | "Technology" | "Culture" | "Wellness";
+
+export type EventRecord = {
+  id: string;
+  title: string;
+  category: EventCategory;
+  description: string;
+  longDescription: string;
+  location: string;
+  city: string;
+  organizer: string;
+  startAt: string;
+  endAt: string;
+  registrationDeadline: string;
+  speakers: string[];
+  capacity: number;
+  availableSpots: number;
+  accent: string;
+  glow: string;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EventInput = Omit<EventRecord, "id" | "availableSpots" | "createdBy" | "createdAt" | "updatedAt"> & {
+  availableSpots?: number;
+};
+
+export type MentorshipRequestRecord = {
+  id: string;
+  userId: string;
+  mentorId: string;
+  note: string;
+  status: "pending" | "accepted" | "rejected" | "cancelled";
+  createdAt: string;
+  updatedAt: string;
+};
+
+const now = () => new Date().toISOString();
+const memoryEvents = new Map<string, EventRecord>(
+  seedEvents.map((event) => [
+    event.id,
+    {
+      ...event,
+      createdBy: null,
+      createdAt: "2026-08-01T00:00:00.000Z",
+      updatedAt: "2026-08-01T00:00:00.000Z",
+    },
+  ]),
+);
+const memoryRegistrations = new Map<string, Set<string>>();
+const memoryMentorshipRequests = new Map<string, MentorshipRequestRecord>();
+
+function iso(value: unknown) {
+  return value instanceof Date ? value.toISOString() : new Date(String(value)).toISOString();
+}
+
+function mapEvent(row: Record<string, unknown>): EventRecord {
+  return {
+    id: String(row.id),
+    title: String(row.title),
+    category: row.category as EventCategory,
+    description: String(row.description),
+    longDescription: String(row.long_description),
+    location: String(row.location),
+    city: String(row.city),
+    organizer: String(row.organizer),
+    startAt: iso(row.start_at),
+    endAt: iso(row.end_at),
+    registrationDeadline: iso(row.registration_deadline),
+    speakers: Array.isArray(row.speakers) ? row.speakers.map(String) : [],
+    capacity: Number(row.capacity),
+    availableSpots: Number(row.available_spots),
+    accent: String(row.accent),
+    glow: String(row.glow),
+    createdBy: row.created_by ? String(row.created_by) : null,
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+  };
+}
+
+function mapMentorshipRequest(row: Record<string, unknown>): MentorshipRequestRecord {
+  return {
+    id: String(row.id),
+    userId: String(row.user_id),
+    mentorId: String(row.mentor_id),
+    note: String(row.note ?? ""),
+    status: row.status as MentorshipRequestRecord["status"],
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+  };
+}
+
+export async function initializeBusinessDatabase() {
+  if (!databasePool) return;
+
+  await databasePool.query(`
+    CREATE TABLE IF NOT EXISTS events (
+      id TEXT PRIMARY KEY,
+      title VARCHAR(140) NOT NULL,
+      category VARCHAR(30) NOT NULL CHECK (category IN ('Design', 'Technology', 'Culture', 'Wellness')),
+      description VARCHAR(280) NOT NULL,
+      long_description VARCHAR(1600) NOT NULL,
+      location VARCHAR(180) NOT NULL,
+      city VARCHAR(120) NOT NULL,
+      organizer VARCHAR(180) NOT NULL,
+      start_at TIMESTAMPTZ NOT NULL,
+      end_at TIMESTAMPTZ NOT NULL,
+      registration_deadline TIMESTAMPTZ NOT NULL,
+      speakers JSONB NOT NULL DEFAULT '[]'::jsonb,
+      capacity INTEGER NOT NULL CHECK (capacity > 0),
+      available_spots INTEGER NOT NULL CHECK (available_spots >= 0 AND available_spots <= capacity),
+      accent VARCHAR(32) NOT NULL DEFAULT '#c8ff4d',
+      glow VARCHAR(80) NOT NULL DEFAULT 'rgba(200, 255, 77, 0.28)',
+      created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK (end_at > start_at),
+      CHECK (registration_deadline <= start_at)
+    );
+
+    CREATE INDEX IF NOT EXISTS events_start_at_idx ON events (start_at);
+    CREATE INDEX IF NOT EXISTS events_category_idx ON events (category);
+
+    CREATE TABLE IF NOT EXISTS event_registrations (
+      id UUID PRIMARY KEY,
+      event_id TEXT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (event_id, user_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS event_registrations_user_idx ON event_registrations (user_id);
+
+    CREATE TABLE IF NOT EXISTS mentorship_requests (
+      id UUID PRIMARY KEY,
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      mentor_id VARCHAR(120) NOT NULL,
+      note VARCHAR(600) NOT NULL DEFAULT '',
+      status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'cancelled')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS mentorship_requests_user_idx ON mentorship_requests (user_id, created_at DESC);
+  `);
+
+  for (const event of seedEvents) {
+    await databasePool.query(
+      `INSERT INTO events (
+        id, title, category, description, long_description, location, city, organizer,
+        start_at, end_at, registration_deadline, speakers, capacity, available_spots, accent, glow
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14,$15,$16)
+      ON CONFLICT (id) DO NOTHING`,
+      [
+        event.id,
+        event.title,
+        event.category,
+        event.description,
+        event.longDescription,
+        event.location,
+        event.city,
+        event.organizer,
+        event.startAt,
+        event.endAt,
+        event.registrationDeadline,
+        JSON.stringify(event.speakers),
+        event.capacity,
+        event.availableSpots,
+        event.accent,
+        event.glow,
+      ],
+    );
+  }
+}
+
+export async function listEvents(): Promise<EventRecord[]> {
+  if (!databasePool) {
+    return [...memoryEvents.values()].sort((a, b) => a.startAt.localeCompare(b.startAt));
+  }
+  const result = await databasePool.query("SELECT * FROM events ORDER BY start_at ASC");
+  return result.rows.map(mapEvent);
+}
+
+export async function findEventById(id: string): Promise<EventRecord | null> {
+  if (!databasePool) return memoryEvents.get(id) ?? null;
+  const result = await databasePool.query("SELECT * FROM events WHERE id = $1 LIMIT 1", [id]);
+  return result.rows[0] ? mapEvent(result.rows[0]) : null;
+}
+
+export async function createEvent(input: EventInput, userId: string): Promise<EventRecord> {
+  const timestamp = now();
+  const event: EventRecord = {
+    ...input,
+    id: `event-${randomUUID()}`,
+    availableSpots: input.availableSpots ?? input.capacity,
+    createdBy: userId,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+
+  if (!databasePool) {
+    memoryEvents.set(event.id, event);
+    return event;
+  }
+
+  const result = await databasePool.query(
+    `INSERT INTO events (
+      id, title, category, description, long_description, location, city, organizer,
+      start_at, end_at, registration_deadline, speakers, capacity, available_spots,
+      accent, glow, created_by
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14,$15,$16,$17)
+    RETURNING *`,
+    [
+      event.id, event.title, event.category, event.description, event.longDescription,
+      event.location, event.city, event.organizer, event.startAt, event.endAt,
+      event.registrationDeadline, JSON.stringify(event.speakers), event.capacity,
+      event.availableSpots, event.accent, event.glow, userId,
+    ],
+  );
+  return mapEvent(result.rows[0]);
+}
+
+export async function updateEvent(id: string, input: EventInput): Promise<EventRecord | null> {
+  if (!databasePool) {
+    const current = memoryEvents.get(id);
+    if (!current) return null;
+    const registeredCount = current.capacity - current.availableSpots;
+    const next = {
+      ...current,
+      ...input,
+      availableSpots: Math.max(0, input.capacity - registeredCount),
+      updatedAt: now(),
+    };
+    memoryEvents.set(id, next);
+    return next;
+  }
+
+  const result = await databasePool.query(
+    `UPDATE events SET
+      title=$2, category=$3, description=$4, long_description=$5, location=$6,
+      city=$7, organizer=$8, start_at=$9, end_at=$10, registration_deadline=$11,
+      speakers=$12::jsonb, capacity=$13,
+      available_spots=GREATEST(0, $13 - (capacity - available_spots)),
+      accent=$14, glow=$15, updated_at=NOW()
+    WHERE id=$1 RETURNING *`,
+    [
+      id, input.title, input.category, input.description, input.longDescription,
+      input.location, input.city, input.organizer, input.startAt, input.endAt,
+      input.registrationDeadline, JSON.stringify(input.speakers), input.capacity,
+      input.accent, input.glow,
+    ],
+  );
+  return result.rows[0] ? mapEvent(result.rows[0]) : null;
+}
+
+export async function deleteEvent(id: string): Promise<boolean> {
+  if (!databasePool) return memoryEvents.delete(id);
+  const result = await databasePool.query("DELETE FROM events WHERE id=$1", [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+function assertRegistrationOpen(event: EventRecord) {
+  const currentTime = Date.now();
+  if (new Date(event.registrationDeadline).getTime() < currentTime || new Date(event.startAt).getTime() <= currentTime) {
+    throw new ApiError(409, "REGISTRATION_CLOSED", "Bu tədbir üçün qeydiyyat müddəti bitib.");
+  }
+  if (event.availableSpots < 1) {
+    throw new ApiError(409, "EVENT_FULL", "Bu tədbirdə boş yer qalmayıb.");
+  }
+}
+
+export async function registerForEvent(eventId: string, userId: string): Promise<EventRecord> {
+  if (!databasePool) {
+    const event = memoryEvents.get(eventId);
+    if (!event) throw new ApiError(404, "EVENT_NOT_FOUND", "Tədbir tapılmadı.");
+    assertRegistrationOpen(event);
+    const registrations = memoryRegistrations.get(eventId) ?? new Set<string>();
+    if (registrations.has(userId)) throw new ApiError(409, "ALREADY_REGISTERED", "Bu tədbirə artıq qeydiyyatdan keçmisən.");
+    registrations.add(userId);
+    memoryRegistrations.set(eventId, registrations);
+    const next = { ...event, availableSpots: event.availableSpots - 1, updatedAt: now() };
+    memoryEvents.set(eventId, next);
+    return next;
+  }
+
+  const client = await databasePool.connect();
+  try {
+    await client.query("BEGIN");
+    const selected = await client.query("SELECT * FROM events WHERE id=$1 FOR UPDATE", [eventId]);
+    if (!selected.rows[0]) throw new ApiError(404, "EVENT_NOT_FOUND", "Tədbir tapılmadı.");
+    const event = mapEvent(selected.rows[0]);
+    assertRegistrationOpen(event);
+    const duplicate = await client.query("SELECT 1 FROM event_registrations WHERE event_id=$1 AND user_id=$2", [eventId, userId]);
+    if (duplicate.rows[0]) throw new ApiError(409, "ALREADY_REGISTERED", "Bu tədbirə artıq qeydiyyatdan keçmisən.");
+    await client.query("INSERT INTO event_registrations (id,event_id,user_id) VALUES ($1,$2,$3)", [randomUUID(), eventId, userId]);
+    const updated = await client.query("UPDATE events SET available_spots=available_spots-1, updated_at=NOW() WHERE id=$1 RETURNING *", [eventId]);
+    await client.query("COMMIT");
+    return mapEvent(updated.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function cancelEventRegistration(eventId: string, userId: string): Promise<EventRecord> {
+  if (!databasePool) {
+    const event = memoryEvents.get(eventId);
+    if (!event) throw new ApiError(404, "EVENT_NOT_FOUND", "Tədbir tapılmadı.");
+    const registrations = memoryRegistrations.get(eventId);
+    if (!registrations?.delete(userId)) throw new ApiError(404, "REGISTRATION_NOT_FOUND", "Aktiv qeydiyyat tapılmadı.");
+    const next = { ...event, availableSpots: Math.min(event.capacity, event.availableSpots + 1), updatedAt: now() };
+    memoryEvents.set(eventId, next);
+    return next;
+  }
+
+  const client = await databasePool.connect();
+  try {
+    await client.query("BEGIN");
+    const deleted = await client.query("DELETE FROM event_registrations WHERE event_id=$1 AND user_id=$2 RETURNING id", [eventId, userId]);
+    if (!deleted.rows[0]) throw new ApiError(404, "REGISTRATION_NOT_FOUND", "Aktiv qeydiyyat tapılmadı.");
+    const updated = await client.query("UPDATE events SET available_spots=LEAST(capacity, available_spots+1), updated_at=NOW() WHERE id=$1 RETURNING *", [eventId]);
+    await client.query("COMMIT");
+    return mapEvent(updated.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function listMyEventRegistrations(userId: string): Promise<EventRecord[]> {
+  if (!databasePool) {
+    return [...memoryRegistrations.entries()]
+      .filter(([, users]) => users.has(userId))
+      .map(([eventId]) => memoryEvents.get(eventId))
+      .filter((event): event is EventRecord => Boolean(event));
+  }
+  const result = await databasePool.query(
+    `SELECT e.* FROM events e
+     INNER JOIN event_registrations r ON r.event_id=e.id
+     WHERE r.user_id=$1 ORDER BY e.start_at ASC`,
+    [userId],
+  );
+  return result.rows.map(mapEvent);
+}
+
+export async function createMentorshipRequest(userId: string, mentorId: string, note: string): Promise<MentorshipRequestRecord> {
+  if (!databasePool) {
+    const duplicate = [...memoryMentorshipRequests.values()].find((item) => item.userId === userId && item.mentorId === mentorId && item.status === "pending");
+    if (duplicate) throw new ApiError(409, "REQUEST_EXISTS", "Bu mentor üçün gözləyən müraciətin artıq var.");
+    const timestamp = now();
+    const record: MentorshipRequestRecord = { id: randomUUID(), userId, mentorId, note, status: "pending", createdAt: timestamp, updatedAt: timestamp };
+    memoryMentorshipRequests.set(record.id, record);
+    return record;
+  }
+  const duplicate = await databasePool.query("SELECT 1 FROM mentorship_requests WHERE user_id=$1 AND mentor_id=$2 AND status='pending'", [userId, mentorId]);
+  if (duplicate.rows[0]) throw new ApiError(409, "REQUEST_EXISTS", "Bu mentor üçün gözləyən müraciətin artıq var.");
+  const result = await databasePool.query(
+    "INSERT INTO mentorship_requests (id,user_id,mentor_id,note) VALUES ($1,$2,$3,$4) RETURNING *",
+    [randomUUID(), userId, mentorId, note],
+  );
+  return mapMentorshipRequest(result.rows[0]);
+}
+
+export async function listMentorshipRequests(userId: string): Promise<MentorshipRequestRecord[]> {
+  if (!databasePool) return [...memoryMentorshipRequests.values()].filter((item) => item.userId === userId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const result = await databasePool.query("SELECT * FROM mentorship_requests WHERE user_id=$1 ORDER BY created_at DESC", [userId]);
+  return result.rows.map(mapMentorshipRequest);
+}
+
+export async function updateMentorshipRequest(id: string, userId: string, note: string): Promise<MentorshipRequestRecord | null> {
+  if (!databasePool) {
+    const current = memoryMentorshipRequests.get(id);
+    if (!current || current.userId !== userId || current.status !== "pending") return null;
+    const next = { ...current, note, updatedAt: now() };
+    memoryMentorshipRequests.set(id, next);
+    return next;
+  }
+  const result = await databasePool.query("UPDATE mentorship_requests SET note=$3, updated_at=NOW() WHERE id=$1 AND user_id=$2 AND status='pending' RETURNING *", [id, userId, note]);
+  return result.rows[0] ? mapMentorshipRequest(result.rows[0]) : null;
+}
+
+export async function deleteMentorshipRequest(id: string, userId: string): Promise<boolean> {
+  if (!databasePool) {
+    const current = memoryMentorshipRequests.get(id);
+    return Boolean(current && current.userId === userId && current.status === "pending" && memoryMentorshipRequests.delete(id));
+  }
+  const result = await databasePool.query("DELETE FROM mentorship_requests WHERE id=$1 AND user_id=$2 AND status='pending'", [id, userId]);
+  return (result.rowCount ?? 0) > 0;
+}

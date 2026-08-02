@@ -1,14 +1,16 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, CalendarDays, Clock3, MapPin, Sparkles, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { ArrowRight, CalendarDays, Check, Clock3, MapPin, Sparkles, X } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import {
   eventCategoryLabels,
   type Event,
 } from "../data/events";
 import { formatAzDate, getDeadlineStatus, getTemporalStatus } from "../lib/date";
+import { useAuth } from "./AuthProvider";
 
 type EventDrawerProps = {
   event: Event | null;
@@ -16,12 +18,40 @@ type EventDrawerProps = {
 };
 
 export function EventDrawer({ event, onClose }: EventDrawerProps) {
+  const { user } = useAuth();
+  const [registeredEventIds, setRegisteredEventIds] = useState<Set<string>>(() => new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationError, setRegistrationError] = useState("");
   const closeRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
   const registrationOpen = event
     ? getDeadlineStatus(event.registrationDeadline) === "open" && event.availableSpots > 0 && getTemporalStatus(event.startAt, event.endAt) !== "finished"
     : false;
+  const isRegistered = event ? registeredEventIds.has(event.id) : false;
+
+  async function toggleRegistration() {
+    if (!event || isSubmitting) return;
+    setIsSubmitting(true);
+    setRegistrationError("");
+    try {
+      const response = await fetch(`/api/events/${encodeURIComponent(event.id)}/registrations`, {
+        method: isRegistered ? "DELETE" : "POST",
+      });
+      const payload = await response.json() as { error?: { message?: string } };
+      if (!response.ok) throw new Error(payload.error?.message ?? "Qeydiyyat tamamlanmadı.");
+      setRegisteredEventIds((current) => {
+        const next = new Set(current);
+        if (isRegistered) next.delete(event.id);
+        else next.add(event.id);
+        return next;
+      });
+    } catch (error) {
+      setRegistrationError(error instanceof Error ? error.message : "Qeydiyyat tamamlanmadı.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   useEffect(() => {
     if (!event) return;
@@ -146,15 +176,24 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
               </div>
 
               <div className="drawer-bottom">
-                <span>{event.capacity}</span>
-                {registrationOpen ? (
-                  <a className="reserve-button" href={`mailto:events@edurate.az?subject=${encodeURIComponent(`${event.title} tədbirinə qeydiyyat`)}`}>
-                    Qeydiyyat üçün müraciət et <ArrowRight size={17} />
-                  </a>
+                <span>{event.capacity} · {event.availableSpots} boş yer</span>
+                {registrationOpen || isRegistered ? (
+                  user ? (
+                    <button type="button" className={`reserve-button${isRegistered ? " is-registered" : ""}`} onClick={() => void toggleRegistration()} disabled={isSubmitting}>
+                      {isSubmitting ? "Gözlə…" : isRegistered ? "Qeydiyyatı ləğv et" : "Qeydiyyatdan keç"}
+                      {isRegistered ? <Check size={17} /> : <ArrowRight size={17} />}
+                    </button>
+                  ) : (
+                    <Link className="reserve-button" href="/auth?returnTo=%2Fevents">
+                      Qeydiyyat üçün daxil ol <ArrowRight size={17} />
+                    </Link>
+                  )
                 ) : (
                   <span className="event-registration-closed">Qeydiyyat bağlıdır</span>
                 )}
               </div>
+              {registrationError && <p className="event-registration-error" role="alert">{registrationError}</p>}
+              <span className="sr-only" aria-live="polite">{isRegistered && event ? `${event.title} tədbirinə qeydiyyatdan keçdin.` : ""}</span>
             </div>
           </motion.aside>
         </motion.div>

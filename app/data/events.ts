@@ -1,5 +1,5 @@
 export type EventCategory = "Design" | "Technology" | "Culture" | "Wellness";
-export type EventMonth = "SEP" | "OCT";
+export type EventMonth = "JAN" | "FEB" | "MAR" | "APR" | "MAY" | "JUN" | "JUL" | "AUG" | "SEP" | "OCT" | "NOV" | "DEC";
 
 export type Event = {
   id: string;
@@ -42,14 +42,66 @@ export const eventCategoryLabels: Record<EventFilter, string> = {
 };
 
 export const eventMonthLabels: Record<EventMonth, string> = {
+  JAN: "YAN",
+  FEB: "FEV",
+  MAR: "MAR",
+  APR: "APR",
+  MAY: "MAY",
+  JUN: "İYN",
+  JUL: "İYL",
+  AUG: "AVQ",
   SEP: "SEN",
   OCT: "OKT",
+  NOV: "NOY",
+  DEC: "DEK",
 };
 
 export const eventMonthLongLabels: Record<EventMonth, string> = {
+  JAN: "yanvar",
+  FEB: "fevral",
+  MAR: "mart",
+  APR: "aprel",
+  MAY: "may",
+  JUN: "iyun",
+  JUL: "iyul",
+  AUG: "avqust",
   SEP: "sentyabr",
   OCT: "oktyabr",
+  NOV: "noyabr",
+  DEC: "dekabr",
 };
+
+export type ApiEvent = {
+  id: string;
+  category: EventCategory;
+  title: string;
+  description: string;
+  longDescription: string;
+  location: string;
+  city: string;
+  organizer: string;
+  startAt: string;
+  endAt: string;
+  registrationDeadline: string;
+  speakers: string[];
+  capacity: number;
+  availableSpots: number;
+  accent: string;
+  glow: string;
+};
+
+const monthCodes: EventMonth[] = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+export function mapApiEvent(event: ApiEvent): Event {
+  const start = new Date(event.startAt);
+  return {
+    ...event,
+    date: new Intl.DateTimeFormat("az-AZ", { day: "2-digit", timeZone: "Asia/Baku" }).format(start),
+    month: monthCodes[Number(new Intl.DateTimeFormat("en-US", { month: "2-digit", timeZone: "Asia/Baku" }).format(start)) - 1] ?? "JAN",
+    time: new Intl.DateTimeFormat("az-AZ", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Baku" }).format(start),
+    capacity: `${event.capacity} iştirakçı`,
+  };
+}
 
 export const events: Event[] = [
   {

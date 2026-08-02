@@ -10,13 +10,17 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { mentors } from "../data/mentors";
 import { useAuth } from "./AuthProvider";
+import { ErrorState, Skeleton } from "./ui/Primitives";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function MentorshipDashboard() {
+  const [availableMentorIds, setAvailableMentorIds] = useState<Set<string> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [requestedIds, setRequestedIds] = useState<Set<string>>(() => new Set());
   const [requestingId, setRequestingId] = useState<string | null>(null);
@@ -28,9 +32,47 @@ export function MentorshipDashboard() {
   const [response, setResponse] = useState("all");
   const reduceMotion = useReducedMotion();
   const { user } = useAuth();
+
+  const loadMentors = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError("");
+    try {
+      const response = await fetch("/api/catalog/mentors", { cache: "no-store" });
+      const payload = await response.json() as { data?: Array<{ id: string; available: boolean }>; error?: { message?: string } };
+      if (!response.ok) throw new Error(payload.error?.message ?? "Mentorlar yüklənmədi.");
+      if (!Array.isArray(payload.data)) throw new Error("Mentor məlumatları düzgün formatda deyil.");
+      setAvailableMentorIds(new Set(payload.data.filter((mentor) => mentor.available).map((mentor) => mentor.id)));
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Mentorlar yüklənmədi.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadMentors(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadMentors]);
+
+  useEffect(() => {
+    if (!user) {
+      const timer = window.setTimeout(() => setRequestedIds(new Set()), 0);
+      return () => window.clearTimeout(timer);
+    }
+    void fetch("/api/mentorship/requests", { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json() as { data?: Array<{ mentorId: string; status: string }> };
+        if (response.ok && Array.isArray(payload.data)) {
+          setRequestedIds(new Set(payload.data.filter((item) => item.status === "pending").map((item) => item.mentorId)));
+        }
+      })
+      .catch(() => undefined);
+  }, [user]);
+
   const filteredMentors = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("az");
     return mentors.filter((mentor) => {
+      if (!availableMentorIds?.has(mentor.id)) return false;
       const matchesQuery = !normalized || `${mentor.name} ${mentor.role} ${mentor.expertise.join(" ")}`.toLocaleLowerCase("az").includes(normalized);
       const matchesDay = day === "all" || mentor.availability.some((slot) => slot.startsWith(day));
       const matchesLanguage = language === "all" || mentor.languages.includes(language);
@@ -38,7 +80,7 @@ export function MentorshipDashboard() {
       const matchesResponse = response === "all" || (response === "fast" ? fastResponse : !fastResponse);
       return matchesQuery && matchesDay && matchesLanguage && matchesResponse && (mode === "all" || mentor.mode === mode);
     });
-  }, [day, language, mode, query, response]);
+  }, [availableMentorIds, day, language, mode, query, response]);
 
   async function requestMentorship(mentorId: string) {
     if (requestingId) return;
@@ -93,6 +135,13 @@ export function MentorshipDashboard() {
         <label><span>Cavab vaxtı</span><select value={response} onChange={(event) => setResponse(event.target.value)}><option value="all">Fərq etmir</option><option value="fast">8 saata qədər</option><option value="daily">Bir günədək</option></select></label>
       </div>
 
+      {isLoading ? (
+        <div className="mentor-grid mentor-skeleton-grid" aria-label="Mentorlar yüklənir">
+          {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="mentor-card-skeleton" />)}
+        </div>
+      ) : loadError ? (
+        <ErrorState title="Mentorları göstərmək mümkün olmadı" description={loadError} action={<button type="button" className="kuds-primary-button" onClick={() => void loadMentors()}>Yenidən yoxla</button>} />
+      ) : (
       <motion.div layout className="mentor-grid" aria-label="Mentor siyahısı">
         {filteredMentors.map((mentor, index) => {
           const expanded = expandedId === mentor.id;
@@ -229,6 +278,7 @@ export function MentorshipDashboard() {
         })}
         {filteredMentors.length === 0 && <div className="mentor-filter-empty">Bu filtrlərə uyğun mentor tapılmadı.</div>}
       </motion.div>
+      )}
     </section>
   );
 }

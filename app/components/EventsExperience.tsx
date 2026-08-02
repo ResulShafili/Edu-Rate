@@ -2,22 +2,26 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Search } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   categories,
   eventCategoryLabels,
-  events,
+  mapApiEvent,
+  type ApiEvent,
   type Event,
   type EventFilter,
 } from "../data/events";
 import { getTemporalStatus, sortByStartAt } from "../lib/date";
 import { EventCard } from "./EventCard";
 import { EventDrawer } from "./EventDrawer";
-import { EmptyState } from "./ui/Primitives";
+import { EmptyState, ErrorState, Skeleton } from "./ui/Primitives";
 
 type EventPeriod = "upcoming" | "past";
 
 export function EventsExperience() {
+  const [eventItems, setEventItems] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [activeFilter, setActiveFilter] = useState<EventFilter>("All");
   const [period, setPeriod] = useState<EventPeriod>("upcoming");
   const [query, setQuery] = useState("");
@@ -26,7 +30,7 @@ export function EventsExperience() {
   const reduceMotion = useReducedMotion();
   const visibleEvents = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("az");
-    return sortByStartAt(events).filter((event) => {
+    return sortByStartAt(eventItems).filter((event) => {
       const temporal = getTemporalStatus(event.startAt, event.endAt);
       const matchesPeriod = period === "upcoming" ? temporal !== "finished" : temporal === "finished";
       const matchesCategory = activeFilter === "All" || event.category === activeFilter;
@@ -34,8 +38,29 @@ export function EventsExperience() {
       const matchesQuery = !normalizedQuery || `${event.title} ${event.location} ${event.organizer}`.toLocaleLowerCase("az").includes(normalizedQuery);
       return matchesPeriod && matchesCategory && matchesDate && matchesQuery;
     });
-  }, [activeFilter, dateFilter, period, query]);
+  }, [activeFilter, dateFilter, eventItems, period, query]);
   const closeDrawer = useCallback(() => setSelectedEvent(null), []);
+
+  const loadEvents = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError("");
+    try {
+      const response = await fetch("/api/catalog/events", { cache: "no-store" });
+      const payload = await response.json() as { data?: ApiEvent[]; error?: { message?: string } };
+      if (!response.ok) throw new Error(payload.error?.message ?? "Tədbirlər yüklənmədi.");
+      if (!Array.isArray(payload.data)) throw new Error("Tədbir məlumatları düzgün formatda deyil.");
+      setEventItems(payload.data.map(mapApiEvent));
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Tədbirlər yüklənmədi.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadEvents(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadEvents]);
 
   return (
     <>
@@ -86,7 +111,13 @@ export function EventsExperience() {
           <span className="event-count">{visibleEvents.length} tədbir</span>
         </div>
 
-        {visibleEvents.length ? (
+        {isLoading ? (
+          <div className="events-grid event-skeleton-grid" aria-label="Tədbirlər yüklənir">
+            {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="event-card-skeleton" />)}
+          </div>
+        ) : loadError ? (
+          <ErrorState title="Tədbirləri göstərmək mümkün olmadı" description={loadError} action={<button type="button" className="kuds-primary-button" onClick={() => void loadEvents()}>Yenidən yoxla</button>} />
+        ) : visibleEvents.length ? (
           <motion.div layout className="events-grid">
             <AnimatePresence mode="popLayout">
               {visibleEvents.map((event, index) => (

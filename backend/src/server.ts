@@ -2,8 +2,10 @@ import { createServer } from "node:http";
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { closeDatabase, initializeDatabase } from "./db/database.js";
+import { initializeBusinessDatabase } from "./db/business.js";
 
 await initializeDatabase();
+await initializeBusinessDatabase();
 
 const server = createServer(createApp());
 

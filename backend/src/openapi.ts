@@ -11,6 +11,8 @@ export const openApiDocument = {
     { name: "System", description: "Server vəziyyəti" },
     { name: "Authentication", description: "Qeydiyyat və giriş" },
     { name: "Catalog", description: "EduRate kataloqları" },
+    { name: "Events", description: "Tədbir CRUD və iştirak qeydiyyatları" },
+    { name: "Mentorship", description: "Mentorluq müraciətlərinin idarə edilməsi" },
     { name: "Administration", description: "Admin əməliyyatları" },
   ],
   paths: {
@@ -97,10 +99,35 @@ export const openApiDocument = {
     },
     "/api/events": {
       get: {
-        tags: ["Catalog"],
+        tags: ["Events"],
         summary: "Tədbirləri siyahıla",
-        responses: { "200": { description: "Tədbirlər" } },
+        responses: { "200": { description: "Tədbirlər", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/Event" } } } } } } } },
       },
+      post: {
+        tags: ["Events"],
+        summary: "Yeni tədbir yarat",
+        security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/EventInput" } } } },
+        responses: { "201": { description: "Tədbir yaradıldı" }, "401": { description: "Giriş tələb olunur" }, "422": { description: "Validasiya xətası" } },
+      },
+    },
+    "/api/events/{eventId}": {
+      parameters: [{ name: "eventId", in: "path", required: true, schema: { type: "string" } }],
+      get: { tags: ["Events"], summary: "Tədbir təfərrüatını göstər", responses: { "200": { description: "Tədbir" }, "404": { description: "Tədbir tapılmadı" } } },
+      patch: {
+        tags: ["Events"], summary: "Yaratdığın tədbiri yenilə", security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/EventInput" } } } },
+        responses: { "200": { description: "Tədbir yeniləndi" }, "403": { description: "İcazə yoxdur" }, "404": { description: "Tədbir tapılmadı" }, "422": { description: "Validasiya xətası" } },
+      },
+      delete: { tags: ["Events"], summary: "Yaratdığın tədbiri sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Tədbir silindi" }, "403": { description: "İcazə yoxdur" }, "404": { description: "Tədbir tapılmadı" } } },
+    },
+    "/api/events/{eventId}/registrations": {
+      parameters: [{ name: "eventId", in: "path", required: true, schema: { type: "string" } }],
+      post: { tags: ["Events"], summary: "Tədbirə qeydiyyatdan keç", security: [{ bearerAuth: [] }], responses: { "201": { description: "Qeydiyyat tamamlandı" }, "409": { description: "Qeydiyyat bağlıdır, yer yoxdur və ya təkrardır" } } },
+      delete: { tags: ["Events"], summary: "Tədbir qeydiyyatını ləğv et", security: [{ bearerAuth: [] }], responses: { "200": { description: "Qeydiyyat ləğv edildi" }, "404": { description: "Qeydiyyat tapılmadı" } } },
+    },
+    "/api/events/registrations/me": {
+      get: { tags: ["Events"], summary: "Qeydiyyatdan keçdiyim tədbirləri göstər", security: [{ bearerAuth: [] }], responses: { "200": { description: "İstifadəçinin tədbirləri" } } },
     },
     "/api/clubs": {
       get: {
@@ -115,6 +142,23 @@ export const openApiDocument = {
         summary: "Mentorları siyahıla",
         responses: { "200": { description: "Mentorlar" } },
       },
+    },
+    "/api/mentorship/requests": {
+      get: { tags: ["Mentorship"], summary: "Müraciətlərimi siyahıla", security: [{ bearerAuth: [] }], responses: { "200": { description: "Mentorluq müraciətləri" } } },
+      post: {
+        tags: ["Mentorship"], summary: "Mentorluq müraciəti yarat", security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/MentorshipRequestInput" } } } },
+        responses: { "201": { description: "Müraciət yaradıldı" }, "404": { description: "Mentor tapılmadı" }, "409": { description: "Gözləyən müraciət artıq var" }, "422": { description: "Validasiya xətası" } },
+      },
+    },
+    "/api/mentorship/requests/{requestId}": {
+      parameters: [{ name: "requestId", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+      patch: {
+        tags: ["Mentorship"], summary: "Gözləyən müraciətin qeydini yenilə", security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["note"], properties: { note: { type: "string", maxLength: 600 } } } } } },
+        responses: { "200": { description: "Müraciət yeniləndi" }, "404": { description: "Müraciət tapılmadı" } },
+      },
+      delete: { tags: ["Mentorship"], summary: "Gözləyən müraciəti sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Müraciət silindi" }, "404": { description: "Müraciət tapılmadı" } } },
     },
     "/api/admin/users": {
       get: {
@@ -178,6 +222,37 @@ export const openApiDocument = {
           year: { type: "string", example: "2-ci kurs" },
           about: { type: "string", maxLength: 600 },
         },
+      },
+      EventInput: {
+        type: "object",
+        required: ["title", "category", "description", "longDescription", "location", "city", "organizer", "startAt", "endAt", "registrationDeadline", "speakers", "capacity"],
+        properties: {
+          title: { type: "string", minLength: 3, maxLength: 140, example: "Kampus innovasiya günü" },
+          category: { type: "string", enum: ["Design", "Technology", "Culture", "Wellness"] },
+          description: { type: "string", minLength: 10, maxLength: 280 },
+          longDescription: { type: "string", minLength: 20, maxLength: 1600 },
+          location: { type: "string", example: "İnnovasiya mərkəzi" },
+          city: { type: "string", example: "Xankəndi" },
+          organizer: { type: "string", example: "Tələbə innovasiya klubu" },
+          startAt: { type: "string", format: "date-time", example: "2026-10-20T14:00:00+04:00" },
+          endAt: { type: "string", format: "date-time", example: "2026-10-20T16:00:00+04:00" },
+          registrationDeadline: { type: "string", format: "date-time", example: "2026-10-19T23:59:59+04:00" },
+          speakers: { type: "array", items: { type: "string" }, example: ["Nigar Hüseynli", "Tural Kərimov"] },
+          capacity: { type: "integer", minimum: 1, maximum: 10000, example: 100 },
+          accent: { type: "string", example: "#c8ff4d" },
+          glow: { type: "string", example: "rgba(200, 255, 77, 0.28)" },
+        },
+      },
+      Event: {
+        allOf: [
+          { $ref: "#/components/schemas/EventInput" },
+          { type: "object", required: ["id", "availableSpots", "createdAt", "updatedAt"], properties: { id: { type: "string" }, availableSpots: { type: "integer" }, createdBy: { type: ["string", "null"] }, createdAt: { type: "string", format: "date-time" }, updatedAt: { type: "string", format: "date-time" } } },
+        ],
+      },
+      MentorshipRequestInput: {
+        type: "object",
+        required: ["mentorId"],
+        properties: { mentorId: { type: "string", example: "aygun-rzayeva" }, note: { type: "string", maxLength: 600, example: "Məhsul ideyam üçün istiqamət almaq istəyirəm." } },
       },
     },
   },

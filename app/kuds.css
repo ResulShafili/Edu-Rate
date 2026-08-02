@@ -1724,3 +1724,41 @@ body {
   .kuds-shell .teacher-avatar { width: 68px !important; height: 90px !important; }
   .kuds-shell .settings-row { grid-template-columns: 32px minmax(0, 1fr) auto; }
 }
+
+.kuds-shell .event-card-skeleton {
+  min-height: 310px;
+  border: 1px solid var(--kuds-border, #dfe7ea);
+  border-radius: 18px;
+}
+
+.kuds-shell .mentor-card-skeleton {
+  min-height: 230px;
+  border: 1px solid var(--kuds-border, #dfe7ea);
+  border-radius: 18px;
+}
+
+.kuds-shell .reserve-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.kuds-shell .reserve-button.is-registered {
+  color: #173b33;
+  background: #d7efe8;
+}
+
+.kuds-shell .event-registration-error {
+  margin: 12px 0 0;
+  color: #a33a36;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.kuds-shell .drawer-layer {
+  z-index: 220;
+}
+
+@media (max-width: 720px) {
+  .kuds-shell .event-card-skeleton { min-height: 250px; }
+  .kuds-shell .mentor-card-skeleton { min-height: 190px; }
+}

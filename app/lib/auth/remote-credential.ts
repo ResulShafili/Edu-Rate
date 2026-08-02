@@ -53,7 +53,7 @@ export function readRemoteCredentialToken(request: Request): string | undefined 
 export async function requestRemoteApi<T>(
   path: string,
   options: {
-    method?: "GET" | "POST" | "PATCH";
+    method?: "GET" | "POST" | "PATCH" | "DELETE";
     body?: unknown;
     token?: string;
   } = {},
@@ -74,10 +74,12 @@ export async function requestRemoteApi<T>(
   } catch {
     throw new ApiHttpError(
       503,
-      "AUTH_SERVICE_UNAVAILABLE",
-      "Hesab xidməti ilə əlaqə yaratmaq mümkün olmadı. Bir qədər sonra yenidən yoxla.",
+      "API_SERVICE_UNAVAILABLE",
+      "EduRate xidməti ilə əlaqə yaratmaq mümkün olmadı. Bir qədər sonra yenidən yoxla.",
     );
   }
+
+  if (response.status === 204) return undefined as T;
 
   const payload = (await response.json().catch(() => null)) as
     | RemoteEnvelope<T>
@@ -89,13 +91,13 @@ export async function requestRemoteApi<T>(
     throw new ApiHttpError(
       response.status,
       remoteError?.code ?? "REMOTE_API_ERROR",
-      remoteError?.message ?? "Hesab əməliyyatı tamamlanmadı.",
+      remoteError?.message ?? "Əməliyyat tamamlanmadı.",
       remoteError?.details,
     );
   }
 
   if (!payload || !("data" in payload)) {
-    throw new ApiHttpError(502, "INVALID_REMOTE_RESPONSE", "Hesab xidməti etibarlı cavab qaytarmadı.");
+    throw new ApiHttpError(502, "INVALID_REMOTE_RESPONSE", "EduRate xidməti etibarlı cavab qaytarmadı.");
   }
 
   return payload.data;

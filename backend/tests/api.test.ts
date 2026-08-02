@@ -26,6 +26,8 @@ describe("EduRate API", () => {
     const response = await request(app).get("/api/openapi.json").expect(200);
     assert.equal(response.body.openapi, "3.1.0");
     assert.ok(response.body.paths["/api/auth/signup"]);
+    assert.ok(response.body.paths["/api/events/{eventId}"]);
+    assert.ok(response.body.paths["/api/mentorship/requests"]);
   });
 
   it("Swagger-in cari API domenindən CORS sorğusuna icazə verir", async () => {
@@ -44,11 +46,11 @@ describe("EduRate API", () => {
   });
 
   it("qeydiyyat, giriş və sessiya axınını tamamlayır", async () => {
-    const email = `aylin.${Date.now()}@example.az`;
+    const email = `telebe.${Date.now()}@example.az`;
     const signup = await request(app)
       .post("/api/auth/signup")
       .send({
-        name: "Aylin Nəcəfli",
+        name: "Nümunə Tələbə",
         email,
         password: "EduRate2026",
         university: "Qarabağ Universiteti",
@@ -63,7 +65,7 @@ describe("EduRate API", () => {
     await request(app)
       .post("/api/auth/signup")
       .send({
-        name: "Aylin Nəcəfli",
+        name: "Nümunə Tələbə",
         email,
         password: "EduRate2026",
         faculty: "Mühəndislik fakültəsi",
@@ -86,7 +88,7 @@ describe("EduRate API", () => {
       .patch("/api/auth/profile")
       .set("Authorization", `Bearer ${login.body.data.token}`)
       .send({
-        name: "Aylin Nəcəfli",
+        name: "Nümunə Tələbə",
         university: "Qarabağ Universiteti",
         faculty: "Mühəndislik fakültəsi",
         program: "Kompüter mühəndisliyi",
@@ -108,5 +110,93 @@ describe("EduRate API", () => {
     assert.ok(events.body.data.length > 0);
     assert.ok(clubs.body.data.length > 0);
     assert.ok(mentors.body.data.length > 0);
+  });
+
+  it("tədbir CRUD, qeydiyyat və mentorluq axınlarını başdan sona tamamlayır", async () => {
+    const signup = await request(app)
+      .post("/api/auth/signup")
+      .send({
+        name: "Test İstifadəçisi",
+        email: `crud.${Date.now()}@example.az`,
+        password: "EduRate2026",
+        university: "Qarabağ Universiteti",
+        faculty: "İqtisadiyyat fakültəsi",
+      })
+      .expect(201);
+    const authorization = `Bearer ${signup.body.data.token}`;
+    const eventInput = {
+      title: "Sprint 2 innovasiya görüşü",
+      category: "Technology",
+      description: "Tələbə layihələrinin təqdim olunduğu açıq innovasiya görüşü.",
+      longDescription: "Komandalar işlək prototiplərini təqdim edir, rəy alır və növbəti inkişaf addımlarını birlikdə müəyyənləşdirirlər.",
+      location: "İnnovasiya mərkəzi",
+      city: "Xankəndi",
+      organizer: "EduRate tələbə komandası",
+      startAt: "2026-12-10T14:00:00+04:00",
+      endAt: "2026-12-10T16:00:00+04:00",
+      registrationDeadline: "2026-12-09T23:59:59+04:00",
+      speakers: ["Nigar Hüseynli", "Tural Kərimov"],
+      capacity: 40,
+      accent: "#c8ff4d",
+      glow: "rgba(200, 255, 77, 0.28)",
+    };
+
+    const created = await request(app)
+      .post("/api/events")
+      .set("Authorization", authorization)
+      .send(eventInput)
+      .expect(201);
+    const eventId = created.body.data.id as string;
+    assert.equal(created.body.data.availableSpots, 40);
+
+    const updated = await request(app)
+      .patch(`/api/events/${eventId}`)
+      .set("Authorization", authorization)
+      .send({ ...eventInput, title: "Yenilənmiş innovasiya görüşü" })
+      .expect(200);
+    assert.equal(updated.body.data.title, "Yenilənmiş innovasiya görüşü");
+
+    await request(app)
+      .post(`/api/events/${eventId}/registrations`)
+      .set("Authorization", authorization)
+      .expect(201);
+    await request(app)
+      .post(`/api/events/${eventId}/registrations`)
+      .set("Authorization", authorization)
+      .expect(409);
+
+    const myEvents = await request(app)
+      .get("/api/events/registrations/me")
+      .set("Authorization", authorization)
+      .expect(200);
+    assert.ok(myEvents.body.data.some((event: { id: string }) => event.id === eventId));
+
+    await request(app)
+      .delete(`/api/events/${eventId}/registrations`)
+      .set("Authorization", authorization)
+      .expect(200);
+
+    const mentorship = await request(app)
+      .post("/api/mentorship/requests")
+      .set("Authorization", authorization)
+      .send({ mentorId: "aygun-rzayeva", note: "Məhsul ideyamı dəqiqləşdirmək istəyirəm." })
+      .expect(201);
+    const mentorshipId = mentorship.body.data.id as string;
+
+    await request(app)
+      .patch(`/api/mentorship/requests/${mentorshipId}`)
+      .set("Authorization", authorization)
+      .send({ note: "Məhsul strategiyası üzrə ilkin plan hazırlamaq istəyirəm." })
+      .expect(200);
+    await request(app)
+      .delete(`/api/mentorship/requests/${mentorshipId}`)
+      .set("Authorization", authorization)
+      .expect(204);
+
+    await request(app)
+      .delete(`/api/events/${eventId}`)
+      .set("Authorization", authorization)
+      .expect(204);
+    await request(app).get(`/api/events/${eventId}`).expect(404);
   });
 });

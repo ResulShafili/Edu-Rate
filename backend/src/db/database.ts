@@ -37,7 +37,7 @@ export interface UpdateUserRecord {
   about: string;
 }
 
-const pool = env.DATABASE_URL
+export const databasePool = env.DATABASE_URL
   ? new Pool({
       connectionString: env.DATABASE_URL,
       max: 10,
@@ -66,12 +66,12 @@ function mapUser(row: Record<string, unknown>): UserRecord {
 }
 
 export async function initializeDatabase() {
-  if (!pool) {
+  if (!databasePool) {
     console.warn("DATABASE_URL yoxdur; lokal yaddaş rejimi aktivdir.");
     return;
   }
 
-  await pool.query(`
+  await databasePool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id UUID PRIMARY KEY,
       name VARCHAR(120) NOT NULL,
@@ -98,32 +98,32 @@ export async function initializeDatabase() {
 }
 
 export async function closeDatabase() {
-  await pool?.end();
+  await databasePool?.end();
 }
 
 export function databaseMode() {
-  return pool ? "postgresql" : "memory";
+  return databasePool ? "postgresql" : "memory";
 }
 
 export async function findUserByEmail(email: string): Promise<UserRecord | null> {
   const normalizedEmail = email.trim().toLowerCase();
 
-  if (!pool) {
+  if (!databasePool) {
     return memoryUsers.get(normalizedEmail) ?? null;
   }
 
-  const result = await pool.query("SELECT * FROM users WHERE email = $1 LIMIT 1", [
+  const result = await databasePool.query("SELECT * FROM users WHERE email = $1 LIMIT 1", [
     normalizedEmail,
   ]);
   return result.rows[0] ? mapUser(result.rows[0]) : null;
 }
 
 export async function findUserById(id: string): Promise<UserRecord | null> {
-  if (!pool) {
+  if (!databasePool) {
     return [...memoryUsers.values()].find((user) => user.id === id) ?? null;
   }
 
-  const result = await pool.query("SELECT * FROM users WHERE id = $1 LIMIT 1", [id]);
+  const result = await databasePool.query("SELECT * FROM users WHERE id = $1 LIMIT 1", [id]);
   return result.rows[0] ? mapUser(result.rows[0]) : null;
 }
 
@@ -143,12 +143,12 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
     createdAt: new Date().toISOString(),
   };
 
-  if (!pool) {
+  if (!databasePool) {
     memoryUsers.set(user.email, user);
     return user;
   }
 
-  const result = await pool.query(
+  const result = await databasePool.query(
     `INSERT INTO users (id, name, email, password_hash, university, faculty, role)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING *`,
@@ -167,11 +167,11 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
 }
 
 export async function listUsers(limit = 50): Promise<UserRecord[]> {
-  if (!pool) {
+  if (!databasePool) {
     return [...memoryUsers.values()].slice(0, limit);
   }
 
-  const result = await pool.query("SELECT * FROM users ORDER BY created_at DESC LIMIT $1", [
+  const result = await databasePool.query("SELECT * FROM users ORDER BY created_at DESC LIMIT $1", [
     limit,
   ]);
   return result.rows.map(mapUser);
@@ -181,7 +181,7 @@ export async function updateUserProfile(
   id: string,
   input: UpdateUserRecord,
 ): Promise<UserRecord | null> {
-  if (!pool) {
+  if (!databasePool) {
     const current = [...memoryUsers.values()].find((user) => user.id === id);
     if (!current) return null;
     const next = {
@@ -197,7 +197,7 @@ export async function updateUserProfile(
     return next;
   }
 
-  const result = await pool.query(
+  const result = await databasePool.query(
     `UPDATE users
      SET name = $2, university = $3, faculty = $4, program = $5, year = $6,
          about = $7, updated_at = NOW()

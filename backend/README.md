@@ -31,9 +31,20 @@ npm run dev
 
 Render build mərhələsində TypeScript və tip paketlərini quraşdırmaq üçün `npm ci --include=dev` istifadə olunur; runtime isə kompilyasiya edilmiş `dist/server.js` faylını başladır.
 
+## Sprint 2 biznes API-ləri
+
+- `GET/POST /api/events` — tədbirləri siyahıla və yeni tədbir yarat
+- `GET/PATCH/DELETE /api/events/:eventId` — tədbir təfərrüatı və CRUD
+- `POST/DELETE /api/events/:eventId/registrations` — tədbirə qoşul və qeydiyyatı ləğv et
+- `GET /api/events/registrations/me` — istifadəçinin tədbir qeydiyyatları
+- `GET/POST /api/mentorship/requests` — mentorluq müraciətlərini siyahıla və yarat
+- `PATCH/DELETE /api/mentorship/requests/:requestId` — gözləyən müraciəti yenilə və sil
+
+Bütün yazma əməliyyatları JWT tələb edir. Tədbiri yalnız onu yaradan istifadəçi və ya admin dəyişə/silə bilər. Endpoint-lərin nümunələri və cavab kodları Swagger UI daxilində test edilə bilər.
+
 ## Frontend bağlantısı
 
-Vercel project **Settings → Environment Variables** bölməsində bunları Railway domeni ilə təyin edin:
+Vercel project **Settings → Environment Variables** bölməsində bunları Render domeni ilə təyin edin:
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=https://edurate-api.onrender.com
