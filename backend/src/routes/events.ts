@@ -70,7 +70,7 @@ eventsRouter.patch("/:eventId", authenticate, async (request, response) => {
   const eventId = z.string().parse(request.params.eventId);
   const current = await findEventById(eventId);
   if (!current) throw new ApiError(404, "EVENT_NOT_FOUND", "Tədbir tapılmadı.");
-  if (request.auth!.role !== "admin" && current.createdBy !== request.auth!.userId) {
+  if (request.auth!.role !== "admin" && request.auth!.role !== "assistant_admin" && current.createdBy !== request.auth!.userId) {
     throw new ApiError(403, "EVENT_EDIT_FORBIDDEN", "Yalnız yaratdığın tədbiri dəyişə bilərsən.");
   }
   const event = await updateEvent(eventId, eventSchema.parse(request.body));
@@ -81,7 +81,7 @@ eventsRouter.delete("/:eventId", authenticate, async (request, response) => {
   const eventId = z.string().parse(request.params.eventId);
   const current = await findEventById(eventId);
   if (!current) throw new ApiError(404, "EVENT_NOT_FOUND", "Tədbir tapılmadı.");
-  if (request.auth!.role !== "admin" && current.createdBy !== request.auth!.userId) {
+  if (request.auth!.role !== "admin" && request.auth!.role !== "assistant_admin" && current.createdBy !== request.auth!.userId) {
     throw new ApiError(403, "EVENT_DELETE_FORBIDDEN", "Yalnız yaratdığın tədbiri silə bilərsən.");
   }
   await deleteEvent(eventId);

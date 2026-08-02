@@ -16,6 +16,10 @@ import {
   type SignInInput,
   type UserProfile,
 } from "../data/user";
+import {
+  isAdminAccessRole,
+  type AdminAccessRole,
+} from "../lib/auth/admin-role";
 import { credentialAuthGateway, getCredentialSession } from "../lib/auth/credential-api";
 
 type AuthStatus = "idle" | "submitting";
@@ -26,6 +30,7 @@ type AuthContextValue = {
   credentialAuthAvailable: boolean;
   signOutHref: string | null;
   isAdmin: boolean;
+  adminRole: AdminAccessRole | null;
   signIn: (input: SignInInput) => Promise<UserProfile>;
   register: (input: RegisterInput) => Promise<UserProfile>;
   signOut: () => Promise<void>;
@@ -36,7 +41,6 @@ type AuthProviderProps = PropsWithChildren<{
   gateway?: AuthGateway;
   initialUser?: UserProfile | null;
   signOutHref?: string | null;
-  initialIsAdmin?: boolean;
 }>;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -48,12 +52,14 @@ export function AuthProvider({
   gateway,
   initialUser = null,
   signOutHref = null,
-  initialIsAdmin = false,
 }: AuthProviderProps) {
   const [user, setUser] = useState<UserProfile | null>(initialUser);
   const [status, setStatus] = useState<AuthStatus>("idle");
   const activeGateway = gateway ?? credentialAuthGateway;
   const credentialAuthAvailable = !signOutHref;
+  const adminRole = isAdminAccessRole(user?.accessRole)
+    ? user.accessRole
+    : null;
 
   useEffect(() => {
     if (initialUser) return;
@@ -116,14 +122,15 @@ export function AuthProvider({
   const value = useMemo<AuthContextValue>(() => ({
     credentialAuthAvailable,
     signOutHref,
-    isAdmin: initialIsAdmin,
+    isAdmin: Boolean(adminRole),
+    adminRole,
     user,
     status,
     signIn,
     register,
     signOut,
     updateProfile,
-  }), [credentialAuthAvailable, initialIsAdmin, register, signIn, signOut, signOutHref, status, updateProfile, user]);
+  }), [adminRole, credentialAuthAvailable, register, signIn, signOut, signOutHref, status, updateProfile, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

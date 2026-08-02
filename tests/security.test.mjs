@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { getAdminCapabilities } from "../app/lib/auth/admin-role.ts";
 import { buildContentSecurityPolicy } from "../app/lib/security/content-security-policy.ts";
 import { isTrustedMutationRequest } from "../app/lib/security/request-origin.ts";
 
@@ -33,5 +34,14 @@ describe("frontend security boundaries", () => {
     assert.doesNotMatch(policy, /script-src[^;]*'unsafe-eval'/);
     assert.match(policy, /frame-ancestors 'none'/);
     assert.match(policy, /object-src 'none'/);
+  });
+
+  it("admin köməkçisinə istifadəçi idarəetmə icazəsi vermir", () => {
+    const capabilities = getAdminCapabilities("assistant_admin");
+    assert.equal(capabilities.canAccessPanel, true);
+    assert.equal(capabilities.canManageContent, true);
+    assert.equal(capabilities.canManageUsers, false);
+    assert.equal(capabilities.canDeleteUsers, false);
+    assert.equal(capabilities.canAssignElevatedRoles, false);
   });
 });

@@ -63,14 +63,16 @@ export default async function RootLayout({
 }>) {
   const requestIdentity = await getServerRequestIdentity();
   const initialUser = requestIdentity
-    ? createIdentityProfile(requestIdentity.displayName, requestIdentity.email)
+    ? {
+        ...createIdentityProfile(requestIdentity.displayName, requestIdentity.email),
+        accessRole: requestIdentity.role ?? "student",
+      }
     : null;
   return (
     <html lang="az" data-scroll-behavior="smooth">
       <body className="antialiased">
         <AuthProvider
           initialUser={initialUser}
-          initialIsAdmin={requestIdentity?.role === "admin"}
         >
           <PlatformProvider>
             <PlatformShell>{children}</PlatformShell>

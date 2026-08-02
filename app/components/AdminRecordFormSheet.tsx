@@ -35,6 +35,7 @@ export type AdminRecordSubmission =
   | { kind: "events"; input: AdminEventCreateInput };
 
 type AdminRecordFormSheetProps = {
+  canAssignElevatedRoles: boolean;
   error: string | null;
   kind: AdminCollectionKind;
   mode: AdminRecordSheetMode;
@@ -53,6 +54,7 @@ const labels: Record<AdminCollectionKind, { singular: string; plural: string }> 
 };
 
 export function AdminRecordFormSheet({
+  canAssignElevatedRoles,
   error,
   kind,
   mode,
@@ -193,6 +195,7 @@ export function AdminRecordFormSheet({
                     <UserFields
                       record={record?.kind === "users" ? record : null}
                       firstFieldRef={firstFieldRef}
+                      canAssignElevatedRoles={canAssignElevatedRoles}
                     />
                   )}
                   {kind === "clubs" && (
@@ -239,7 +242,11 @@ type FieldProps<TRecord> = {
   record: TRecord | null;
 };
 
-function UserFields({ firstFieldRef, record }: FieldProps<AdminUser>) {
+function UserFields({
+  firstFieldRef,
+  record,
+  canAssignElevatedRoles,
+}: FieldProps<AdminUser> & { canAssignElevatedRoles: boolean }) {
   return (
     <>
       <Field label="Ad və soyad" name="name" required>
@@ -253,7 +260,12 @@ function UserFields({ firstFieldRef, record }: FieldProps<AdminUser>) {
           <option value="student">Tələbə</option>
           <option value="mentor">Mentor</option>
           <option value="teacher">Müəllim</option>
-          <option value="admin">Administrator</option>
+          {canAssignElevatedRoles && (
+            <>
+              <option value="assistant_admin">Admin köməkçisi</option>
+              <option value="admin">Əsas administrator</option>
+            </>
+          )}
         </select>
       </Field>
       <Field label="Universitet" name="university" required>

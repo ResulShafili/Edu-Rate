@@ -16,7 +16,11 @@ export const openApiDocument = {
     { name: "Mentorship", description: "Mentorluq müraciətlərinin idarə edilməsi" },
     { name: "Reviews", description: "Müəllim rəyləri və moderasiya" },
     { name: "Support", description: "Dəstək müraciətləri" },
-    { name: "Administration", description: "Admin əməliyyatları" },
+    {
+      name: "Administration",
+      description:
+        "Əsas admin və admin köməkçisi üçün idarəetmə əməliyyatları. İstifadəçi yazma əməliyyatları yalnız əsas adminə açıqdır.",
+    },
   ],
   paths: {
     "/api/health": {
@@ -199,6 +203,59 @@ export const openApiDocument = {
           "403": { description: "Admin icazəsi tələb olunur" },
         },
       },
+      post: {
+        tags: ["Administration"],
+        summary: "Yeni istifadəçi yarat (yalnız əsas admin)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "201": { description: "İstifadəçi yaradıldı" },
+          "403": { description: "Əsas admin icazəsi tələb olunur" },
+          "422": { description: "Validasiya xətası" },
+        },
+      },
+    },
+    "/api/admin/users/{id}": {
+      parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+      patch: {
+        tags: ["Administration"],
+        summary: "İstifadəçini və rolunu yenilə (yalnız əsas admin)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "İstifadəçi yeniləndi" },
+          "403": { description: "Əsas admin icazəsi tələb olunur" },
+          "409": { description: "Aktiv adminin özünü kilidləmə cəhdinin qarşısı alındı" },
+          "404": { description: "İstifadəçi tapılmadı" },
+        },
+      },
+      delete: {
+        tags: ["Administration"],
+        summary: "İstifadəçini sil (yalnız əsas admin)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "204": { description: "İstifadəçi silindi" },
+          "403": { description: "Əsas admin icazəsi tələb olunur" },
+          "409": { description: "Admin öz hesabını silə bilməz" },
+          "404": { description: "İstifadəçi tapılmadı" },
+        },
+      },
+    },
+    "/api/admin/clubs": {
+      get: { tags: ["Administration"], summary: "Klubları idarəetmə üçün siyahıla", security: [{ bearerAuth: [] }], responses: { "200": { description: "Klublar" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+      post: { tags: ["Administration"], summary: "Yeni klub yarat", security: [{ bearerAuth: [] }], responses: { "201": { description: "Klub yaradıldı" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+    },
+    "/api/admin/clubs/{id}": {
+      parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+      patch: { tags: ["Administration"], summary: "Klubu yenilə", security: [{ bearerAuth: [] }], responses: { "200": { description: "Klub yeniləndi" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+      delete: { tags: ["Administration"], summary: "Klubu sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Klub silindi" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+    },
+    "/api/admin/events": {
+      get: { tags: ["Administration"], summary: "Tədbirləri idarəetmə üçün siyahıla", security: [{ bearerAuth: [] }], responses: { "200": { description: "Tədbirlər" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+      post: { tags: ["Administration"], summary: "Yeni tədbir yarat", security: [{ bearerAuth: [] }], responses: { "201": { description: "Tədbir yaradıldı" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+    },
+    "/api/admin/events/{id}": {
+      parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+      patch: { tags: ["Administration"], summary: "Tədbiri yenilə", security: [{ bearerAuth: [] }], responses: { "200": { description: "Tədbir yeniləndi" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+      delete: { tags: ["Administration"], summary: "Tədbiri sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Tədbir silindi" }, "403": { description: "Admin icazəsi tələb olunur" } } },
     },
   },
   components: {
@@ -206,6 +263,12 @@ export const openApiDocument = {
       bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
     },
     schemas: {
+      UserRole: {
+        type: "string",
+        enum: ["student", "mentor", "teacher", "assistant_admin", "admin"],
+        description:
+          "admin: tam səlahiyyət; assistant_admin: admin paneli və klub/tədbir CRUD; digər rollar: standart istifadəçi səlahiyyətləri.",
+      },
       HealthResponse: {
         type: "object",
         properties: {

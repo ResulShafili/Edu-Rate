@@ -29,8 +29,22 @@ export async function authenticate(request: Request, _response: Response, next: 
 }
 
 export function requireAdmin(request: Request, _response: Response, next: NextFunction) {
-  if (request.auth?.role !== "admin") {
+  if (request.auth?.role !== "admin" && request.auth?.role !== "assistant_admin") {
     return next(new ApiError(403, "ADMIN_REQUIRED", "Bu əməliyyat üçün admin icazəsi lazımdır."));
+  }
+
+  next();
+}
+
+export function requirePrimaryAdmin(request: Request, _response: Response, next: NextFunction) {
+  if (request.auth?.role !== "admin") {
+    return next(
+      new ApiError(
+        403,
+        "PRIMARY_ADMIN_REQUIRED",
+        "Bu əməliyyat yalnız əsas admin üçün əlçatandır.",
+      ),
+    );
   }
 
   next();

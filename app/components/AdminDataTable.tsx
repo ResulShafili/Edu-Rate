@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { MoreHorizontal, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
+import { LockKeyhole, MoreHorizontal, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
 import { useState, type KeyboardEvent } from "react";
 import type { AdminRecordStatus } from "../data/admin";
 import { AdminDataControls } from "./AdminDataControls";
@@ -21,6 +21,9 @@ export type AdminTableRow = {
 
 type AdminDataTableProps = {
   activeKind: AdminTableKind;
+  canCreate: boolean;
+  canDelete: boolean;
+  canEdit: boolean;
   error: Error | null;
   loading: boolean;
   mutationPending: boolean;
@@ -35,6 +38,7 @@ type AdminDataTableProps = {
   page: number;
   pageSize: number;
   queryPending: boolean;
+  restrictionMessage: string | null;
   rows: readonly AdminTableRow[];
   searchValue: string;
   status: AdminRecordStatus | "all";
@@ -73,6 +77,9 @@ const tableConfig: Record<AdminTableKind, TableConfig> = {
 
 export function AdminDataTable({
   activeKind,
+  canCreate,
+  canDelete,
+  canEdit,
   error,
   loading,
   mutationPending,
@@ -87,6 +94,7 @@ export function AdminDataTable({
   page,
   pageSize,
   queryPending,
+  restrictionMessage,
   rows,
   searchValue,
   status,
@@ -162,6 +170,7 @@ export function AdminDataTable({
           ))}
         </div>
 
+        {canCreate ? (
           <button
             type="button"
             className="admin-crud-create-button"
@@ -171,7 +180,20 @@ export function AdminDataTable({
             <Plus size={16} aria-hidden="true" />
             Yeni {config.singular}
           </button>
+        ) : (
+          <span className="admin-permission-badge">
+            <LockKeyhole size={14} aria-hidden="true" />
+            Yalnız baxış
+          </span>
+        )}
       </div>
+
+      {restrictionMessage && (
+        <p className="admin-permission-note" role="note">
+          <LockKeyhole size={15} aria-hidden="true" />
+          {restrictionMessage}
+        </p>
+      )}
 
       <AdminDataControls
         kind={activeKind}
@@ -317,6 +339,7 @@ export function AdminDataTable({
                     </div>
                   </dl>
                   <div className="admin-row-inspector__actions">
+                    {canEdit && (
                     <button
                       type="button"
                       onClick={() => {
@@ -328,6 +351,8 @@ export function AdminDataTable({
                       <Pencil size={15} aria-hidden="true" />
                       Redaktə et
                     </button>
+                    )}
+                    {canDelete && (
                     <button
                       type="button"
                       className="is-danger"
@@ -340,6 +365,13 @@ export function AdminDataTable({
                       <Trash2 size={15} aria-hidden="true" />
                       Sil
                     </button>
+                    )}
+                    {!canEdit && !canDelete && (
+                      <span className="admin-row-inspector__read-only">
+                        <LockKeyhole size={14} aria-hidden="true" />
+                        Bu bölmə yalnız baxış üçündür.
+                      </span>
+                    )}
                   </div>
                   <button
                     type="button"

@@ -32,6 +32,11 @@ import {
   useAdminUsers,
 } from "../hooks/useAdminData";
 import { useAdminTableQuery } from "../hooks/useAdminTableQuery";
+import {
+  getAdminCapabilities,
+  getAdminRoleLabel,
+  type AdminAccessRole,
+} from "../lib/auth/admin-role";
 import { AdminCharts } from "./AdminCharts";
 import {
   AdminDataTable,
@@ -128,6 +133,7 @@ type AdminDashboardProps = {
   administrator: {
     displayName: string;
     email: string;
+    role: AdminAccessRole;
   };
   demoMode: boolean;
 };
@@ -158,6 +164,8 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
   const [formError, setFormError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<CrudFeedback | null>(null);
   const tableQuery = useAdminTableQuery(activeTable);
+  const capabilities = getAdminCapabilities(administrator.role);
+  const isUserTableReadOnly = activeTable === "users" && !capabilities.canManageUsers;
   const activeQuery = tableQuery.query;
 
   const overview = useAdminOverview();
@@ -193,6 +201,13 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
   }
 
   function openEditor(mode: AdminRecordSheetMode, id?: string) {
+    if (activeTable === "users" && !capabilities.canManageUsers) {
+      setFeedback({
+        id: Date.now(),
+        message: "İstifadəçi hesablarını yalnız əsas administrator dəyişə bilər.",
+      });
+      return;
+    }
     const record = id
       ? collectionItems.find((item) => item.id === id) ?? null
       : null;
@@ -207,6 +222,9 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
 
     try {
       if (submission.kind === "users") {
+        if (!capabilities.canManageUsers) {
+          throw new Error("İstifadəçi hesablarını yalnız əsas administrator dəyişə bilər.");
+        }
         if (editor.mode === "edit" && editor.record?.kind === "users") {
           await userMutations.update(editor.record.id, submission.input);
         } else {
@@ -239,7 +257,12 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
     setFormError(null);
 
     try {
-      if (record.kind === "users") await userMutations.remove(record.id);
+      if (record.kind === "users") {
+        if (!capabilities.canDeleteUsers) {
+          throw new Error("İstifadəçi silmək yalnız əsas administratora açıqdır.");
+        }
+        await userMutations.remove(record.id);
+      }
       if (record.kind === "clubs") await clubMutations.remove(record.id);
       if (record.kind === "events") await eventMutations.remove(record.id);
       setEditor(null);
@@ -287,6 +310,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
               <span aria-hidden="true">{getInitials(administrator.displayName)}</span>
               <div>
                 <strong>{administrator.displayName}</strong>
+                <em>{getAdminRoleLabel(administrator.role)}</em>
                 <small>{demoMode ? "Yalnız təqdimat rejimi" : administrator.email}</small>
               </div>
             </div>
@@ -359,6 +383,14 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
           loading={activeCollection.isLoading}
           error={activeCollection.error ?? null}
           mutationPending={mutationPending}
+          canCreate={!isUserTableReadOnly}
+          canEdit={!isUserTableReadOnly}
+          canDelete={activeTable !== "users" || capabilities.canDeleteUsers}
+          restrictionMessage={
+            isUserTableReadOnly
+              ? "Admin köməkçisi istifadəçiləri görə bilər, lakin hesab yarada, dəyişə və ya silə bilməz."
+              : null
+          }
           onCreate={() => openEditor("create")}
           onDelete={(id) => openEditor("delete", id)}
           onEdit={(id) => openEditor("edit", id)}
@@ -383,6 +415,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
         record={editor?.record ?? null}
         pending={mutationPending}
         error={formError}
+        canAssignElevatedRoles={capabilities.canAssignElevatedRoles}
         onClose={() => {
           if (mutationPending) return;
           setEditor(null);

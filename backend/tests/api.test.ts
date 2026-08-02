@@ -12,6 +12,7 @@ process.env.ADMIN_EMAILS = "admin.test@example.az";
 let app: Express;
 let reusableStudentId = "";
 let reusableStudentToken = "";
+let reusableAdminToken = "";
 
 before(async () => {
   const module = await import("../src/app.js");
@@ -291,6 +292,7 @@ describe("EduRate API", () => {
       .expect(201);
     assert.equal(signup.body.data.user.role, "admin");
     const authorization = `Bearer ${signup.body.data.token}`;
+    reusableAdminToken = signup.body.data.token;
 
     const overview = await request(app).get("/api/admin/overview").set("Authorization", authorization).expect(200);
     assert.equal(overview.body.data.metrics.length, 4);
@@ -310,14 +312,172 @@ describe("EduRate API", () => {
       .set("Authorization", `Bearer ${reusableStudentToken}`)
       .expect(403);
 
-    await request(app)
-      .patch(`/api/admin/users/${signup.body.data.user.id}`)
-      .set("Authorization", authorization)
-      .send({ role: "student" })
+  });
+
+  it("iki səviyyəli admin icazələrini server tərəfində tətbiq edir", async () => {
+    const adminAuthorization = `Bearer ${reusableAdminToken}`;
+    const suffix = Date.now();
+
+    const primaryAdminSession = await request(app)
+      .get("/api/auth/session")
+      .set("Authorization", adminAuthorization)
       .expect(200);
+    const primaryAdminId = primaryAdminSession.body.data.user.id as string;
+
+    for (const unsafeSelfPatch of [{ role: "student" }, { status: "Məhdudlaşdırılıb" }]) {
+      const deniedSelfLockout = await request(app)
+        .patch(`/api/admin/users/${primaryAdminId}`)
+        .set("Authorization", adminAuthorization)
+        .send(unsafeSelfPatch)
+        .expect(409);
+      assert.equal(deniedSelfLockout.body.error.code, "SELF_ADMIN_LOCKOUT_FORBIDDEN");
+    }
+
+    const assistantCandidate = await request(app)
+      .post("/api/admin/users")
+      .set("Authorization", adminAuthorization)
+      .send({
+        name: "Admin Köməkçisi",
+        email: `assistant.${suffix}@example.az`,
+        role: "student",
+        university: "Qarabağ Universiteti",
+        faculty: "İdarəetmə fakültəsi",
+      })
+      .expect(201);
+    const assistantId = assistantCandidate.body.data.id as string;
+
+    const student = await request(app)
+      .post("/api/admin/users")
+      .set("Authorization", adminAuthorization)
+      .send({
+        name: "RBAC Tələbəsi",
+        email: `student.rbac.${suffix}@example.az`,
+        role: "student",
+        university: "Qarabağ Universiteti",
+        faculty: "Mühəndislik fakültəsi",
+      })
+      .expect(201);
+    const studentId = student.body.data.id as string;
+
+    const [{ findUserById }, { createAccessToken }] = await Promise.all([
+      import("../src/db/database.js"),
+      import("../src/lib/auth.js"),
+    ]);
+    const assistantRecord = await findUserById(assistantId);
+    const studentRecord = await findUserById(studentId);
+    assert.ok(assistantRecord);
+    assert.ok(studentRecord);
+    const assistantAuthorization = `Bearer ${createAccessToken(assistantRecord)}`;
+    const studentAuthorization = `Bearer ${createAccessToken(studentRecord)}`;
+
+    const promoted = await request(app)
+      .patch(`/api/admin/users/${assistantId}`)
+      .set("Authorization", adminAuthorization)
+      .send({ role: "assistant_admin" })
+      .expect(200);
+    assert.equal(promoted.body.data.role, "assistant_admin");
+
+    const assistantSession = await request(app)
+      .get("/api/auth/session")
+      .set("Authorization", assistantAuthorization)
+      .expect(200);
+    assert.equal(assistantSession.body.data.user.role, "assistant_admin");
+
+    await Promise.all([
+      request(app).get("/api/admin/overview").set("Authorization", assistantAuthorization).expect(200),
+      request(app).get("/api/admin/users").set("Authorization", assistantAuthorization).expect(200),
+      request(app).get("/api/admin/clubs").set("Authorization", assistantAuthorization).expect(200),
+      request(app).get("/api/admin/events").set("Authorization", assistantAuthorization).expect(200),
+    ]);
+
+    const eventInput = {
+      name: "RBAC inteqrasiya tədbiri",
+      category: "Texnologiya",
+      organizer: "EduRate komandası",
+      startAt: "2027-02-12T14:00:00+04:00",
+      capacity: 80,
+      place: "İnnovasiya mərkəzi",
+    };
+    const createdEvent = await request(app)
+      .post("/api/admin/events")
+      .set("Authorization", assistantAuthorization)
+      .send(eventInput)
+      .expect(201);
+    const eventId = createdEvent.body.data.id as string;
     await request(app)
-      .get("/api/admin/overview")
-      .set("Authorization", authorization)
+      .patch(`/api/admin/events/${eventId}`)
+      .set("Authorization", assistantAuthorization)
+      .send({ name: "Yenilənmiş RBAC tədbiri" })
+      .expect(200);
+
+    const clubSlug = `rbac-klubu-${suffix}`;
+    const createdClub = await request(app)
+      .post("/api/admin/clubs")
+      .set("Authorization", assistantAuthorization)
+      .send({
+        name: "RBAC İnnovasiya Klubu",
+        slug: clubSlug,
+        category: "Texnologiya",
+        coordinatorInitials: "RK",
+      })
+      .expect(201);
+    const clubId = createdClub.body.data.id as string;
+    await request(app)
+      .patch(`/api/admin/clubs/${clubId}`)
+      .set("Authorization", assistantAuthorization)
+      .send({ name: "RBAC Texnologiya Klubu" })
+      .expect(200);
+
+    const forbiddenUserCreate = await request(app)
+      .post("/api/admin/users")
+      .set("Authorization", assistantAuthorization)
+      .send({
+        name: "İcazəsiz İstifadəçi",
+        email: `forbidden.${suffix}@example.az`,
+        role: "student",
+        university: "Qarabağ Universiteti",
+        faculty: "İqtisadiyyat fakültəsi",
+      })
       .expect(403);
+    assert.equal(forbiddenUserCreate.body.error.code, "PRIMARY_ADMIN_REQUIRED");
+
+    const forbiddenRoleEscalation = await request(app)
+      .patch(`/api/admin/users/${assistantId}`)
+      .set("Authorization", assistantAuthorization)
+      .send({ role: "admin" })
+      .expect(403);
+    assert.equal(forbiddenRoleEscalation.body.error.code, "PRIMARY_ADMIN_REQUIRED");
+
+    const forbiddenUserDelete = await request(app)
+      .delete(`/api/admin/users/${studentId}`)
+      .set("Authorization", assistantAuthorization)
+      .expect(403);
+    assert.equal(forbiddenUserDelete.body.error.code, "PRIMARY_ADMIN_REQUIRED");
+
+    for (const path of ["/api/admin/overview", "/api/admin/users", "/api/admin/events", "/api/admin/clubs"]) {
+      const denied = await request(app)
+        .get(path)
+        .set("Authorization", studentAuthorization)
+        .expect(403);
+      assert.equal(denied.body.error.code, "ADMIN_REQUIRED");
+    }
+
+    await request(app)
+      .delete(`/api/admin/events/${eventId}`)
+      .set("Authorization", assistantAuthorization)
+      .expect(204);
+    await request(app)
+      .delete(`/api/admin/clubs/${clubId}`)
+      .set("Authorization", assistantAuthorization)
+      .expect(204);
+
+    await request(app)
+      .delete(`/api/admin/users/${studentId}`)
+      .set("Authorization", adminAuthorization)
+      .expect(204);
+    await request(app)
+      .delete(`/api/admin/users/${assistantId}`)
+      .set("Authorization", adminAuthorization)
+      .expect(204);
   });
 });

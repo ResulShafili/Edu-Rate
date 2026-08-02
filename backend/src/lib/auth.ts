@@ -53,7 +53,13 @@ export function verifyAccessToken(token: string) {
     }
 
     const role = payload.role;
-    if (role !== "student" && role !== "mentor" && role !== "teacher" && role !== "admin") {
+    if (
+      role !== "student" &&
+      role !== "mentor" &&
+      role !== "teacher" &&
+      role !== "assistant_admin" &&
+      role !== "admin"
+    ) {
       throw new Error("Token rolu yanlışdır.");
     }
 

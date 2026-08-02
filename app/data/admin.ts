@@ -34,7 +34,7 @@ export type AdminRecordBase<
   updatedAt: string;
 };
 
-export type AdminUserRole = "student" | "mentor" | "teacher" | "admin";
+export type AdminUserRole = "student" | "mentor" | "teacher" | "assistant_admin" | "admin";
 
 export type AdminUser = AdminRecordBase<AdminUserStatus> & {
   kind: "users";
@@ -167,7 +167,8 @@ export const adminRoleLabels: Record<AdminUserRole, string> = {
   student: "Tələbə",
   mentor: "Mentor",
   teacher: "Müəllim",
-  admin: "Administrator",
+  assistant_admin: "Admin köməkçisi",
+  admin: "Əsas administrator",
 };
 
 export const adminDemoOverview: AdminOverview = {

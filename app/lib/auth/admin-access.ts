@@ -1,8 +1,13 @@
 import { getServerRequestIdentity } from "./request-identity";
+import {
+  isAdminAccessRole,
+  type AdminAccessRole,
+} from "./admin-role";
 
 export type AdminPrincipal = {
   displayName: string;
   email: string;
+  role: AdminAccessRole;
 };
 
 export type AdminAccess =
@@ -15,17 +20,24 @@ export type AdminAccess =
  * Server-only authorization boundary for administrator pages. The browser never
  * supplies a role and production never falls back to a demo administrator.
  */
-export async function resolveAdminAccess(): Promise<AdminAccess> {
+export async function resolveAdminAccess(
+  options: { allowAssistant?: boolean } = {},
+): Promise<AdminAccess> {
   try {
     const identity = await getServerRequestIdentity();
     if (!identity) return { status: "signed-out", signInHref: "/auth?returnTo=%2Fadmin" };
 
-    return identity.role === "admin"
+    const role = identity.role;
+    const hasAccess = role === "admin"
+      || (options.allowAssistant === true && role === "assistant_admin");
+
+    return hasAccess && isAdminAccessRole(role)
       ? {
           status: "granted",
           principal: {
             displayName: identity.displayName,
             email: identity.email,
+            role,
           },
         }
       : { status: "forbidden" };

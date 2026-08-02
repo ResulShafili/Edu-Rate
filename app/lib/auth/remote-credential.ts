@@ -21,7 +21,7 @@ export type RemoteApiUser = {
   year?: string;
   city?: string;
   about?: string;
-  role: "student" | "mentor" | "teacher" | "admin";
+  role: "student" | "mentor" | "teacher" | "admin" | "assistant_admin";
   createdAt: string;
 };
 
@@ -117,6 +117,7 @@ export function mapRemoteUserToProfile(user: RemoteApiUser): UserProfile {
     id: user.id,
     name: user.name,
     initials: getInitials(user.name),
+    accessRole: user.role,
     university: user.university,
     faculty: user.faculty,
     program: user.program || "İxtisas məlumatı əlavə edilməyib",

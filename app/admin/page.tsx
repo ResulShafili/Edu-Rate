@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const access = await resolveAdminAccess();
+  const access = await resolveAdminAccess({ allowAssistant: true });
   if (access.status === "signed-out") redirect(access.signInHref);
 
   return (

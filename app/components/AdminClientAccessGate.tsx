@@ -8,6 +8,7 @@ import {
 } from "./AdminAccessState";
 import { AdminDashboard } from "./AdminDashboard";
 import { AdminSkeleton } from "./AdminSkeleton";
+import type { AdminAccessRole } from "../lib/auth/admin-role";
 
 type AdminClientAccessGateProps = {
   sessionUrl: string;
@@ -15,7 +16,7 @@ type AdminClientAccessGateProps = {
 
 type ClientAccessState =
   | { status: "checking" }
-  | { status: "granted"; principal: { displayName: string; email: string } }
+  | { status: "granted"; principal: { displayName: string; email: string; role: AdminAccessRole } }
   | AdminAccessDeniedState;
 
 const SESSION_CHECK_TIMEOUT_MS = 7_000;

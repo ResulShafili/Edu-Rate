@@ -2,6 +2,7 @@ import { ApiHttpError, apiError, apiNoContent, apiSuccess, readJsonBody } from "
 import { assertTrustedMutation } from "../../../lib/api/security";
 import { getRequestIdentity } from "../../../lib/auth/request-identity";
 import { readRemoteCredentialToken, requestRemoteApi } from "../../../lib/auth/remote-credential";
+import { isAdminAccessRole } from "../../../lib/auth/admin-role";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ async function handle(request: Request, context: Context) {
     assertTrustedMutation(request);
     const identity = await getRequestIdentity(request);
     if (!identity) throw new ApiHttpError(401, "UNAUTHENTICATED", "İdarəetmə API-si üçün daxil olmalısan.");
-    if (identity.role !== "admin") {
+    if (!isAdminAccessRole(identity.role)) {
       throw new ApiHttpError(403, "FORBIDDEN", "Bu əməliyyat üçün administrator icazəsi yoxdur.");
     }
     const token = readRemoteCredentialToken(request);

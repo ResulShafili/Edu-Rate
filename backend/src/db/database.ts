@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import { env } from "../config/env.js";
 
-export type UserRole = "student" | "mentor" | "teacher" | "admin";
+export type UserRole = "student" | "mentor" | "teacher" | "assistant_admin" | "admin";
 export type UserStatus = "Aktiv" | "Gözləmədə" | "Məhdudlaşdırılıb";
 
 export interface UserRecord {
@@ -103,7 +103,7 @@ export async function initializeDatabase() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS about VARCHAR(600) NOT NULL DEFAULT 'EduRate icmasına xoş gəlmisən.';
     ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'Aktiv';
     ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
-    ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('student', 'mentor', 'teacher', 'admin'));
+    ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('student', 'mentor', 'teacher', 'assistant_admin', 'admin'));
     ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check;
     ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('Aktiv', 'Gözləmədə', 'Məhdudlaşdırılıb'));
   `);

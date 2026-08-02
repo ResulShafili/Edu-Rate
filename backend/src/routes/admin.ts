@@ -27,13 +27,13 @@ import {
 } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
 import { hashPassword } from "../lib/auth.js";
-import { authenticate, requireAdmin } from "../middleware/authenticate.js";
+import { authenticate, requireAdmin, requirePrimaryAdmin } from "../middleware/authenticate.js";
 
 export const adminRouter = Router();
 adminRouter.use(authenticate, requireAdmin);
 
 const userStatus = z.enum(["Aktiv", "Gözləmədə", "Məhdudlaşdırılıb"]);
-const userRole = z.enum(["student", "mentor", "teacher", "admin"]);
+const userRole = z.enum(["student", "mentor", "teacher", "assistant_admin", "admin"]);
 const userSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.email().transform((value) => value.toLowerCase()),
@@ -89,20 +89,32 @@ adminRouter.get("/users", async (request, response) => {
   response.json({ data: paginate(filterRows(users, request.query), request.query) });
 });
 
-adminRouter.post("/users", async (request, response) => {
+adminRouter.post("/users", requirePrimaryAdmin, async (request, response) => {
   const input = userSchema.parse(request.body);
   const user = await createUser({ ...input, passwordHash: await hashPassword(randomBytes(24).toString("base64url")) });
   response.status(201).json({ data: toAdminUser(user) });
 });
 
-adminRouter.patch("/users/:id", async (request, response) => {
+adminRouter.patch("/users/:id", requirePrimaryAdmin, async (request, response) => {
   const id = z.string().parse(request.params.id);
-  const user = await adminUpdateUser(id, userSchema.partial().parse(request.body));
+  const patch = userSchema.partial().parse(request.body);
+  if (
+    id === request.auth!.userId &&
+    ((patch.role !== undefined && patch.role !== "admin") ||
+      (patch.status !== undefined && patch.status !== "Aktiv"))
+  ) {
+    throw new ApiError(
+      409,
+      "SELF_ADMIN_LOCKOUT_FORBIDDEN",
+      "Aktiv admin öz rolunu və ya statusunu məhdudlaşdıra bilməz.",
+    );
+  }
+  const user = await adminUpdateUser(id, patch);
   if (!user) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
   response.json({ data: toAdminUser(user) });
 });
 
-adminRouter.delete("/users/:id", async (request, response) => {
+adminRouter.delete("/users/:id", requirePrimaryAdmin, async (request, response) => {
   const id = z.string().parse(request.params.id);
   if (id === request.auth!.userId) throw new ApiError(409, "SELF_DELETE_FORBIDDEN", "Aktiv admin hesabını silmək olmaz.");
   if (!(await deleteUser(id))) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");

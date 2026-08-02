@@ -19,6 +19,7 @@ export type UserProfile = {
   initials: string;
   email: string;
   role: "Tələbə";
+  accessRole?: "student" | "mentor" | "teacher" | "admin" | "assistant_admin";
   university: string;
   faculty: string;
   program: string;
@@ -134,6 +135,7 @@ export function createIdentityProfile(nameValue: string, emailValue: string): Us
     initials: getInitials(name),
     email,
     role: "Tələbə",
+    accessRole: "student",
     university: "Universitet məlumatı əlavə edilməyib",
     faculty: "Fakültə məlumatı əlavə edilməyib",
     program: "İxtisas məlumatı əlavə edilməyib",

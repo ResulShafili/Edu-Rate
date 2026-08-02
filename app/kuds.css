@@ -1514,6 +1514,18 @@ body {
 .kuds-shell .admin-header p,
 .kuds-shell .admin-connection-state { color: var(--kuds-muted) !important; }
 .kuds-shell .admin-account-chip { color: var(--ku-dark-green) !important; border-color: var(--kuds-border) !important; background: var(--ku-soft-green) !important; }
+.kuds-shell .admin-account-chip em {
+  align-self: flex-start;
+  padding: 2px 6px;
+  color: var(--ku-dark-green) !important;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.4;
+  border: 1px solid rgb(68 118 108 / 24%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 68%);
+}
 .kuds-shell .admin-metrics-grid { gap: 16px !important; }
 .kuds-shell .admin-metric-card { padding: 20px !important; }
 .kuds-shell .admin-metric-card :is(strong, span, p) { color: var(--kuds-text) !important; }
@@ -1532,6 +1544,34 @@ body {
   background: rgb(211 232 191 / 42%) !important;
 }
 .kuds-shell .admin-data-section { margin-top: 24px !important; }
+.kuds-shell .admin-permission-badge {
+  display: inline-flex;
+  min-height: 40px;
+  padding: 0 13px;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  color: var(--ku-dark-green) !important;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgb(68 118 108 / 22%);
+  border-radius: 999px;
+  background: var(--ku-soft-green);
+}
+.kuds-shell .admin-permission-note {
+  display: flex;
+  margin: -2px 0 14px;
+  padding: 10px 12px;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--kuds-muted) !important;
+  font-size: 11px;
+  line-height: 1.55;
+  border: 1px solid var(--kuds-border);
+  border-radius: 10px;
+  background: rgb(211 232 191 / 24%);
+}
+.kuds-shell .admin-permission-note svg { flex: none; margin-top: 1px; color: var(--ku-dark-green); }
 .kuds-shell .admin-data-panel { overflow: hidden; }
 .kuds-shell .admin-data-tabs button {
   color: var(--kuds-muted) !important;
@@ -1633,6 +1673,18 @@ body {
 .kuds-shell .admin-row-inspector > button {
   color: var(--ku-dark-green) !important;
   background: var(--kuds-bg) !important;
+}
+.kuds-shell .admin-row-inspector__read-only {
+  display: inline-flex;
+  min-height: 40px;
+  padding: 0 12px;
+  align-items: center;
+  gap: 7px;
+  color: var(--kuds-muted) !important;
+  font-size: 10px;
+  border: 1px solid var(--kuds-border);
+  border-radius: 999px;
+  background: var(--kuds-bg);
 }
 
 .kuds-shell .admin-record-sheet__header,
