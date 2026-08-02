@@ -1,6 +1,7 @@
 import type { SignInInput } from "../../../data/user";
 import { checkRateLimit } from "../../../lib/api/rate-limit";
 import { apiError, apiSuccess, readJsonBody } from "../../../lib/api/http";
+import { assertTrustedMutation } from "../../../lib/api/security";
 import {
   getRemoteCredentialCookieOptions,
   mapRemoteUserToProfile,
@@ -13,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
+    assertTrustedMutation(request);
     const rateLimit = checkRateLimit(request, { key: "auth:login", limit: 10, windowMs: 15 * 60_000 });
     if (!rateLimit.allowed) {
       return Response.json(

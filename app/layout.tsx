@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
 import { AuthProvider } from "./components/AuthProvider";
 import { PlatformProvider } from "./components/PlatformProvider";
 import { PlatformShell } from "./components/PlatformShell";
 import { createIdentityProfile } from "./data/user";
-import { getServerRequestIdentity, isAdminEmail } from "./lib/auth/request-identity";
+import { getServerRequestIdentity } from "./lib/auth/request-identity";
+import { getCanonicalSiteOrigin } from "./lib/site-origin";
 import "./globals.css";
 import "./kuds.css";
 
@@ -18,16 +18,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export async function generateMetadata(): Promise<Metadata> {
-  const incomingHeaders = await headers();
-  const host =
-    incomingHeaders.get("x-forwarded-host") ??
-    incomingHeaders.get("host") ??
-    "localhost:3000";
-  const protocol =
-    incomingHeaders.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") ? "http" : "https");
-  const origin = `${protocol}://${host}`;
+export function generateMetadata(): Metadata {
+  const origin = getCanonicalSiteOrigin();
   const socialImage = `${origin}/og.png`;
 
   return {
@@ -78,10 +70,7 @@ export default async function RootLayout({
       <body className="antialiased">
         <AuthProvider
           initialUser={initialUser}
-          initialIsAdmin={Boolean(
-            requestIdentity &&
-              (requestIdentity.role === "admin" || isAdminEmail(requestIdentity.email)),
-          )}
+          initialIsAdmin={requestIdentity?.role === "admin"}
         >
           <PlatformProvider>
             <PlatformShell>{children}</PlatformShell>

@@ -1,5 +1,6 @@
 import { ApiHttpError, apiError, apiSuccess, readJsonBody } from "../../../lib/api/http";
 import { checkRateLimit } from "../../../lib/api/rate-limit";
+import { assertTrustedMutation } from "../../../lib/api/security";
 import { requestRemoteApi } from "../../../lib/auth/remote-credential";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +8,7 @@ type TicketInput = { name?: string; email?: string; topic?: string; message?: st
 
 export async function POST(request: Request) {
   try {
+    assertTrustedMutation(request);
     const limit = checkRateLimit(request, { key: "support-ticket", limit: 4, windowMs: 30 * 60_000 });
     if (!limit.allowed) throw new ApiHttpError(429, "RATE_LIMITED", `Çox sayda sorğu göndərilib. ${limit.retryAfterSeconds} saniyə sonra yenidən yoxla.`);
     const input = await readJsonBody<TicketInput>(request);

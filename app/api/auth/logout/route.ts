@@ -1,8 +1,5 @@
-import { apiNoContent } from "../../../lib/api/http";
-import {
-  credentialSessionCookie,
-  getCredentialSessionCookieOptions,
-} from "../../../lib/auth/credential-session";
+import { apiError, apiNoContent } from "../../../lib/api/http";
+import { assertTrustedMutation } from "../../../lib/api/security";
 import {
   getRemoteCredentialCookieOptions,
   remoteCredentialCookie,
@@ -11,14 +8,15 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
-  const response = apiNoContent();
-  response.cookies.set(credentialSessionCookie.name, "", {
-    ...getCredentialSessionCookieOptions(request),
-    maxAge: 0,
-  });
-  response.cookies.set(remoteCredentialCookie.name, "", {
-    ...getRemoteCredentialCookieOptions(request),
-    maxAge: 0,
-  });
-  return response;
+  try {
+    assertTrustedMutation(request);
+    const response = apiNoContent();
+    response.cookies.set(remoteCredentialCookie.name, "", {
+      ...getRemoteCredentialCookieOptions(request),
+      maxAge: 0,
+    });
+    return response;
+  } catch (error) {
+    return apiError(error);
+  }
 }

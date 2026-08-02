@@ -10,6 +10,8 @@ process.env.TRUST_PROXY = "true";
 process.env.ADMIN_EMAILS = "admin.test@example.az";
 
 let app: Express;
+let reusableStudentId = "";
+let reusableStudentToken = "";
 
 before(async () => {
   const module = await import("../src/app.js");
@@ -34,19 +36,41 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/support/tickets"]);
   });
 
-  it("Swagger-in cari API domenindən CORS sorğusuna icazə verir", async () => {
-    const response = await request(app)
+  it("CORS-u yalnız frontend allowlist-i ilə məhdudlaşdırır", async () => {
+    const allowed = await request(app)
       .options("/api/auth/signup")
-      .set("Host", "edurate-api.onrender.com")
-      .set("X-Forwarded-Proto", "https")
-      .set("Origin", "https://edurate-api.onrender.com")
+      .set("Origin", "http://localhost:3000")
       .set("Access-Control-Request-Method", "POST")
       .expect(204);
+    assert.equal(allowed.headers["access-control-allow-origin"], "http://localhost:3000");
+    assert.equal(allowed.headers["access-control-allow-credentials"], undefined);
 
-    assert.equal(
-      response.headers["access-control-allow-origin"],
-      "https://edurate-api.onrender.com",
-    );
+    const denied = await request(app)
+      .options("/api/auth/signup")
+      .set("Origin", "https://attacker.example")
+      .set("Access-Control-Request-Method", "POST")
+      .expect(200);
+    assert.equal(denied.headers["access-control-allow-origin"], undefined);
+  });
+
+  it("yanlış və həddindən böyük JSON sorğularını təhlükəsiz rədd edir", async () => {
+    const malformed = await request(app)
+      .post("/api/auth/login")
+      .set("Content-Type", "application/json")
+      .send('{"email":')
+      .expect(400);
+    assert.equal(malformed.body.error.code, "INVALID_JSON");
+
+    const oversized = await request(app)
+      .post("/api/support/tickets")
+      .send({
+        name: "Test İstifadəçisi",
+        email: "payload@example.az",
+        topic: "Təhlükəsizlik testi",
+        message: "x".repeat(70_000),
+      })
+      .expect(413);
+    assert.equal(oversized.body.error.code, "PAYLOAD_TOO_LARGE");
   });
 
   it("qeydiyyat, giriş və sessiya axınını tamamlayır", async () => {
@@ -65,6 +89,8 @@ describe("EduRate API", () => {
     assert.equal(signup.body.data.user.email, email);
     assert.ok(signup.body.data.token);
     assert.equal(signup.body.data.user.passwordHash, undefined);
+    reusableStudentId = signup.body.data.user.id;
+    reusableStudentToken = signup.body.data.token;
 
     await request(app)
       .post("/api/auth/signup")
@@ -273,5 +299,25 @@ describe("EduRate API", () => {
     assert.ok(users.body.data.total >= 1);
     const clubs = await request(app).get("/api/admin/clubs?page=1&pageSize=5").set("Authorization", authorization).expect(200);
     assert.ok(clubs.body.data.total >= 1);
+
+    await request(app)
+      .patch(`/api/admin/users/${reusableStudentId}`)
+      .set("Authorization", authorization)
+      .send({ status: "Məhdudlaşdırılıb" })
+      .expect(200);
+    await request(app)
+      .get("/api/auth/session")
+      .set("Authorization", `Bearer ${reusableStudentToken}`)
+      .expect(403);
+
+    await request(app)
+      .patch(`/api/admin/users/${signup.body.data.user.id}`)
+      .set("Authorization", authorization)
+      .send({ role: "student" })
+      .expect(200);
+    await request(app)
+      .get("/api/admin/overview")
+      .set("Authorization", authorization)
+      .expect(403);
   });
 });

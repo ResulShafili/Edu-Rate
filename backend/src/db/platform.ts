@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { ApiError } from "../lib/api-error.js";
 import { databasePool } from "./database.js";
 
@@ -330,7 +330,7 @@ export async function createSupportTicket(
   userId: string | null,
 ): Promise<SupportTicketRecord> {
   const ticket: SupportTicketRecord = {
-    id: randomUUID(), reference: `EDU-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+    id: randomUUID(), reference: `EDU-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString("hex").toUpperCase()}`,
     userId, ...input, status: "open", createdAt: now(),
   };
   if (!databasePool) {

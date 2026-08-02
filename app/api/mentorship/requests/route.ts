@@ -1,5 +1,6 @@
 import { ApiHttpError, apiError, apiSuccess, readJsonBody } from "../../../lib/api/http";
 import { checkRateLimit } from "../../../lib/api/rate-limit";
+import { assertTrustedMutation } from "../../../lib/api/security";
 import { readRemoteCredentialToken, requestRemoteApi } from "../../../lib/auth/remote-credential";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ function requireToken(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    assertTrustedMutation(request);
     const data = await requestRemoteApi<MentorshipRequest[]>("/api/mentorship/requests", {
       token: requireToken(request),
     });

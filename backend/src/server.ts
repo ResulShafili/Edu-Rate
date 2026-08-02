@@ -10,6 +10,13 @@ await initializeBusinessDatabase();
 await initializePlatformDatabase();
 
 const server = createServer(createApp());
+server.requestTimeout = 30_000;
+server.headersTimeout = 15_000;
+server.keepAliveTimeout = 5_000;
+server.maxRequestsPerSocket = 1_000;
+server.on("clientError", (_error, socket) => {
+  if (socket.writable) socket.end("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
+});
 
 server.listen(env.PORT, "0.0.0.0", () => {
   console.log(`EduRate API http://0.0.0.0:${env.PORT} ünvanında işləyir.`);

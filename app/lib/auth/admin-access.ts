@@ -1,4 +1,4 @@
-import { getServerRequestIdentity, isAdminEmail } from "./request-identity";
+import { getServerRequestIdentity } from "./request-identity";
 
 export type AdminPrincipal = {
   displayName: string;
@@ -20,7 +20,7 @@ export async function resolveAdminAccess(): Promise<AdminAccess> {
     const identity = await getServerRequestIdentity();
     if (!identity) return { status: "signed-out", signInHref: "/auth?returnTo=%2Fadmin" };
 
-    return identity.role === "admin" || isAdminEmail(identity.email)
+    return identity.role === "admin"
       ? {
           status: "granted",
           principal: {

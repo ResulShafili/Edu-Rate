@@ -26,7 +26,7 @@ EduRate Qarabağ Universitetinin tələbə həyatı üçün hazırlanmış Azər
 | `/mentors` | Mentorlar | Mentor profilləri və müraciət axını |
 | `/clubs` | Klublar | Klub kataloqu və klub səhifələri |
 | `/support` | Dəstək | FAQ və dəstək sorğusu forması |
-| `/auth` | Giriş və qeydiyyat | Lokal cookie-sessiyalı autentifikasiya |
+| `/auth` | Giriş və qeydiyyat | HttpOnly cookie ilə qorunan API sessiyası |
 | `/profile` | Profil | Tələbə profilinin xülasəsi |
 | `/admin` | İdarəetmə | Canlı analitika və verilənlər bazasına bağlı CRUD cədvəlləri |
 | `/api-docs` | API sənədləri | OpenAPI 3.1 endpoint kataloqu və canlı health testi |
@@ -64,10 +64,12 @@ npm run dev
 
 Server `http://localhost:3001`, Swagger UI isə `http://localhost:3001/api-docs` ünvanında açılır. Render deployment addımları `backend/README.md` faylında verilib.
 
-`.env.example` faylını `.env.local` adı ilə kopyalayın və production-da güclü sessiya sirri verin:
+`.env.example` faylını `.env.local` adı ilə kopyalayın və tətbiq ünvanlarını təyin edin:
 
 ```bash
-EDURATE_AUTH_SECRET=minimum-32-simvolluq-unikal-production-sirriniz
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+EDURATE_APP_ORIGIN=http://localhost:3000
+EDURATE_API_BASE_URL=http://localhost:3001
 ```
 
 ## İşlək API-lər
@@ -109,6 +111,10 @@ npm run build
 - Qeydiyyat, profil, tədbirlər, klub üzvlükləri, mentorluq müraciətləri, müəllim rəyləri və dəstək sorğuları PostgreSQL-də qalıcı saxlanılır.
 - Admin istifadəçi, klub və tədbir CRUD-u JWT rol yoxlaması ilə qorunur.
 - Mentor, müəllim və elan məzmunlarının bir hissəsi idarə olunan kataloq məlumatıdır; istifadəçi əməliyyatları isə real API-yə bağlıdır.
-- Vercel-də `EDURATE_ADMIN_EMAILS`, Render-də isə eyni siyahı `ADMIN_EMAILS` kimi yazılmalıdır.
+- Admin e-poçtları yalnız Render-də `ADMIN_EMAILS` dəyişənində saxlanılır; frontend rol məlumatını qorunan backend sessiyasından alır.
+- Vercel-də `NEXT_PUBLIC_SITE_URL` və `EDURATE_APP_ORIGIN` real frontend domeninə bərabər olmalıdır.
+
+Ətraflı tətbiq təhlükəsizliyi nəticələri və production nəzarət siyahısı üçün
+[`docs/security_best_practices_report.md`](docs/security_best_practices_report.md) sənədinə baxın.
 
 Sonrakı təhlükəsizlik mərhələsinə e-poçt təsdiqi, şifrə bərpası, refresh-token rotasiyası və moderasiya audit tarixçəsi daxildir. Xarici backend ünvanı `EDURATE_API_BASE_URL` ilə dəyişdirilə bilər.

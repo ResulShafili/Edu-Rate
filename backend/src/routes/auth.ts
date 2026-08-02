@@ -81,6 +81,9 @@ authRouter.post("/login", loginLimiter, async (request, response) => {
   if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
     throw new ApiError(401, "INVALID_CREDENTIALS", "E-poçt və ya şifrə düzgün deyil.");
   }
+  if (user.status !== "Aktiv") {
+    throw new ApiError(403, "ACCOUNT_RESTRICTED", "Hesab aktiv deyil.");
+  }
 
   response.json({ data: { token: createAccessToken(user), user: toPublicUser(user) } });
 });

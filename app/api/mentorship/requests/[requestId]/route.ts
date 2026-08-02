@@ -1,4 +1,5 @@
 import { ApiHttpError, apiError, apiNoContent, apiSuccess, readJsonBody } from "../../../../lib/api/http";
+import { assertTrustedMutation } from "../../../../lib/api/security";
 import { readRemoteCredentialToken, requestRemoteApi } from "../../../../lib/auth/remote-credential";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +13,7 @@ function requireToken(request: Request) {
 
 export async function PATCH(request: Request, context: Context) {
   try {
+    assertTrustedMutation(request);
     const { requestId } = await context.params;
     const body = await readJsonBody<{ note?: string }>(request);
     const data = await requestRemoteApi<unknown>(`/api/mentorship/requests/${encodeURIComponent(requestId)}`, {
@@ -27,6 +29,7 @@ export async function PATCH(request: Request, context: Context) {
 
 export async function DELETE(request: Request, context: Context) {
   try {
+    assertTrustedMutation(request);
     const { requestId } = await context.params;
     await requestRemoteApi<void>(`/api/mentorship/requests/${encodeURIComponent(requestId)}`, {
       method: "DELETE",

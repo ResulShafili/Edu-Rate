@@ -32,6 +32,7 @@ export function verifyPassword(password: string, passwordHash: string) {
 
 export function createAccessToken(user: UserRecord) {
   return jwt.sign({ role: user.role }, env.JWT_SECRET, {
+    algorithm: "HS256",
     subject: user.id,
     issuer,
     audience,
@@ -41,7 +42,11 @@ export function createAccessToken(user: UserRecord) {
 
 export function verifyAccessToken(token: string) {
   try {
-    const payload = jwt.verify(token, env.JWT_SECRET, { issuer, audience });
+    const payload = jwt.verify(token, env.JWT_SECRET, {
+      algorithms: ["HS256"],
+      issuer,
+      audience,
+    });
 
     if (typeof payload === "string" || !payload.sub) {
       throw new Error("Token payload yanlışdır.");

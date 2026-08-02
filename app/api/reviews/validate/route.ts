@@ -3,6 +3,7 @@ import {
   REVIEW_MAX_LENGTH,
 } from "../../../lib/review-moderation";
 import { checkRateLimit } from "../../../lib/api/rate-limit";
+import { assertTrustedMutation } from "../../../lib/api/security";
 import { getRequestIdentity } from "../../../lib/auth/request-identity";
 import { readRemoteCredentialToken, requestRemoteApi } from "../../../lib/auth/remote-credential";
 
@@ -41,6 +42,11 @@ function hasValidCriteria(value: unknown) {
 }
 
 export async function POST(request: Request) {
+  try {
+    assertTrustedMutation(request);
+  } catch {
+    return json({ accepted: false, reason: "Sorğunun mənbəyi təsdiqlənmədi." }, 403);
+  }
   const identity = await getRequestIdentity(request);
   if (!identity) return json({ accepted: false, reason: "Rəy göndərmək üçün hesaba daxil ol." }, 401);
 

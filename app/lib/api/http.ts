@@ -66,7 +66,7 @@ export function apiError(error: unknown): NextResponse {
   );
 }
 
-export async function readJsonBody<T>(request: Request): Promise<T> {
+export async function readJsonBody<T>(request: Request, maxBytes = 64 * 1024): Promise<T> {
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.toLocaleLowerCase("en-US").includes("application/json")) {
     throw new ApiHttpError(
@@ -76,8 +76,17 @@ export async function readJsonBody<T>(request: Request): Promise<T> {
     );
   }
 
+  const declaredLength = Number(request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+    throw new ApiHttpError(413, "PAYLOAD_TOO_LARGE", "Sorğunun həcmi icazə verilən limiti aşır.");
+  }
+
   try {
-    const value = await request.json();
+    const raw = await request.text();
+    if (new TextEncoder().encode(raw).byteLength > maxBytes) {
+      throw new ApiHttpError(413, "PAYLOAD_TOO_LARGE", "Sorğunun həcmi icazə verilən limiti aşır.");
+    }
+    const value = JSON.parse(raw) as unknown;
     if (!value || typeof value !== "object" || Array.isArray(value)) {
       throw new ApiHttpError(
         400,

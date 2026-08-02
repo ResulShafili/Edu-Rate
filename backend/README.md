@@ -55,7 +55,7 @@ Vercel project **Settings → Environment Variables** bölməsində bunları Ren
 ```env
 NEXT_PUBLIC_API_BASE_URL=https://edurate-api.onrender.com
 EDURATE_API_BASE_URL=https://edurate-api.onrender.com
-EDURATE_ADMIN_EMAILS=admin@example.az
+ADMIN_EMAILS=admin@example.az
 ```
 
 Render servisində eyni ünvanı `ADMIN_EMAILS=admin@example.az` kimi təyin edin. Bu hesab yenidən daxil olduqda admin JWT-si alacaq.

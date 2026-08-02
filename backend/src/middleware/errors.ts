@@ -7,6 +7,22 @@ export const notFound: RequestHandler = (request, _response, next) => {
 };
 
 export const errorHandler: ErrorRequestHandler = (error, request, response, _next) => {
+  if (typeof error === "object" && error && "type" in error && error.type === "entity.parse.failed") {
+    response.status(400).json({
+      error: { code: "INVALID_JSON", message: "Sorğunun JSON məzmunu düzgün deyil." },
+      requestId: response.locals.requestId,
+    });
+    return;
+  }
+
+  if (typeof error === "object" && error && "status" in error && error.status === 413) {
+    response.status(413).json({
+      error: { code: "PAYLOAD_TOO_LARGE", message: "Sorğunun həcmi icazə verilən limiti aşır." },
+      requestId: response.locals.requestId,
+    });
+    return;
+  }
+
   if (error instanceof ZodError) {
     const details = Object.fromEntries(
       error.issues.map((issue) => [issue.path.join(".") || "body", issue.message]),
@@ -38,7 +54,12 @@ export const errorHandler: ErrorRequestHandler = (error, request, response, _nex
     return;
   }
 
-  console.error(`[${response.locals.requestId}]`, error);
+  if (process.env.NODE_ENV === "production") {
+    const name = error instanceof Error ? error.name : "UnknownError";
+    console.error(`[${response.locals.requestId}] ${name}`);
+  } else {
+    console.error(`[${response.locals.requestId}]`, error);
+  }
   response.status(500).json({
     error: { code: "INTERNAL_ERROR", message: "Gözlənilməz server xətası baş verdi." },
     requestId: response.locals.requestId,

@@ -10,7 +10,7 @@
     "build": "next build",
     "build:vercel": "next build",
     "start": "next start",
-    "test": "node --test --experimental-strip-types tests/date.test.mjs",
+    "test": "node --test --experimental-strip-types tests/date.test.mjs tests/security.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern backend"
   },
   "dependencies": {
@@ -28,7 +28,7 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.12",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3"
   },
