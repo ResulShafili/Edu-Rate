@@ -33,17 +33,17 @@ type AdminChartsProps = {
 };
 
 const tooltipStyle: CSSProperties = {
-  background: "rgba(14, 15, 16, 0.92)",
-  border: "1px solid rgba(255, 255, 255, 0.12)",
+  background: "rgba(255, 255, 255, 0.98)",
+  border: "1px solid #e2e8f0",
   borderRadius: 14,
-  boxShadow: "0 18px 50px rgba(0, 0, 0, 0.28)",
-  color: "#f7f8f3",
+  boxShadow: "0 18px 50px rgba(15, 23, 42, 0.14)",
+  color: "#1e293b",
   fontSize: 12,
 };
 
-const cursorStyle = { stroke: "rgba(200, 255, 77, 0.34)", strokeWidth: 1 };
-const barCursorStyle = { fill: "rgba(255, 255, 255, 0.025)" };
-const distributionColors = ["#c8ff4d", "#77b8ff", "#b9a7ff", "#ff9e7a"];
+const cursorStyle = { stroke: "rgba(68, 118, 108, 0.34)", strokeWidth: 1 };
+const barCursorStyle = { fill: "rgba(68, 118, 108, 0.06)" };
+const distributionColors = ["#44766c", "#4f8fa3", "#7c68c5", "#c96d4e"];
 
 export function AdminCharts({ activity, distribution }: AdminChartsProps) {
   const reducedMotion = useReducedMotion();
@@ -79,22 +79,22 @@ export function AdminCharts({ activity, distribution }: AdminChartsProps) {
             <AreaChart data={[...activity]} margin={{ top: 12, right: 8, left: -22, bottom: 0 }}>
               <defs>
                 <linearGradient id="admin-users-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#c8ff4d" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#c8ff4d" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#44766c" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#44766c" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="rgba(255,255,255,0.07)" strokeDasharray="4 7" vertical={false} />
+              <CartesianGrid stroke="rgba(30,41,59,0.1)" strokeDasharray="4 7" vertical={false} />
               <XAxis
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "rgba(245,247,240,0.48)", fontSize: 11 }}
+                tick={{ fill: "#64748b", fontSize: 11 }}
                 dy={10}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "rgba(245,247,240,0.4)", fontSize: 10 }}
+                tick={{ fill: "#64748b", fontSize: 10 }}
                 width={44}
               />
               <Tooltip contentStyle={tooltipStyle} cursor={cursorStyle} />
@@ -102,7 +102,7 @@ export function AdminCharts({ activity, distribution }: AdminChartsProps) {
                 type="monotone"
                 dataKey="users"
                 name="İstifadəçilər"
-                stroke="#c8ff4d"
+                stroke="#44766c"
                 strokeWidth={2.4}
                 fill="url(#admin-users-fill)"
                 isAnimationActive={!reducedMotion}
@@ -113,7 +113,7 @@ export function AdminCharts({ activity, distribution }: AdminChartsProps) {
                 type="monotone"
                 dataKey="clubs"
                 name="Klublar"
-                stroke="#77b8ff"
+                stroke="#4f8fa3"
                 strokeWidth={1.8}
                 fill="transparent"
                 isAnimationActive={!reducedMotion}
@@ -125,7 +125,7 @@ export function AdminCharts({ activity, distribution }: AdminChartsProps) {
                 type="monotone"
                 dataKey="events"
                 name="Tədbirlər"
-                stroke="#b9a7ff"
+                stroke="#7c68c5"
                 strokeWidth={1.8}
                 fill="transparent"
                 isAnimationActive={!reducedMotion}
@@ -167,18 +167,18 @@ export function AdminCharts({ activity, distribution }: AdminChartsProps) {
         >
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={[...distribution]} margin={{ top: 14, right: 2, left: -30, bottom: 0 }}>
-              <CartesianGrid stroke="rgba(255,255,255,0.07)" strokeDasharray="4 7" vertical={false} />
+              <CartesianGrid stroke="rgba(30,41,59,0.1)" strokeDasharray="4 7" vertical={false} />
               <XAxis
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "rgba(245,247,240,0.48)", fontSize: 10 }}
+                tick={{ fill: "#64748b", fontSize: 10 }}
                 dy={10}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: "rgba(245,247,240,0.4)", fontSize: 10 }}
+                tick={{ fill: "#64748b", fontSize: 10 }}
               />
               <Tooltip contentStyle={tooltipStyle} cursor={barCursorStyle} />
               <Bar
