@@ -6,6 +6,7 @@ import {
   type SignInInput,
   type UserProfile,
 } from "../../data/user";
+import { canonicalUniversity, isValidFacultyProgram } from "../../data/academic-programs";
 import { ApiHttpError } from "./http";
 
 type StoredCredential = {
@@ -78,7 +79,7 @@ function createProfile(input: RegisterInput): UserProfile {
     initials: getInitials(input.name),
     university: input.university.trim(),
     faculty: input.faculty.trim(),
-    program: "İxtisasını profil bölməsindən əlavə et",
+    program: input.program.trim(),
     year: "Kursunu profil bölməsindən əlavə et",
     city: "Xankəndi",
     about: "EduRate icmasında universitet həyatını daha planlı və əlaqəli yaşamaq üçün buradayam.",
@@ -94,17 +95,20 @@ function validateRegistration(input: RegisterInput): RegisterInput {
   const password = input.password ?? "";
   const university = input.university?.trim() ?? "";
   const faculty = input.faculty?.trim() ?? "";
+  const program = input.program?.trim() ?? "";
 
   if (name.length < 2 || name.length > 100) errors.name = "Ad və soyad 2–100 simvol olmalıdır.";
   if (!email) errors.email = "Etibarlı e-poçt ünvanı yaz.";
   if (!isPassword(password)) errors.password = `Şifrə ${minimumPasswordLength}–${maximumPasswordLength} simvol olmalıdır.`;
-  if (!university || university.length > 140) errors.university = "Universitet məlumatını seç.";
-  if (!faculty || faculty.length > 140) errors.faculty = "Fakültə məlumatını seç.";
+  if (university !== canonicalUniversity) errors.university = "Qarabağ Universitetini seç.";
+  if (!isValidFacultyProgram(faculty, program)) {
+    errors.program = "Fakültə və ixtisası uyğun siyahıdan seç.";
+  }
   if (Object.keys(errors).length > 0) {
     throw new ApiHttpError(422, "VALIDATION_ERROR", "Məlumatları yenidən yoxla.", errors);
   }
 
-  return { name, email: email ?? "", password, university, faculty };
+  return { name, email: email ?? "", password, university, faculty, program };
 }
 
 function validateProfileUpdate(input: ProfileUpdateInput): ProfileUpdateInput {
@@ -117,9 +121,10 @@ function validateProfileUpdate(input: ProfileUpdateInput): ProfileUpdateInput {
   const about = input.about?.trim() ?? "";
 
   if (name.length < 2 || name.length > 100) errors.name = "Ad və soyad 2–100 simvol olmalıdır.";
-  if (!university || university.length > 140) errors.university = "Universitet məlumatını yaz.";
-  if (!faculty || faculty.length > 140) errors.faculty = "Fakültə məlumatını yaz.";
-  if (!program || program.length > 140) errors.program = "İxtisas məlumatını yaz.";
+  if (university !== canonicalUniversity) errors.university = "Qarabağ Universitetini seç.";
+  if (!isValidFacultyProgram(faculty, program)) {
+    errors.program = "Fakültə və ixtisası uyğun siyahıdan seç.";
+  }
   if (!year || year.length > 80) errors.year = "Kurs məlumatını yaz.";
   if (about.length > 600) errors.about = "Haqqında mətni 600 simvoldan uzun ola bilməz.";
   if (Object.keys(errors).length > 0) {

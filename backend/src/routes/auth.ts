@@ -7,6 +7,11 @@ import {
   findUserById,
   updateUserProfile,
 } from "../db/database.js";
+import {
+  ACADEMIC_UNIVERSITY,
+  isAcademicFaculty,
+  isValidAcademicSelection,
+} from "../data/academic-catalog.js";
 import { ApiError } from "../lib/api-error.js";
 import {
   createAccessToken,
@@ -43,8 +48,9 @@ const signupSchema = z.object({
     .max(72)
     .regex(/[a-zA-ZƏəÖöÜüĞğŞşÇçİı]/, "Şifrədə hərf olmalıdır.")
     .regex(/\d/, "Şifrədə rəqəm olmalıdır."),
-  university: z.string().trim().min(2).max(180).default("Qarabağ Universiteti"),
+  university: z.string().trim().min(2).max(180).default(ACADEMIC_UNIVERSITY),
   faculty: z.string().trim().min(2).max(180),
+  program: z.string().trim().min(2).max(180),
 });
 
 const loginSchema = z.object({
@@ -61,8 +67,36 @@ const profileSchema = z.object({
   about: z.string().trim().max(600),
 });
 
+function academicSelectionErrorDetails(
+  university: string,
+  faculty: string,
+): Record<string, string> {
+  if (university !== ACADEMIC_UNIVERSITY) {
+    return { university: `Universitet yalnız “${ACADEMIC_UNIVERSITY}” ola bilər.` };
+  }
+
+  if (!isAcademicFaculty(faculty)) {
+    return { faculty: "Fakültəni təqdim olunan rəsmi siyahıdan seçin." };
+  }
+
+  return { program: "İxtisası seçilmiş fakültənin siyahısından seçin." };
+}
+
 authRouter.post("/signup", signupLimiter, async (request, response) => {
   const input = signupSchema.parse(request.body);
+
+  if (
+    input.university !== ACADEMIC_UNIVERSITY ||
+    !isValidAcademicSelection(input.faculty, input.program)
+  ) {
+    throw new ApiError(
+      422,
+      "INVALID_ACADEMIC_SELECTION",
+      "Universitet, fakültə və ixtisas seçimi rəsmi kataloqa uyğun deyil.",
+      academicSelectionErrorDetails(input.university, input.faculty),
+    );
+  }
+
   const existingUser = await findUserByEmail(input.email);
 
   if (existingUser) {
@@ -100,6 +134,30 @@ authRouter.get("/session", authenticate, async (request, response) => {
 
 authRouter.patch("/profile", authenticate, async (request, response) => {
   const input = profileSchema.parse(request.body);
+  const currentUser = await findUserById(request.auth!.userId);
+
+  if (!currentUser) {
+    throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
+  }
+
+  const keepsLegacyAcademicSelection =
+    currentUser.university === input.university &&
+    currentUser.faculty === input.faculty &&
+    currentUser.program === input.program;
+
+  if (
+    !keepsLegacyAcademicSelection &&
+    (input.university !== ACADEMIC_UNIVERSITY ||
+      !isValidAcademicSelection(input.faculty, input.program))
+  ) {
+    throw new ApiError(
+      422,
+      "INVALID_ACADEMIC_SELECTION",
+      "Universitet, fakültə və ixtisas seçimi rəsmi kataloqa uyğun deyil.",
+      academicSelectionErrorDetails(input.university, input.faculty),
+    );
+  }
+
   const user = await updateUserProfile(request.auth!.userId, input);
 
   if (!user) {

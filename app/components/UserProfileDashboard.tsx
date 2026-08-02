@@ -18,6 +18,14 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import {
+  canonicalUniversity,
+  faculties,
+  getProgramsForFaculty,
+  isFacultyName,
+  isValidFacultyProgram,
+  type FacultyName,
+} from "../data/academic-programs";
 import type { ProfileStat, ProfileUpdateInput } from "../data/user";
 import {
   isAuthProviderUnavailable,
@@ -37,6 +45,8 @@ const statIcons: Record<ProfileStat["id"], LucideIcon> = {
 export function UserProfileDashboard() {
   const [editing, setEditing] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
+  const [editFaculty, setEditFaculty] = useState<FacultyName | "">("");
+  const [editProgram, setEditProgram] = useState("");
   const reduceMotion = Boolean(useReducedMotion());
   const router = useRouter();
   const {
@@ -80,8 +90,13 @@ export function UserProfileDashboard() {
       about: readValue(formData, "about"),
     };
 
-    if (!input.name || !input.university || !input.faculty) {
-      setProfileMessage("Ad, universitet və fakültə sahələrini doldur.");
+    if (!input.name || input.university !== canonicalUniversity) {
+      setProfileMessage("Adını daxil et və universitet olaraq Qarabağ Universitetini seç.");
+      return;
+    }
+
+    if (!isValidFacultyProgram(input.faculty, input.program)) {
+      setProfileMessage("Fakültə və ixtisası uyğun siyahıdan seç.");
       return;
     }
 
@@ -155,6 +170,13 @@ export function UserProfileDashboard() {
               aria-expanded={editing}
               aria-controls="profile-edit-panel"
               onClick={() => {
+                if (!editing) {
+                  const nextFaculty = isFacultyName(user.faculty) ? user.faculty : "";
+                  setEditFaculty(nextFaculty);
+                  setEditProgram(
+                    isValidFacultyProgram(nextFaculty, user.program) ? user.program : "",
+                  );
+                }
                 setEditing((open) => !open);
                 setProfileMessage("");
               }}
@@ -195,9 +217,44 @@ export function UserProfileDashboard() {
 
             <form className="profile-edit-form" onSubmit={handleProfileUpdate}>
               <ProfileEditField label="Ad və soyad" name="name" defaultValue={user.name} autoComplete="name" required />
-              <ProfileEditField label="Universitet" name="university" defaultValue={user.university} autoComplete="organization" required />
-              <ProfileEditField label="Fakültə" name="faculty" defaultValue={user.faculty} autoComplete="organization-title" required />
-              <ProfileEditField label="İxtisas" name="program" defaultValue={user.program} />
+              <label className="profile-edit-field">
+                <span>Universitet</span>
+                <select name="university" defaultValue={canonicalUniversity} autoComplete="organization" required>
+                  <option value={canonicalUniversity}>{canonicalUniversity}</option>
+                </select>
+              </label>
+              <label className="profile-edit-field">
+                <span>Fakültə</span>
+                <select
+                  name="faculty"
+                  value={editFaculty}
+                  autoComplete="organization-title"
+                  onChange={(event) => {
+                    const faculty = event.target.value;
+                    setEditFaculty(isFacultyName(faculty) ? faculty : "");
+                    setEditProgram("");
+                  }}
+                  required
+                >
+                  <option value="" disabled>Fakültəni seç</option>
+                  {faculties.map((faculty) => <option key={faculty} value={faculty}>{faculty}</option>)}
+                </select>
+              </label>
+              <label className="profile-edit-field">
+                <span>İxtisas</span>
+                <select
+                  name="program"
+                  value={editProgram}
+                  onChange={(event) => setEditProgram(event.target.value)}
+                  disabled={!editFaculty}
+                  required
+                >
+                  <option value="" disabled>{editFaculty ? "İxtisası seç" : "Əvvəl fakültəni seç"}</option>
+                  {getProgramsForFaculty(editFaculty).map((program) => (
+                    <option key={program} value={program}>{program}</option>
+                  ))}
+                </select>
+              </label>
               <ProfileEditField label="Kurs" name="year" defaultValue={user.year} />
               <label className="profile-edit-field profile-edit-about">
                 <span>Mənim haqqımda</span>
@@ -222,7 +279,7 @@ export function UserProfileDashboard() {
 
       <p
         className={`profile-status-message${profileMessage ? " is-visible" : ""}`}
-        role={profileMessage.includes("mümkün olmadı") || profileMessage.includes("doldur") || profileMessage.includes("qoşulmayıb") ? "alert" : "status"}
+        role={profileMessage.includes("mümkün olmadı") || profileMessage.includes("daxil et") || profileMessage.includes("seç") || profileMessage.includes("qoşulmayıb") ? "alert" : "status"}
         aria-live="polite"
       >
         {profileMessage}

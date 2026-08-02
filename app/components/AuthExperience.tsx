@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
+  BookOpen,
   Building2,
   Check,
   Eye,
@@ -22,7 +23,14 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
-import { faculties, universities } from "../data/user";
+import {
+  canonicalUniversity,
+  faculties,
+  getProgramsForFaculty,
+  isFacultyName,
+  isValidFacultyProgram,
+  type FacultyName,
+} from "../data/academic-programs";
 import { ApiError } from "../lib/api/client";
 import {
   isAuthProviderUnavailable,
@@ -30,7 +38,7 @@ import {
 } from "./AuthProvider";
 
 type AuthMode = "login" | "register";
-type AuthField = "name" | "email" | "password" | "university" | "faculty";
+type AuthField = "name" | "email" | "password" | "university" | "faculty" | "program";
 type FieldErrors = Partial<Record<AuthField, string>>;
 
 type AuthFormValues = Record<AuthField, string>;
@@ -63,6 +71,8 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formMessage, setFormMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedFaculty, setSelectedFaculty] = useState<FacultyName | "">("");
+  const [selectedProgram, setSelectedProgram] = useState("");
   const reduceMotion = Boolean(useReducedMotion());
   const formId = useId();
   const router = useRouter();
@@ -84,6 +94,8 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
     setErrors({});
     setFormMessage("");
     setShowPassword(false);
+    setSelectedFaculty("");
+    setSelectedProgram("");
   }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -139,11 +151,14 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
           password: values.password,
           university: values.university,
           faculty: values.faculty,
+          program: values.program,
         });
         setFormMessage("Hazırsan — hesabın yaradıldı. Profilin açılır.");
       }
 
       form.reset();
+      setSelectedFaculty("");
+      setSelectedProgram("");
       router.push(returnTo);
     } catch (error) {
       if (isAuthProviderUnavailable(error)) {
@@ -353,21 +368,18 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                       error={errors.university}
                       icon={<Building2 size={16} aria-hidden="true" />}
                     >
-                      <input
+                      <select
                         id={`${formId}-university`}
                         name="university"
-                        type="text"
-                        list={`${formId}-universities`}
                         autoComplete="organization"
-                        placeholder="Universitetini seç və ya yaz"
+                        defaultValue={canonicalUniversity}
                         aria-invalid={Boolean(errors.university)}
                         aria-describedby={errors.university ? `${formId}-university-error` : undefined}
                         disabled={!credentialAuthAvailable || submitting}
                         required
-                      />
-                      <datalist id={`${formId}-universities`}>
-                        {universities.map((university) => <option key={university} value={university}>{university}</option>)}
-                      </datalist>
+                      >
+                        <option value={canonicalUniversity}>{canonicalUniversity}</option>
+                      </select>
                     </AuthFieldShell>
 
                     <AuthFieldShell
@@ -376,21 +388,49 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                       error={errors.faculty}
                       icon={<GraduationCap size={16} aria-hidden="true" />}
                     >
-                      <input
+                      <select
                         id={`${formId}-faculty`}
                         name="faculty"
-                        type="text"
-                        list={`${formId}-faculties`}
                         autoComplete="organization-title"
-                        placeholder="Fakültəni seç və ya yaz"
+                        value={selectedFaculty}
+                        onChange={(event) => {
+                          const faculty = event.target.value;
+                          setSelectedFaculty(isFacultyName(faculty) ? faculty : "");
+                          setSelectedProgram("");
+                        }}
                         aria-invalid={Boolean(errors.faculty)}
                         aria-describedby={errors.faculty ? `${formId}-faculty-error` : undefined}
                         disabled={!credentialAuthAvailable || submitting}
                         required
-                      />
-                      <datalist id={`${formId}-faculties`}>
+                      >
+                        <option value="" disabled>Fakültəni seç</option>
                         {faculties.map((faculty) => <option key={faculty} value={faculty}>{faculty}</option>)}
-                      </datalist>
+                      </select>
+                    </AuthFieldShell>
+
+                    <AuthFieldShell
+                      id={`${formId}-program`}
+                      label="İxtisas"
+                      error={errors.program}
+                      icon={<BookOpen size={16} aria-hidden="true" />}
+                    >
+                      <select
+                        id={`${formId}-program`}
+                        name="program"
+                        value={selectedProgram}
+                        onChange={(event) => setSelectedProgram(event.target.value)}
+                        aria-invalid={Boolean(errors.program)}
+                        aria-describedby={errors.program ? `${formId}-program-error` : undefined}
+                        disabled={!credentialAuthAvailable || submitting || !selectedFaculty}
+                        required
+                      >
+                        <option value="" disabled>
+                          {selectedFaculty ? "İxtisası seç" : "Əvvəl fakültəni seç"}
+                        </option>
+                        {getProgramsForFaculty(selectedFaculty).map((program) => (
+                          <option key={program} value={program}>{program}</option>
+                        ))}
+                      </select>
                     </AuthFieldShell>
                   </>
                 )}
@@ -470,6 +510,7 @@ function readFormValues(formData: FormData): AuthFormValues {
     password: getFormValue(formData, "password"),
     university: getFormValue(formData, "university"),
     faculty: getFormValue(formData, "faculty"),
+    program: getFormValue(formData, "program"),
   };
 }
 
@@ -492,14 +533,21 @@ function validateAuthForm(mode: AuthMode, values: AuthFormValues): FieldErrors {
   } else if (!/\d/.test(values.password)) {
     errors.password = "Şifrədə ən azı bir rəqəm olmalıdır.";
   }
-  if (mode === "register" && !values.university) errors.university = "Universitetini seç və ya yaz.";
-  if (mode === "register" && !values.faculty) errors.faculty = "Fakültəni seç və ya yaz.";
+  if (mode === "register" && values.university !== canonicalUniversity) {
+    errors.university = "Universitet olaraq Qarabağ Universitetini seç.";
+  }
+  if (mode === "register" && !isFacultyName(values.faculty)) {
+    errors.faculty = "Fakültəni siyahıdan seç.";
+  }
+  if (mode === "register" && !isValidFacultyProgram(values.faculty, values.program)) {
+    errors.program = "İxtisası seçilmiş fakültənin siyahısından seç.";
+  }
 
   return errors;
 }
 
 function isAuthField(value: string): value is AuthField {
-  return ["name", "email", "password", "university", "faculty"].includes(value);
+  return ["name", "email", "password", "university", "faculty", "program"].includes(value);
 }
 
 function readApiFieldErrors(error: ApiError): FieldErrors {

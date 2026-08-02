@@ -28,6 +28,7 @@ export interface CreateUserRecord {
   passwordHash: string;
   university: string;
   faculty: string;
+  program?: string;
   role?: UserRole;
   status?: UserStatus;
 }
@@ -155,7 +156,7 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
     passwordHash: input.passwordHash,
     university: input.university.trim(),
     faculty: input.faculty.trim(),
-    program: "İxtisas məlumatı əlavə edilməyib",
+    program: input.program?.trim() ?? "İxtisas məlumatı əlavə edilməyib",
     year: "Kurs məlumatı əlavə edilməyib",
     city: "Xankəndi",
     about: "EduRate icmasında universitet həyatını daha əlaqəli yaşamaq üçün buradayam.",
@@ -171,8 +172,8 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
   }
 
   const result = await databasePool.query(
-    `INSERT INTO users (id, name, email, password_hash, university, faculty, role, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO users (id, name, email, password_hash, university, faculty, program, role, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
     [
       user.id,
@@ -181,6 +182,7 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
       user.passwordHash,
       user.university,
       user.faculty,
+      user.program,
       user.role,
       user.status,
     ],

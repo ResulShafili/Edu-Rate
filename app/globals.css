@@ -2709,7 +2709,6 @@ a { color: inherit; text-decoration: none; }
 .auth-form-panel { min-width: 0; }
 .auth-form { display: grid; min-width: 0; gap: 16px; }
 .auth-form-register { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.auth-form-register > .auth-field:nth-child(5),
 .auth-form-register > .auth-form-footer,
 .auth-form-register > .auth-form-message { grid-column: 1 / -1; }
 .auth-field { min-width: 0; }
@@ -2795,10 +2794,12 @@ a { color: inherit; text-decoration: none; }
 .profile-edit-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-top: 25px; }
 .profile-edit-field { display: grid; min-width: 0; gap: 7px; }
 .profile-edit-field > span { color: rgba(243, 241, 233, 0.5); font-size: 8px; font-weight: 650; }
-.profile-edit-field :is(input, textarea) { width: 100%; min-width: 0; padding: 0 15px; color: var(--paper); font: inherit; font-size: 11px; border: 1px solid rgba(243, 241, 233, 0.12); border-radius: 11px; outline: none; background: rgba(255, 255, 255, 0.035); transition: border-color 180ms ease, background-color 180ms ease; }
-.profile-edit-field input { height: 52px; }
+.profile-edit-field :is(input, textarea, select) { width: 100%; min-width: 0; padding: 0 15px; color: var(--paper); font: inherit; font-size: 11px; border: 1px solid rgba(243, 241, 233, 0.12); border-radius: 11px; outline: none; background: rgba(255, 255, 255, 0.035); transition: border-color 180ms ease, background-color 180ms ease; }
+.profile-edit-field :is(input, select) { height: 52px; }
+.profile-edit-field select option { color: var(--paper); background: #141415; }
+.profile-edit-field select:disabled { cursor: not-allowed; opacity: 0.58; }
 .profile-edit-field textarea { min-height: 116px; padding-block: 14px; resize: vertical; }
-.profile-edit-field :is(input, textarea):focus { border-color: var(--lime); background: rgba(255, 255, 255, 0.06); }
+.profile-edit-field :is(input, textarea, select):focus { border-color: var(--lime); background: rgba(255, 255, 255, 0.06); }
 .profile-edit-about { grid-column: 1 / -1; }
 .profile-edit-footer { grid-column: 1 / -1; display: flex; margin-top: 7px; align-items: center; justify-content: flex-end; gap: 9px; }
 .profile-edit-footer button { min-height: 44px; padding: 0 17px; cursor: pointer; color: rgba(243, 241, 233, 0.54); font-size: 9px; font-weight: 650; border: 1px solid rgba(243, 241, 233, 0.13); border-radius: 999px; background: transparent; }
@@ -3709,7 +3710,6 @@ a { color: inherit; text-decoration: none; }
   .auth-story-note { margin-top: 36px; }
   .auth-panel { padding: 36px; }
   .auth-form-register { grid-template-columns: 1fr; }
-  .auth-form-register > .auth-field:nth-child(5),
   .auth-form-register > .auth-form-footer,
   .auth-form-register > .auth-form-message { grid-column: auto; }
   .profile-section { padding: 116px 22px 100px; }
@@ -4114,8 +4114,8 @@ a { color: inherit; text-decoration: none; }
   .profile-edit-heading { padding-bottom: 19px; }
   .profile-edit-heading h2 { font-size: 27px; }
   .profile-edit-form { gap: 10px; padding-top: 19px; }
-  .profile-edit-field :is(input, textarea) { font-size: 16px; }
-  .profile-edit-field input { height: 54px; }
+  .profile-edit-field :is(input, textarea, select) { font-size: 16px; }
+  .profile-edit-field :is(input, select) { height: 54px; }
   .profile-edit-footer { display: grid; grid-template-columns: 1fr 1fr; }
   .profile-edit-footer button { width: 100%; min-height: 46px; padding-inline: 10px; }
   .profile-status-message { margin-bottom: -22px; }

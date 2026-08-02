@@ -35,6 +35,7 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/clubs/{clubId}/memberships"]);
     assert.ok(response.body.paths["/api/reviews"]);
     assert.ok(response.body.paths["/api/support/tickets"]);
+    assert.ok(response.body.paths["/api/academic-catalog"]);
   });
 
   it("CORS-u yalnız frontend allowlist-i ilə məhdudlaşdırır", async () => {
@@ -84,6 +85,7 @@ describe("EduRate API", () => {
         password: "EduRate2026",
         university: "Qarabağ Universiteti",
         faculty: "Mühəndislik fakültəsi",
+        program: "Kompüter mühəndisliyi",
       })
       .expect(201);
 
@@ -100,6 +102,7 @@ describe("EduRate API", () => {
         email,
         password: "EduRate2026",
         faculty: "Mühəndislik fakültəsi",
+        program: "Kompüter mühəndisliyi",
       })
       .expect(409);
 
@@ -115,6 +118,20 @@ describe("EduRate API", () => {
 
     assert.equal(session.body.data.user.email, email);
 
+    const invalidProfile = await request(app)
+      .patch("/api/auth/profile")
+      .set("Authorization", `Bearer ${login.body.data.token}`)
+      .send({
+        name: "Nümunə Tələbə",
+        university: "Qarabağ Universiteti",
+        faculty: "Mühəndislik fakültəsi",
+        program: "Psixologiya",
+        year: "2-ci kurs",
+        about: "Uyğun olmayan ixtisas seçimi sınağı.",
+      })
+      .expect(422);
+    assert.equal(invalidProfile.body.error.code, "INVALID_ACADEMIC_SELECTION");
+
     const profile = await request(app)
       .patch("/api/auth/profile")
       .set("Authorization", `Bearer ${login.body.data.token}`)
@@ -129,6 +146,63 @@ describe("EduRate API", () => {
       .expect(200);
 
     assert.equal(profile.body.data.user.program, "Kompüter mühəndisliyi");
+  });
+
+  it("rəsmi akademik kataloqu və fakültə-ixtisas uyğunluğunu qoruyur", async () => {
+    const { ACADEMIC_CATALOG, isValidAcademicSelection } = await import(
+      "../src/data/academic-catalog.js"
+    );
+    assert.equal(ACADEMIC_CATALOG.length, 7);
+
+    const catalog = await request(app).get("/api/academic-catalog").expect(200);
+    assert.deepEqual(catalog.body.data, ACADEMIC_CATALOG);
+
+    for (const entry of ACADEMIC_CATALOG) {
+      assert.ok(entry.programs.length > 0);
+      for (const program of entry.programs) {
+        assert.equal(isValidAcademicSelection(entry.faculty, program), true);
+      }
+    }
+    assert.equal(isValidAcademicSelection("Mühəndislik fakültəsi", "Psixologiya"), false);
+    assert.equal(isValidAcademicSelection("Mövcud olmayan fakültə", "Tibb"), false);
+
+    const validBase = {
+      name: "Akademik Seçim Testi",
+      password: "EduRate2026",
+      university: "Qarabağ Universiteti",
+      faculty: "Mühəndislik fakültəsi",
+      program: "Kompüter mühəndisliyi",
+    };
+
+    const mismatched = await request(app)
+      .post("/api/auth/signup")
+      .set("X-Forwarded-For", "203.0.113.21")
+      .send({ ...validBase, email: `mismatch.${Date.now()}@example.az`, program: "Psixologiya" })
+      .expect(422);
+    assert.equal(mismatched.body.error.code, "INVALID_ACADEMIC_SELECTION");
+    assert.ok(mismatched.body.error.details.program);
+
+    const unsupportedUniversity = await request(app)
+      .post("/api/auth/signup")
+      .set("X-Forwarded-For", "203.0.113.22")
+      .send({ ...validBase, email: `university.${Date.now()}@example.az`, university: "Başqa Universitet" })
+      .expect(422);
+    assert.equal(unsupportedUniversity.body.error.code, "INVALID_ACADEMIC_SELECTION");
+    assert.ok(unsupportedUniversity.body.error.details.university);
+
+    const missingProgram = await request(app)
+      .post("/api/auth/signup")
+      .set("X-Forwarded-For", "203.0.113.23")
+      .send({
+        name: validBase.name,
+        email: `missing.${Date.now()}@example.az`,
+        password: validBase.password,
+        university: validBase.university,
+        faculty: validBase.faculty,
+      })
+      .expect(422);
+    assert.equal(missingProgram.body.error.code, "VALIDATION_ERROR");
+    assert.ok(missingProgram.body.error.details.program);
   });
 
   it("kataloq endpoint-lərini təqdim edir", async () => {
@@ -152,6 +226,7 @@ describe("EduRate API", () => {
         password: "EduRate2026",
         university: "Qarabağ Universiteti",
         faculty: "İqtisadiyyat fakültəsi",
+        program: "İqtisadiyyat",
       })
       .expect(201);
     const authorization = `Bearer ${signup.body.data.token}`;
@@ -239,7 +314,8 @@ describe("EduRate API", () => {
         email: `platform.${Date.now()}@example.az`,
         password: "EduRate2026",
         university: "Qarabağ Universiteti",
-        faculty: "Humanitar elmlər fakültəsi",
+        faculty: "Humanitar və sosial elmlər fakültəsi",
+        program: "Psixologiya",
       })
       .expect(201);
     const authorization = `Bearer ${signup.body.data.token}`;
@@ -287,7 +363,8 @@ describe("EduRate API", () => {
         email: "admin.test@example.az",
         password: "EduRate2026",
         university: "Qarabağ Universiteti",
-        faculty: "İdarəetmə",
+        faculty: "Pedaqoji fakültə",
+        program: "Riyaziyyat müəllimliyi",
       })
       .expect(201);
     assert.equal(signup.body.data.user.role, "admin");
@@ -477,6 +554,55 @@ describe("EduRate API", () => {
       .expect(204);
     await request(app)
       .delete(`/api/admin/users/${assistantId}`)
+      .set("Authorization", adminAuthorization)
+      .expect(204);
+  });
+
+  it("legacy akademik məlumatlı hesabların sessiya və profil axınını pozmur", async () => {
+    const adminAuthorization = `Bearer ${reusableAdminToken}`;
+    const created = await request(app)
+      .post("/api/admin/users")
+      .set("Authorization", adminAuthorization)
+      .send({
+        name: "Legacy Tələbə",
+        email: `legacy.${Date.now()}@example.az`,
+        role: "student",
+        university: "Köhnə Universitet",
+        faculty: "Köhnə fakültə",
+      })
+      .expect(201);
+
+    const [{ findUserById }, { createAccessToken }] = await Promise.all([
+      import("../src/db/database.js"),
+      import("../src/lib/auth.js"),
+    ]);
+    const legacyUser = await findUserById(created.body.data.id as string);
+    assert.ok(legacyUser);
+    const authorization = `Bearer ${createAccessToken(legacyUser)}`;
+
+    const session = await request(app)
+      .get("/api/auth/session")
+      .set("Authorization", authorization)
+      .expect(200);
+    assert.equal(session.body.data.user.university, "Köhnə Universitet");
+    assert.equal(session.body.data.user.faculty, "Köhnə fakültə");
+
+    const profile = await request(app)
+      .patch("/api/auth/profile")
+      .set("Authorization", authorization)
+      .send({
+        name: "Legacy Tələbə",
+        university: legacyUser.university,
+        faculty: legacyUser.faculty,
+        program: legacyUser.program,
+        year: legacyUser.year,
+        about: "Mövcud akademik məlumatlar dəyişdirilmədən profil yeniləndi.",
+      })
+      .expect(200);
+    assert.equal(profile.body.data.user.about, "Mövcud akademik məlumatlar dəyişdirilmədən profil yeniləndi.");
+
+    await request(app)
+      .delete(`/api/admin/users/${legacyUser.id}`)
       .set("Authorization", adminAuthorization)
       .expect(204);
   });

@@ -43,6 +43,7 @@ export type RegisterInput = {
   password: string;
   university: string;
   faculty: string;
+  program: string;
 };
 
 export type ProfileUpdateInput = Pick<
@@ -59,56 +60,6 @@ export type AuthGateway = {
     input: ProfileUpdateInput,
   ) => Promise<UserProfile>;
 };
-
-export const universities = [
-  "Qarabağ Universiteti",
-  "Bakı Dövlət Universiteti",
-  "Azərbaycan Dövlət İqtisad Universiteti",
-  "Azərbaycan Texniki Universiteti",
-  "Bakı Mühəndislik Universiteti",
-  "ADA Universiteti",
-  "Azərbaycan Dövlət Neft və Sənaye Universiteti",
-  "Azərbaycan Memarlıq və İnşaat Universiteti",
-  "Azərbaycan Tibb Universiteti",
-  "Azərbaycan Dövlət Pedaqoji Universiteti",
-  "Azərbaycan Dillər Universiteti",
-  "Bakı Slavyan Universiteti",
-  "Xəzər Universiteti",
-  "Qərbi Kaspi Universiteti",
-  "Azərbaycan Universiteti",
-  "Bakı Ali Neft Məktəbi",
-  "Naxçıvan Dövlət Universiteti",
-  "Gəncə Dövlət Universiteti",
-  "Sumqayıt Dövlət Universiteti",
-  "Lənkəran Dövlət Universiteti",
-] as const;
-
-export const faculties = [
-  "Tətbiqi riyaziyyat və kibernetika",
-  "İnformasiya texnologiyaları",
-  "Kompüter elmləri və kompüter mühəndisliyi",
-  "Mühəndislik",
-  "Energetika və avtomatika",
-  "Neft-qaz mühəndisliyi",
-  "Kimya mühəndisliyi",
-  "İnşaat mühəndisliyi",
-  "İqtisadiyyat və idarəetmə",
-  "Biznes və menecment",
-  "Maliyyə və mühasibat",
-  "Hüquq",
-  "Humanitar və sosial elmlər",
-  "Filologiya və dilçilik",
-  "Tarix və coğrafiya",
-  "Pedaqogika",
-  "Təbiət elmləri",
-  "Kimya və biologiya",
-  "Tibb",
-  "İctimai səhiyyə",
-  "Memarlıq və dizayn",
-  "İncəsənət",
-  "Turizm və qonaqpərvərlik",
-  "Kənd təsərrüfatı",
-] as const;
 
 const emptyProfileStats: readonly ProfileStat[] = [
   { id: "events", label: "Qoşulduğu tədbirlər", value: 0 },

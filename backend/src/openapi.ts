@@ -1,3 +1,11 @@
+import {
+  ACADEMIC_CATALOG,
+  ACADEMIC_UNIVERSITY,
+} from "./data/academic-catalog.js";
+
+const academicFaculties = ACADEMIC_CATALOG.map((entry) => entry.faculty);
+const academicPrograms = ACADEMIC_CATALOG.flatMap((entry) => [...entry.programs]);
+
 export const openApiDocument = {
   openapi: "3.1.0",
   info: {
@@ -48,7 +56,14 @@ export const openApiDocument = {
         responses: {
           "201": { description: "Hesab yaradıldı" },
           "409": { description: "E-poçt artıq mövcuddur" },
-          "422": { description: "Validasiya xətası" },
+          "422": {
+            description: "Validasiya və ya fakültə-ixtisas uyğunluğu xətası",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AcademicSelectionError" },
+              },
+            },
+          },
         },
       },
     },
@@ -93,7 +108,14 @@ export const openApiDocument = {
         responses: {
           "200": { description: "Profil yeniləndi" },
           "401": { description: "Token yoxdur və ya yanlışdır" },
-          "422": { description: "Validasiya xətası" },
+          "422": {
+            description: "Validasiya və ya fakültə-ixtisas uyğunluğu xətası",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AcademicSelectionError" },
+              },
+            },
+          },
         },
       },
     },
@@ -102,6 +124,22 @@ export const openApiDocument = {
         tags: ["Authentication"],
         summary: "Client sessiyasını bitir",
         responses: { "204": { description: "Çıxış edildi" } },
+      },
+    },
+    "/api/academic-catalog": {
+      get: {
+        tags: ["Catalog"],
+        summary: "Rəsmi fakültə və ixtisas kataloqunu göstər",
+        responses: {
+          "200": {
+            description: "Fakültələr və onlara aid ixtisaslar",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AcademicCatalogResponse" },
+              },
+            },
+          },
+        },
       },
     },
     "/api/events": {
@@ -286,13 +324,28 @@ export const openApiDocument = {
       },
       SignupInput: {
         type: "object",
-        required: ["name", "email", "password", "faculty"],
+        required: ["name", "email", "password", "faculty", "program"],
         properties: {
           name: { type: "string", example: "Nümunə Tələbə" },
           email: { type: "string", format: "email", example: "telebe@example.az" },
           password: { type: "string", format: "password", minLength: 8, example: "EduRate2026" },
-          university: { type: "string", example: "Qarabağ Universiteti" },
-          faculty: { type: "string", example: "Mühəndislik fakültəsi" },
+          university: {
+            type: "string",
+            enum: [ACADEMIC_UNIVERSITY],
+            default: ACADEMIC_UNIVERSITY,
+            example: ACADEMIC_UNIVERSITY,
+          },
+          faculty: {
+            type: "string",
+            enum: academicFaculties,
+            example: "Mühəndislik fakültəsi",
+          },
+          program: {
+            type: "string",
+            enum: academicPrograms,
+            description: "Seçilmiş fakültəyə aid ixtisas olmalıdır.",
+            example: "Kompüter mühəndisliyi",
+          },
         },
       },
       LoginInput: {
@@ -308,11 +361,68 @@ export const openApiDocument = {
         required: ["name", "university", "faculty", "program", "year", "about"],
         properties: {
           name: { type: "string", example: "Nümunə Tələbə" },
-          university: { type: "string", example: "Qarabağ Universiteti" },
-          faculty: { type: "string", example: "Mühəndislik fakültəsi" },
-          program: { type: "string", example: "Kompüter mühəndisliyi" },
+          university: {
+            type: "string",
+            enum: [ACADEMIC_UNIVERSITY],
+            example: ACADEMIC_UNIVERSITY,
+          },
+          faculty: {
+            type: "string",
+            enum: academicFaculties,
+            example: "Mühəndislik fakültəsi",
+          },
+          program: {
+            type: "string",
+            enum: academicPrograms,
+            description: "Seçilmiş fakültəyə aid ixtisas olmalıdır.",
+            example: "Kompüter mühəndisliyi",
+          },
           year: { type: "string", example: "2-ci kurs" },
           about: { type: "string", maxLength: 600 },
+        },
+      },
+      AcademicCatalogResponse: {
+        type: "object",
+        required: ["data"],
+        properties: {
+          data: {
+            type: "array",
+            minItems: 7,
+            items: {
+              type: "object",
+              required: ["faculty", "programs"],
+              properties: {
+                faculty: { type: "string", enum: academicFaculties },
+                programs: {
+                  type: "array",
+                  minItems: 1,
+                  items: { type: "string", enum: academicPrograms },
+                },
+              },
+            },
+          },
+        },
+      },
+      AcademicSelectionError: {
+        type: "object",
+        required: ["error"],
+        properties: {
+          error: {
+            type: "object",
+            required: ["code", "message"],
+            properties: {
+              code: { type: "string", example: "INVALID_ACADEMIC_SELECTION" },
+              message: {
+                type: "string",
+                example: "Universitet, fakültə və ixtisas seçimi rəsmi kataloqa uyğun deyil.",
+              },
+              details: {
+                type: "object",
+                additionalProperties: { type: "string" },
+                example: { program: "İxtisası seçilmiş fakültənin siyahısından seçin." },
+              },
+            },
+          },
         },
       },
       EventInput: {
