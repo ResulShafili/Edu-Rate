@@ -52,7 +52,6 @@ export function AnnouncementsBoard({ items, activeFilter, onFilterChange, reduce
     <section className="announcements-board" aria-labelledby="announcements-title">
       <header className="announcements-board-heading">
         <div><span><Megaphone size={14} aria-hidden="true" /> Universitet şəbəkəsi</span><h2 id="announcements-title">Vacib elanlar</h2></div>
-        <p>Aktiv və vaxtı məhdud məlumatlar öncə göstərilir; müddəti bitən elanlar avtomatik arxivə keçir.</p>
       </header>
 
       <div className="announcement-filter-bar">

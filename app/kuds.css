@@ -1366,11 +1366,87 @@ body {
 .kuds-shell .announcements-board { color: var(--kuds-text) !important; }
 .kuds-shell .announcements-board-heading :is(h2, h3, p, span) { color: var(--kuds-text) !important; }
 .kuds-shell .announcements-board-heading p { color: var(--kuds-muted) !important; }
-.kuds-shell .announcement-filter-bar { position: static !important; border-color: var(--kuds-border) !important; background: var(--kuds-surface) !important; box-shadow: var(--kuds-shadow-xs) !important; backdrop-filter: none !important; }
-.kuds-shell .announcement-filter-bar button { color: var(--kuds-muted) !important; }
-.kuds-shell .announcement-filter-bar > span:first-child { color: var(--ku-dark-green) !important; background: var(--ku-soft-green) !important; }
+.kuds-shell .announcement-filter-bar {
+  position: static !important;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 8px;
+  overflow: hidden;
+  border: 1px solid var(--kuds-border) !important;
+  border-radius: 12px;
+  background: var(--kuds-surface) !important;
+  box-shadow: var(--kuds-shadow-xs) !important;
+  backdrop-filter: none !important;
+}
+.kuds-shell .announcement-filter-bar > span:first-child {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--ku-dark-green) !important;
+  border-radius: 8px;
+  background: var(--ku-soft-green) !important;
+}
+.kuds-shell .announcement-filters {
+  display: flex;
+  min-width: 0;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+.kuds-shell .announcement-filters::-webkit-scrollbar { display: none; }
+.kuds-shell .announcement-filter-bar button {
+  position: relative;
+  display: inline-flex;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  cursor: pointer;
+  isolation: isolate;
+  color: var(--kuds-muted) !important;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 650;
+  scroll-snap-align: start;
+}
+.kuds-shell .announcement-filter-bar button > span {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+.kuds-shell .announcement-filter-bar button > i {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ku-green);
+}
+.kuds-shell .announcement-filter-bar button:hover:not([aria-pressed="true"]) {
+  color: var(--ku-dark-green) !important;
+  border-color: rgb(68 118 108 / 24%);
+  background: var(--ku-soft-green);
+}
 .kuds-shell .announcement-filter-bar button[aria-pressed="true"] { color: #fff !important; }
-.kuds-shell .announcement-filter-bar .bg-\[var\(--lime\)\] { background: var(--ku-green) !important; }
+.kuds-shell .announcement-filter-bar button:focus-visible { outline: 2px solid var(--ku-green); outline-offset: 2px; }
+.kuds-shell .announcement-count {
+  padding: 0 8px;
+  color: var(--kuds-muted);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
 .kuds-shell .announcement-card,
 .kuds-shell .feed-card { color: var(--kuds-text) !important; border-color: var(--kuds-border) !important; background: var(--kuds-surface) !important; box-shadow: var(--kuds-shadow-xs) !important; backdrop-filter: none !important; }
 .kuds-shell .announcement-card :is(h3, p, span, time),
