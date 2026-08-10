@@ -14,7 +14,6 @@ import {
   Mail,
   Sparkles,
   UserRound,
-  UsersRound,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -40,7 +39,7 @@ import {
 } from "./AuthProvider";
 
 type AuthMode = "login" | "register";
-type AccountType = "student" | "teacher" | "mentor";
+type AccountType = "student" | "teacher";
 type AuthField = "name" | "email" | "password" | "university" | "faculty" | "program" | "accountType";
 type FieldErrors = Partial<Record<AuthField, string>>;
 
@@ -157,7 +156,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
           email: values.email,
           password: values.password,
           university: values.university,
-          faculty: values.accountType === "student" ? values.faculty : values.accountType === "teacher" ? "Müəllim heyəti" : "Mentorluq şəbəkəsi",
+          faculty: values.accountType === "student" ? values.faculty : "Müəllim heyəti",
           program: values.program,
           accountType: values.accountType as AccountType,
         });
@@ -384,7 +383,6 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                         {([
                           { value: "student", label: "Tələbə", icon: GraduationCap },
                           { value: "teacher", label: "Müəllim", icon: BriefcaseBusiness },
-                          { value: "mentor", label: "Mentor", icon: UsersRound },
                         ] as const).map((option) => {
                           const Icon = option.icon;
                           return <button key={option.value} type="button" role="radio" aria-checked={accountType === option.value} onClick={() => { setAccountType(option.value); setSelectedFaculty(""); setSelectedProgram(""); }} disabled={submitting}><Icon size={15} /><span>{option.label}</span></button>;
@@ -426,7 +424,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
 
                     <AuthFieldShell
                       id={`${formId}-program`}
-                      label={accountType === "student" ? "İxtisas" : accountType === "teacher" ? "Tədris sahəsi" : "Ekspertiza sahəsi"}
+                      label={accountType === "student" ? "İxtisas" : "Tədris sahəsi"}
                       error={errors.program}
                       icon={<BookOpen size={16} aria-hidden="true" />}
                     >
@@ -446,7 +444,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                         {getProgramsForFaculty(selectedFaculty).map((program) => (
                           <option key={program} value={program}>{program}</option>
                         ))}
-                      </select> : <input id={`${formId}-program`} name="program" type="text" value={selectedProgram} onChange={(event) => setSelectedProgram(event.target.value)} placeholder={accountType === "teacher" ? "Məsələn, Riyaziyyat" : "Məsələn, Karyera planlaması"} aria-invalid={Boolean(errors.program)} aria-describedby={errors.program ? `${formId}-program-error` : undefined} disabled={!credentialAuthAvailable || submitting} required />}
+                      </select> : <input id={`${formId}-program`} name="program" type="text" value={selectedProgram} onChange={(event) => setSelectedProgram(event.target.value)} placeholder="Məsələn, Riyaziyyat" aria-invalid={Boolean(errors.program)} aria-describedby={errors.program ? `${formId}-program-error` : undefined} disabled={!credentialAuthAvailable || submitting} required />}
                     </AuthFieldShell>
                   </>
                 )}
@@ -560,7 +558,7 @@ function validateAuthForm(mode: AuthMode, values: AuthFormValues): FieldErrors {
     errors.program = "İxtisası seçilmiş fakültənin siyahısından seç.";
   }
   if (mode === "register" && values.accountType !== "student" && values.program.length < 2) {
-    errors.program = values.accountType === "teacher" ? "Tədris sahəsini yaz." : "Ekspertiza sahəsini yaz.";
+    errors.program = values.accountType === "teacher" ? "Tədris sahəsini yaz." : "İxtisası seç.";
   }
 
   return errors;

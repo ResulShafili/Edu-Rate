@@ -49,7 +49,7 @@ const signupSchema = z.object({
     .regex(/[a-zA-ZƏəÖöÜüĞğŞşÇçİı]/, "Şifrədə hərf olmalıdır.")
     .regex(/\d/, "Şifrədə rəqəm olmalıdır."),
   university: z.string().trim().min(2).max(180).default(ACADEMIC_UNIVERSITY),
-  accountType: z.enum(["student", "teacher", "mentor"]).default("student"),
+  accountType: z.enum(["student", "teacher"]).default("student"),
   faculty: z.string().trim().max(180).optional().default(""),
   program: z.string().trim().min(2).max(180),
 });
@@ -110,12 +110,12 @@ authRouter.post("/signup", signupLimiter, async (request, response) => {
     });
   }
 
-  const isPrivilegedRegistration = input.accountType === "teacher" || input.accountType === "mentor";
+  const isPrivilegedRegistration = input.accountType === "teacher";
   const user = await createUser({
     name: input.name,
     email: input.email,
     university: input.university,
-    faculty: input.accountType === "teacher" ? "Müəllim heyəti" : input.accountType === "mentor" ? "Mentorluq şəbəkəsi" : input.faculty,
+    faculty: input.accountType === "teacher" ? "Müəllim heyəti" : input.faculty,
     program: input.program,
     role: input.accountType,
     status: isPrivilegedRegistration ? "Gözləmədə" : "Aktiv",

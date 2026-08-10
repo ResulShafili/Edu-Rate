@@ -73,7 +73,7 @@ export async function updateCredentialProfile(
 
 function createProfile(input: RegisterInput): UserProfile {
   const base = createIdentityProfile(input.name, input.email);
-  const role = input.accountType === "teacher" ? "Müəllim" : input.accountType === "mentor" ? "Mentor" : "Tələbə";
+  const role = input.accountType === "teacher" ? "Müəllim" : "Tələbə";
   return {
     ...base,
     name: input.name.trim(),

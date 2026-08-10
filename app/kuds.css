@@ -1515,6 +1515,29 @@ body {
 .kuds-shell .workspace-items button { display: inline-flex; min-height: 34px; padding: 0 10px; align-items: center; gap: 5px; color: var(--ku-dark-green); font-size: 10px; font-weight: 700; border: 1px solid var(--kuds-border); border-radius: 8px; background: #fff; }
 .kuds-shell .workspace-action-error { margin: 0 0 12px; padding: 10px 12px; color: #991b1b; border: 1px solid #fecaca; border-radius: 9px; background: #fef2f2; font-size: 12px; }
 .kuds-shell .workspace-items button:last-child { color: #fff; border-color: var(--ku-green); background: var(--ku-green); }
+.kuds-shell .workspace-mentor-path { display: grid; margin-top: 24px; padding: 20px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 20px; border: 1px solid color-mix(in srgb, var(--ku-green), transparent 72%); border-radius: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--ku-green), transparent 92%), var(--kuds-surface)); box-shadow: var(--kuds-shadow-xs); }
+.kuds-shell .workspace-mentor-copy > span { display: inline-flex; align-items: center; gap: 6px; color: var(--ku-green); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.kuds-shell .workspace-mentor-copy h2 { margin: 7px 0 0; color: var(--kuds-text); font-size: 23px; letter-spacing: -.035em; }
+.kuds-shell .workspace-mentor-copy p { max-width: 650px; margin: 7px 0 0; color: var(--kuds-muted); font-size: 12px; line-height: 1.6; }
+.kuds-shell .workspace-mentor-apply,
+.kuds-shell .workspace-mentor-actions button { display: inline-flex; min-height: 42px; padding: 0 15px; align-items: center; justify-content: center; gap: 7px; color: #fff; font-size: 11px; font-weight: 750; border: 0; border-radius: 10px; background: var(--ku-green); }
+.kuds-shell .workspace-mentor-status { display: flex; max-width: 390px; padding: 13px 15px; align-items: center; gap: 10px; color: var(--kuds-text); border: 1px solid var(--kuds-border); border-radius: 12px; background: var(--kuds-bg); }
+.kuds-shell .workspace-mentor-status.is-approved { border-color: color-mix(in srgb, var(--ku-green), transparent 65%); }
+.kuds-shell .workspace-mentor-status > span { display: flex; flex-direction: column; gap: 3px; }
+.kuds-shell .workspace-mentor-status strong { font-size: 11px; }
+.kuds-shell .workspace-mentor-status small { color: var(--kuds-muted); font-size: 9px; line-height: 1.45; }
+.kuds-shell .workspace-mentor-form { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.kuds-shell .workspace-mentor-form label { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
+.kuds-shell .workspace-mentor-form label.is-wide { grid-column: 1 / -1; }
+.kuds-shell .workspace-mentor-form label > span { color: var(--kuds-muted); font-size: 10px; font-weight: 700; }
+.kuds-shell .workspace-mentor-form input,
+.kuds-shell .workspace-mentor-form select,
+.kuds-shell .workspace-mentor-form textarea { width: 100%; padding: 11px 12px; color: var(--kuds-text); font: inherit; font-size: 12px; border: 1px solid var(--kuds-border); border-radius: 10px; outline: 0; background: var(--kuds-bg); }
+.kuds-shell .workspace-mentor-form input:focus,
+.kuds-shell .workspace-mentor-form select:focus,
+.kuds-shell .workspace-mentor-form textarea:focus { border-color: var(--ku-green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ku-green), transparent 84%); }
+.kuds-shell .workspace-mentor-actions { display: flex; grid-column: 1 / -1; justify-content: flex-end; gap: 8px; }
+.kuds-shell .workspace-mentor-actions button:first-child { color: var(--kuds-text); border: 1px solid var(--kuds-border); background: var(--kuds-bg); }
 .kuds-shell .workspace-state { display: grid; min-height: 170px; padding: 24px; place-items: center; align-content: center; text-align: center; border: 1px dashed var(--kuds-border); border-radius: 12px; }
 .kuds-shell .workspace-state :is(h1, h3) { margin: 0; color: var(--kuds-text); }
 .kuds-shell .workspace-state p { margin: 6px 0 16px; color: var(--kuds-muted); font-size: 12px; }
@@ -1662,6 +1685,9 @@ body {
 .kuds-shell .admin-review-list article span,
 .kuds-shell .admin-review-list article small { color: var(--kuds-muted); font-size: 11px; }
 .kuds-shell .admin-review-list article p { margin: 12px 0; color: var(--kuds-text); font-size: 13px; line-height: 1.65; }
+.kuds-shell .admin-review-criteria { display: grid; margin: 12px 0; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+.kuds-shell .admin-review-criteria span { display: flex; padding: 8px 9px; align-items: center; justify-content: space-between; gap: 7px; border: 1px solid var(--kuds-border); border-radius: 8px; background: var(--kuds-surface); }
+.kuds-shell .admin-review-criteria b { color: var(--ku-green); font-size: 10px; }
 .kuds-shell .admin-review-list article footer button:last-child { color: #fff; border-color: var(--ku-dark-green); background: var(--ku-dark-green); }
 .kuds-shell .admin-review-state { padding: 26px 16px; text-align: center; border: 1px dashed var(--kuds-border); border-radius: 12px; }
 .kuds-shell .admin-review-state p { margin: 5px 0 0; color: var(--kuds-muted); font-size: 12px; }
@@ -2384,10 +2410,16 @@ body {
   .kuds-shell .workspace-items { grid-template-columns: 1fr; }
   .kuds-shell .workspace-metrics article { min-height: 104px; }
   .kuds-shell .workspace-queue { padding: 15px; }
+  .kuds-shell .workspace-mentor-path { padding: 16px; grid-template-columns: 1fr; align-items: stretch; }
+  .kuds-shell .workspace-mentor-apply { width: 100%; }
+  .kuds-shell .workspace-mentor-form { grid-template-columns: 1fr; }
+  .kuds-shell .workspace-mentor-form label.is-wide,
+  .kuds-shell .workspace-mentor-actions { grid-column: 1; }
   .kuds-shell .admin-review-panel { padding: 15px; }
   .kuds-shell .admin-review-panel > header { align-items: flex-start; }
   .kuds-shell .admin-review-list article > footer { align-items: flex-start; flex-direction: column; }
   .kuds-shell .admin-review-list article > footer > div { display: grid; width: 100%; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kuds-shell .admin-review-criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kuds-shell .clubs-hero { padding: 20px !important; }
   .kuds-shell .club-directory-link { min-height: 294px !important; grid-template-rows: 112px minmax(0, 1fr) !important; }
   .kuds-shell .club-card-copy { margin: 12px 0 !important; }

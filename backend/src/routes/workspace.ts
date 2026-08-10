@@ -5,7 +5,8 @@ import { findUserById, listUsers } from "../db/database.js";
 import { getPlatformCounts, listMyClubMemberships, listSupportTickets, listTeacherReviews } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
 import { authenticate } from "../middleware/authenticate.js";
-import { ensureProfessionalProfileForUser } from "../db/professionals.js";
+import { ensureProfessionalProfileForUser, findProfessionalByUser } from "../db/professionals.js";
+import { createMentorApplication, getMentorApplication } from "../db/mentor-applications.js";
 
 export const workspaceRouter = Router();
 workspaceRouter.use(authenticate);
@@ -16,14 +17,28 @@ workspaceRouter.get("/", async (request, response) => {
 
   if (user.role === "teacher") {
     const profile = await ensureProfessionalProfileForUser(user);
-    const reviews = await listTeacherReviews({ teacherId: profile?.id ?? normalizeRoleId(user.name), limit: 100 });
+    const [reviews, mentorApplication, mentorProfile] = await Promise.all([
+      listTeacherReviews({ teacherId: profile?.id ?? normalizeRoleId(user.name), limit: 100 }),
+      getMentorApplication(user.id),
+      findProfessionalByUser(user.id, "mentor"),
+    ]);
+    const mentorRequests = mentorProfile?.status === "approved"
+      ? await listMentorRequests(mentorProfile.slug, mentorProfile.id)
+      : [];
+    const mentorItems = await Promise.all(mentorRequests.slice(0, 12).map(async (item) => {
+      const requester = await findUserById(item.userId);
+      return { ...item, userId: undefined, title: requester?.name ?? "Tələbə müraciəti", course: requester?.program ?? "Mentorluq" };
+    }));
     const approved = reviews.filter((review) => review.status === "approved");
     const average = approved.length ? approved.reduce((sum, review) => sum + review.rating, 0) / approved.length : 0;
     response.json({ data: { role: user.role, title: "Müəllim paneli", focus: user.program, metrics: [
       { label: "Təsdiqlənmiş rəy", value: approved.length },
       { label: "Gözləyən rəy", value: reviews.filter((review) => review.status === "pending").length },
       { label: "Orta qiymət", value: average ? average.toFixed(1) : "—" },
-    ], items: reviews.slice(0, 8).map(({ userId: _userId, ...review }) => review) } });
+    ], items: reviews.slice(0, 8).map(({ userId: _userId, text: _text, ...review }) => review),
+      mentorApplication, mentorEnabled: mentorProfile?.status === "approved" && mentorProfile.visible,
+      mentorItems,
+    } });
     return;
   }
 
@@ -74,15 +89,34 @@ workspaceRouter.get("/", async (request, response) => {
 });
 
 workspaceRouter.patch("/mentorship/:id", async (request, response) => {
-  if (request.auth!.role !== "mentor") throw new ApiError(403, "MENTOR_REQUIRED", "Bu əməliyyat yalnız mentor üçündür.");
   const user = await findUserById(request.auth!.userId);
   if (!user) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
+  const mentorProfile = user.role === "mentor"
+    ? await ensureProfessionalProfileForUser(user)
+    : user.role === "teacher"
+      ? await findProfessionalByUser(user.id, "mentor")
+      : null;
+  if (!mentorProfile || mentorProfile.status !== "approved" || !mentorProfile.visible) {
+    throw new ApiError(403, "MENTOR_REQUIRED", "Bu əməliyyat yalnız təsdiqlənmiş mentor üçündür.");
+  }
   const id = z.string().uuid().parse(request.params.id);
   const { status } = z.object({ status: z.enum(["accepted", "rejected"]) }).strict().parse(request.body);
-  const profile = await ensureProfessionalProfileForUser(user);
-  const result = await decideMentorshipRequest(id, profile?.slug ?? normalizeRoleId(user.name), status, profile?.id);
+  const result = await decideMentorshipRequest(id, mentorProfile.slug, status, mentorProfile.id);
   if (!result) throw new ApiError(404, "MENTORSHIP_REQUEST_NOT_FOUND", "Gözləyən mentorluq müraciəti tapılmadı.");
   response.json({ data: result });
+});
+
+workspaceRouter.post("/mentor-application", async (request, response) => {
+  const user = await findUserById(request.auth!.userId);
+  if (!user) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
+  const input = z.object({
+    specialty: z.string().trim().min(2).max(180),
+    biography: z.string().trim().min(20).max(1200),
+    availability: z.string().trim().min(2).max(240),
+    meetingMode: z.enum(["Onlayn", "Əyani", "Hibrid"]),
+    languages: z.array(z.string().trim().min(2).max(80)).min(1).max(5),
+  }).strict().parse(request.body);
+  response.status(201).json({ data: await createMentorApplication(user, input) });
 });
 
 function normalizeRoleId(value: string) {

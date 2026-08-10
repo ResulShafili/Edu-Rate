@@ -35,6 +35,7 @@ import { authenticate, requireAdmin, requirePrimaryAdmin } from "../middleware/a
 import { ensureProfessionalProfileForUser } from "../db/professionals.js";
 import { listAudit, writeAudit } from "../db/audit.js";
 import { createAnnouncement, deleteAnnouncement, listAdminAnnouncements, updateAnnouncement } from "../db/network.js";
+import { decideMentorApplication, listMentorApplications } from "../db/mentor-applications.js";
 
 export const adminRouter = Router();
 adminRouter.use(authenticate, requireAdmin);
@@ -252,6 +253,20 @@ adminRouter.patch("/reviews/:id", async (request, response) => {
   const review = await updateTeacherReviewStatus(id, status);
   if (!review) throw new ApiError(404, "REVIEW_NOT_FOUND", "Rəy tapılmadı.");
   response.json({ data: review });
+});
+
+adminRouter.get("/mentor-applications", async (request, response) => {
+  const { status } = z.object({ status: z.enum(["pending", "approved", "rejected"]).default("pending") }).parse(request.query);
+  response.json({ data: await listMentorApplications(status) });
+});
+
+adminRouter.patch("/mentor-applications/:id", async (request, response) => {
+  const id = z.string().uuid().parse(request.params.id);
+  const { status } = z.object({ status: z.enum(["approved", "rejected"]) }).strict().parse(request.body);
+  const application = await decideMentorApplication(id, status, request.auth!.userId);
+  if (!application) throw new ApiError(404, "MENTOR_APPLICATION_NOT_FOUND", "Mentorluq müraciəti tapılmadı.");
+  await writeAudit(request.auth!.userId, status === "approved" ? "Mentor müraciəti təsdiqləndi" : "Mentor müraciəti rədd edildi", "mentor_application", id, { teacherId: application.userId });
+  response.json({ data: application });
 });
 
 function initials(name: string) {

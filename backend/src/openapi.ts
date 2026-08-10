@@ -360,6 +360,24 @@ export const openApiDocument = {
         responses: { "200": { description: "Tələbə, müəllim, mentor və ya rəhbərlik paneli" }, "401": { description: "Giriş tələb olunur" } },
       },
     },
+    "/api/workspace/mentor-application": {
+      post: {
+        tags: ["Mentorship"], summary: "Müəllim hesabından mentorluq üçün müraciət et", security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["specialty", "biography", "availability", "meetingMode", "languages"], properties: {
+          specialty: { type: "string", minLength: 2, maxLength: 180 }, biography: { type: "string", minLength: 20, maxLength: 1200 },
+          availability: { type: "string", minLength: 2, maxLength: 240 }, meetingMode: { type: "string", enum: ["Onlayn", "Əyani", "Hibrid"] },
+          languages: { type: "array", minItems: 1, maxItems: 5, items: { type: "string" } },
+        } } } } },
+        responses: { "201": { description: "Mentorluq müraciəti yaradıldı" }, "403": { description: "Aktiv müəllim hesabı tələb olunur" }, "409": { description: "Aktiv və ya gözləyən müraciət mövcuddur" } },
+      },
+    },
+    "/api/admin/mentor-applications": {
+      get: { tags: ["Administration"], summary: "Mentorluq müraciətlərini siyahıla", security: [{ bearerAuth: [] }], responses: { "200": { description: "Mentorluq müraciətləri" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+    },
+    "/api/admin/mentor-applications/{id}": {
+      parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+      patch: { tags: ["Administration"], summary: "Mentorluq müraciətini təsdiqlə və ya rədd et", security: [{ bearerAuth: [] }], requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["status"], properties: { status: { type: "string", enum: ["approved", "rejected"] } } } } } }, responses: { "200": { description: "Mentorluq müraciəti yeniləndi" }, "404": { description: "Müraciət tapılmadı" } } },
+    },
     "/api/workspace/mentorship/{id}": {
       parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
       patch: {
@@ -410,9 +428,9 @@ export const openApiDocument = {
           },
           accountType: {
             type: "string",
-            enum: ["student", "teacher", "mentor"],
+            enum: ["student", "teacher"],
             default: "student",
-            description: "Müəllim və mentor hesabları rəhbərlik təsdiqindən sonra aktivləşir.",
+            description: "Müəllim hesabı rəhbərlik təsdiqindən sonra aktivləşir. Mentor olmaq üçün müəllim panelindən ayrıca müraciət edilir.",
           },
           faculty: {
             type: "string",
@@ -422,7 +440,7 @@ export const openApiDocument = {
           },
           program: {
             type: "string",
-            description: "Tələbə üçün ixtisas, müəllim üçün tədris sahəsi, mentor üçün ekspertiza sahəsi.",
+            description: "Tələbə üçün ixtisas, müəllim üçün tədris sahəsi.",
             example: "Kompüter mühəndisliyi",
           },
         },

@@ -44,7 +44,7 @@ export type RegisterInput = {
   university: string;
   faculty: string;
   program: string;
-  accountType: "student" | "teacher" | "mentor";
+  accountType: "student" | "teacher";
 };
 
 export type RegisterResult = {

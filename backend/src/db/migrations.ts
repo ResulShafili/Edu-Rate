@@ -112,6 +112,31 @@ const migrations: Migration[] = [
       CREATE UNIQUE INDEX IF NOT EXISTS conversations_direct_key_unique ON conversations (direct_key);
     `,
   },
+  {
+    version: 6,
+    name: "teacher mentor applications and dual professional profiles",
+    sql: `
+      ALTER TABLE professional_profiles DROP CONSTRAINT IF EXISTS professional_profiles_user_id_key;
+      CREATE UNIQUE INDEX IF NOT EXISTS professional_profiles_user_kind_unique
+        ON professional_profiles (user_id, kind) WHERE user_id IS NOT NULL;
+
+      CREATE TABLE IF NOT EXISTS mentor_applications (
+        id UUID PRIMARY KEY,
+        user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+        specialty VARCHAR(180) NOT NULL,
+        biography VARCHAR(1200) NOT NULL,
+        availability VARCHAR(240) NOT NULL,
+        meeting_mode VARCHAR(80) NOT NULL,
+        languages TEXT[] NOT NULL DEFAULT '{}',
+        status VARCHAR(16) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+        reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS mentor_applications_status_idx
+        ON mentor_applications (status, created_at DESC);
+    `,
+  },
 ];
 
 export async function runMigrations() {

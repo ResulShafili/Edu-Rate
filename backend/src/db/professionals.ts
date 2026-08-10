@@ -24,7 +24,24 @@ const seedProfiles: Omit<ProfessionalProfile, "id" | "userId">[] = [
   { kind:"mentor", slug:"sevinc-melikova", name:"Sevinc Məlikova", headline:"Karyera mentoru", specialty:"Yaradıcı karyera", biography:"Portfel, müsahibə və karyera istiqamətini planlaşdırmağa dəstək verir.", city:"Bakı", experienceYears:9, availability:"Bir gün ərzində cavab verir", meetingMode:"Onlayn", languages:["Azərbaycan dili","İngilis dili"], expertise:["Karyera","Portfel"], status:"approved", visible:true },
 ];
 
-const memory = new Map(seedProfiles.map((profile) => [profile.slug, { ...profile, id: randomUUID(), userId:null }]));
+const memory = new Map<string, ProfessionalProfile>(
+  seedProfiles.map((profile) => [profile.slug, { ...profile, id: randomUUID(), userId: null }]),
+);
+
+export function activateMemoryMentorProfile(input: {
+  userId: string; name: string; specialty: string; biography: string;
+  availability: string; meetingMode: string; languages: string[];
+}) {
+  if (databasePool) return;
+  const slug = `mentor-${input.userId}`;
+  memory.set(slug, {
+    id: randomUUID(), userId: input.userId, kind: "mentor", slug, name: input.name,
+    headline: `${input.specialty} mentoru`, specialty: input.specialty, biography: input.biography,
+    city: "Xankəndi", experienceYears: 0, availability: input.availability,
+    meetingMode: input.meetingMode, languages: input.languages, expertise: [input.specialty],
+    status: "approved", visible: true,
+  });
+}
 
 export async function seedProfessionalProfiles() {
   if (!databasePool) return;

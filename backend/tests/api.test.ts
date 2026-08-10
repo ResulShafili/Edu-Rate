@@ -628,7 +628,7 @@ describe("EduRate API", () => {
       .expect(204);
   });
 
-  it("teacher and mentor registrations require approval and expose role workspaces", async () => {
+  it("müəllim qeydiyyatından sonra eyni hesabla mentorluq müraciəti yaradır", async () => {
     const suffix = Date.now();
     const adminAuthorization = `Bearer ${reusableAdminToken}`;
 
@@ -647,19 +647,41 @@ describe("EduRate API", () => {
       .set("Authorization", adminAuthorization).send({ status: "Aktiv" }).expect(200);
     const teacherLogin = await request(app).post("/api/auth/login").set("X-Forwarded-For", "203.0.113.63")
       .send({ email: `teacher.${suffix}@example.az`, password: "EduRate2026" }).expect(200);
+    const teacherAuthorization = `Bearer ${teacherLogin.body.data.token}`;
     const teacherWorkspace = await request(app).get("/api/workspace")
-      .set("Authorization", `Bearer ${teacherLogin.body.data.token}`).expect(200);
+      .set("Authorization", teacherAuthorization).expect(200);
     assert.equal(teacherWorkspace.body.data.role, "teacher");
     assert.equal(teacherWorkspace.body.data.focus, "Riyaziyyat");
 
-    const mentorSignup = await request(app).post("/api/auth/signup").set("X-Forwarded-For", "203.0.113.64").send({
-      name: "Aygün Rzayeva", email: `mentor.${suffix}@example.az`, password: "EduRate2026",
+    await request(app).post("/api/auth/signup").set("X-Forwarded-For", "203.0.113.64").send({
+      name: "Ayrıca Mentor", email: `mentor.${suffix}@example.az`, password: "EduRate2026",
       university: "Qarabağ Universiteti", accountType: "mentor", program: "Məhsul strategiyası",
-    }).expect(201);
-    assert.equal(mentorSignup.body.data.requiresApproval, true);
-    assert.equal(mentorSignup.body.data.user.role, "mentor");
-    await request(app).patch(`/api/admin/users/${mentorSignup.body.data.user.id}`)
-      .set("Authorization", adminAuthorization).send({ status: "Aktiv" }).expect(200);
+    }).expect(422);
+
+    const application = await request(app).post("/api/workspace/mentor-application")
+      .set("Authorization", teacherAuthorization).send({
+        specialty: "Riyaziyyat mentorluğu",
+        biography: "Tələbələrə riyazi düşüncə və akademik inkişaf üzrə dəstək verirəm.",
+        availability: "Həftəiçi 18:00-dan sonra",
+        meetingMode: "Hibrid",
+        languages: ["Azərbaycan dili"],
+      }).expect(201);
+    assert.equal(application.body.data.status, "pending");
+    await request(app).post("/api/workspace/mentor-application")
+      .set("Authorization", teacherAuthorization).send({
+        specialty: "Riyaziyyat mentorluğu", biography: "Tələbələrə riyazi düşüncə və akademik inkişaf üzrə dəstək verirəm.",
+        availability: "Həftəiçi", meetingMode: "Onlayn", languages: ["Azərbaycan dili"],
+      }).expect(409);
+
+    const pendingApplications = await request(app).get("/api/admin/mentor-applications?status=pending")
+      .set("Authorization", adminAuthorization).expect(200);
+    assert.ok(pendingApplications.body.data.some((item: { id: string }) => item.id === application.body.data.id));
+    await request(app).patch(`/api/admin/mentor-applications/${application.body.data.id}`)
+      .set("Authorization", adminAuthorization).send({ status: "approved" }).expect(200);
+
+    const dualWorkspace = await request(app).get("/api/workspace").set("Authorization", teacherAuthorization).expect(200);
+    assert.equal(dualWorkspace.body.data.role, "teacher");
+    assert.equal(dualWorkspace.body.data.mentorEnabled, true);
 
     const studentSignup = await request(app).post("/api/auth/signup").set("X-Forwarded-For", "203.0.113.65").send({
       name: "Mentorluq Test Tələbəsi", email: `mentor.student.${suffix}@example.az`, password: "EduRate2026",
@@ -668,15 +690,12 @@ describe("EduRate API", () => {
     }).expect(201);
     const mentorship = await request(app).post("/api/mentorship/requests")
       .set("Authorization", `Bearer ${studentSignup.body.data.token}`)
-      .send({ mentorId: "aygun-rzayeva", note: "Karyera planımı dəqiqləşdirmək istəyirəm." }).expect(201);
+      .send({ mentorId: `mentor-${teacherSignup.body.data.user.id}`, note: "Karyera planımı dəqiqləşdirmək istəyirəm." }).expect(201);
 
-    const mentorLogin = await request(app).post("/api/auth/login").set("X-Forwarded-For", "203.0.113.66")
-      .send({ email: `mentor.${suffix}@example.az`, password: "EduRate2026" }).expect(200);
-    const mentorAuthorization = `Bearer ${mentorLogin.body.data.token}`;
-    const mentorWorkspace = await request(app).get("/api/workspace").set("Authorization", mentorAuthorization).expect(200);
-    assert.ok(mentorWorkspace.body.data.items.some((item: { id: string }) => item.id === mentorship.body.data.id));
+    const mentorWorkspace = await request(app).get("/api/workspace").set("Authorization", teacherAuthorization).expect(200);
+    assert.ok(mentorWorkspace.body.data.mentorItems.some((item: { id: string }) => item.id === mentorship.body.data.id));
     const accepted = await request(app).patch(`/api/workspace/mentorship/${mentorship.body.data.id}`)
-      .set("Authorization", mentorAuthorization).send({ status: "accepted" }).expect(200);
+      .set("Authorization", teacherAuthorization).send({ status: "accepted" }).expect(200);
     assert.equal(accepted.body.data.status, "accepted");
   });
 

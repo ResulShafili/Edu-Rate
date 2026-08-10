@@ -10,8 +10,8 @@ type ModerationReview = {
   teacherId: string;
   course: string;
   semester: string;
-  text: string;
   rating: number;
+  criteria: { clarity: number; subjectKnowledge: number; objectivity: number; communication: number };
   status: "pending" | "approved" | "rejected";
   createdAt: string;
 };
@@ -40,7 +40,7 @@ export function ReviewModerationPanel() {
       <header>
         <div>
           <span><ShieldCheck size={14} aria-hidden="true" /> Təhlükəsiz icma</span>
-          <h2 id="admin-reviews-title">Rəy moderasiyası</h2>
+          <h2 id="admin-reviews-title">Qiymətləndirmə təsdiqi</h2>
         </div>
         <button type="button" onClick={() => void mutate()} disabled={isValidating} aria-label="Rəyləri yenilə">
           <RefreshCw size={15} aria-hidden="true" /> Yenilə
@@ -58,7 +58,12 @@ export function ReviewModerationPanel() {
           {data.map((review) => (
             <article key={review.id}>
               <div><span>{review.course} · {review.semester}</span><strong>{review.rating.toFixed(1)} / 5</strong></div>
-              <p>{review.text}</p>
+              <div className="admin-review-criteria">
+                <span>İzah <b>{review.criteria.clarity}/5</b></span>
+                <span>Fənn biliyi <b>{review.criteria.subjectKnowledge}/5</b></span>
+                <span>Obyektivlik <b>{review.criteria.objectivity}/5</b></span>
+                <span>Ünsiyyət <b>{review.criteria.communication}/5</b></span>
+              </div>
               <footer>
                 <small>{review.teacherId}</small>
                 <div>
