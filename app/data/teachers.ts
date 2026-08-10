@@ -24,7 +24,7 @@ export type TeacherReview = {
   author: string;
   initials: string;
   rating: number;
-  text: string;
+  text?: string;
   date: string;
   course: string;
   accent: string;

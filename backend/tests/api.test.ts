@@ -347,13 +347,12 @@ describe("EduRate API", () => {
       teacherId: "nigar-huseynli",
       course: "İngilis dili",
       semester: `2026-payız-${Date.now()}`,
-      text: "İzahlar aydın idi və tapşırıqlara faydalı geribildirim verildi.",
       criteria: { clarity: 5, subjectKnowledge: 5, objectivity: 4, communication: 5 },
     };
     const createdReview = await request(app).post("/api/reviews").set("Authorization", authorization).send(reviewInput).expect(201);
     reusableReviewId = createdReview.body.data.id;
     await request(app).post("/api/reviews").set("Authorization", authorization).send(reviewInput).expect(409);
-    await request(app).post("/api/reviews").set("Authorization", authorization).send({ ...reviewInput, semester: "2027-yaz", text: "Bu müəllim axmaqdır və heç nə bilmir." }).expect(422);
+    await request(app).post("/api/reviews").set("Authorization", authorization).send({ ...reviewInput, semester: "2027-yaz", text: "Açıq mətn API tərəfindən qəbul edilməməlidir." }).expect(422);
 
     const ticket = await request(app).post("/api/support/tickets").set("Authorization", authorization).send({
       name: "Aysel Məmmədli",
@@ -425,6 +424,7 @@ describe("EduRate API", () => {
     const review = published.body.data.find((item: { id: string }) => item.id === reusableReviewId);
     assert.ok(review);
     assert.equal(review.userId, undefined);
+    assert.equal(review.text, undefined);
     assert.equal(review.author, "Təsdiqlənmiş tələbə");
   });
 

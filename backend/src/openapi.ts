@@ -22,7 +22,7 @@ export const openApiDocument = {
     { name: "Events", description: "Tədbir CRUD və iştirak qeydiyyatları" },
     { name: "Clubs", description: "Klublar və üzvlüklər" },
     { name: "Mentorship", description: "Mentorluq müraciətlərinin idarə edilməsi" },
-    { name: "Reviews", description: "Müəllim rəyləri və moderasiya" },
+    { name: "Reviews", description: "Müəllimlərin meyar əsaslı rəqəmsal qiymətləndirilməsi" },
     { name: "Support", description: "Dəstək müraciətləri" },
     { name: "Community", description: "İstifadəçi kataloqu və əlaqələr" },
     { name: "Messaging", description: "Qalıcı şəxsi mesajlaşma və realtime hadisələri" },
@@ -218,17 +218,17 @@ export const openApiDocument = {
     },
     "/api/reviews": {
       get: {
-        tags: ["Reviews"], summary: "Təsdiqlənmiş müəllim rəylərini siyahıla",
+        tags: ["Reviews"], summary: "Təsdiqlənmiş müəllim qiymətləndirmələrini siyahıla",
         parameters: [
           { name: "teacherId", in: "query", schema: { type: "string" } },
           { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 50, default: 30 } },
         ],
-        responses: { "200": { description: "Dərc edilmiş rəylər" }, "422": { description: "Validasiya xətası" } },
+        responses: { "200": { description: "Dərc edilmiş rəqəmsal nəticələr" }, "422": { description: "Validasiya xətası" } },
       },
       post: {
-        tags: ["Reviews"], summary: "Moderasiya növbəsinə müəllim rəyi göndər", security: [{ bearerAuth: [] }],
+        tags: ["Reviews"], summary: "Müəllim üçün meyar əsaslı qiymətləndirmə göndər", security: [{ bearerAuth: [] }],
         requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/TeacherReviewInput" } } } },
-        responses: { "201": { description: "Rəy saxlanıldı" }, "409": { description: "Cari semestr üçün rəy mövcuddur" }, "422": { description: "Validasiya və ya moderasiya xətası" } },
+        responses: { "201": { description: "Qiymətləndirmə saxlanıldı" }, "409": { description: "Cari semestr üçün qiymətləndirmə mövcuddur" }, "422": { description: "Açıq mətn, naməlum sahə və ya natamam meyar qəbul edilmir" } },
       },
     },
     "/api/network/announcements": {
@@ -537,12 +537,11 @@ export const openApiDocument = {
       },
       TeacherReviewInput: {
         type: "object",
-        required: ["teacherId", "course", "semester", "text", "criteria"],
+        required: ["teacherId", "course", "semester", "criteria"],
         properties: {
           teacherId: { type: "string", example: "nigar-huseynli" },
           course: { type: "string", example: "İngilis dili" },
           semester: { type: "string", example: "2026-payız" },
-          text: { type: "string", minLength: 12, maxLength: 1200 },
           criteria: { type: "object", required: ["clarity", "subjectKnowledge", "objectivity", "communication"], properties: { clarity: { type: "integer", minimum: 1, maximum: 5 }, subjectKnowledge: { type: "integer", minimum: 1, maximum: 5 }, objectivity: { type: "integer", minimum: 1, maximum: 5 }, communication: { type: "integer", minimum: 1, maximum: 5 } } },
         },
       },

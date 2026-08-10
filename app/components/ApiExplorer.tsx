@@ -9,7 +9,7 @@ const endpointGroups = [
     title: "Sistem",
     endpoints: [
       { method: "GET", path: "/api/health", description: "API xidmətinin işləkliyini yoxlayır." },
-      { method: "POST", path: "/api/reviews/validate", description: "Müəllim rəylərini moderasiya qaydaları ilə yoxlayır." },
+      { method: "POST", path: "/api/reviews/validate", description: "Müəllim üçün dörd rəqəmsal qiymətləndirmə meyarını yoxlayır." },
     ],
   },
   {

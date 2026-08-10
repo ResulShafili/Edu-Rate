@@ -10,13 +10,11 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
   type CSSProperties,
   type FormEvent,
   type UIEvent,
 } from "react";
 import { teachers as teacherTemplates, type Teacher, type TeacherReview } from "../data/teachers";
-import { moderateReview } from "../lib/review-moderation";
 import {
   areCriteriaComplete,
   calculateCriteriaAverage,
@@ -44,7 +42,6 @@ type PublishedReview = {
   id: string;
   teacherId: string;
   course: string;
-  text: string;
   rating: number;
   author: string;
   initials: string;
@@ -69,7 +66,6 @@ export function TeacherEvaluation() {
   const [profileTeacher, setProfileTeacher] = useState<Teacher | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [criteriaRatings, setCriteriaRatings] = useState<CriteriaRatings>({ ...defaultCriteriaRatings });
-  const [reviewText, setReviewText] = useState("");
   const [reviewSent, setReviewSent] = useState(false);
   const [reviewChecking, setReviewChecking] = useState(false);
   const [reviewError, setReviewError] = useState<ReviewValidationResponse | null>(null);
@@ -106,7 +102,6 @@ export function TeacherEvaluation() {
       author: review.author,
       initials: review.initials,
       rating: review.rating,
-      text: review.text,
       date: new Intl.DateTimeFormat("az-AZ", { day: "numeric", month: "long", year: "numeric" }).format(new Date(review.createdAt)),
       course: review.course,
       accent: teacher?.accent ?? "#44766c",
@@ -127,13 +122,8 @@ export function TeacherEvaluation() {
     return [...filtered].sort((left, right) => teacherSort === "reviews" ? right.reviewCount - left.reviewCount : right.rating - left.rating);
   }, [availableTeacherIds, languageFilter, modeFilter, subjectFilter, teacherQuery, teacherSort, teachers]);
   const rating = calculateCriteriaAverage(criteriaRatings);
-  const localModeration = useMemo(() => moderateReview(reviewText), [reviewText]);
-  const visibleModerationIssue = reviewText.trim() && !localModeration.accepted ? localModeration : null;
-  const displayedError = reviewError ?? visibleModerationIssue;
   const canSubmit = Boolean(selectedTeacher)
     && areCriteriaComplete(criteriaRatings)
-    && reviewText.trim().length >= 12
-    && localModeration.accepted
     && !reviewSent
     && !reviewChecking;
 
@@ -175,7 +165,6 @@ export function TeacherEvaluation() {
       }
       setSelectedId(teacher.id);
       setCriteriaRatings({ ...defaultCriteriaRatings });
-      setReviewText("");
       setReviewSent(false);
       setReviewError(null);
     }
@@ -203,11 +192,6 @@ export function TeacherEvaluation() {
     });
   }
 
-  function updateReviewText(event: ChangeEvent<HTMLTextAreaElement>) {
-    setReviewText(event.target.value);
-    setReviewError(null);
-  }
-
   async function submitReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canSubmit || !selectedTeacher) return;
@@ -221,7 +205,6 @@ export function TeacherEvaluation() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: reviewText,
           criteria: criteriaRatings,
           teacherId: selectedTeacher.id,
           course: selectedTeacher.subject,
@@ -252,7 +235,6 @@ export function TeacherEvaluation() {
     confirmationTimer.current = window.setTimeout(() => {
       setReviewSent(false);
       setCriteriaRatings({ ...defaultCriteriaRatings });
-      setReviewText("");
     }, reduceMotion ? 900 : 2400);
   }
 
@@ -376,10 +358,10 @@ export function TeacherEvaluation() {
           <div className="rating-panel-copy">
             <span><Sparkles size={13} /> Təcrübəni qiymətləndir</span>
             <h3 id="teacher-rating-title">{selectedTeacher.name} sənə necə kömək etdi?</h3>
-            <p>Dörd peşəkar meyar üzrə səmimi rəyin digər tələbələrin daha doğru seçim etməsinə kömək edir.</p>
+            <p>Dörd peşəkar meyar üzrə verdiyin rəqəmsal qiymət digər tələbələrin daha doğru seçim etməsinə kömək edir.</p>
             <div className="rating-teacher-chip">
               <i>{selectedTeacher.initials}</i>
-              <span><strong>{selectedTeacher.subject}</strong><small>{formatInteger(selectedTeacher.reviewCount)} təsdiqlənmiş rəy</small></span>
+              <span><strong>{selectedTeacher.subject}</strong><small>{formatInteger(selectedTeacher.reviewCount)} təsdiqlənmiş qiymətləndirmə</small></span>
             </div>
           </div>
 
@@ -394,28 +376,9 @@ export function TeacherEvaluation() {
               disabled={reviewChecking || reviewSent}
               className="criteria-rating"
             />
-            <div className={`rating-textarea${reviewText ? " has-value" : ""}${displayedError ? " has-error" : ""}`}>
-              <textarea
-                id="teacher-review"
-                value={reviewText}
-                onChange={updateReviewText}
-                rows={5}
-                minLength={12}
-                maxLength={420}
-                placeholder=" "
-                aria-invalid={Boolean(displayedError)}
-                aria-describedby={`teacher-review-guidance${displayedError ? " teacher-review-error" : ""}`}
-                required
-              />
-              <label htmlFor="teacher-review">Dərs təcrübəndən konkret bir məqamı paylaş…</label>
-              <span>{reviewText.length} / 420</span>
-            </div>
-            <p id="teacher-review-guidance" className="review-guidance">
-              Şəxsi deyil, tədris təcrübəsini qiymətləndir: nə aydın idi, nəyi yaxşılaşdırmaq olardı?
-            </p>
-            <p className="review-score-explanation">Ümumi bal izahın aydınlığı, fənn biliyi, obyektivlik və ünsiyyət ballarının bərabər çəkili ortasıdır.</p>
+            <p className="review-score-explanation">Açıq mətn rəyi qəbul edilmir. Ümumi bal izahın aydınlığı, fənn biliyi, obyektivlik və ünsiyyət ballarının bərabər çəkili ortasıdır.</p>
             <AnimatePresence initial={false}>
-              {displayedError && (
+              {reviewError && (
                 <motion.div
                   id="teacher-review-error"
                   className="review-moderation-message"
@@ -425,7 +388,7 @@ export function TeacherEvaluation() {
                   exit={{ opacity: 0, y: -4, scale: 0.99 }}
                 >
                   <CircleAlert size={16} />
-                  <p><strong>{displayedError.reason}</strong><span>{displayedError.suggestion}</span></p>
+                  <p><strong>{reviewError.reason}</strong><span>{reviewError.suggestion}</span></p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -433,7 +396,7 @@ export function TeacherEvaluation() {
               <small>{rating === 0 ? "Dörd meyarı tamamla" : `Orta qiymət: ${formatDecimalScore(rating)} / 5`}</small>
               <motion.button type="submit" disabled={!canSubmit} whileTap={reduceMotion ? undefined : { scale: 0.96 }}>
                 {reviewSent ? <Check size={15} /> : reviewChecking ? <i className="review-check-spinner" /> : <Send size={14} />}
-                {reviewSent ? "Rəy göndərildi" : reviewChecking ? "Rəy yoxlanılır" : "Rəyi göndər"}
+                {reviewSent ? "Qiymət göndərildi" : reviewChecking ? "Qiymət saxlanılır" : "Qiyməti göndər"}
               </motion.button>
             </div>
 
@@ -454,8 +417,8 @@ export function TeacherEvaluation() {
                   >
                     <Check size={25} />
                   </motion.i>
-                  <strong>Rəyin moderasiyaya göndərildi</strong>
-                  <span>Təşəkkür edirik — rəy qaydalara uyğun təsdiqləndikdən sonra icmada görünəcək.</span>
+                  <strong>Qiymətləndirmən göndərildi</strong>
+                  <span>Təşəkkür edirik — rəqəmsal nəticə təsdiqləndikdən sonra müəllimin ümumi göstəricilərinə əlavə olunacaq.</span>
                   {!reduceMotion && (
                     <b className="review-success-ring" aria-hidden="true" />
                   )}
@@ -471,7 +434,7 @@ export function TeacherEvaluation() {
             <div className="rating-auth-required">
               <span>Rəylərin etibarlılığını qoruyuruq</span>
               <h3>Qiymətləndirmək üçün hesabına daxil ol.</h3>
-              <p>Hər tələbə eyni müəllim üçün semestr ərzində yalnız bir rəy göndərə bilər.</p>
+              <p>Hər tələbə eyni müəllim üçün semestr ərzində yalnız bir qiymətləndirmə göndərə bilər.</p>
               <Link href="/auth?returnTo=%2Fteachers">Daxil ol <ArrowRight size={15} /></Link>
             </div>
           )}
@@ -496,18 +459,18 @@ export function TeacherEvaluation() {
 
       <div className="reviews-heading">
         <div>
-          <span className="teachers-kicker">İcmanın rəyləri</span>
-          <h3>Son rəylər</h3>
+          <span className="teachers-kicker">Tələbə qiymətləndirmələri</span>
+          <h3>Son nəticələr</h3>
         </div>
         <p><Star size={14} fill="currentColor" /> {formatInteger(allReviews.length)} dərc edilmiş qiymətləndirmə</p>
       </div>
 
-      <div className="reviews-masonry" aria-label="Müəllimlər haqqında rəylər">
+      <div className="reviews-masonry" aria-label="Müəllimlərin rəqəmsal qiymətləndirmələri">
         {allReviews.slice(0, reviewLimit).map((review, index) => <ReviewCard key={review.id} review={review} index={index} />)}
       </div>
       {reviewLimit < allReviews.length && (
         <button type="button" className="reviews-load-more" onClick={() => setReviewLimit((current) => current + 6)}>
-          Daha çox rəy göstər
+          Daha çox nəticə göstər
         </button>
       )}
     </section>

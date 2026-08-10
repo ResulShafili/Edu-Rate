@@ -21,17 +21,13 @@ const reviewSchema = z.object({
   teacherId: z.string().trim().min(2).max(120),
   course: z.string().trim().min(2).max(180),
   semester: z.string().trim().min(2).max(80),
-  text: z.string().trim().min(12).max(1200),
   criteria: z.object({
     clarity: score,
     subjectKnowledge: score,
     objectivity: score,
     communication: score,
   }),
-});
-
-const blockedWords = /(?:siktir|qəhbə|orospu|peysər|gijdıllaq|götverən|axmaq|səfeh|beyinsiz|idiot)/iu;
-const contactDetails = /(?:https?:\/\/|www\.|\b[^\s@]+@[^\s@]+\.[^\s@]+\b)/iu;
+}).strict();
 
 reviewsRouter.get("/", async (request, response) => {
   const query = z.object({
@@ -44,7 +40,7 @@ reviewsRouter.get("/", async (request, response) => {
     limit: query.limit,
   });
   response.json({
-    data: reviews.map(({ userId: _userId, ...review }) => ({
+    data: reviews.map(({ userId: _userId, text: _text, ...review }) => ({
       ...review,
       author: "Təsdiqlənmiş tələbə",
       initials: "TT",
@@ -58,12 +54,10 @@ reviewsRouter.post("/", limiter, authenticate, async (request, response) => {
   if (!teacher || teacher.status !== "approved" || !teacher.visible) {
     throw new ApiError(404, "TEACHER_NOT_FOUND", "Aktiv müəllim profili tapılmadı.");
   }
-  if (blockedWords.test(input.text)) {
-    throw new ApiError(422, "REVIEW_MODERATION_FAILED", "Rəydə təhqir və ya nalayiq ifadə istifadə etmək olmaz.");
-  }
-  if (contactDetails.test(input.text)) {
-    throw new ApiError(422, "REVIEW_CONTACT_DETAILS", "Rəydə keçid və ya əlaqə məlumatı paylaşmaq olmaz.");
-  }
-  const review = await createTeacherReview(request.auth!.userId, { ...input, teacherId: teacher.slug }, teacher.id);
+  const review = await createTeacherReview(request.auth!.userId, {
+    ...input,
+    teacherId: teacher.slug,
+    text: "Meyarlar üzrə rəqəmsal qiymətləndirmə.",
+  }, teacher.id);
   response.status(201).json({ data: review });
 });

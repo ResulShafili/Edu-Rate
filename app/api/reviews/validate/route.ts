@@ -1,7 +1,3 @@
-import {
-  moderateReview,
-  REVIEW_MAX_LENGTH,
-} from "../../../lib/review-moderation";
 import { checkRateLimit } from "../../../lib/api/rate-limit";
 import { assertTrustedMutation } from "../../../lib/api/security";
 import { getRequestIdentity } from "../../../lib/auth/request-identity";
@@ -15,7 +11,6 @@ const criterionKeys = [
 ] as const;
 
 type ReviewPayload = {
-  text?: unknown;
   criteria?: unknown;
   teacherId?: unknown;
   course?: unknown;
@@ -59,7 +54,7 @@ export async function POST(request: Request) {
   }
 
   const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (contentLength > REVIEW_MAX_LENGTH * 4) {
+  if (contentLength > 4_096) {
     return json({ accepted: false, reason: "Sorğu həddindən artıq böyükdür." }, 413);
   }
 
@@ -70,8 +65,8 @@ export async function POST(request: Request) {
     return json({ accepted: false, reason: "Sorğu oxuna bilmədi." }, 400);
   }
 
-  if (typeof payload.text !== "string") {
-    return json({ accepted: false, reason: "Rəy mətni düzgün deyil." }, 400);
+  if ("text" in payload) {
+    return json({ accepted: false, reason: "Açıq mətn rəyi qəbul edilmir. Yalnız rəqəmsal meyarları seç." }, 400);
   }
 
   if (typeof payload.teacherId !== "string" || typeof payload.course !== "string" || typeof payload.semester !== "string") {
@@ -86,25 +81,6 @@ export async function POST(request: Request) {
     }, 422);
   }
 
-  if (payload.text.trim().length < 12) {
-    return json({
-      accepted: false,
-      reason: "Rəy çox qısadır.",
-      suggestion: "Dərsdə müşahidə etdiyin konkret bir məqamı ən azı 12 simvolla paylaş.",
-    }, 422);
-  }
-
-  const result = moderateReview(payload.text);
-  if (!result.accepted) {
-    return json({
-      accepted: false,
-      allowed: false,
-      reason: result.reason,
-      suggestion: result.suggestion,
-      issues: result.issues.map(({ code, reason, suggestion }) => ({ code, reason, suggestion })),
-    }, 422);
-  }
-
   const token = readRemoteCredentialToken(request);
   if (!token) return json({ accepted: false, reason: "Sessiyanı yeniləmək üçün yenidən daxil ol." }, 401);
 
@@ -116,7 +92,6 @@ export async function POST(request: Request) {
         teacherId: payload.teacherId.trim(),
         course: payload.course.trim(),
         semester: payload.semester.trim(),
-        text: payload.text.trim(),
         criteria: payload.criteria,
       },
     });
@@ -129,7 +104,6 @@ export async function POST(request: Request) {
   return json({
     accepted: true,
     allowed: true,
-    text: payload.text.trim(),
     status: "pending",
   }, 200);
 }

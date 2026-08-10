@@ -1,11 +1,11 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Flag, Quote, Star } from "lucide-react";
-import Link from "next/link";
+import { Star } from "lucide-react";
 import type { CSSProperties } from "react";
 import type { TeacherReview } from "../data/teachers";
 import { criteriaLabels, type ReviewCriterionKey } from "./CriteriaRating";
+import { formatDecimalScore } from "../lib/number-format";
 
 type ReviewCardProps = {
   review: TeacherReview;
@@ -14,10 +14,8 @@ type ReviewCardProps = {
 
 export function ReviewCard({ review, index }: ReviewCardProps) {
   const reduceMotion = useReducedMotion();
-  const criterionHighlights = review.criteria
+  const criterionScores = review.criteria
     ? (Object.entries(review.criteria) as Array<[ReviewCriterionKey, number]>)
-        .sort(([, first], [, second]) => second - first)
-        .slice(0, 2)
     : [];
 
   return (
@@ -31,17 +29,16 @@ export function ReviewCard({ review, index }: ReviewCardProps) {
     >
       <div className="review-topline">
         <span>{review.course}</span>
-        <Quote size={17} />
+        <strong className="review-score-value">{formatDecimalScore(review.rating)} / 5</strong>
       </div>
-      <p>{review.text}</p>
       <div className="review-stars" aria-label={`${review.rating} ulduz`}> 
         {Array.from({ length: 5 }, (_, star) => (
           <Star key={star} size={12} fill={star < review.rating ? "currentColor" : "none"} />
         ))}
       </div>
-      {criterionHighlights.length > 0 && (
-        <dl className="review-criteria" aria-label="Rəydə önə çıxan meyarlar">
-          {criterionHighlights.map(([criterion, score]) => (
+      {criterionScores.length > 0 && (
+        <dl className="review-criteria" aria-label="Qiymətləndirmə meyarları">
+          {criterionScores.map(([criterion, score]) => (
             <div key={criterion}>
               <dt>{criteriaLabels[criterion]}</dt>
               <dd>{score}/5</dd>
@@ -55,7 +52,6 @@ export function ReviewCard({ review, index }: ReviewCardProps) {
           <strong>{review.author}</strong>
           <small>{review.teacherName} · {review.date}</small>
         </div>
-        <Link href={`/support?topic=review&review=${encodeURIComponent(review.id)}`} className="review-report" aria-label={`${review.teacherName} haqqında rəyi bildir`} title="Rəyi bildir"><Flag size={14} aria-hidden="true" /></Link>
       </div>
     </motion.article>
   );
