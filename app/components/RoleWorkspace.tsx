@@ -80,9 +80,28 @@ export function RoleWorkspace() {
   const mentorApplication = data.mentorApplication;
   const canApplyForMentorship = data.role === "teacher" && !data.mentorEnabled && mentorApplication?.status !== "pending";
 
+  function openMentorApplication() {
+    setApplicationOpen(true);
+    window.requestAnimationFrame(() => {
+      document.getElementById("mentor-path-title")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
   return (
     <section className="role-workspace" aria-labelledby="workspace-title" aria-busy={isValidating}>
-      <header className="workspace-header"><div><span>{roleLabel(data.role)}</span><h1 id="workspace-title">{data.title}</h1><p>{data.focus}</p></div><button type="button" onClick={() => void mutate()} disabled={isValidating}><RefreshCw size={15} /> Yenilə</button></header>
+      <header className="workspace-header">
+        <div><span>{roleLabel(data.role)}</span><h1 id="workspace-title">{data.title}</h1><p>{data.focus}</p></div>
+        <div className="workspace-header-actions">
+          {canApplyForMentorship && (
+            <button type="button" className="is-primary" onClick={openMentorApplication}>
+              <HeartHandshake size={15} /> {mentorApplication?.status === "rejected" ? "Yenidən müraciət et" : "Mentor kimi müraciət et"}
+            </button>
+          )}
+          {data.role === "teacher" && mentorApplication?.status === "pending" && <span className="workspace-header-status">Mentor müraciəti yoxlanılır</span>}
+          {data.role === "teacher" && data.mentorEnabled && <span className="workspace-header-status is-approved"><Check size={14} /> Mentor profili aktivdir</span>}
+          <button type="button" onClick={() => void mutate()} disabled={isValidating}><RefreshCw size={15} /> Yenilə</button>
+        </div>
+      </header>
       <div className="workspace-metrics">{data.metrics.map((metric) => <article key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong></article>)}</div>
 
       {data.role === "teacher" && (
@@ -107,7 +126,7 @@ export function RoleWorkspace() {
               <div className="workspace-mentor-actions"><button type="button" onClick={() => setApplicationOpen(false)} disabled={applicationPending}>Ləğv et</button><button type="submit" disabled={applicationPending}><Send size={14} /> {applicationPending ? "Göndərilir…" : "Müraciəti göndər"}</button></div>
             </form>
           ) : canApplyForMentorship ? (
-            <button type="button" className="workspace-mentor-apply" onClick={() => setApplicationOpen(true)}><HeartHandshake size={16} /> {mentorApplication?.status === "rejected" ? "Yenidən müraciət et" : "Mentor olmaq üçün müraciət et"}</button>
+            <button type="button" className="workspace-mentor-apply" onClick={openMentorApplication}><HeartHandshake size={16} /> {mentorApplication?.status === "rejected" ? "Yenidən müraciət et" : "Mentor olmaq üçün müraciət et"}</button>
           ) : null}
         </section>
       )}

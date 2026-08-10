@@ -1493,8 +1493,12 @@ body {
 .kuds-shell .workspace-queue > header span { color: var(--ku-green); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .kuds-shell .workspace-header h1 { margin: 5px 0 0; color: var(--kuds-text); font-size: clamp(34px, 5vw, 58px); line-height: 1; letter-spacing: -.055em; }
 .kuds-shell .workspace-header p { margin: 8px 0 0; color: var(--kuds-muted); font-size: 13px; }
+.kuds-shell .workspace-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
 .kuds-shell .workspace-header button,
 .kuds-shell .workspace-state button { display: inline-flex; min-height: 42px; padding: 0 15px; flex: none; align-items: center; justify-content: center; gap: 7px; color: var(--ku-dark-green); font-size: 11px; font-weight: 700; border: 1px solid var(--kuds-border); border-radius: 10px; background: var(--kuds-surface); }
+.kuds-shell .workspace-header button.is-primary { color: #fff; border-color: var(--ku-green); background: var(--ku-green); box-shadow: 0 8px 20px rgb(68 118 108 / 18%); }
+.kuds-shell .workspace-header-status { display: inline-flex; min-height: 42px; padding: 0 13px; align-items: center; gap: 6px; color: var(--ku-dark-green) !important; font-size: 10px !important; letter-spacing: 0 !important; text-transform: none !important; border: 1px solid var(--kuds-border); border-radius: 10px; background: var(--kuds-surface); }
+.kuds-shell .workspace-header-status.is-approved { border-color: color-mix(in srgb, var(--ku-green), transparent 58%); }
 .kuds-shell .workspace-metrics { display: grid; margin-top: 20px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .kuds-shell .workspace-metrics article { display: grid; min-height: 128px; padding: 18px; align-content: space-between; border: 1px solid var(--kuds-border); border-radius: 14px; background: var(--kuds-surface); box-shadow: var(--kuds-shadow-xs); }
 .kuds-shell .workspace-metrics span { color: var(--kuds-muted); font-size: 11px; }
@@ -2406,6 +2410,8 @@ body {
   .kuds-shell .announcement-count { display: none; }
   .kuds-shell .auth-account-type > div { grid-template-columns: 1fr; }
   .kuds-shell .workspace-header { align-items: flex-start; flex-direction: column; }
+  .kuds-shell .workspace-header-actions { width: 100%; flex-wrap: wrap; justify-content: flex-start; }
+  .kuds-shell .workspace-header-actions .is-primary { flex: 1 1 190px; }
   .kuds-shell .workspace-metrics,
   .kuds-shell .workspace-items { grid-template-columns: 1fr; }
   .kuds-shell .workspace-metrics article { min-height: 104px; }
