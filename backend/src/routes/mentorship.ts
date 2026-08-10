@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { mentors } from "../data/catalog.js";
+import { findProfessionalProfile } from "../db/professionals.js";
 import {
   createMentorshipRequest,
   deleteMentorshipRequest,
@@ -26,10 +26,11 @@ mentorshipRouter.get("/", async (request, response) => {
 
 mentorshipRouter.post("/", async (request, response) => {
   const input = requestSchema.parse(request.body);
-  if (!mentors.some((mentor) => mentor.id === input.mentorId && mentor.available)) {
+  const mentor = await findProfessionalProfile(input.mentorId, "mentor");
+  if (!mentor || mentor.status !== "approved" || !mentor.visible) {
     throw new ApiError(404, "MENTOR_NOT_FOUND", "Aktiv mentor tapılmadı.");
   }
-  response.status(201).json({ data: await createMentorshipRequest(request.auth!.userId, input.mentorId, input.note) });
+  response.status(201).json({ data: await createMentorshipRequest(request.auth!.userId, mentor.slug, input.note, mentor.id) });
 });
 
 mentorshipRouter.patch("/:requestId", async (request, response) => {

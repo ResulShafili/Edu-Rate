@@ -1,7 +1,10 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
-import { createSupportTicket } from "../db/platform.js";
+import { createSupportTicket, listSupportTickets, updateSupportTicketStatus } from "../db/platform.js";
+import { authenticate, requireAdmin } from "../middleware/authenticate.js";
+import { findUserById } from "../db/database.js";
+import { ApiError } from "../lib/api-error.js";
 
 export const supportRouter = Router();
 
@@ -20,7 +23,26 @@ const ticketSchema = z.object({
   message: z.string().trim().min(20).max(2000),
 });
 
-supportRouter.post("/tickets", limiter, async (request, response) => {
-  const ticket = await createSupportTicket(ticketSchema.parse(request.body), null);
+supportRouter.get("/tickets/me", authenticate, async (request, response) => {
+  response.json({ data: await listSupportTickets(request.auth!.userId) });
+});
+
+supportRouter.get("/tickets", authenticate, requireAdmin, async (_request, response) => {
+  response.json({ data: await listSupportTickets() });
+});
+
+supportRouter.patch("/tickets/:id", authenticate, requireAdmin, async (request, response) => {
+  const id=z.string().uuid().parse(request.params.id);
+  const {status}=z.object({status:z.enum(["open","in_progress","resolved"])}).strict().parse(request.body);
+  const ticket=await updateSupportTicketStatus(id,status);
+  if(!ticket) throw new ApiError(404,"TICKET_NOT_FOUND","Dəstək müraciəti tapılmadı.");
+  response.json({data:ticket});
+});
+
+supportRouter.post("/tickets", limiter, authenticate, async (request, response) => {
+  const user=await findUserById(request.auth!.userId);
+  if(!user) throw new ApiError(404,"USER_NOT_FOUND","İstifadəçi tapılmadı.");
+  const input=ticketSchema.parse(request.body);
+  const ticket = await createSupportTicket({ ...input, name:user.name, email:user.email }, user.id);
   response.status(201).json({ data: { reference: ticket.reference, status: ticket.status } });
 });

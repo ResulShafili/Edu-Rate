@@ -11,16 +11,20 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
-import { mentors } from "../data/mentors";
+import { mentors as mentorTemplates, type Mentor } from "../data/mentors";
 import { useAuth } from "./AuthProvider";
 import { ErrorState, Skeleton } from "./ui/Primitives";
 
 const ease = [0.22, 1, 0.36, 1] as const;
+type ProfessionalMentor={id:string;profileId:string;available:boolean;name:string;headline:string;specialty:string;biography:string;city:string;experienceYears:number;availability:string;meetingMode:string;languages:string[];expertise:string[]};
+function toMentor(profile:ProfessionalMentor):Mentor{const template=mentorTemplates.find((item)=>item.id===profile.id);if(template)return{...template,name:profile.name,role:profile.headline,focus:profile.specialty,bio:profile.biography,location:`${profile.city}, Azərbaycan`,experience:`${profile.experienceYears} il təcrübə`,responseTime:profile.availability,mode:normalizeMentorMode(profile.meetingMode),languages:profile.languages,expertise:profile.expertise};return{id:profile.id,name:profile.name,initials:profile.name.split(/\s+/).slice(0,2).map((part)=>part[0]?.toLocaleUpperCase("az")).join(""),role:profile.headline,focus:profile.specialty,bio:profile.biography,location:`${profile.city}, Azərbaycan`,timezone:"UTC+4",experience:`${profile.experienceYears} il təcrübə`,responseTime:profile.availability,availability:[],mode:normalizeMentorMode(profile.meetingMode),languages:profile.languages,expertise:profile.expertise,outcome:"",accent:"#44766c",glow:"rgba(68,118,108,.24)"};}
+function normalizeMentorMode(value:string):Mentor["mode"]{return value==="Onlayn"||value==="Əyani"||value==="Hibrid"?value:"Onlayn";}
 
 export function MentorshipDashboard() {
   const [availableMentorIds, setAvailableMentorIds] = useState<Set<string> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [catalogMentors,setCatalogMentors]=useState<Mentor[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [requestedIds, setRequestedIds] = useState<Set<string>>(() => new Set());
   const [requestingId, setRequestingId] = useState<string | null>(null);
@@ -32,16 +36,19 @@ export function MentorshipDashboard() {
   const [response, setResponse] = useState("all");
   const reduceMotion = useReducedMotion();
   const { user } = useAuth();
+  const mentors=catalogMentors;
 
   const loadMentors = useCallback(async () => {
     setIsLoading(true);
     setLoadError("");
     try {
       const response = await fetch("/api/catalog/mentors", { cache: "no-store" });
-      const payload = await response.json() as { data?: Array<{ id: string; available: boolean }>; error?: { message?: string } };
+      const payload = await response.json() as { data?: ProfessionalMentor[]; error?: { message?: string } };
       if (!response.ok) throw new Error(payload.error?.message ?? "Mentorlar yüklənmədi.");
       if (!Array.isArray(payload.data)) throw new Error("Mentor məlumatları düzgün formatda deyil.");
-      setAvailableMentorIds(new Set(payload.data.filter((mentor) => mentor.available).map((mentor) => mentor.id)));
+      const active=payload.data.filter((mentor)=>mentor.available);
+      setAvailableMentorIds(new Set(active.map((mentor) => mentor.id)));
+      setCatalogMentors(active.map(toMentor));
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : "Mentorlar yüklənmədi.");
     } finally {
@@ -80,7 +87,7 @@ export function MentorshipDashboard() {
       const matchesResponse = response === "all" || (response === "fast" ? fastResponse : !fastResponse);
       return matchesQuery && matchesDay && matchesLanguage && matchesResponse && (mode === "all" || mentor.mode === mode);
     });
-  }, [availableMentorIds, day, language, mode, query, response]);
+  }, [availableMentorIds, day, language, mentors, mode, query, response]);
 
   async function requestMentorship(mentorId: string) {
     if (requestingId) return;

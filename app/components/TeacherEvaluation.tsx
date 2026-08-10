@@ -15,7 +15,7 @@ import {
   type FormEvent,
   type UIEvent,
 } from "react";
-import { teacherReviews, teachers, type Teacher, type TeacherReview } from "../data/teachers";
+import { teachers as teacherTemplates, type Teacher, type TeacherReview } from "../data/teachers";
 import { moderateReview } from "../lib/review-moderation";
 import {
   areCriteriaComplete,
@@ -52,6 +52,11 @@ type PublishedReview = {
   createdAt: string;
 };
 
+type ProfessionalTeacher={id:string;profileId:string;available:boolean;name:string;headline:string;specialty:string;biography:string;city:string;experienceYears:number;availability:string;meetingMode:string;languages:string[]};
+
+function toTeacher(profile:ProfessionalTeacher):Teacher{const template=teacherTemplates.find((item)=>item.id===profile.id);if(template)return{...template,name:profile.name,role:profile.headline,subject:profile.specialty,bio:profile.biography,city:profile.city,experience:`${profile.experienceYears} il təcrübə`,availability:profile.availability,teachingMode:normalizeMode(profile.meetingMode),language:profile.languages.includes("İngilis dili")?"İngilis dili":"Azərbaycan dili"};return{id:profile.id,name:profile.name,initials:profile.name.split(/\s+/).slice(0,2).map((part)=>part[0]?.toLocaleUpperCase("az")).join(""),role:profile.headline,subject:profile.specialty,bio:profile.biography,city:profile.city,experience:`${profile.experienceYears} il təcrübə`,availability:profile.availability,teachingMode:normalizeMode(profile.meetingMode),language:profile.languages.includes("İngilis dili")?"İngilis dili":"Azərbaycan dili",studentsCount:0,rating:0,reviewCount:0,accent:"#44766c",glow:"rgba(68,118,108,.24)"};}
+function normalizeMode(value:string):Teacher["teachingMode"]{return value==="Onlayn"||value==="Əyani"||value==="Hibrid"?value:"Onlayn";}
+
 async function loadPublishedReviews(): Promise<PublishedReview[]> {
   const response = await fetch("/api/reviews?limit=50", { headers: { Accept: "application/json" } });
   const payload = await response.json() as { data?: PublishedReview[]; error?: { message?: string } };
@@ -74,6 +79,9 @@ export function TeacherEvaluation() {
   const [languageFilter, setLanguageFilter] = useState("all");
   const [teacherSort, setTeacherSort] = useState("rating");
   const [reviewLimit, setReviewLimit] = useState(6);
+  const [availableTeacherIds,setAvailableTeacherIds]=useState<Set<string>|null>(null);
+  const [teacherCatalogError,setTeacherCatalogError]=useState("");
+  const [catalogTeachers,setCatalogTeachers]=useState<Teacher[]>([]);
   const trackRef = useRef<HTMLDivElement>(null);
   const ratingPanelRef = useRef<HTMLDivElement>(null);
   const confirmationTimer = useRef<number | null>(null);
@@ -82,10 +90,12 @@ export function TeacherEvaluation() {
   const ratingScrollPending = useRef(false);
   const reduceMotion = useReducedMotion();
   const { user } = useAuth();
+  const teachers=catalogTeachers;
   const publishedReviews = useSWR("published-teacher-reviews", loadPublishedReviews, {
     revalidateOnFocus: false,
     dedupingInterval: 30_000,
   });
+  useEffect(()=>{let cancelled=false;void fetch("/api/catalog/teachers",{cache:"no-store"}).then(async(response)=>{const payload=await response.json() as {data?:ProfessionalTeacher[];error?:{message?:string}};if(!response.ok)throw new Error(payload.error?.message??"Müəllim kataloqu yüklənmədi.");if(!cancelled){const active=(payload.data??[]).filter((item)=>item.available);setAvailableTeacherIds(new Set(active.map((item)=>item.id)));setCatalogTeachers(active.map(toTeacher));}}).catch((value)=>{if(!cancelled){setAvailableTeacherIds(new Set());setTeacherCatalogError(value instanceof Error?value.message:"Müəllim kataloqu yüklənmədi.");}});return()=>{cancelled=true;};},[]);
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedId) ?? null;
   const liveReviews = useMemo<TeacherReview[]>(() => (publishedReviews.data ?? []).map((review) => {
     const teacher = teachers.find((item) => item.id === review.teacherId);
@@ -102,11 +112,12 @@ export function TeacherEvaluation() {
       accent: teacher?.accent ?? "#44766c",
       criteria: review.criteria,
     };
-  }), [publishedReviews.data]);
-  const allReviews = [...liveReviews, ...teacherReviews.filter((review) => !liveReviews.some((live) => live.id === review.id))];
+  }), [publishedReviews.data, teachers]);
+  const allReviews = liveReviews;
   const displayedTeachers = useMemo(() => {
     const query = teacherQuery.trim().toLocaleLowerCase("az");
     const filtered = teachers.filter((teacher) => {
+      if(!availableTeacherIds?.has(teacher.id)) return false;
       const matchesQuery = !query || `${teacher.name} ${teacher.subject}`.toLocaleLowerCase("az").includes(query);
       const matchesSubject = subjectFilter === "all" || teacher.subject === subjectFilter;
       const matchesMode = modeFilter === "all" || teacher.teachingMode === modeFilter;
@@ -114,7 +125,7 @@ export function TeacherEvaluation() {
       return matchesQuery && matchesSubject && matchesMode && matchesLanguage;
     });
     return [...filtered].sort((left, right) => teacherSort === "reviews" ? right.reviewCount - left.reviewCount : right.rating - left.rating);
-  }, [languageFilter, modeFilter, subjectFilter, teacherQuery, teacherSort]);
+  }, [availableTeacherIds, languageFilter, modeFilter, subjectFilter, teacherQuery, teacherSort, teachers]);
   const rating = calculateCriteriaAverage(criteriaRatings);
   const localModeration = useMemo(() => moderateReview(reviewText), [reviewText]);
   const visibleModerationIssue = reviewText.trim() && !localModeration.accepted ? localModeration : null;
@@ -333,7 +344,7 @@ export function TeacherEvaluation() {
             onOpenProfile={openTeacherProfile}
           />
         ))}
-        {displayedTeachers.length === 0 && <div className="teacher-filter-empty">Bu filtrlərə uyğun müəllim tapılmadı.</div>}
+        {displayedTeachers.length === 0 && <div className="teacher-filter-empty">{availableTeacherIds===null?"Müəllimlər yüklənir…":teacherCatalogError||"Bu filtrlərə uyğun müəllim tapılmadı."}</div>}
         <span className="teachers-track-spacer" aria-hidden="true" />
       </div>
 
@@ -488,7 +499,7 @@ export function TeacherEvaluation() {
           <span className="teachers-kicker">İcmanın rəyləri</span>
           <h3>Son rəylər</h3>
         </div>
-        <p><Star size={14} fill="currentColor" /> Son 30 gündə {formatInteger(teacherReviews.length + 182)} yeni qiymətləndirmə</p>
+        <p><Star size={14} fill="currentColor" /> {formatInteger(allReviews.length)} dərc edilmiş qiymətləndirmə</p>
       </div>
 
       <div className="reviews-masonry" aria-label="Müəllimlər haqqında rəylər">

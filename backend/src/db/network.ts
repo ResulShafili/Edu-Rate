@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { databasePool } from "./database.js";
 
 export type NetworkCategory = "official" | "faculties" | "clubs" | "scholarship" | "events";
@@ -74,7 +75,7 @@ export async function initializeNetworkDatabase() {
 export async function listAnnouncements(category?: NetworkCategory): Promise<AnnouncementRecord[]> {
   if (!databasePool) return announcements.filter((item) => !category || item.category === category);
   const result = await databasePool.query(
-    `SELECT * FROM announcements ${category ? "WHERE category = $1" : ""} ORDER BY priority DESC, published_at DESC`,
+    `SELECT * FROM announcements WHERE status='published' ${category ? "AND category = $1" : ""} ORDER BY priority DESC, published_at DESC`,
     category ? [category] : [],
   );
   return result.rows.map((row) => ({ id: String(row.id), kind: "announcement", category: row.category, title: String(row.title), summary: String(row.summary), source: String(row.source), sourceInitials: String(row.source_initials), publishedAt: new Date(row.published_at).toISOString(), timeLabel: formatTime(row.published_at), tone: row.tone, dateLabel: formatDate(row.starts_at), startsAt: new Date(row.starts_at).toISOString(), expiresAt: new Date(row.expires_at).toISOString(), priority: Boolean(row.priority) }));
@@ -83,11 +84,18 @@ export async function listAnnouncements(category?: NetworkCategory): Promise<Ann
 export async function listFeed(category?: NetworkCategory): Promise<FeedRecord[]> {
   if (!databasePool) return feed.filter((item) => !category || item.category === category);
   const result = await databasePool.query(
-    `SELECT * FROM feed_posts ${category ? "WHERE category = $1" : ""} ORDER BY published_at DESC LIMIT 100`,
+    `SELECT * FROM feed_posts WHERE status='published' ${category ? "AND category = $1" : ""} ORDER BY published_at DESC LIMIT 100`,
     category ? [category] : [],
   );
   return result.rows.map((row) => ({ id: String(row.id), kind: row.kind, category: row.category, title: String(row.title), summary: String(row.summary), source: String(row.source), sourceInitials: String(row.source_initials), publishedAt: new Date(row.published_at).toISOString(), timeLabel: formatTime(row.published_at), tone: row.tone, tags: Array.isArray(row.tags) ? row.tags.map(String) : [] }));
 }
+
+export type AnnouncementInput={category:NetworkCategory;title:string;summary:string;source:string;sourceInitials:string;tone:NetworkTone;startsAt:string;expiresAt:string;priority:boolean;status:"draft"|"published"};
+export async function listAdminAnnouncements(){if(!databasePool)return announcements;const result=await databasePool.query("SELECT *,status FROM announcements ORDER BY published_at DESC");return result.rows;}
+export async function createAnnouncement(input:AnnouncementInput){if(!databasePool)return{id:randomUUID(),...input,publishedAt:new Date().toISOString()};const id=randomUUID();const result=await databasePool.query(`INSERT INTO announcements(id,category,title,summary,source,source_initials,published_at,tone,starts_at,expires_at,priority,status) VALUES($1,$2,$3,$4,$5,$6,NOW(),$7,$8,$9,$10,$11) RETURNING *`,[id,input.category,input.title,input.summary,input.source,input.sourceInitials,input.tone,input.startsAt,input.expiresAt,input.priority,input.status]);return result.rows[0];}
+export async function updateAnnouncement(id:string,input:Partial<AnnouncementInput>){if(!databasePool)return null;const result=await databasePool.query(`UPDATE announcements SET category=COALESCE($2,category),title=COALESCE($3,title),summary=COALESCE($4,summary),source=COALESCE($5,source),source_initials=COALESCE($6,source_initials),tone=COALESCE($7,tone),starts_at=COALESCE($8,starts_at),expires_at=COALESCE($9,expires_at),priority=COALESCE($10,priority),status=COALESCE($11,status) WHERE id=$1 RETURNING *`,[id,input.category,input.title,input.summary,input.source,input.sourceInitials,input.tone,input.startsAt,input.expiresAt,input.priority,input.status]);return result.rows[0]??null;}
+export async function deleteAnnouncement(id:string){if(!databasePool)return false;const result=await databasePool.query("DELETE FROM announcements WHERE id=$1",[id]);return Boolean(result.rowCount);}
+export async function createFeedPost(userId:string,input:{title:string;summary:string;tags:string[]},source:string){const id=randomUUID();if(!databasePool)return{id,kind:"post",category:"clubs",...input,source,status:"pending"};const initials=source.split(/\s+/).slice(0,2).map((part)=>part[0]?.toLocaleUpperCase("az")).join("");const result=await databasePool.query(`INSERT INTO feed_posts(id,kind,category,title,summary,source,source_initials,published_at,tone,tags,status,user_id) VALUES($1,'post','clubs',$2,$3,$4,$5,NOW(),'blue',$6,'pending',$7) RETURNING *`,[id,input.title,input.summary,source,initials,input.tags,userId]);return result.rows[0];}
 
 function formatDate(value: unknown) {
   return new Intl.DateTimeFormat("az-AZ", { day: "numeric", month: "long", timeZone: "Asia/Baku" }).format(new Date(String(value)));

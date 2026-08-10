@@ -5,13 +5,19 @@ import { closeDatabase, initializeDatabase } from "./db/database.js";
 import { initializeBusinessDatabase } from "./db/business.js";
 import { initializePlatformDatabase } from "./db/platform.js";
 import { initializeNetworkDatabase } from "./db/network.js";
+import { runMigrations } from "./db/migrations.js";
+import { seedProfessionalProfiles } from "./db/professionals.js";
+import { attachRealtime, closeRealtime } from "./realtime.js";
 
 await initializeDatabase();
 await initializeBusinessDatabase();
 await initializePlatformDatabase();
 await initializeNetworkDatabase();
+await runMigrations();
+await seedProfessionalProfiles();
 
 const server = createServer(createApp());
+attachRealtime(server);
 server.requestTimeout = 30_000;
 server.headersTimeout = 15_000;
 server.keepAliveTimeout = 5_000;
@@ -28,6 +34,7 @@ server.listen(env.PORT, "0.0.0.0", () => {
 async function shutdown(signal: string) {
   console.log(`${signal} alındı; server dayandırılır.`);
   server.close(async () => {
+    await closeRealtime();
     await closeDatabase();
     process.exit(0);
   });

@@ -62,6 +62,9 @@ eventsRouter.get("/:eventId", async (request, response) => {
 });
 
 eventsRouter.post("/", authenticate, async (request, response) => {
+  if (!["admin", "assistant_admin"].includes(request.auth!.role)) {
+    throw new ApiError(403, "EVENT_CREATE_FORBIDDEN", "Tədbiri yalnız rəhbərlik yarada bilər.");
+  }
   const input = eventSchema.parse(request.body);
   response.status(201).json({ data: await createEvent(input, request.auth!.userId) });
 });
@@ -73,7 +76,8 @@ eventsRouter.patch("/:eventId", authenticate, async (request, response) => {
   if (request.auth!.role !== "admin" && request.auth!.role !== "assistant_admin" && current.createdBy !== request.auth!.userId) {
     throw new ApiError(403, "EVENT_EDIT_FORBIDDEN", "Yalnız yaratdığın tədbiri dəyişə bilərsən.");
   }
-  const event = await updateEvent(eventId, eventSchema.parse(request.body));
+  const patch = z.record(z.string(), z.unknown()).parse(request.body);
+  const event = await updateEvent(eventId, eventSchema.parse({ ...current, ...patch }));
   response.json({ data: event });
 });
 

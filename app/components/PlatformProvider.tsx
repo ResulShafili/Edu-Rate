@@ -2,12 +2,12 @@
 
 import { MotionConfig } from "framer-motion";
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { peers, type Peer } from "../data/peers";
+import type { Peer } from "../data/peers";
 import { ChatDock } from "./ChatDock";
 import { useAuth } from "./AuthProvider";
 
 type PlatformContextValue = {
-  activePeer: Peer;
+  activePeer: Peer | null;
   chatOpen: boolean;
   openConversation: (peer: Peer) => void;
   setChatOpen: (open: boolean) => void;
@@ -21,7 +21,7 @@ type PlatformProviderProps = {
 
 export function PlatformProvider({ children }: PlatformProviderProps) {
   const { user } = useAuth();
-  const [activePeer, setActivePeer] = useState<Peer>(peers[0]);
+  const [activePeer, setActivePeer] = useState<Peer | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
 
   const value = useMemo<PlatformContextValue>(() => ({
@@ -38,7 +38,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     <MotionConfig reducedMotion="user">
       <PlatformContext.Provider value={value}>
         {children}
-        {user ? (
+        {user && activePeer ? (
           <ChatDock peer={activePeer} open={chatOpen} onOpenChange={setChatOpen} />
         ) : null}
       </PlatformContext.Provider>

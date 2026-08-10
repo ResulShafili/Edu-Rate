@@ -302,6 +302,7 @@ export async function leaveClub(id: string, userId: string): Promise<ClubRecord>
 export async function createTeacherReview(
   userId: string,
   input: Omit<TeacherReviewRecord, "id" | "userId" | "rating" | "status" | "createdAt">,
+  teacherProfileId?: string,
 ): Promise<TeacherReviewRecord> {
   const rating = Object.values(input.criteria).reduce((total, value) => total + value, 0) / 4;
   const review: TeacherReviewRecord = { id: randomUUID(), userId, ...input, rating, status: "pending", createdAt: now() };
@@ -314,9 +315,9 @@ export async function createTeacherReview(
   try {
     const result = await databasePool.query(
       `INSERT INTO teacher_reviews
-         (id, user_id, teacher_id, course, semester, review_text, clarity, subject_knowledge, objectivity, communication, rating)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-      [review.id, userId, input.teacherId, input.course, input.semester, input.text, input.criteria.clarity, input.criteria.subjectKnowledge, input.criteria.objectivity, input.criteria.communication, rating],
+         (id, user_id, teacher_id, teacher_profile_id, course, semester, review_text, clarity, subject_knowledge, objectivity, communication, rating)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      [review.id, userId, input.teacherId, teacherProfileId ?? null, input.course, input.semester, input.text, input.criteria.clarity, input.criteria.subjectKnowledge, input.criteria.objectivity, input.criteria.communication, rating],
     );
     return mapReview(result.rows[0]);
   } catch (error) {
@@ -345,7 +346,7 @@ export async function listTeacherReviews(filters: {
   const values: unknown[] = [];
   if (filters.teacherId) {
     values.push(filters.teacherId);
-    clauses.push(`teacher_id = $${values.length}`);
+    clauses.push(`(teacher_id = $${values.length} OR teacher_profile_id::text = $${values.length})`);
   }
   if (filters.status) {
     values.push(filters.status);
@@ -398,6 +399,24 @@ export async function createSupportTicket(
     [ticket.id, ticket.reference, userId, input.name, input.email, input.topic, input.message],
   );
   return { ...ticket, createdAt: iso(result.rows[0].created_at) };
+}
+
+function mapTicket(row: Record<string, unknown>): SupportTicketRecord {
+  return { id:String(row.id), reference:String(row.reference), userId:row.user_id ? String(row.user_id) : null,
+    name:String(row.name), email:String(row.email), topic:String(row.topic), message:String(row.message),
+    status:row.status as SupportTicketRecord["status"], createdAt:iso(row.created_at) };
+}
+
+export async function listSupportTickets(userId?: string): Promise<SupportTicketRecord[]> {
+  if (!databasePool) return [...memoryTickets.values()].filter((ticket)=>!userId||ticket.userId===userId).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  const result=await databasePool.query(`SELECT * FROM support_tickets ${userId?"WHERE user_id=$1":""} ORDER BY created_at DESC`,userId?[userId]:[]);
+  return result.rows.map(mapTicket);
+}
+
+export async function updateSupportTicketStatus(id:string,status:SupportTicketRecord["status"]):Promise<SupportTicketRecord|null> {
+  if (!databasePool) { const ticket=memoryTickets.get(id); if(!ticket)return null; const next={...ticket,status}; memoryTickets.set(id,next); return next; }
+  const result=await databasePool.query("UPDATE support_tickets SET status=$2, updated_at=NOW() WHERE id=$1 RETURNING *",[id,status]);
+  return result.rows[0]?mapTicket(result.rows[0]):null;
 }
 
 export async function getPlatformCounts() {

@@ -25,7 +25,7 @@ const clubSchema = z.object({
 });
 
 clubsRouter.get("/", async (_request, response) => {
-  response.json({ data: await listClubs() });
+  response.json({ data: (await listClubs()).filter((club) => club.status === "Aktiv") });
 });
 
 clubsRouter.get("/memberships/me", authenticate, async (request, response) => {
@@ -34,7 +34,7 @@ clubsRouter.get("/memberships/me", authenticate, async (request, response) => {
 
 clubsRouter.get("/:clubId", async (request, response) => {
   const club = await findClub(z.string().parse(request.params.clubId));
-  if (!club) throw new ApiError(404, "CLUB_NOT_FOUND", "Klub tapılmadı.");
+  if (!club || club.status !== "Aktiv") throw new ApiError(404, "CLUB_NOT_FOUND", "Klub tapılmadı.");
   response.json({ data: club });
 });
 

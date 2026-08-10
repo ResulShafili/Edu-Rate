@@ -616,3 +616,12 @@ export const communities = [
 export function getClubBySlug(slug: string) {
   return clubs.find((club) => club.slug === slug);
 }
+
+export type ClubApiRecord={slug:string;name:string;category:string;coordinatorInitials:string;memberCount:number;eventCount:number;status:string};
+
+export function clubFromApi(record:ClubApiRecord):Club {
+  const existing=getClubBySlug(record.slug);if(existing)return {...existing,name:record.name,category:normalizeClubCategory(record.category),stats:[{label:"üzv",value:String(record.memberCount)},{label:"tədbir",value:String(record.eventCount)}]};
+  return {slug:record.slug,name:record.name,shortName:record.name,category:normalizeClubCategory(record.category),tagline:"Birlikdə öyrən və yarat.",description:"Universitet tələbələrinin birgə fəaliyyəti üçün açıq klub.",about:["Klub haqqında ətraflı məlumat rəhbərlik tərəfindən əlavə ediləcək."],stats:[{label:"üzv",value:String(record.memberCount)},{label:"tədbir",value:String(record.eventCount)}],tone:"lime",visualMark:record.coordinatorInitials,meeting:{cadence:"Yenilənir",day:"—",time:"—",place:"Kampus"},focusTags:[record.category],events:[],members:[],history:[]};
+}
+
+function normalizeClubCategory(value:string):ClubCategory {if(value==="Texnologiya"||value==="Akademik"||value==="Yaradıcılıq"||value==="Sosial təsir"||value==="Mədəniyyət")return value;return "Akademik";}

@@ -24,6 +24,8 @@ export const openApiDocument = {
     { name: "Mentorship", description: "Mentorluq müraciətlərinin idarə edilməsi" },
     { name: "Reviews", description: "Müəllim rəyləri və moderasiya" },
     { name: "Support", description: "Dəstək müraciətləri" },
+    { name: "Community", description: "İstifadəçi kataloqu və əlaqələr" },
+    { name: "Messaging", description: "Qalıcı şəxsi mesajlaşma və realtime hadisələri" },
     {
       name: "Administration",
       description:
@@ -250,6 +252,23 @@ export const openApiDocument = {
         responses: { "201": { description: "Müraciət saxlanıldı" }, "422": { description: "Validasiya xətası" } },
       },
     },
+    "/api/support/tickets/me": { get:{tags:["Support"],summary:"Cari istifadəçinin dəstək müraciətlərini göstər",security:[{bearerAuth:[]}],responses:{"200":{description:"Müraciətlər"}}} },
+    "/api/teachers": { get:{tags:["Catalog"],summary:"Təsdiqlənmiş müəllim profillərini siyahıla",responses:{"200":{description:"Müəllimlər"}}} },
+    "/api/community/users": { get:{tags:["Community"],summary:"Aktiv istifadəçi kataloqu",security:[{bearerAuth:[]}],responses:{"200":{description:"İstifadəçilər"}}} },
+    "/api/community/connections": {
+      get:{tags:["Community"],summary:"Əlaqələri siyahıla",security:[{bearerAuth:[]}],responses:{"200":{description:"Əlaqələr"}}},
+      post:{tags:["Community"],summary:"Əlaqə sorğusu göndər",security:[{bearerAuth:[]}],responses:{"201":{description:"Sorğu yaradıldı"}}},
+    },
+    "/api/community/conversations": {
+      get:{tags:["Messaging"],summary:"Söhbətləri siyahıla",security:[{bearerAuth:[]}],responses:{"200":{description:"Söhbətlər"}}},
+      post:{tags:["Messaging"],summary:"Şəxsi söhbət yarat",security:[{bearerAuth:[]}],responses:{"201":{description:"Söhbət yaradıldı"}}},
+    },
+    "/api/community/conversations/{id}/messages": {
+      parameters:[{name:"id",in:"path",required:true,schema:{type:"string",format:"uuid"}}],
+      get:{tags:["Messaging"],summary:"Cursor əsaslı mesaj tarixçəsi",security:[{bearerAuth:[]}],responses:{"200":{description:"Mesajlar"}}},
+      post:{tags:["Messaging"],summary:"Mesaj göndər",security:[{bearerAuth:[]}],responses:{"201":{description:"Mesaj saxlanıldı"}}},
+    },
+    "/api/realtime/ticket": { post:{tags:["Messaging"],summary:"Birdəfəlik realtime bileti al",security:[{bearerAuth:[]}],responses:{"201":{description:"60 saniyəlik bilet"}}} },
     "/api/admin/overview": {
       get: { tags: ["Administration"], summary: "Canlı idarəetmə göstəricilərini göstər", security: [{ bearerAuth: [] }], responses: { "200": { description: "İdarəetmə icmalı" }, "403": { description: "Admin icazəsi tələb olunur" } } },
     },

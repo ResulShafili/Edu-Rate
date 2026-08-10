@@ -17,6 +17,8 @@ import { networkRouter } from "./routes/network.js";
 import { reviewsRouter } from "./routes/reviews.js";
 import { supportRouter } from "./routes/support.js";
 import { workspaceRouter } from "./routes/workspace.js";
+import { communityRouter } from "./routes/community.js";
+import { realtimeRouter } from "./routes/realtime.js";
 
 export function createApp() {
   const app = express();
@@ -74,6 +76,8 @@ export function createApp() {
   app.use("/api/reviews", reviewsRouter);
   app.use("/api/support", supportRouter);
   app.use("/api/workspace", workspaceRouter);
+  app.use("/api/community", communityRouter);
+  app.use("/api/realtime", realtimeRouter);
   app.use("/api", catalogRouter);
   app.use("/api/admin", adminRouter);
   app.get("/api/openapi.json", (_request, response) => response.json(openApiDocument));

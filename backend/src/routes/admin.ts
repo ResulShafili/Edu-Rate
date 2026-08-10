@@ -32,6 +32,9 @@ import {
 import { ApiError } from "../lib/api-error.js";
 import { hashPassword } from "../lib/auth.js";
 import { authenticate, requireAdmin, requirePrimaryAdmin } from "../middleware/authenticate.js";
+import { ensureProfessionalProfileForUser } from "../db/professionals.js";
+import { listAudit, writeAudit } from "../db/audit.js";
+import { createAnnouncement, deleteAnnouncement, listAdminAnnouncements, updateAnnouncement } from "../db/network.js";
 
 export const adminRouter = Router();
 adminRouter.use(authenticate, requireAdmin);
@@ -62,9 +65,10 @@ const eventSchema = z.object({
   place: z.string().trim().min(2).max(180),
   status: z.enum(["Açıq", "Qaralama", "Tamamlanıb"]).optional(),
 });
+const announcementSchema=z.object({category:z.enum(["official","faculties","clubs","scholarship","events"]),title:z.string().trim().min(3).max(180),summary:z.string().trim().min(10).max(800),source:z.string().trim().min(2).max(140),sourceInitials:z.string().trim().min(1).max(8),tone:z.enum(["lime","lilac","blue","coral","mint","gold"]),startsAt:z.string().datetime({offset:true}),expiresAt:z.string().datetime({offset:true}),priority:z.boolean().default(false),status:z.enum(["draft","published"]).default("draft")});
 
 adminRouter.get("/overview", async (_request, response) => {
-  const [users, events, platform] = await Promise.all([listUsers(10_000), listEvents(), getPlatformCounts()]);
+  const [users, events, platform, audit] = await Promise.all([listUsers(10_000), listEvents(false), getPlatformCounts(), listAudit(6)]);
   const activeUsers = users.filter((user) => user.status === "Aktiv").length;
   const openEvents = events.filter((event) => new Date(event.endAt).getTime() > Date.now()).length;
   const engagement = users.length ? Math.min(99, Math.round(((platform.memberships + platform.reviews) / users.length) * 100)) : 0;
@@ -79,7 +83,7 @@ adminRouter.get("/overview", async (_request, response) => {
       ],
       activity: buildActivity(users.length, platform.clubs, events.length),
       distribution: buildDistribution(await listClubs()),
-      recentActivity: [
+      recentActivity: audit.length ? audit.map((item)=>({id:item.id,title:item.action,description:`${item.actor} · ${item.entityType}`,timeLabel:"audit",occurredAt:item.occurredAt,tone:"lime"})) : [
         { id: "live-users", title: "İstifadəçi bazası aktivdir", description: `${users.length} hesab real verilənlər bazasında saxlanılır.`, timeLabel: "indi", occurredAt: new Date().toISOString(), tone: "lime" },
         { id: "live-clubs", title: "Klub üzvlükləri işləyir", description: `${platform.memberships} aktiv klub üzvlüyü mövcuddur.`, timeLabel: "indi", occurredAt: new Date().toISOString(), tone: "blue" },
         { id: "live-moderation", title: "Rəy moderasiyası aktivdir", description: `${platform.reviews} rəy moderasiya növbəsindədir.`, timeLabel: "indi", occurredAt: new Date().toISOString(), tone: "violet" },
@@ -128,6 +132,8 @@ adminRouter.patch("/users/:id", async (request, response) => {
         "İstifadəçinin rolu dəyişib. Siyahını yeniləyib təkrar yoxlayın.",
       );
     }
+    await ensureProfessionalProfileForUser(user);
+    await writeAudit(request.auth!.userId,"İstifadəçi rolu dəyişdirildi","user",id,{role:input.role});
     response.json({ data: toAdminUser(user) });
     return;
   }
@@ -146,6 +152,8 @@ adminRouter.patch("/users/:id", async (request, response) => {
   }
   const user = await adminUpdateUser(id, patch);
   if (!user) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
+  await ensureProfessionalProfileForUser(user);
+  await writeAudit(request.auth!.userId,"İstifadəçi yeniləndi","user",id,{role:patch.role,status:patch.status});
   response.json({ data: toAdminUser(user) });
 });
 
@@ -153,6 +161,7 @@ adminRouter.delete("/users/:id", requirePrimaryAdmin, async (request, response) 
   const id = z.string().parse(request.params.id);
   if (id === request.auth!.userId) throw new ApiError(409, "SELF_DELETE_FORBIDDEN", "Aktiv admin hesabını silmək olmaz.");
   if (!(await deleteUser(id))) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
+  await writeAudit(request.auth!.userId,"İstifadəçi silindi","user",id);
   response.status(204).send();
 });
 
@@ -177,7 +186,7 @@ adminRouter.delete("/clubs/:id", async (request, response) => {
 });
 
 adminRouter.get("/events", async (request, response) => {
-  const events = (await listEvents()).map((event) => toAdminEvent(event));
+  const events = (await listEvents(false)).map((event) => toAdminEvent(event));
   response.json({ data: paginate(filterRows(events, request.query), request.query) });
 });
 
@@ -192,7 +201,7 @@ adminRouter.patch("/events/:id", async (request, response) => {
   const current = await findEventById(id);
   if (!current) throw new ApiError(404, "EVENT_NOT_FOUND", "Tədbir tapılmadı.");
   const patch = eventSchema.partial().parse(request.body);
-  const merged = {
+  const mergedAdmin = {
     name: patch.name ?? current.title,
     category: patch.category ?? current.category,
     organizer: patch.organizer ?? current.organizer,
@@ -201,7 +210,19 @@ adminRouter.patch("/events/:id", async (request, response) => {
     place: patch.place ?? current.location,
     status: patch.status,
   };
-  const event = await updateEvent(id, toEventInput(merged));
+  const generated = toEventInput(mergedAdmin);
+  const event = await updateEvent(id, {
+    ...current,
+    title: generated.title,
+    category: generated.category,
+    organizer: generated.organizer,
+    location: generated.location,
+    capacity: generated.capacity,
+    startAt: generated.startAt,
+    endAt: patch.startAt ? generated.endAt : current.endAt,
+    registrationDeadline: patch.startAt ? generated.registrationDeadline : current.registrationDeadline,
+    adminStatus: patch.status ?? current.adminStatus,
+  });
   response.json({ data: toAdminEvent(event!, patch.status) });
 });
 
@@ -209,6 +230,11 @@ adminRouter.delete("/events/:id", async (request, response) => {
   if (!(await deleteEvent(z.string().parse(request.params.id)))) throw new ApiError(404, "EVENT_NOT_FOUND", "Tədbir tapılmadı.");
   response.status(204).send();
 });
+
+adminRouter.get("/announcements",async(_request,response)=>response.json({data:await listAdminAnnouncements()}));
+adminRouter.post("/announcements",async(request,response)=>{const item=await createAnnouncement(announcementSchema.parse(request.body));await writeAudit(request.auth!.userId,"Elan yaradıldı","announcement",String(item.id));response.status(201).json({data:item});});
+adminRouter.patch("/announcements/:id",async(request,response)=>{const id=z.string().parse(request.params.id);const item=await updateAnnouncement(id,announcementSchema.partial().parse(request.body));if(!item)throw new ApiError(404,"ANNOUNCEMENT_NOT_FOUND","Elan tapılmadı.");await writeAudit(request.auth!.userId,"Elan yeniləndi","announcement",id);response.json({data:item});});
+adminRouter.delete("/announcements/:id",async(request,response)=>{const id=z.string().parse(request.params.id);if(!await deleteAnnouncement(id))throw new ApiError(404,"ANNOUNCEMENT_NOT_FOUND","Elan tapılmadı.");await writeAudit(request.auth!.userId,"Elan silindi","announcement",id);response.status(204).send();});
 
 adminRouter.get("/reviews", async (request, response) => {
   const query = z.object({

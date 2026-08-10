@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createTeacherReview, listTeacherReviews } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
 import { authenticate } from "../middleware/authenticate.js";
+import { findProfessionalProfile } from "../db/professionals.js";
 
 export const reviewsRouter = Router();
 
@@ -53,12 +54,16 @@ reviewsRouter.get("/", async (request, response) => {
 
 reviewsRouter.post("/", limiter, authenticate, async (request, response) => {
   const input = reviewSchema.parse(request.body);
+  const teacher = await findProfessionalProfile(input.teacherId, "teacher");
+  if (!teacher || teacher.status !== "approved" || !teacher.visible) {
+    throw new ApiError(404, "TEACHER_NOT_FOUND", "Aktiv müəllim profili tapılmadı.");
+  }
   if (blockedWords.test(input.text)) {
     throw new ApiError(422, "REVIEW_MODERATION_FAILED", "Rəydə təhqir və ya nalayiq ifadə istifadə etmək olmaz.");
   }
   if (contactDetails.test(input.text)) {
     throw new ApiError(422, "REVIEW_CONTACT_DETAILS", "Rəydə keçid və ya əlaqə məlumatı paylaşmaq olmaz.");
   }
-  const review = await createTeacherReview(request.auth!.userId, input);
+  const review = await createTeacherReview(request.auth!.userId, { ...input, teacherId: teacher.slug }, teacher.id);
   response.status(201).json({ data: review });
 });

@@ -21,9 +21,7 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { events } from "../data/events";
-import { announcements } from "../data/network";
-import { formatAzDate, getUpcomingItems, isExpired } from "../lib/date";
+import { formatAzDate } from "../lib/date";
 import {
   getPlatformRouteContext,
   platformSearchItems,
@@ -74,8 +72,9 @@ function UtilityContent({
   searchInputRef,
   idPrefix,
 }: UtilityContentProps) {
-  const upcomingEvents = getUpcomingItems(events).slice(0, 3);
-  const activeAnnouncements = announcements.filter((item) => !isExpired(item.expiresAt)).slice(0, 3);
+  const [upcomingEvents,setUpcomingEvents]=useState<Array<{id:string;title:string;startAt:string;location:string}>>([]);
+  const [activeAnnouncements,setActiveAnnouncements]=useState<Array<{id:string;title:string;dateLabel:string;source:string}>>([]);
+  useEffect(()=>{let cancelled=false;void Promise.all([fetch("/api/catalog/events",{cache:"no-store"}),fetch("/api/network",{cache:"no-store"})]).then(async([eventsResponse,networkResponse])=>{const eventsPayload=await eventsResponse.json() as {data?:Array<{id:string;title:string;startAt:string;location:string}>};const networkPayload=await networkResponse.json() as {data?:{announcements?:Array<{id:string;title:string;dateLabel:string;source:string}>}};if(!cancelled){setUpcomingEvents((eventsPayload.data??[]).filter((item)=>new Date(item.startAt).getTime()>=Date.now()).slice(0,3));setActiveAnnouncements((networkPayload.data?.announcements??[]).slice(0,3));}}).catch(()=>undefined);return()=>{cancelled=true;};},[]);
   const filteredItems = useMemo(() => {
     const normalizedQuery = normalizeSearchValue(query);
     if (!normalizedQuery) return platformSearchItems.slice(0, 6);
@@ -181,8 +180,8 @@ function UtilityContent({
         </header>
         {upcomingEvents.map((event) => (
           <Link key={event.id} href="/events" onClick={onNavigate}>
-            <time dateTime={event.startAt}><strong>{event.date}</strong>{formatAzDate(event.startAt)}</time>
-            <span><strong>{event.title}</strong><small>{event.time} · {event.location}</small></span>
+            <time dateTime={event.startAt}><strong>{new Date(event.startAt).getDate()}</strong>{formatAzDate(event.startAt)}</time>
+            <span><strong>{event.title}</strong><small>{new Intl.DateTimeFormat("az-AZ",{hour:"2-digit",minute:"2-digit"}).format(new Date(event.startAt))} · {event.location}</small></span>
           </Link>
         ))}
       </section>

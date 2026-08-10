@@ -186,11 +186,15 @@ export async function initializeBusinessDatabase() {
   }
 }
 
-export async function listEvents(): Promise<EventRecord[]> {
+export async function listEvents(publicOnly = true): Promise<EventRecord[]> {
   if (!databasePool) {
-    return [...memoryEvents.values()].sort((a, b) => a.startAt.localeCompare(b.startAt));
+    return [...memoryEvents.values()]
+      .filter((event) => !publicOnly || event.adminStatus === "Açıq")
+      .sort((a, b) => a.startAt.localeCompare(b.startAt));
   }
-  const result = await databasePool.query("SELECT * FROM events ORDER BY start_at ASC");
+  const result = await databasePool.query(
+    `SELECT * FROM events ${publicOnly ? "WHERE admin_status = 'Açıq'" : ""} ORDER BY start_at ASC`,
+  );
   return result.rows.map(mapEvent);
 }
 
@@ -362,7 +366,7 @@ export async function listMyEventRegistrations(userId: string): Promise<EventRec
   return result.rows.map(mapEvent);
 }
 
-export async function createMentorshipRequest(userId: string, mentorId: string, note: string): Promise<MentorshipRequestRecord> {
+export async function createMentorshipRequest(userId: string, mentorId: string, note: string, mentorProfileId?: string): Promise<MentorshipRequestRecord> {
   if (!databasePool) {
     const duplicate = [...memoryMentorshipRequests.values()].find((item) => item.userId === userId && item.mentorId === mentorId && item.status === "pending");
     if (duplicate) throw new ApiError(409, "REQUEST_EXISTS", "Bu mentor üçün gözləyən müraciətin artıq var.");
@@ -371,11 +375,11 @@ export async function createMentorshipRequest(userId: string, mentorId: string, 
     memoryMentorshipRequests.set(record.id, record);
     return record;
   }
-  const duplicate = await databasePool.query("SELECT 1 FROM mentorship_requests WHERE user_id=$1 AND mentor_id=$2 AND status='pending'", [userId, mentorId]);
+  const duplicate = await databasePool.query("SELECT 1 FROM mentorship_requests WHERE user_id=$1 AND (mentor_profile_id=$2 OR mentor_id=$3) AND status='pending'", [userId, mentorProfileId ?? null, mentorId]);
   if (duplicate.rows[0]) throw new ApiError(409, "REQUEST_EXISTS", "Bu mentor üçün gözləyən müraciətin artıq var.");
   const result = await databasePool.query(
-    "INSERT INTO mentorship_requests (id,user_id,mentor_id,note) VALUES ($1,$2,$3,$4) RETURNING *",
-    [randomUUID(), userId, mentorId, note],
+    "INSERT INTO mentorship_requests (id,user_id,mentor_id,mentor_profile_id,note) VALUES ($1,$2,$3,$4,$5) RETURNING *",
+    [randomUUID(), userId, mentorId, mentorProfileId ?? null, note],
   );
   return mapMentorshipRequest(result.rows[0]);
 }
@@ -386,9 +390,9 @@ export async function listMentorshipRequests(userId: string): Promise<Mentorship
   return result.rows.map(mapMentorshipRequest);
 }
 
-export async function listMentorRequests(mentorId: string): Promise<MentorshipRequestRecord[]> {
+export async function listMentorRequests(mentorId: string, mentorProfileId?: string): Promise<MentorshipRequestRecord[]> {
   if (!databasePool) return [...memoryMentorshipRequests.values()].filter((item) => item.mentorId === mentorId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const result = await databasePool.query("SELECT * FROM mentorship_requests WHERE mentor_id=$1 ORDER BY created_at DESC", [mentorId]);
+  const result = await databasePool.query("SELECT * FROM mentorship_requests WHERE mentor_id=$1 OR mentor_profile_id=$2 ORDER BY created_at DESC", [mentorId, mentorProfileId ?? null]);
   return result.rows.map(mapMentorshipRequest);
 }
 
@@ -396,6 +400,7 @@ export async function decideMentorshipRequest(
   id: string,
   mentorId: string,
   status: Extract<MentorshipRequestRecord["status"], "accepted" | "rejected">,
+  mentorProfileId?: string,
 ): Promise<MentorshipRequestRecord | null> {
   if (!databasePool) {
     const current = memoryMentorshipRequests.get(id);
@@ -405,8 +410,8 @@ export async function decideMentorshipRequest(
     return next;
   }
   const result = await databasePool.query(
-    "UPDATE mentorship_requests SET status=$3, updated_at=NOW() WHERE id=$1 AND mentor_id=$2 AND status='pending' RETURNING *",
-    [id, mentorId, status],
+    "UPDATE mentorship_requests SET status=$3, updated_at=NOW() WHERE id=$1 AND (mentor_id=$2 OR mentor_profile_id=$4) AND status='pending' RETURNING *",
+    [id, mentorId, status, mentorProfileId ?? null],
   );
   return result.rows[0] ? mapMentorshipRequest(result.rows[0]) : null;
 }

@@ -7,7 +7,7 @@ process.env.NODE_ENV = "test";
 process.env.JWT_SECRET = "edurate-test-secret-with-at-least-32-characters";
 process.env.FRONTEND_URL = "http://localhost:3000";
 process.env.TRUST_PROXY = "true";
-process.env.ADMIN_EMAILS = "admin.test@example.az";
+process.env.ADMIN_EMAILS = "admin.test@example.az,bootstrap.admin@example.az";
 
 let app: Express;
 let reusableStudentId = "";
@@ -18,6 +18,9 @@ let reusableReviewId = "";
 before(async () => {
   const module = await import("../src/app.js");
   app = module.createApp();
+  const [{createUser},{createAccessToken,hashPassword}]=await Promise.all([import("../src/db/database.js"),import("../src/lib/auth.js")]);
+  const admin=await createUser({name:"Başlanğıc Administrator",email:"bootstrap.admin@example.az",passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Pedaqoji fakültə",program:"Riyaziyyat müəllimliyi"});
+  reusableAdminToken=createAccessToken(admin);
 });
 
 describe("EduRate API", () => {
@@ -259,7 +262,7 @@ describe("EduRate API", () => {
 
     const created = await request(app)
       .post("/api/events")
-      .set("Authorization", authorization)
+      .set("Authorization", `Bearer ${reusableAdminToken}`)
       .send(eventInput)
       .expect(201);
     const eventId = created.body.data.id as string;
@@ -267,7 +270,7 @@ describe("EduRate API", () => {
 
     const updated = await request(app)
       .patch(`/api/events/${eventId}`)
-      .set("Authorization", authorization)
+      .set("Authorization", `Bearer ${reusableAdminToken}`)
       .send({ ...eventInput, title: "Yenilənmiş innovasiya görüşü" })
       .expect(200);
     assert.equal(updated.body.data.title, "Yenilənmiş innovasiya görüşü");
@@ -311,7 +314,7 @@ describe("EduRate API", () => {
 
     await request(app)
       .delete(`/api/events/${eventId}`)
-      .set("Authorization", authorization)
+      .set("Authorization", `Bearer ${reusableAdminToken}`)
       .expect(204);
     await request(app).get(`/api/events/${eventId}`).expect(404);
   });
@@ -352,7 +355,7 @@ describe("EduRate API", () => {
     await request(app).post("/api/reviews").set("Authorization", authorization).send(reviewInput).expect(409);
     await request(app).post("/api/reviews").set("Authorization", authorization).send({ ...reviewInput, semester: "2027-yaz", text: "Bu müəllim axmaqdır və heç nə bilmir." }).expect(422);
 
-    const ticket = await request(app).post("/api/support/tickets").send({
+    const ticket = await request(app).post("/api/support/tickets").set("Authorization", authorization).send({
       name: "Aysel Məmmədli",
       email: "aysel.memmedli@example.az",
       topic: "Tədbir qeydiyyatı",
@@ -724,5 +727,33 @@ describe("EduRate API", () => {
       .delete(`/api/admin/users/${legacyUser.id}`)
       .set("Authorization", adminAuthorization)
       .expect(204);
+  });
+
+  it("qaralama tədbiri gizlədir və qismən redaktədə məlumatı qoruyur", async()=>{
+    const authorization=`Bearer ${reusableAdminToken}`;
+    const created=await request(app).post("/api/admin/events").set("Authorization",authorization).send({name:"Qaralama seminar",category:"Technology",organizer:"EduRate",startAt:"2027-01-12T10:00:00+04:00",capacity:30,place:"Kampus",status:"Qaralama"}).expect(201);
+    const id=created.body.data.id as string;
+    const before=await request(app).get(`/api/events/${id}`).expect(200);
+    await request(app).patch(`/api/admin/events/${id}`).set("Authorization",authorization).send({name:"Yenilənmiş qaralama seminar"}).expect(200);
+    const after=await request(app).get(`/api/events/${id}`).expect(200);
+    assert.equal(after.body.data.description,before.body.data.description);
+    const publicEvents=await request(app).get("/api/events").expect(200);
+    assert.equal(publicEvents.body.data.some((item:{id:string})=>item.id===id),false);
+  });
+
+  it("iki real hesab arasında əlaqə, qalıcı mesaj və oxunma axınını tamamlayır",async()=>{
+    const [{createUser},{createAccessToken,hashPassword}]=await Promise.all([import("../src/db/database.js"),import("../src/lib/auth.js")]);
+    const suffix=Date.now();
+    const sender=await createUser({name:"Göndərən Test",email:`sender.${suffix}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"İqtisadiyyat fakültəsi",program:"İqtisadiyyat"});
+    const peer=await createUser({name:"Mesaj Testi",email:`message.${suffix}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"İqtisadiyyat fakültəsi",program:"Maliyyə"});
+    const studentAuthorization=`Bearer ${createAccessToken(sender)}`;const peerAuthorization=`Bearer ${createAccessToken(peer)}`;
+    const connection=await request(app).post("/api/community/connections").set("Authorization",studentAuthorization).send({userId:peer.id}).expect(201);
+    await request(app).patch(`/api/community/connections/${connection.body.data.id}`).set("Authorization",peerAuthorization).send({}).expect(200);
+    const conversation=await request(app).post("/api/community/conversations").set("Authorization",studentAuthorization).send({peerId:peer.id}).expect(201);
+    const id=conversation.body.data.id as string;
+    const sent=await request(app).post(`/api/community/conversations/${id}/messages`).set("Authorization",studentAuthorization).send({body:"Salam, layihəni birlikdə yoxlayaq."}).expect(201);
+    const history=await request(app).get(`/api/community/conversations/${id}/messages`).set("Authorization",peerAuthorization).expect(200);
+    assert.equal(history.body.data[0].id,sent.body.data.id);
+    await request(app).patch(`/api/community/conversations/${id}/read`).set("Authorization",peerAuthorization).send({}).expect(200);
   });
 });

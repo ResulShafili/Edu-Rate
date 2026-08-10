@@ -1908,6 +1908,24 @@ body {
   .kuds-shell .api-method { width: fit-content; }
 }
 
+@media (max-width: 767px) {
+  .kuds-shell .peers-section { padding-top: 24px !important; }
+  .kuds-shell :is(.teacher-directory-filters, .mentor-filters) {
+    display: flex !important;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 0 0 8px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  .kuds-shell :is(.teacher-directory-filters, .mentor-filters)::-webkit-scrollbar { display: none; }
+  .kuds-shell :is(.teacher-directory-filters, .mentor-filters) label {
+    flex: 0 0 min(78vw, 250px);
+    min-height: 58px;
+    scroll-snap-align: start;
+  }
+}
+
 /* Dialogs */
 .kuds-shell :is(.drawer-backdrop, .platform-mobile-navigation-backdrop, .platform-mobile-utility-backdrop) { background: rgb(15 23 42 / 38%) !important; }
 .kuds-shell :is(.event-drawer, .admin-record-sheet, .teacher-profile-drawer) { color: var(--kuds-text) !important; border-color: var(--kuds-border) !important; background: var(--kuds-surface) !important; }

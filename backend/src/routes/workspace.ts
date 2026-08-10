@@ -2,9 +2,10 @@ import { Router } from "express";
 import { z } from "zod";
 import { decideMentorshipRequest, listEvents, listMentorRequests, listMentorshipRequests, listMyEventRegistrations } from "../db/business.js";
 import { findUserById, listUsers } from "../db/database.js";
-import { getPlatformCounts, listMyClubMemberships, listTeacherReviews } from "../db/platform.js";
+import { getPlatformCounts, listMyClubMemberships, listSupportTickets, listTeacherReviews } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
 import { authenticate } from "../middleware/authenticate.js";
+import { ensureProfessionalProfileForUser } from "../db/professionals.js";
 
 export const workspaceRouter = Router();
 workspaceRouter.use(authenticate);
@@ -14,7 +15,8 @@ workspaceRouter.get("/", async (request, response) => {
   if (!user) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
 
   if (user.role === "teacher") {
-    const reviews = await listTeacherReviews({ teacherId: normalizeRoleId(user.name), limit: 100 });
+    const profile = await ensureProfessionalProfileForUser(user);
+    const reviews = await listTeacherReviews({ teacherId: profile?.id ?? normalizeRoleId(user.name), limit: 100 });
     const approved = reviews.filter((review) => review.status === "approved");
     const average = approved.length ? approved.reduce((sum, review) => sum + review.rating, 0) / approved.length : 0;
     response.json({ data: { role: user.role, title: "Müəllim paneli", focus: user.program, metrics: [
@@ -26,7 +28,8 @@ workspaceRouter.get("/", async (request, response) => {
   }
 
   if (user.role === "mentor") {
-    const requests = await listMentorRequests(normalizeRoleId(user.name));
+    const profile = await ensureProfessionalProfileForUser(user);
+    const requests = await listMentorRequests(profile?.slug ?? normalizeRoleId(user.name), profile?.id);
     const items = await Promise.all(requests.slice(0, 12).map(async (item) => {
       const requester = await findUserById(item.userId);
       return {
@@ -54,17 +57,19 @@ workspaceRouter.get("/", async (request, response) => {
     return;
   }
 
-  const [events, clubs, mentorships] = await Promise.all([
-    listMyEventRegistrations(user.id), listMyClubMemberships(user.id), listMentorshipRequests(user.id),
+  const [events, clubs, mentorships, tickets] = await Promise.all([
+    listMyEventRegistrations(user.id), listMyClubMemberships(user.id), listMentorshipRequests(user.id), listSupportTickets(user.id),
   ]);
   response.json({ data: { role: user.role, title: "Tələbə paneli", focus: user.program, metrics: [
     { label: "Tədbir qeydiyyatı", value: events.length },
     { label: "Klub üzvlüyü", value: clubs.length },
     { label: "Mentorluq müraciəti", value: mentorships.length },
+    { label: "Dəstək bileti", value: tickets.length },
   ], items: [
     ...events.slice(0, 4).map((item) => ({ id: item.id, title: item.title, status: "Qeydiyyat aktivdir", type: "Tədbir" })),
     ...clubs.slice(0, 4).map((item) => ({ id: item.id, title: item.name, status: "Klub üzvü", type: "Klub" })),
     ...mentorships.slice(0, 4).map((item) => ({ id: item.id, title: "Mentorluq müraciəti", text: item.note, status: item.status, type: "Mentor" })),
+    ...tickets.slice(0, 4).map((item) => ({ id: item.id, title: item.topic, text: item.reference, status: item.status, type: "Dəstək" })),
   ] } });
 });
 
@@ -74,7 +79,8 @@ workspaceRouter.patch("/mentorship/:id", async (request, response) => {
   if (!user) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
   const id = z.string().uuid().parse(request.params.id);
   const { status } = z.object({ status: z.enum(["accepted", "rejected"]) }).strict().parse(request.body);
-  const result = await decideMentorshipRequest(id, normalizeRoleId(user.name), status);
+  const profile = await ensureProfessionalProfileForUser(user);
+  const result = await decideMentorshipRequest(id, profile?.slug ?? normalizeRoleId(user.name), status, profile?.id);
   if (!result) throw new ApiError(404, "MENTORSHIP_REQUEST_NOT_FOUND", "Gözləyən mentorluq müraciəti tapılmadı.");
   response.json({ data: result });
 });
