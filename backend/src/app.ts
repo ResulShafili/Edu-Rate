@@ -13,6 +13,7 @@ import { clubsRouter } from "./routes/clubs.js";
 import { eventsRouter } from "./routes/events.js";
 import { healthRouter } from "./routes/health.js";
 import { mentorshipRouter } from "./routes/mentorship.js";
+import { networkRouter } from "./routes/network.js";
 import { reviewsRouter } from "./routes/reviews.js";
 import { supportRouter } from "./routes/support.js";
 
@@ -68,6 +69,7 @@ export function createApp() {
   app.use("/api/events", eventsRouter);
   app.use("/api/clubs", clubsRouter);
   app.use("/api/mentorship/requests", mentorshipRouter);
+  app.use("/api/network", networkRouter);
   app.use("/api/reviews", reviewsRouter);
   app.use("/api/support", supportRouter);
   app.use("/api", catalogRouter);

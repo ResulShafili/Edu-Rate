@@ -23,7 +23,9 @@ import {
   createClub,
   deleteClub,
   getPlatformCounts,
+  listTeacherReviews,
   listClubs,
+  updateTeacherReviewStatus,
   updateClub,
   type ClubRecord,
 } from "../db/platform.js";
@@ -206,6 +208,24 @@ adminRouter.patch("/events/:id", async (request, response) => {
 adminRouter.delete("/events/:id", async (request, response) => {
   if (!(await deleteEvent(z.string().parse(request.params.id)))) throw new ApiError(404, "EVENT_NOT_FOUND", "Tədbir tapılmadı.");
   response.status(204).send();
+});
+
+adminRouter.get("/reviews", async (request, response) => {
+  const query = z.object({
+    status: z.enum(["pending", "approved", "rejected"]).default("pending"),
+    teacherId: z.string().trim().min(2).max(120).optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(50),
+  }).parse(request.query);
+  const reviews = await listTeacherReviews(query);
+  response.json({ data: reviews });
+});
+
+adminRouter.patch("/reviews/:id", async (request, response) => {
+  const id = z.string().uuid().parse(request.params.id);
+  const { status } = z.object({ status: z.enum(["approved", "rejected"]) }).strict().parse(request.body);
+  const review = await updateTeacherReviewStatus(id, status);
+  if (!review) throw new ApiError(404, "REVIEW_NOT_FOUND", "Rəy tapılmadı.");
+  response.json({ data: review });
 });
 
 function initials(name: string) {

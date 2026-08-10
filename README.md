@@ -84,8 +84,10 @@ EDURATE_API_BASE_URL=http://localhost:3001
 | `PATCH` | `/api/auth/profile` | Profil məlumatlarının yenilənməsi |
 | `GET` | `/api/admin/overview` | Verilənlər bazasından canlı admin göstəriciləri |
 | `GET/POST/PATCH/DELETE` | `/api/admin/users`, `/api/admin/clubs`, `/api/admin/events` | Qorunan real CRUD əməliyyatları |
+| `GET/PATCH` | `/api/admin/reviews` | Müəllim rəylərinin admin moderasiyası |
 | `POST/DELETE` | `/api/clubs/:clubId/memberships` | Kluba qoşulma və üzvlükdən çıxma |
-| `POST` | `/api/reviews` | Moderasiya edilən müəllim rəyinin bazada saxlanması |
+| `GET/POST` | `/api/reviews` | Təsdiqlənmiş rəylər və yeni rəyin moderasiya növbəsinə göndərilməsi |
+| `GET` | `/api/network/announcements`, `/api/network/feed` | PostgreSQL əsaslı elanlar və tələbə lenti |
 | `POST` | `/api/support/tickets` | Dəstək müraciətinin bazada saxlanması |
 | `GET` | `/api/openapi.json` | OpenAPI 3.1 sənədi |
 | `POST` | `/api/reviews/validate` | Rəy mətninin ilkin moderasiyası |

@@ -13,6 +13,7 @@ let app: Express;
 let reusableStudentId = "";
 let reusableStudentToken = "";
 let reusableAdminToken = "";
+let reusableReviewId = "";
 
 before(async () => {
   const module = await import("../src/app.js");
@@ -34,6 +35,9 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/mentorship/requests"]);
     assert.ok(response.body.paths["/api/clubs/{clubId}/memberships"]);
     assert.ok(response.body.paths["/api/reviews"]);
+    assert.ok(response.body.paths["/api/network/announcements"]);
+    assert.ok(response.body.paths["/api/network/feed"]);
+    assert.ok(response.body.paths["/api/admin/reviews"]);
     assert.ok(response.body.paths["/api/support/tickets"]);
     assert.ok(response.body.paths["/api/academic-catalog"]);
   });
@@ -206,15 +210,19 @@ describe("EduRate API", () => {
   });
 
   it("kataloq endpoint-lərini təqdim edir", async () => {
-    const [events, clubs, mentors] = await Promise.all([
+    const [events, clubs, mentors, announcements, feed] = await Promise.all([
       request(app).get("/api/events").expect(200),
       request(app).get("/api/clubs").expect(200),
       request(app).get("/api/mentors").expect(200),
+      request(app).get("/api/network/announcements").expect(200),
+      request(app).get("/api/network/feed").expect(200),
     ]);
 
     assert.ok(events.body.data.length > 0);
     assert.ok(clubs.body.data.length > 0);
     assert.ok(mentors.body.data.length > 0);
+    assert.ok(announcements.body.data.length > 0);
+    assert.ok(feed.body.data.length > 0);
   });
 
   it("tədbir CRUD, qeydiyyat və mentorluq axınlarını başdan sona tamamlayır", async () => {
@@ -337,7 +345,8 @@ describe("EduRate API", () => {
       text: "İzahlar aydın idi və tapşırıqlara faydalı geribildirim verildi.",
       criteria: { clarity: 5, subjectKnowledge: 5, objectivity: 4, communication: 5 },
     };
-    await request(app).post("/api/reviews").set("Authorization", authorization).send(reviewInput).expect(201);
+    const createdReview = await request(app).post("/api/reviews").set("Authorization", authorization).send(reviewInput).expect(201);
+    reusableReviewId = createdReview.body.data.id;
     await request(app).post("/api/reviews").set("Authorization", authorization).send(reviewInput).expect(409);
     await request(app).post("/api/reviews").set("Authorization", authorization).send({ ...reviewInput, semester: "2027-yaz", text: "Bu müəllim axmaqdır və heç nə bilmir." }).expect(422);
 
@@ -389,6 +398,29 @@ describe("EduRate API", () => {
       .set("Authorization", `Bearer ${reusableStudentToken}`)
       .expect(403);
 
+  });
+
+  it("admin rəy moderasiyasını tamamlayır və yalnız təsdiqlənmiş rəyi yayımlayır", async () => {
+    const authorization = `Bearer ${reusableAdminToken}`;
+    const pending = await request(app)
+      .get("/api/admin/reviews?status=pending")
+      .set("Authorization", authorization)
+      .expect(200);
+    assert.ok(pending.body.data.some((review: { id: string }) => review.id === reusableReviewId));
+
+    await request(app)
+      .patch(`/api/admin/reviews/${reusableReviewId}`)
+      .set("Authorization", authorization)
+      .send({ status: "approved" })
+      .expect(200);
+
+    const published = await request(app)
+      .get("/api/reviews?teacherId=nigar-huseynli")
+      .expect(200);
+    const review = published.body.data.find((item: { id: string }) => item.id === reusableReviewId);
+    assert.ok(review);
+    assert.equal(review.userId, undefined);
+    assert.equal(review.author, "Təsdiqlənmiş tələbə");
   });
 
   it("iki səviyyəli admin icazələrini server tərəfində tətbiq edir", async () => {

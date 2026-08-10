@@ -39,6 +39,8 @@ export type TeacherReviewRecord = {
   createdAt: string;
 };
 
+export type TeacherReviewStatus = TeacherReviewRecord["status"];
+
 export type SupportTicketRecord = {
   id: string;
   reference: string;
@@ -323,6 +325,59 @@ export async function createTeacherReview(
     }
     throw error;
   }
+}
+
+export async function listTeacherReviews(filters: {
+  teacherId?: string;
+  status?: TeacherReviewStatus;
+  limit?: number;
+} = {}): Promise<TeacherReviewRecord[]> {
+  const limit = Math.min(100, Math.max(1, filters.limit ?? 50));
+  if (!databasePool) {
+    return [...memoryReviews.values()]
+      .filter((review) => !filters.teacherId || review.teacherId === filters.teacherId)
+      .filter((review) => !filters.status || review.status === filters.status)
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+      .slice(0, limit);
+  }
+
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+  if (filters.teacherId) {
+    values.push(filters.teacherId);
+    clauses.push(`teacher_id = $${values.length}`);
+  }
+  if (filters.status) {
+    values.push(filters.status);
+    clauses.push(`status = $${values.length}`);
+  }
+  values.push(limit);
+  const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+  const result = await databasePool.query(
+    `SELECT * FROM teacher_reviews ${where} ORDER BY created_at DESC LIMIT $${values.length}`,
+    values,
+  );
+  return result.rows.map(mapReview);
+}
+
+export async function updateTeacherReviewStatus(
+  id: string,
+  status: TeacherReviewStatus,
+): Promise<TeacherReviewRecord | null> {
+  if (!databasePool) {
+    const entry = [...memoryReviews.entries()].find(([, review]) => review.id === id);
+    if (!entry) return null;
+    const [key, review] = entry;
+    const updated = { ...review, status };
+    memoryReviews.set(key, updated);
+    return updated;
+  }
+
+  const result = await databasePool.query(
+    "UPDATE teacher_reviews SET status = $2 WHERE id = $1 RETURNING *",
+    [id, status],
+  );
+  return result.rows[0] ? mapReview(result.rows[0]) : null;
 }
 
 export async function createSupportTicket(

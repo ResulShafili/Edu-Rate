@@ -215,10 +215,32 @@ export const openApiDocument = {
       delete: { tags: ["Mentorship"], summary: "Gözləyən müraciəti sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Müraciət silindi" }, "404": { description: "Müraciət tapılmadı" } } },
     },
     "/api/reviews": {
+      get: {
+        tags: ["Reviews"], summary: "Təsdiqlənmiş müəllim rəylərini siyahıla",
+        parameters: [
+          { name: "teacherId", in: "query", schema: { type: "string" } },
+          { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 50, default: 30 } },
+        ],
+        responses: { "200": { description: "Dərc edilmiş rəylər" }, "422": { description: "Validasiya xətası" } },
+      },
       post: {
         tags: ["Reviews"], summary: "Moderasiya növbəsinə müəllim rəyi göndər", security: [{ bearerAuth: [] }],
         requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/TeacherReviewInput" } } } },
         responses: { "201": { description: "Rəy saxlanıldı" }, "409": { description: "Cari semestr üçün rəy mövcuddur" }, "422": { description: "Validasiya və ya moderasiya xətası" } },
+      },
+    },
+    "/api/network/announcements": {
+      get: {
+        tags: ["Catalog"], summary: "Aktiv universitet elanlarını siyahıla",
+        parameters: [{ name: "category", in: "query", schema: { type: "string", enum: ["official", "faculties", "clubs", "scholarship", "events"] } }],
+        responses: { "200": { description: "Elanlar" }, "422": { description: "Validasiya xətası" } },
+      },
+    },
+    "/api/network/feed": {
+      get: {
+        tags: ["Catalog"], summary: "Tələbə lentini siyahıla",
+        parameters: [{ name: "category", in: "query", schema: { type: "string", enum: ["official", "faculties", "clubs", "scholarship", "events"] } }],
+        responses: { "200": { description: "Lent paylaşımları" }, "422": { description: "Validasiya xətası" } },
       },
     },
     "/api/support/tickets": {
@@ -294,6 +316,24 @@ export const openApiDocument = {
       parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
       patch: { tags: ["Administration"], summary: "Tədbiri yenilə", security: [{ bearerAuth: [] }], responses: { "200": { description: "Tədbir yeniləndi" }, "403": { description: "Admin icazəsi tələb olunur" } } },
       delete: { tags: ["Administration"], summary: "Tədbiri sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Tədbir silindi" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+    },
+    "/api/admin/reviews": {
+      get: {
+        tags: ["Administration"], summary: "Rəyləri moderasiya üçün siyahıla", security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "status", in: "query", schema: { type: "string", enum: ["pending", "approved", "rejected"], default: "pending" } },
+          { name: "teacherId", in: "query", schema: { type: "string" } },
+        ],
+        responses: { "200": { description: "Moderasiya rəyləri" }, "403": { description: "Admin icazəsi tələb olunur" } },
+      },
+    },
+    "/api/admin/reviews/{id}": {
+      parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+      patch: {
+        tags: ["Administration"], summary: "Rəyi təsdiqlə və ya rədd et", security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["status"], properties: { status: { type: "string", enum: ["approved", "rejected"] } } } } } },
+        responses: { "200": { description: "Rəy yeniləndi" }, "404": { description: "Rəy tapılmadı" }, "403": { description: "Admin icazəsi tələb olunur" } },
+      },
     },
   },
   components: {

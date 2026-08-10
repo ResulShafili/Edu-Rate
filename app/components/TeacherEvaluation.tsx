@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, CircleAlert, Send, Sparkles, Star } from "lucide-react";
 import Link from "next/link";
+import useSWR from "swr";
 import {
   useCallback,
   useEffect,
@@ -39,6 +40,25 @@ type ReviewValidationResponse = {
   status?: "pending";
 };
 
+type PublishedReview = {
+  id: string;
+  teacherId: string;
+  course: string;
+  text: string;
+  rating: number;
+  author: string;
+  initials: string;
+  criteria: CriteriaRatings;
+  createdAt: string;
+};
+
+async function loadPublishedReviews(): Promise<PublishedReview[]> {
+  const response = await fetch("/api/reviews?limit=50", { headers: { Accept: "application/json" } });
+  const payload = await response.json() as { data?: PublishedReview[]; error?: { message?: string } };
+  if (!response.ok || !payload.data) throw new Error(payload.error?.message ?? "Rəylər yüklənmədi.");
+  return payload.data;
+}
+
 export function TeacherEvaluation() {
   const [selectedId, setSelectedId] = useState<Teacher["id"] | null>(null);
   const [profileTeacher, setProfileTeacher] = useState<Teacher | null>(null);
@@ -48,7 +68,6 @@ export function TeacherEvaluation() {
   const [reviewSent, setReviewSent] = useState(false);
   const [reviewChecking, setReviewChecking] = useState(false);
   const [reviewError, setReviewError] = useState<ReviewValidationResponse | null>(null);
-  const [newReviews, setNewReviews] = useState<TeacherReview[]>([]);
   const [teacherQuery, setTeacherQuery] = useState("");
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [modeFilter, setModeFilter] = useState("all");
@@ -63,8 +82,28 @@ export function TeacherEvaluation() {
   const ratingScrollPending = useRef(false);
   const reduceMotion = useReducedMotion();
   const { user } = useAuth();
+  const publishedReviews = useSWR("published-teacher-reviews", loadPublishedReviews, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30_000,
+  });
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedId) ?? null;
-  const allReviews = [...newReviews, ...teacherReviews];
+  const liveReviews = useMemo<TeacherReview[]>(() => (publishedReviews.data ?? []).map((review) => {
+    const teacher = teachers.find((item) => item.id === review.teacherId);
+    return {
+      id: review.id,
+      teacherId: review.teacherId,
+      teacherName: teacher?.name ?? "Müəllim",
+      author: review.author,
+      initials: review.initials,
+      rating: review.rating,
+      text: review.text,
+      date: new Intl.DateTimeFormat("az-AZ", { day: "numeric", month: "long", year: "numeric" }).format(new Date(review.createdAt)),
+      course: review.course,
+      accent: teacher?.accent ?? "#44766c",
+      criteria: review.criteria,
+    };
+  }), [publishedReviews.data]);
+  const allReviews = [...liveReviews, ...teacherReviews.filter((review) => !liveReviews.some((live) => live.id === review.id))];
   const displayedTeachers = useMemo(() => {
     const query = teacherQuery.trim().toLocaleLowerCase("az");
     const filtered = teachers.filter((teacher) => {
@@ -196,23 +235,6 @@ export function TeacherEvaluation() {
       setReviewChecking(false);
     }
 
-    setNewReviews((current) => [
-      {
-        id: `review-${selectedTeacher.id}-${Date.now()}`,
-        teacherId: selectedTeacher.id,
-        teacherName: selectedTeacher.name,
-        author: "Sən",
-        initials: "S",
-        rating,
-        text: validation.text ?? reviewText.trim(),
-        date: "indi",
-        course: selectedTeacher.subject,
-        accent: selectedTeacher.accent,
-        featured: true,
-        criteria: { ...criteriaRatings },
-      },
-      ...current,
-    ]);
     setReviewSent(true);
 
     if (confirmationTimer.current) window.clearTimeout(confirmationTimer.current);

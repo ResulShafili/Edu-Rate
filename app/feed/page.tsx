@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { StudentFeed } from "../components/StudentFeed";
-import { announcements, studentFeedItems } from "../data/network";
+import { StudentFeedRemote } from "../components/StudentFeedRemote";
 
 export const metadata: Metadata = {
   title: "Elanlar — EduRate",
@@ -11,7 +10,7 @@ export const metadata: Metadata = {
 export default function FeedPage() {
   return (
     <main id="main-content" className="route-page" tabIndex={-1}>
-      <StudentFeed announcements={announcements} items={studentFeedItems} />
+      <StudentFeedRemote />
     </main>
   );
 }

@@ -1573,6 +1573,67 @@ body {
 }
 .kuds-shell .admin-permission-note svg { flex: none; margin-top: 1px; color: var(--ku-dark-green); }
 .kuds-shell .admin-data-panel { overflow: hidden; }
+.kuds-shell .admin-review-panel {
+  margin-top: 24px;
+  padding: 20px;
+  color: var(--kuds-text);
+  border: 1px solid var(--kuds-border);
+  border-radius: 16px;
+  background: var(--kuds-surface);
+  box-shadow: var(--kuds-shadow-xs);
+}
+.kuds-shell .admin-review-panel > header,
+.kuds-shell .admin-review-panel article > div,
+.kuds-shell .admin-review-panel article > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.kuds-shell .admin-review-panel > header { margin-bottom: 16px; }
+.kuds-shell .admin-review-panel > header span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ku-dark-green);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.kuds-shell .admin-review-panel h2 { margin: 4px 0 0; font-size: 24px; letter-spacing: -.035em; }
+.kuds-shell .admin-review-panel button {
+  display: inline-flex;
+  min-height: 38px;
+  padding: 0 13px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--ku-dark-green);
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--kuds-border);
+  border-radius: 10px;
+  background: #fff;
+}
+.kuds-shell .admin-review-panel button:disabled { cursor: wait; opacity: .5; }
+.kuds-shell .admin-review-list { display: grid; gap: 10px; }
+.kuds-shell .admin-review-list article { padding: 15px; border: 1px solid var(--kuds-border); border-radius: 12px; background: var(--kuds-bg); }
+.kuds-shell .admin-review-list article span,
+.kuds-shell .admin-review-list article small { color: var(--kuds-muted); font-size: 11px; }
+.kuds-shell .admin-review-list article p { margin: 12px 0; color: var(--kuds-text); font-size: 13px; line-height: 1.65; }
+.kuds-shell .admin-review-list article footer button:last-child { color: #fff; border-color: var(--ku-dark-green); background: var(--ku-dark-green); }
+.kuds-shell .admin-review-state { padding: 26px 16px; text-align: center; border: 1px dashed var(--kuds-border); border-radius: 12px; }
+.kuds-shell .admin-review-state p { margin: 5px 0 0; color: var(--kuds-muted); font-size: 12px; }
+.kuds-shell .admin-review-skeleton { display: grid; gap: 10px; }
+.kuds-shell .admin-review-skeleton i { display: block; height: 92px; border-radius: 12px; background: linear-gradient(90deg, var(--kuds-bg), #fff, var(--kuds-bg)); background-size: 220% 100%; animation: kuds-shimmer 1.4s infinite linear; }
+@keyframes kuds-shimmer { to { background-position: -220% 0; } }
+.kuds-shell .feed-remote-state { display: grid; min-height: 62svh; padding: 28px; place-items: center; align-content: center; text-align: center; }
+.kuds-shell .feed-remote-state > div { display: grid; width: min(860px, 100%); gap: 14px; }
+.kuds-shell .feed-remote-state i { display: block; height: 112px; border: 1px solid var(--kuds-border); border-radius: 14px; background: linear-gradient(90deg, var(--kuds-bg), #fff, var(--kuds-bg)); background-size: 220% 100%; animation: kuds-shimmer 1.4s infinite linear; }
+.kuds-shell .feed-remote-state h1 { margin: 0; color: var(--kuds-text); font-size: clamp(30px, 5vw, 52px); letter-spacing: -.05em; }
+.kuds-shell .feed-remote-state p { margin: 8px 0 18px; color: var(--kuds-muted); }
+.kuds-shell .feed-remote-state button { display: inline-flex; min-height: 44px; padding: 0 16px; align-items: center; gap: 7px; color: #fff; font-weight: 700; border: 0; border-radius: 10px; background: var(--ku-dark-green); }
 .kuds-shell .admin-data-tabs button {
   color: var(--kuds-muted) !important;
   font-size: 13px;
@@ -2259,6 +2320,10 @@ body {
   .kuds-shell .announcement-filters { display: flex; overflow-x: auto; }
   .kuds-shell .announcement-filters button { flex: 0 0 auto; }
   .kuds-shell .announcement-count { display: none; }
+  .kuds-shell .admin-review-panel { padding: 15px; }
+  .kuds-shell .admin-review-panel > header { align-items: flex-start; }
+  .kuds-shell .admin-review-list article > footer { align-items: flex-start; flex-direction: column; }
+  .kuds-shell .admin-review-list article > footer > div { display: grid; width: 100%; grid-template-columns: 1fr 1fr; gap: 8px; }
   .kuds-shell .clubs-hero { padding: 20px !important; }
   .kuds-shell .club-directory-link { min-height: 294px !important; grid-template-rows: 112px minmax(0, 1fr) !important; }
   .kuds-shell .club-card-copy { margin: 12px 0 !important; }

@@ -46,6 +46,16 @@ Render build mərhələsində TypeScript və tip paketlərini quraşdırmaq üç
 - `POST /api/support/tickets` — dəstək müraciətini saxla
 - `GET /api/admin/overview` və admin CRUD endpoint-ləri — canlı idarəetmə məlumatları
 
+## Sprint 3 əlavələri
+
+- `GET /api/network/announcements` — verilənlər bazasından elanları siyahıla
+- `GET /api/network/feed` — tələbə lentini siyahıla
+- `GET /api/reviews` — yalnız təsdiqlənmiş, anonimləşdirilmiş müəllim rəylərini göstər
+- `GET /api/admin/reviews` — moderasiya növbəsini göstər
+- `PATCH /api/admin/reviews/:id` — rəyi təsdiqlə və ya rədd et
+
+Frontend Elanlar səhifəsi artıq bu API-lərlə işləyir; yüklənmə, boş və xəta vəziyyətləri mövcuddur. Admin panelində rəy moderasiyası ayrıca qorunan bölmə kimi təqdim edilir.
+
 Bütün yazma əməliyyatları JWT tələb edir. Tədbiri yalnız onu yaradan istifadəçi və ya admin dəyişə/silə bilər. Endpoint-lərin nümunələri və cavab kodları Swagger UI daxilində test edilə bilər.
 
 ## Frontend bağlantısı

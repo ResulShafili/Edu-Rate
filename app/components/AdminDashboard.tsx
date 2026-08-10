@@ -51,6 +51,7 @@ import {
   type AdminRecordSubmission,
 } from "./AdminRecordFormSheet";
 import { AdminSkeleton } from "./AdminSkeleton";
+import { ReviewModerationPanel } from "./ReviewModerationPanel";
 
 const metricIcons: Record<AdminMetric["id"], LucideIcon> = {
   users: UsersRound,
@@ -431,6 +432,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
           status={tableQuery.status}
           total={activeCollection.data?.total ?? 0}
         />
+        <ReviewModerationPanel />
       </div>
 
       <AdminRecordFormSheet

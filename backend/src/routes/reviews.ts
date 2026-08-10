@@ -1,7 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
-import { createTeacherReview } from "../db/platform.js";
+import { createTeacherReview, listTeacherReviews } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
 import { authenticate } from "../middleware/authenticate.js";
 
@@ -31,6 +31,25 @@ const reviewSchema = z.object({
 
 const blockedWords = /(?:siktir|qəhbə|orospu|peysər|gijdıllaq|götverən|axmaq|səfeh|beyinsiz|idiot)/iu;
 const contactDetails = /(?:https?:\/\/|www\.|\b[^\s@]+@[^\s@]+\.[^\s@]+\b)/iu;
+
+reviewsRouter.get("/", async (request, response) => {
+  const query = z.object({
+    teacherId: z.string().trim().min(2).max(120).optional(),
+    limit: z.coerce.number().int().min(1).max(50).default(30),
+  }).parse(request.query);
+  const reviews = await listTeacherReviews({
+    teacherId: query.teacherId,
+    status: "approved",
+    limit: query.limit,
+  });
+  response.json({
+    data: reviews.map(({ userId: _userId, ...review }) => ({
+      ...review,
+      author: "Təsdiqlənmiş tələbə",
+      initials: "TT",
+    })),
+  });
+});
 
 reviewsRouter.post("/", limiter, authenticate, async (request, response) => {
   const input = reviewSchema.parse(request.body);
