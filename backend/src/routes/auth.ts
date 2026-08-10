@@ -49,7 +49,8 @@ const signupSchema = z.object({
     .regex(/[a-zA-ZƏəÖöÜüĞğŞşÇçİı]/, "Şifrədə hərf olmalıdır.")
     .regex(/\d/, "Şifrədə rəqəm olmalıdır."),
   university: z.string().trim().min(2).max(180).default(ACADEMIC_UNIVERSITY),
-  faculty: z.string().trim().min(2).max(180),
+  accountType: z.enum(["student", "teacher", "mentor"]).default("student"),
+  faculty: z.string().trim().max(180).optional().default(""),
   program: z.string().trim().min(2).max(180),
 });
 
@@ -85,10 +86,10 @@ function academicSelectionErrorDetails(
 authRouter.post("/signup", signupLimiter, async (request, response) => {
   const input = signupSchema.parse(request.body);
 
-  if (
+  if (input.accountType === "student" && (
     input.university !== ACADEMIC_UNIVERSITY ||
     !isValidAcademicSelection(input.faculty, input.program)
-  ) {
+  )) {
     throw new ApiError(
       422,
       "INVALID_ACADEMIC_SELECTION",
@@ -103,9 +104,28 @@ authRouter.post("/signup", signupLimiter, async (request, response) => {
     throw new ApiError(409, "EMAIL_EXISTS", "Bu e-poçt artıq istifadə olunur.");
   }
 
-  const user = await createUser({ ...input, passwordHash: await hashPassword(input.password) });
-  const token = createAccessToken(user);
-  response.status(201).json({ data: { token, user: toPublicUser(user) } });
+  if (input.accountType !== "student" && input.university !== ACADEMIC_UNIVERSITY) {
+    throw new ApiError(422, "INVALID_UNIVERSITY", `Universitet yalnız “${ACADEMIC_UNIVERSITY}” ola bilər.`, {
+      university: `Universitet yalnız “${ACADEMIC_UNIVERSITY}” ola bilər.`,
+    });
+  }
+
+  const isPrivilegedRegistration = input.accountType === "teacher" || input.accountType === "mentor";
+  const user = await createUser({
+    name: input.name,
+    email: input.email,
+    university: input.university,
+    faculty: input.accountType === "teacher" ? "Müəllim heyəti" : input.accountType === "mentor" ? "Mentorluq şəbəkəsi" : input.faculty,
+    program: input.program,
+    role: input.accountType,
+    status: isPrivilegedRegistration ? "Gözləmədə" : "Aktiv",
+    passwordHash: await hashPassword(input.password),
+  });
+  if (user.status !== "Aktiv") {
+    response.status(201).json({ data: { user: toPublicUser(user), requiresApproval: true } });
+    return;
+  }
+  response.status(201).json({ data: { token: createAccessToken(user), user: toPublicUser(user), requiresApproval: false } });
 });
 
 authRouter.post("/login", loginLimiter, async (request, response) => {
@@ -145,7 +165,7 @@ authRouter.patch("/profile", authenticate, async (request, response) => {
     currentUser.faculty === input.faculty &&
     currentUser.program === input.program;
 
-  if (
+  if (currentUser.role === "student" &&
     !keepsLegacyAcademicSelection &&
     (input.university !== ACADEMIC_UNIVERSITY ||
       !isValidAcademicSelection(input.faculty, input.program))
@@ -156,6 +176,12 @@ authRouter.patch("/profile", authenticate, async (request, response) => {
       "Universitet, fakültə və ixtisas seçimi rəsmi kataloqa uyğun deyil.",
       academicSelectionErrorDetails(input.university, input.faculty),
     );
+  }
+
+  if (currentUser.role !== "student" && input.university !== ACADEMIC_UNIVERSITY) {
+    throw new ApiError(422, "INVALID_UNIVERSITY", `Universitet yalnız “${ACADEMIC_UNIVERSITY}” ola bilər.`, {
+      university: `Universitet yalnız “${ACADEMIC_UNIVERSITY}” ola bilər.`,
+    });
   }
 
   const user = await updateUserProfile(request.auth!.userId, input);

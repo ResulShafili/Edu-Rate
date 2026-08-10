@@ -386,6 +386,31 @@ export async function listMentorshipRequests(userId: string): Promise<Mentorship
   return result.rows.map(mapMentorshipRequest);
 }
 
+export async function listMentorRequests(mentorId: string): Promise<MentorshipRequestRecord[]> {
+  if (!databasePool) return [...memoryMentorshipRequests.values()].filter((item) => item.mentorId === mentorId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const result = await databasePool.query("SELECT * FROM mentorship_requests WHERE mentor_id=$1 ORDER BY created_at DESC", [mentorId]);
+  return result.rows.map(mapMentorshipRequest);
+}
+
+export async function decideMentorshipRequest(
+  id: string,
+  mentorId: string,
+  status: Extract<MentorshipRequestRecord["status"], "accepted" | "rejected">,
+): Promise<MentorshipRequestRecord | null> {
+  if (!databasePool) {
+    const current = memoryMentorshipRequests.get(id);
+    if (!current || current.mentorId !== mentorId || current.status !== "pending") return null;
+    const next = { ...current, status, updatedAt: now() };
+    memoryMentorshipRequests.set(id, next);
+    return next;
+  }
+  const result = await databasePool.query(
+    "UPDATE mentorship_requests SET status=$3, updated_at=NOW() WHERE id=$1 AND mentor_id=$2 AND status='pending' RETURNING *",
+    [id, mentorId, status],
+  );
+  return result.rows[0] ? mapMentorshipRequest(result.rows[0]) : null;
+}
+
 export async function updateMentorshipRequest(id: string, userId: string, note: string): Promise<MentorshipRequestRecord | null> {
   if (!databasePool) {
     const current = memoryMentorshipRequests.get(id);

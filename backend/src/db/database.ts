@@ -160,8 +160,8 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
     year: "Kurs məlumatı əlavə edilməyib",
     city: "Xankəndi",
     about: "EduRate icmasında universitet həyatını daha əlaqəli yaşamaq üçün buradayam.",
-    role: input.role ?? (env.ADMIN_EMAILS.includes(normalizedEmail) ? "admin" : "student"),
-    status: input.status ?? "Aktiv",
+    role: env.ADMIN_EMAILS.includes(normalizedEmail) ? "admin" : input.role ?? "student",
+    status: env.ADMIN_EMAILS.includes(normalizedEmail) ? "Aktiv" : input.status ?? "Aktiv",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

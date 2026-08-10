@@ -68,6 +68,7 @@ export type PlatformRoute = (typeof platformRoutes)[number];
 
 export const accountRoutes = [
   { href: "/profile", label: "Profil" },
+  { href: "/workspace", label: "İş paneli" },
   { href: "/settings", label: "Parametrlər" },
   { href: "/auth", label: "Daxil ol" },
 ] as const;

@@ -1480,6 +1480,46 @@ body {
 .kuds-shell .auth-input-shell :is(input, select) { color: var(--kuds-text) !important; border-color: var(--kuds-border) !important; background: var(--kuds-surface) !important; }
 .kuds-shell .auth-field > label { color: var(--kuds-text) !important; }
 .kuds-shell .auth-field-icon { color: var(--kuds-muted) !important; }
+.kuds-shell .auth-account-type { grid-column: 1 / -1; min-width: 0; margin: 0; padding: 0; border: 0; }
+.kuds-shell .auth-account-type legend { margin: 0 0 8px 3px; color: var(--kuds-text); font-size: 9px; font-weight: 650; }
+.kuds-shell .auth-account-type > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kuds-shell .auth-account-type button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 7px; color: var(--kuds-muted); font-size: 12px; font-weight: 650; border: 1px solid var(--kuds-border); border-radius: 10px; background: var(--kuds-surface); }
+.kuds-shell .auth-account-type button[aria-checked="true"] { color: #fff; border-color: var(--ku-green); background: var(--ku-green); box-shadow: 0 6px 16px rgb(68 118 108 / 18%); }
+
+/* Role workspaces */
+.kuds-shell .role-workspace { min-height: 68svh; }
+.kuds-shell .workspace-header { display: flex; padding-bottom: 22px; align-items: end; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--kuds-border); }
+.kuds-shell .workspace-header span,
+.kuds-shell .workspace-queue > header span { color: var(--ku-green); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.kuds-shell .workspace-header h1 { margin: 5px 0 0; color: var(--kuds-text); font-size: clamp(34px, 5vw, 58px); line-height: 1; letter-spacing: -.055em; }
+.kuds-shell .workspace-header p { margin: 8px 0 0; color: var(--kuds-muted); font-size: 13px; }
+.kuds-shell .workspace-header button,
+.kuds-shell .workspace-state button { display: inline-flex; min-height: 42px; padding: 0 15px; flex: none; align-items: center; justify-content: center; gap: 7px; color: var(--ku-dark-green); font-size: 11px; font-weight: 700; border: 1px solid var(--kuds-border); border-radius: 10px; background: var(--kuds-surface); }
+.kuds-shell .workspace-metrics { display: grid; margin-top: 20px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.kuds-shell .workspace-metrics article { display: grid; min-height: 128px; padding: 18px; align-content: space-between; border: 1px solid var(--kuds-border); border-radius: 14px; background: var(--kuds-surface); box-shadow: var(--kuds-shadow-xs); }
+.kuds-shell .workspace-metrics span { color: var(--kuds-muted); font-size: 11px; }
+.kuds-shell .workspace-metrics strong { color: var(--kuds-text); font-size: 34px; letter-spacing: -.045em; }
+.kuds-shell .workspace-queue { margin-top: 24px; padding: 20px; border: 1px solid var(--kuds-border); border-radius: 16px; background: var(--kuds-surface); box-shadow: var(--kuds-shadow-xs); }
+.kuds-shell .workspace-queue > header { margin-bottom: 15px; }
+.kuds-shell .workspace-queue h2 { margin: 4px 0 0; color: var(--kuds-text); font-size: 25px; letter-spacing: -.035em; }
+.kuds-shell .workspace-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.kuds-shell .workspace-items article { min-width: 0; padding: 15px; border: 1px solid var(--kuds-border); border-radius: 12px; background: var(--kuds-bg); }
+.kuds-shell .workspace-items article > div,
+.kuds-shell .workspace-items footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.kuds-shell .workspace-items article span,
+.kuds-shell .workspace-items article small { color: var(--kuds-muted); font-size: 10px; font-weight: 650; }
+.kuds-shell .workspace-items h3 { margin: 10px 0 0; color: var(--kuds-text); font-size: 15px; line-height: 1.45; }
+.kuds-shell .workspace-items p { margin: 9px 0 14px; color: var(--kuds-muted); font-size: 12px; line-height: 1.6; }
+.kuds-shell .workspace-items footer { margin-top: 14px; }
+.kuds-shell .workspace-items footer > div { display: flex; gap: 7px; }
+.kuds-shell .workspace-items button { display: inline-flex; min-height: 34px; padding: 0 10px; align-items: center; gap: 5px; color: var(--ku-dark-green); font-size: 10px; font-weight: 700; border: 1px solid var(--kuds-border); border-radius: 8px; background: #fff; }
+.kuds-shell .workspace-action-error { margin: 0 0 12px; padding: 10px 12px; color: #991b1b; border: 1px solid #fecaca; border-radius: 9px; background: #fef2f2; font-size: 12px; }
+.kuds-shell .workspace-items button:last-child { color: #fff; border-color: var(--ku-green); background: var(--ku-green); }
+.kuds-shell .workspace-state { display: grid; min-height: 170px; padding: 24px; place-items: center; align-content: center; text-align: center; border: 1px dashed var(--kuds-border); border-radius: 12px; }
+.kuds-shell .workspace-state :is(h1, h3) { margin: 0; color: var(--kuds-text); }
+.kuds-shell .workspace-state p { margin: 6px 0 16px; color: var(--kuds-muted); font-size: 12px; }
+.kuds-shell .workspace-skeleton { display: grid; gap: 14px; }
+.kuds-shell .workspace-skeleton i { display: block; height: 128px; border-radius: 14px; background: linear-gradient(90deg, var(--kuds-bg), #fff, var(--kuds-bg)); background-size: 220% 100%; animation: kuds-shimmer 1.4s infinite linear; }
 
 .kuds-shell .profile-section { min-height: auto !important; padding: 0 !important; }
 .kuds-shell .profile-ambient { display: none; }
@@ -2320,6 +2360,12 @@ body {
   .kuds-shell .announcement-filters { display: flex; overflow-x: auto; }
   .kuds-shell .announcement-filters button { flex: 0 0 auto; }
   .kuds-shell .announcement-count { display: none; }
+  .kuds-shell .auth-account-type > div { grid-template-columns: 1fr; }
+  .kuds-shell .workspace-header { align-items: flex-start; flex-direction: column; }
+  .kuds-shell .workspace-metrics,
+  .kuds-shell .workspace-items { grid-template-columns: 1fr; }
+  .kuds-shell .workspace-metrics article { min-height: 104px; }
+  .kuds-shell .workspace-queue { padding: 15px; }
   .kuds-shell .admin-review-panel { padding: 15px; }
   .kuds-shell .admin-review-panel > header { align-items: flex-start; }
   .kuds-shell .admin-review-list article > footer { align-items: flex-start; flex-direction: column; }

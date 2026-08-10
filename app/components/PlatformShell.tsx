@@ -184,6 +184,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
         pathname={pathname}
         authenticated={Boolean(user)}
         isAdmin={isAdmin}
+        accountRole={user?.accessRole}
         accountInitials={user?.initials}
         signOutHref={signOutHref}
         onCredentialSignOut={async () => {

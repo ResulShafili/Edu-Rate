@@ -27,7 +27,8 @@ EduRate Qarabağ Universitetinin tələbə həyatı üçün hazırlanmış Azər
 | `/clubs` | Klublar | Klub kataloqu və klub səhifələri |
 | `/support` | Dəstək | FAQ və dəstək sorğusu forması |
 | `/auth` | Giriş və qeydiyyat | HttpOnly cookie ilə qorunan API sessiyası |
-| `/profile` | Profil | Tələbə profilinin xülasəsi |
+| `/workspace` | Rol paneli | Tələbə, müəllim və mentor üçün ayrıca iş axınları |
+| `/profile` | Profil | Rol üzrə hesab və təcrübə məlumatları |
 | `/admin` | İdarəetmə | Canlı analitika və verilənlər bazasına bağlı CRUD cədvəlləri |
 | `/api-docs` | API sənədləri | OpenAPI 3.1 endpoint kataloqu və canlı health testi |
 | `/technical-presentation` | Texniki təqdimat | Rəhbər şəxslər üçün hazır təqdimat məzmunu |
@@ -77,11 +78,12 @@ EDURATE_API_BASE_URL=http://localhost:3001
 | Metod | Endpoint | Təyinat |
 | --- | --- | --- |
 | `GET` | `/api/health` | Xidmətin işləkliyinin yoxlanması |
-| `POST` | `/api/auth/signup` | Qeydiyyat və cookie sessiyasının yaradılması |
+| `POST` | `/api/auth/signup` | Tələbə qeydiyyatı və müəllim/mentor təsdiq müraciəti |
 | `POST` | `/api/auth/login` | Giriş |
 | `POST` | `/api/auth/logout` | Çıxış |
 | `GET` | `/api/auth/session` | Aktiv sessiya |
 | `PATCH` | `/api/auth/profile` | Profil məlumatlarının yenilənməsi |
+| `GET/PATCH` | `/api/workspace` | Rol paneli və mentor müraciətlərinin cavablandırılması |
 | `GET` | `/api/admin/overview` | Verilənlər bazasından canlı admin göstəriciləri |
 | `GET/POST/PATCH/DELETE` | `/api/admin/users`, `/api/admin/clubs`, `/api/admin/events` | Qorunan real CRUD əməliyyatları |
 | `GET/PATCH` | `/api/admin/reviews` | Müəllim rəylərinin admin moderasiyası |

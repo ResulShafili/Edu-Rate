@@ -38,6 +38,8 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/network/announcements"]);
     assert.ok(response.body.paths["/api/network/feed"]);
     assert.ok(response.body.paths["/api/admin/reviews"]);
+    assert.ok(response.body.paths["/api/workspace"]);
+    assert.ok(response.body.paths["/api/workspace/mentorship/{id}"]);
     assert.ok(response.body.paths["/api/support/tickets"]);
     assert.ok(response.body.paths["/api/academic-catalog"]);
   });
@@ -621,6 +623,58 @@ describe("EduRate API", () => {
       .delete(`/api/admin/users/${assistantId}`)
       .set("Authorization", adminAuthorization)
       .expect(204);
+  });
+
+  it("teacher and mentor registrations require approval and expose role workspaces", async () => {
+    const suffix = Date.now();
+    const adminAuthorization = `Bearer ${reusableAdminToken}`;
+
+    const teacherSignup = await request(app).post("/api/auth/signup").set("X-Forwarded-For", "203.0.113.61").send({
+      name: "Səma Həsənli", email: `teacher.${suffix}@example.az`, password: "EduRate2026",
+      university: "Qarabağ Universiteti", accountType: "teacher", program: "Riyaziyyat",
+    }).expect(201);
+    assert.equal(teacherSignup.body.data.requiresApproval, true);
+    assert.equal(teacherSignup.body.data.token, undefined);
+    assert.equal(teacherSignup.body.data.user.role, "teacher");
+    assert.equal(teacherSignup.body.data.user.status, "Gözləmədə");
+
+    await request(app).post("/api/auth/login").set("X-Forwarded-For", "203.0.113.62")
+      .send({ email: `teacher.${suffix}@example.az`, password: "EduRate2026" }).expect(403);
+    await request(app).patch(`/api/admin/users/${teacherSignup.body.data.user.id}`)
+      .set("Authorization", adminAuthorization).send({ status: "Aktiv" }).expect(200);
+    const teacherLogin = await request(app).post("/api/auth/login").set("X-Forwarded-For", "203.0.113.63")
+      .send({ email: `teacher.${suffix}@example.az`, password: "EduRate2026" }).expect(200);
+    const teacherWorkspace = await request(app).get("/api/workspace")
+      .set("Authorization", `Bearer ${teacherLogin.body.data.token}`).expect(200);
+    assert.equal(teacherWorkspace.body.data.role, "teacher");
+    assert.equal(teacherWorkspace.body.data.focus, "Riyaziyyat");
+
+    const mentorSignup = await request(app).post("/api/auth/signup").set("X-Forwarded-For", "203.0.113.64").send({
+      name: "Aygün Rzayeva", email: `mentor.${suffix}@example.az`, password: "EduRate2026",
+      university: "Qarabağ Universiteti", accountType: "mentor", program: "Məhsul strategiyası",
+    }).expect(201);
+    assert.equal(mentorSignup.body.data.requiresApproval, true);
+    assert.equal(mentorSignup.body.data.user.role, "mentor");
+    await request(app).patch(`/api/admin/users/${mentorSignup.body.data.user.id}`)
+      .set("Authorization", adminAuthorization).send({ status: "Aktiv" }).expect(200);
+
+    const studentSignup = await request(app).post("/api/auth/signup").set("X-Forwarded-For", "203.0.113.65").send({
+      name: "Mentorluq Test Tələbəsi", email: `mentor.student.${suffix}@example.az`, password: "EduRate2026",
+      university: "Qarabağ Universiteti", faculty: "Mühəndislik fakültəsi",
+      program: "Kompüter mühəndisliyi", accountType: "student",
+    }).expect(201);
+    const mentorship = await request(app).post("/api/mentorship/requests")
+      .set("Authorization", `Bearer ${studentSignup.body.data.token}`)
+      .send({ mentorId: "aygun-rzayeva", note: "Karyera planımı dəqiqləşdirmək istəyirəm." }).expect(201);
+
+    const mentorLogin = await request(app).post("/api/auth/login").set("X-Forwarded-For", "203.0.113.66")
+      .send({ email: `mentor.${suffix}@example.az`, password: "EduRate2026" }).expect(200);
+    const mentorAuthorization = `Bearer ${mentorLogin.body.data.token}`;
+    const mentorWorkspace = await request(app).get("/api/workspace").set("Authorization", mentorAuthorization).expect(200);
+    assert.ok(mentorWorkspace.body.data.items.some((item: { id: string }) => item.id === mentorship.body.data.id));
+    const accepted = await request(app).patch(`/api/workspace/mentorship/${mentorship.body.data.id}`)
+      .set("Authorization", mentorAuthorization).send({ status: "accepted" }).expect(200);
+    assert.equal(accepted.body.data.status, "accepted");
   });
 
   it("legacy akademik məlumatlı hesabların sessiya və profil axınını pozmur", async () => {

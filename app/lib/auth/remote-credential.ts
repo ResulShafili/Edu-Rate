@@ -135,7 +135,14 @@ export function mapRemoteUserToProfile(user: RemoteApiUser): UserProfile {
     profile.about,
   ].filter((value) => value.trim().length > 0).length;
 
-  return { ...profile, completion: Math.round((completed / 6) * 100) };
+  const roleLabels: Record<RemoteApiUser["role"], UserProfile["role"]> = {
+    student: "Tələbə",
+    teacher: "Müəllim",
+    mentor: "Mentor",
+    assistant_admin: "Rəhbərlik",
+    admin: "Rəhbərlik",
+  };
+  return { ...profile, role: roleLabels[user.role], completion: Math.round((completed / 6) * 100) };
 }
 
 function getRemoteApiBaseUrl() {

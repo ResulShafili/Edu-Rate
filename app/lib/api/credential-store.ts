@@ -73,10 +73,13 @@ export async function updateCredentialProfile(
 
 function createProfile(input: RegisterInput): UserProfile {
   const base = createIdentityProfile(input.name, input.email);
+  const role = input.accountType === "teacher" ? "Müəllim" : input.accountType === "mentor" ? "Mentor" : "Tələbə";
   return {
     ...base,
     name: input.name.trim(),
     initials: getInitials(input.name),
+    role,
+    accessRole: input.accountType,
     university: input.university.trim(),
     faculty: input.faculty.trim(),
     program: input.program.trim(),
@@ -96,19 +99,21 @@ function validateRegistration(input: RegisterInput): RegisterInput {
   const university = input.university?.trim() ?? "";
   const faculty = input.faculty?.trim() ?? "";
   const program = input.program?.trim() ?? "";
+  const accountType = input.accountType ?? "student";
 
   if (name.length < 2 || name.length > 100) errors.name = "Ad və soyad 2–100 simvol olmalıdır.";
   if (!email) errors.email = "Etibarlı e-poçt ünvanı yaz.";
   if (!isPassword(password)) errors.password = `Şifrə ${minimumPasswordLength}–${maximumPasswordLength} simvol olmalıdır.`;
   if (university !== canonicalUniversity) errors.university = "Qarabağ Universitetini seç.";
-  if (!isValidFacultyProgram(faculty, program)) {
+  if (accountType === "student" && !isValidFacultyProgram(faculty, program)) {
     errors.program = "Fakültə və ixtisası uyğun siyahıdan seç.";
   }
+  if (accountType !== "student" && program.length < 2) errors.program = "Tədris və ya ekspertiza sahəsini yaz.";
   if (Object.keys(errors).length > 0) {
     throw new ApiHttpError(422, "VALIDATION_ERROR", "Məlumatları yenidən yoxla.", errors);
   }
 
-  return { name, email: email ?? "", password, university, faculty, program };
+  return { name, email: email ?? "", password, university, faculty, program, accountType };
 }
 
 function validateProfileUpdate(input: ProfileUpdateInput): ProfileUpdateInput {

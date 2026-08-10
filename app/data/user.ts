@@ -18,7 +18,7 @@ export type UserProfile = {
   name: string;
   initials: string;
   email: string;
-  role: "Tələbə";
+  role: "Tələbə" | "Müəllim" | "Mentor" | "Rəhbərlik";
   accessRole?: "student" | "mentor" | "teacher" | "admin" | "assistant_admin";
   university: string;
   faculty: string;
@@ -44,6 +44,13 @@ export type RegisterInput = {
   university: string;
   faculty: string;
   program: string;
+  accountType: "student" | "teacher" | "mentor";
+};
+
+export type RegisterResult = {
+  user: UserProfile | null;
+  requiresApproval: boolean;
+  accountType: RegisterInput["accountType"];
 };
 
 export type ProfileUpdateInput = Pick<
@@ -53,7 +60,7 @@ export type ProfileUpdateInput = Pick<
 
 export type AuthGateway = {
   signIn: (input: SignInInput) => Promise<UserProfile>;
-  register: (input: RegisterInput) => Promise<UserProfile>;
+  register: (input: RegisterInput) => Promise<RegisterResult>;
   signOut: () => Promise<void>;
   updateProfile: (
     profile: UserProfile,

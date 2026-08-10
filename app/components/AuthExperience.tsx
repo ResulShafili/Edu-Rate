@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   BookOpen,
+  BriefcaseBusiness,
   Building2,
   Check,
   Eye,
@@ -13,6 +14,7 @@ import {
   Mail,
   Sparkles,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -38,7 +40,8 @@ import {
 } from "./AuthProvider";
 
 type AuthMode = "login" | "register";
-type AuthField = "name" | "email" | "password" | "university" | "faculty" | "program";
+type AccountType = "student" | "teacher" | "mentor";
+type AuthField = "name" | "email" | "password" | "university" | "faculty" | "program" | "accountType";
 type FieldErrors = Partial<Record<AuthField, string>>;
 
 type AuthFormValues = Record<AuthField, string>;
@@ -73,6 +76,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
   const [showPassword, setShowPassword] = useState(false);
   const [selectedFaculty, setSelectedFaculty] = useState<FacultyName | "">("");
   const [selectedProgram, setSelectedProgram] = useState("");
+  const [accountType, setAccountType] = useState<AccountType>("student");
   const reduceMotion = Boolean(useReducedMotion());
   const formId = useId();
   const router = useRouter();
@@ -96,6 +100,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
     setShowPassword(false);
     setSelectedFaculty("");
     setSelectedProgram("");
+    setAccountType("student");
   }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -142,24 +147,34 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
 
     try {
       if (mode === "login") {
-        await signIn({ email: values.email, password: values.password });
+        const nextUser = await signIn({ email: values.email, password: values.password });
         setFormMessage("Daxil oldun. Profilin açılır.");
+        form.reset();
+        router.push(getRoleHome(nextUser.accessRole, returnTo));
       } else {
-        await register({
+        const result = await register({
           name: values.name,
           email: values.email,
           password: values.password,
           university: values.university,
-          faculty: values.faculty,
+          faculty: values.accountType === "student" ? values.faculty : values.accountType === "teacher" ? "Müəllim heyəti" : "Mentorluq şəbəkəsi",
           program: values.program,
+          accountType: values.accountType as AccountType,
         });
+        if (result.requiresApproval) {
+          setFormMessage("Müraciətin qəbul edildi. Rəhbərlik hesabını təsdiqlədikdən sonra daxil ola biləcəksən.");
+          form.reset();
+          setSelectedFaculty("");
+          setSelectedProgram("");
+          return;
+        }
         setFormMessage("Hazırsan — hesabın yaradıldı. Profilin açılır.");
+        form.reset();
+        router.push(getRoleHome(result.user?.accessRole, returnTo));
       }
 
-      form.reset();
       setSelectedFaculty("");
       setSelectedProgram("");
-      router.push(returnTo);
     } catch (error) {
       if (isAuthProviderUnavailable(error)) {
         setFormMessage(unavailableMessage);
@@ -362,6 +377,21 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
 
                 {mode === "register" && (
                   <>
+                    <fieldset className="auth-account-type">
+                      <legend>Hesab növü</legend>
+                      <input type="hidden" name="accountType" value={accountType} />
+                      <div role="radiogroup" aria-label="Hesab növünü seç">
+                        {([
+                          { value: "student", label: "Tələbə", icon: GraduationCap },
+                          { value: "teacher", label: "Müəllim", icon: BriefcaseBusiness },
+                          { value: "mentor", label: "Mentor", icon: UsersRound },
+                        ] as const).map((option) => {
+                          const Icon = option.icon;
+                          return <button key={option.value} type="button" role="radio" aria-checked={accountType === option.value} onClick={() => { setAccountType(option.value); setSelectedFaculty(""); setSelectedProgram(""); }} disabled={submitting}><Icon size={15} /><span>{option.label}</span></button>;
+                        })}
+                      </div>
+                    </fieldset>
+
                     <AuthFieldShell
                       id={`${formId}-university`}
                       label="Universitet"
@@ -382,39 +412,25 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                       </select>
                     </AuthFieldShell>
 
-                    <AuthFieldShell
-                      id={`${formId}-faculty`}
-                      label="Fakültə"
-                      error={errors.faculty}
-                      icon={<GraduationCap size={16} aria-hidden="true" />}
-                    >
-                      <select
+                    {accountType === "student" && <AuthFieldShell
                         id={`${formId}-faculty`}
-                        name="faculty"
-                        autoComplete="organization-title"
-                        value={selectedFaculty}
-                        onChange={(event) => {
-                          const faculty = event.target.value;
-                          setSelectedFaculty(isFacultyName(faculty) ? faculty : "");
-                          setSelectedProgram("");
-                        }}
-                        aria-invalid={Boolean(errors.faculty)}
-                        aria-describedby={errors.faculty ? `${formId}-faculty-error` : undefined}
-                        disabled={!credentialAuthAvailable || submitting}
-                        required
+                        label="Fakültə"
+                        error={errors.faculty}
+                        icon={<GraduationCap size={16} aria-hidden="true" />}
                       >
-                        <option value="" disabled>Fakültəni seç</option>
-                        {faculties.map((faculty) => <option key={faculty} value={faculty}>{faculty}</option>)}
-                      </select>
-                    </AuthFieldShell>
+                        <select id={`${formId}-faculty`} name="faculty" autoComplete="organization-title" value={selectedFaculty} onChange={(event) => { const faculty = event.target.value; setSelectedFaculty(isFacultyName(faculty) ? faculty : ""); setSelectedProgram(""); }} aria-invalid={Boolean(errors.faculty)} aria-describedby={errors.faculty ? `${formId}-faculty-error` : undefined} disabled={!credentialAuthAvailable || submitting} required>
+                          <option value="" disabled>Fakültəni seç</option>
+                          {faculties.map((faculty) => <option key={faculty} value={faculty}>{faculty}</option>)}
+                        </select>
+                      </AuthFieldShell>}
 
                     <AuthFieldShell
                       id={`${formId}-program`}
-                      label="İxtisas"
+                      label={accountType === "student" ? "İxtisas" : accountType === "teacher" ? "Tədris sahəsi" : "Ekspertiza sahəsi"}
                       error={errors.program}
                       icon={<BookOpen size={16} aria-hidden="true" />}
                     >
-                      <select
+                      {accountType === "student" ? <select
                         id={`${formId}-program`}
                         name="program"
                         value={selectedProgram}
@@ -430,7 +446,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                         {getProgramsForFaculty(selectedFaculty).map((program) => (
                           <option key={program} value={program}>{program}</option>
                         ))}
-                      </select>
+                      </select> : <input id={`${formId}-program`} name="program" type="text" value={selectedProgram} onChange={(event) => setSelectedProgram(event.target.value)} placeholder={accountType === "teacher" ? "Məsələn, Riyaziyyat" : "Məsələn, Karyera planlaması"} aria-invalid={Boolean(errors.program)} aria-describedby={errors.program ? `${formId}-program-error` : undefined} disabled={!credentialAuthAvailable || submitting} required />}
                     </AuthFieldShell>
                   </>
                 )}
@@ -511,6 +527,7 @@ function readFormValues(formData: FormData): AuthFormValues {
     university: getFormValue(formData, "university"),
     faculty: getFormValue(formData, "faculty"),
     program: getFormValue(formData, "program"),
+    accountType: getFormValue(formData, "accountType") || "student",
   };
 }
 
@@ -536,18 +553,27 @@ function validateAuthForm(mode: AuthMode, values: AuthFormValues): FieldErrors {
   if (mode === "register" && values.university !== canonicalUniversity) {
     errors.university = "Universitet olaraq Qarabağ Universitetini seç.";
   }
-  if (mode === "register" && !isFacultyName(values.faculty)) {
+  if (mode === "register" && values.accountType === "student" && !isFacultyName(values.faculty)) {
     errors.faculty = "Fakültəni siyahıdan seç.";
   }
-  if (mode === "register" && !isValidFacultyProgram(values.faculty, values.program)) {
+  if (mode === "register" && values.accountType === "student" && !isValidFacultyProgram(values.faculty, values.program)) {
     errors.program = "İxtisası seçilmiş fakültənin siyahısından seç.";
+  }
+  if (mode === "register" && values.accountType !== "student" && values.program.length < 2) {
+    errors.program = values.accountType === "teacher" ? "Tədris sahəsini yaz." : "Ekspertiza sahəsini yaz.";
   }
 
   return errors;
 }
 
 function isAuthField(value: string): value is AuthField {
-  return ["name", "email", "password", "university", "faculty", "program"].includes(value);
+  return ["name", "email", "password", "university", "faculty", "program", "accountType"].includes(value);
+}
+
+function getRoleHome(role: string | undefined, fallback: string) {
+  if (role === "admin" || role === "assistant_admin") return "/admin";
+  if (role === "teacher" || role === "mentor") return "/workspace";
+  return fallback;
 }
 
 function readApiFieldErrors(error: ApiError): FieldErrors {

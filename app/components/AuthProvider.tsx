@@ -13,6 +13,7 @@ import {
   type AuthGateway,
   type ProfileUpdateInput,
   type RegisterInput,
+  type RegisterResult,
   type SignInInput,
   type UserProfile,
 } from "../data/user";
@@ -32,7 +33,7 @@ type AuthContextValue = {
   isAdmin: boolean;
   adminRole: AdminAccessRole | null;
   signIn: (input: SignInInput) => Promise<UserProfile>;
-  register: (input: RegisterInput) => Promise<UserProfile>;
+  register: (input: RegisterInput) => Promise<RegisterResult>;
   signOut: () => Promise<void>;
   updateProfile: (input: ProfileUpdateInput) => Promise<UserProfile>;
 };
@@ -88,9 +89,9 @@ export function AuthProvider({
   const register = useCallback(async (input: RegisterInput) => {
     setStatus("submitting");
     try {
-      const nextUser = await activeGateway.register(input);
-      setUser(nextUser);
-      return nextUser;
+      const result = await activeGateway.register(input);
+      if (result.user) setUser(result.user);
+      return result;
     } finally {
       setStatus("idle");
     }

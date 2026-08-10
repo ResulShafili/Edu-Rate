@@ -24,16 +24,22 @@ export async function POST(request: Request) {
     }
 
     const input = await readJsonBody<RegisterInput>(request);
-    const result = await requestRemoteApi<{ token: string; user: RemoteApiUser }>(
+    const result = await requestRemoteApi<{ token?: string; user: RemoteApiUser; requiresApproval?: boolean }>(
       "/api/auth/signup",
       { method: "POST", body: input },
     );
-    const response = apiSuccess({ user: mapRemoteUserToProfile(result.user) }, 201);
-    response.cookies.set(
-      remoteCredentialCookie.name,
-      result.token,
-      getRemoteCredentialCookieOptions(request),
-    );
+    const requiresApproval = Boolean(result.requiresApproval || !result.token);
+    const response = apiSuccess({
+      user: requiresApproval ? null : mapRemoteUserToProfile(result.user),
+      requiresApproval,
+    }, 201);
+    if (result.token) {
+      response.cookies.set(
+        remoteCredentialCookie.name,
+        result.token,
+        getRemoteCredentialCookieOptions(request),
+      );
+    }
     return response;
   } catch (error) {
     return apiError(error);

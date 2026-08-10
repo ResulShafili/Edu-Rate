@@ -16,6 +16,7 @@ import { mentorshipRouter } from "./routes/mentorship.js";
 import { networkRouter } from "./routes/network.js";
 import { reviewsRouter } from "./routes/reviews.js";
 import { supportRouter } from "./routes/support.js";
+import { workspaceRouter } from "./routes/workspace.js";
 
 export function createApp() {
   const app = express();
@@ -72,6 +73,7 @@ export function createApp() {
   app.use("/api/network", networkRouter);
   app.use("/api/reviews", reviewsRouter);
   app.use("/api/support", supportRouter);
+  app.use("/api/workspace", workspaceRouter);
   app.use("/api", catalogRouter);
   app.use("/api/admin", adminRouter);
   app.get("/api/openapi.json", (_request, response) => response.json(openApiDocument));

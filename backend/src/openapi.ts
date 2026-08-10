@@ -335,6 +335,20 @@ export const openApiDocument = {
         responses: { "200": { description: "Rəy yeniləndi" }, "404": { description: "Rəy tapılmadı" }, "403": { description: "Admin icazəsi tələb olunur" } },
       },
     },
+    "/api/workspace": {
+      get: {
+        tags: ["Authentication"], summary: "Cari rol üçün iş panelini göstər", security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Tələbə, müəllim, mentor və ya rəhbərlik paneli" }, "401": { description: "Giriş tələb olunur" } },
+      },
+    },
+    "/api/workspace/mentorship/{id}": {
+      parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+      patch: {
+        tags: ["Mentorship"], summary: "Mentorluq müraciətini qəbul et və ya rədd et", security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["status"], properties: { status: { type: "string", enum: ["accepted", "rejected"] } } } } } },
+        responses: { "200": { description: "Müraciət yeniləndi" }, "403": { description: "Mentor icazəsi tələb olunur" }, "404": { description: "Müraciət tapılmadı" } },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -364,7 +378,7 @@ export const openApiDocument = {
       },
       SignupInput: {
         type: "object",
-        required: ["name", "email", "password", "faculty", "program"],
+        required: ["name", "email", "password", "accountType", "program"],
         properties: {
           name: { type: "string", example: "Nümunə Tələbə" },
           email: { type: "string", format: "email", example: "telebe@example.az" },
@@ -375,15 +389,21 @@ export const openApiDocument = {
             default: ACADEMIC_UNIVERSITY,
             example: ACADEMIC_UNIVERSITY,
           },
+          accountType: {
+            type: "string",
+            enum: ["student", "teacher", "mentor"],
+            default: "student",
+            description: "Müəllim və mentor hesabları rəhbərlik təsdiqindən sonra aktivləşir.",
+          },
           faculty: {
             type: "string",
             enum: academicFaculties,
+            description: "Yalnız tələbə qeydiyyatı üçün tələb olunur.",
             example: "Mühəndislik fakültəsi",
           },
           program: {
             type: "string",
-            enum: academicPrograms,
-            description: "Seçilmiş fakültəyə aid ixtisas olmalıdır.",
+            description: "Tələbə üçün ixtisas, müəllim üçün tədris sahəsi, mentor üçün ekspertiza sahəsi.",
             example: "Kompüter mühəndisliyi",
           },
         },

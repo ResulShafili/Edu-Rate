@@ -10,6 +10,7 @@ import {
   Home,
   LogIn,
   LogOut,
+  LayoutDashboard,
   Megaphone,
   Settings,
   ShieldCheck,
@@ -30,6 +31,7 @@ type PlatformNavigationRailProps = {
   pathname: string;
   authenticated: boolean;
   isAdmin: boolean;
+  accountRole?: "student" | "mentor" | "teacher" | "admin" | "assistant_admin";
   accountInitials?: string;
   signOutHref: string | null;
   onCredentialSignOut: () => Promise<void>;
@@ -65,7 +67,7 @@ export function PlatformNavigationRail(props: PlatformNavigationRailProps) {
       {props.isAdmin && (
         <div className="platform-nav-group">
           <span className="platform-nav-group-label">İdarəetmə</span>
-          <NavigationLink href="/admin" label="Admin paneli" pathname={props.pathname} icon={ShieldCheck} reducedMotion={Boolean(reducedMotion)} />
+          <NavigationLink href="/admin" label="Rəhbərlik paneli" pathname={props.pathname} icon={ShieldCheck} reducedMotion={Boolean(reducedMotion)} />
         </div>
       )}
     </>
@@ -73,6 +75,7 @@ export function PlatformNavigationRail(props: PlatformNavigationRailProps) {
 
   const account = props.authenticated ? (
     <>
+      {!props.isAdmin && <AccountLink href="/workspace" label={props.accountRole === "teacher" ? "Müəllim paneli" : props.accountRole === "mentor" ? "Mentor paneli" : "Şəxsi panel"} icon={LayoutDashboard} pathname={props.pathname} />}
       <AccountLink href="/profile" label="Profil" icon={UserRound} pathname={props.pathname} initials={props.accountInitials} />
       <AccountLink href="/settings" label="Parametrlər" icon={Settings} pathname={props.pathname} />
       {props.signOutHref ? (

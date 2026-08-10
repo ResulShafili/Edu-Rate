@@ -95,8 +95,12 @@ export function UserProfileDashboard() {
       return;
     }
 
-    if (!isValidFacultyProgram(input.faculty, input.program)) {
+    if (user.accessRole === "student" && !isValidFacultyProgram(input.faculty, input.program)) {
       setProfileMessage("Fakültə və ixtisası uyğun siyahıdan seç.");
+      return;
+    }
+    if (user.accessRole !== "student" && input.program.length < 2) {
+      setProfileMessage(user.accessRole === "teacher" ? "Tədris sahəsini daxil et." : "Ekspertiza sahəsini daxil et.");
       return;
     }
 
@@ -135,6 +139,7 @@ export function UserProfileDashboard() {
   }
 
   const firstName = user.name.trim().split(/\s+/)[0] || user.name;
+  const isStudent = user.accessRole === "student";
 
   return (
     <section className="profile-section" aria-labelledby="profile-title">
@@ -154,7 +159,7 @@ export function UserProfileDashboard() {
         </div>
 
         <div className="profile-hero-copy">
-          <span className="profile-kicker">Tələbə profili</span>
+          <span className="profile-kicker">{isStudent ? "Tələbə profili" : user.accessRole === "teacher" ? "Müəllim profili" : user.accessRole === "mentor" ? "Mentor profili" : "Rəhbərlik profili"}</span>
           <h1 id="profile-title">Salam, <em>{firstName}.</em></h1>
           <div className="profile-identity-meta">
             <span><BadgeCheck size={14} aria-hidden="true" /> {user.role}</span>
@@ -171,10 +176,10 @@ export function UserProfileDashboard() {
               aria-controls="profile-edit-panel"
               onClick={() => {
                 if (!editing) {
-                  const nextFaculty = isFacultyName(user.faculty) ? user.faculty : "";
+                  const nextFaculty = isStudent && isFacultyName(user.faculty) ? user.faculty : "";
                   setEditFaculty(nextFaculty);
                   setEditProgram(
-                    isValidFacultyProgram(nextFaculty, user.program) ? user.program : "",
+                    isStudent ? (isValidFacultyProgram(nextFaculty, user.program) ? user.program : "") : user.program,
                   );
                 }
                 setEditing((open) => !open);
@@ -223,7 +228,7 @@ export function UserProfileDashboard() {
                   <option value={canonicalUniversity}>{canonicalUniversity}</option>
                 </select>
               </label>
-              <label className="profile-edit-field">
+              {isStudent ? <label className="profile-edit-field">
                 <span>Fakültə</span>
                 <select
                   name="faculty"
@@ -239,10 +244,10 @@ export function UserProfileDashboard() {
                   <option value="" disabled>Fakültəni seç</option>
                   {faculties.map((faculty) => <option key={faculty} value={faculty}>{faculty}</option>)}
                 </select>
-              </label>
+              </label> : <input type="hidden" name="faculty" value={user.faculty} />}
               <label className="profile-edit-field">
-                <span>İxtisas</span>
-                <select
+                <span>{isStudent ? "İxtisas" : user.accessRole === "teacher" ? "Tədris sahəsi" : "Ekspertiza sahəsi"}</span>
+                {isStudent ? <select
                   name="program"
                   value={editProgram}
                   onChange={(event) => setEditProgram(event.target.value)}
@@ -253,9 +258,9 @@ export function UserProfileDashboard() {
                   {getProgramsForFaculty(editFaculty).map((program) => (
                     <option key={program} value={program}>{program}</option>
                   ))}
-                </select>
+                </select> : <input name="program" type="text" value={editProgram} onChange={(event) => setEditProgram(event.target.value)} required />}
               </label>
-              <ProfileEditField label="Kurs" name="year" defaultValue={user.year} />
+              <ProfileEditField label={isStudent ? "Kurs" : "Təcrübə / vəzifə"} name="year" defaultValue={user.year} />
               <label className="profile-edit-field profile-edit-about">
                 <span>Mənim haqqımda</span>
                 <textarea name="about" defaultValue={user.about} maxLength={280} rows={4} />
@@ -322,8 +327,8 @@ export function UserProfileDashboard() {
           </div>
           <dl className="profile-facts">
             <div><dt>Universitet</dt><dd>{user.university}</dd></div>
-            <div><dt>Fakültə</dt><dd>{user.faculty}</dd></div>
-            <div><dt>Kurs</dt><dd>{user.year}</dd></div>
+            {isStudent && <div><dt>Fakültə</dt><dd>{user.faculty}</dd></div>}
+            <div><dt>{isStudent ? "Kurs" : "Təcrübə / vəzifə"}</dt><dd>{user.year}</dd></div>
           </dl>
         </motion.article>
 

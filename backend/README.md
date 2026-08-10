@@ -53,8 +53,12 @@ Render build mərhələsində TypeScript və tip paketlərini quraşdırmaq üç
 - `GET /api/reviews` — yalnız təsdiqlənmiş, anonimləşdirilmiş müəllim rəylərini göstər
 - `GET /api/admin/reviews` — moderasiya növbəsini göstər
 - `PATCH /api/admin/reviews/:id` — rəyi təsdiqlə və ya rədd et
+- `GET /api/workspace` — tələbə, müəllim, mentor və rəhbərlik üçün rol əsaslı panel məlumatları
+- `PATCH /api/workspace/mentorship/:id` — mentorun ona ünvanlanan müraciəti qəbul və ya rədd etməsi
 
 Frontend Elanlar səhifəsi artıq bu API-lərlə işləyir; yüklənmə, boş və xəta vəziyyətləri mövcuddur. Admin panelində rəy moderasiyası ayrıca qorunan bölmə kimi təqdim edilir.
+
+Müəllim və mentor qeydiyyatları təhlükəsizlik məqsədilə `Gözləmədə` statusunda yaradılır. Əsas administrator hesabı yoxlayıb aktivləşdirdikdən sonra rol panelinə giriş açılır. Müəllim qeydiyyatında fakültə tələb edilmir; yalnız tədris sahəsi yazılır.
 
 Bütün yazma əməliyyatları JWT tələb edir. Tədbiri yalnız onu yaradan istifadəçi və ya admin dəyişə/silə bilər. Endpoint-lərin nümunələri və cavab kodları Swagger UI daxilində test edilə bilər.
 
