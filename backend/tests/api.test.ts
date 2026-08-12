@@ -397,6 +397,12 @@ describe("EduRate API", () => {
 
     const overview = await request(app).get("/api/admin/overview").set("Authorization", authorization).expect(200);
     assert.equal(overview.body.data.metrics.length, 4);
+    assert.equal(overview.body.data.activity.length, 6);
+    for (let index = 1; index < overview.body.data.activity.length; index += 1) {
+      assert.ok(overview.body.data.activity[index].users >= overview.body.data.activity[index - 1].users);
+      assert.ok(overview.body.data.activity[index].clubs >= overview.body.data.activity[index - 1].clubs);
+      assert.ok(overview.body.data.activity[index].events >= overview.body.data.activity[index - 1].events);
+    }
     const users = await request(app).get("/api/admin/users?page=1&pageSize=5").set("Authorization", authorization).expect(200);
     assert.equal(users.body.data.page, 1);
     assert.ok(users.body.data.total >= 1);

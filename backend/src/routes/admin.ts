@@ -82,10 +82,10 @@ const eventSchema = z.object({
 const announcementSchema=z.object({category:z.enum(["official","faculties","clubs","scholarship","events"]),title:z.string().trim().min(3).max(180),summary:z.string().trim().min(10).max(800),source:z.string().trim().min(2).max(140),sourceInitials:z.string().trim().min(1).max(8),tone:z.enum(["lime","lilac","blue","coral","mint","gold"]),startsAt:z.string().datetime({offset:true}),expiresAt:z.string().datetime({offset:true}),priority:z.boolean().default(false),status:z.enum(["draft","published"]).default("draft")});
 
 adminRouter.get("/overview", async (_request, response) => {
-  const [users, events, platform, audit] = await Promise.all([listUsers(10_000), listEvents(false), getPlatformCounts(), listAudit(6)]);
+  const [users, events, platform, audit, clubs] = await Promise.all([listUsers(10_000), listEvents(false), getPlatformCounts(), listAudit(6), listClubs()]);
   const activeUsers = users.filter((user) => user.status === "Aktiv").length;
   const openEvents = events.filter((event) => new Date(event.endAt).getTime() > Date.now()).length;
-  const engagement = users.length ? Math.min(99, Math.round(((platform.memberships + platform.reviews) / users.length) * 100)) : 0;
+  const participation = platform.memberships + platform.reviews;
   response.json({
     data: {
       updatedAt: new Date().toISOString(),
@@ -93,14 +93,14 @@ adminRouter.get("/overview", async (_request, response) => {
         { id: "users", label: "Aktiv istifadəçi", value: String(activeUsers), change: `${users.length} ümumi`, trend: "up" },
         { id: "clubs", label: "Tələbə klubu", value: String(platform.clubs), change: `${platform.memberships} üzvlük`, trend: "up" },
         { id: "events", label: "Açıq tədbir", value: String(openEvents), change: `${events.length} ümumi`, trend: "steady" },
-        { id: "engagement", label: "İştirak göstəricisi", value: `${engagement}%`, change: `${platform.reviews} rəy`, trend: "up" },
+        { id: "engagement", label: "İştirak fəaliyyəti", value: String(participation), change: `${platform.memberships} üzvlük · ${platform.reviews} rəy`, trend: "up" },
       ],
-      activity: buildActivity(users.length, platform.clubs, events.length),
-      distribution: buildDistribution(await listClubs()),
+      activity: buildActivity(users, clubs, events),
+      distribution: buildDistribution(clubs),
       recentActivity: audit.length ? audit.map((item)=>({id:item.id,title:item.action,description:`${item.actor} · ${item.entityType}`,timeLabel:"audit",occurredAt:item.occurredAt,tone:"lime"})) : [
         { id: "live-users", title: "İstifadəçi bazası aktivdir", description: `${users.length} hesab real verilənlər bazasında saxlanılır.`, timeLabel: "indi", occurredAt: new Date().toISOString(), tone: "lime" },
         { id: "live-clubs", title: "Klub üzvlükləri işləyir", description: `${platform.memberships} aktiv klub üzvlüyü mövcuddur.`, timeLabel: "indi", occurredAt: new Date().toISOString(), tone: "blue" },
-        { id: "live-moderation", title: "Rəy moderasiyası aktivdir", description: `${platform.reviews} rəy moderasiya növbəsindədir.`, timeLabel: "indi", occurredAt: new Date().toISOString(), tone: "violet" },
+        { id: "live-moderation", title: "Rəy sistemi aktivdir", description: `${platform.reviews} rəy bazada saxlanılır.`, timeLabel: "indi", occurredAt: new Date().toISOString(), tone: "violet" },
       ],
     },
   });
@@ -388,9 +388,20 @@ function paginate<T>(items: T[], query: Record<string, unknown>) {
   return { items: items.slice((page - 1) * pageSize, page * pageSize), total: items.length, page, pageSize };
 }
 
-function buildActivity(users: number, clubs: number, events: number) {
-  const labels = ["Mar", "Apr", "May", "İyn", "İyl", "Avq"];
-  return labels.map((label, index) => ({ label, users: Math.max(0, users - (5 - index) * Math.ceil(users / 12)), clubs: Math.max(0, clubs - (5 - index)), events: Math.max(0, events - (5 - index)) }));
+function buildActivity(users: UserRecord[], clubs: ClubRecord[], events: EventRecord[]) {
+  const now = new Date();
+  const monthFormatter = new Intl.DateTimeFormat("az-AZ", { month: "short" });
+  return Array.from({ length: 6 }, (_, index) => {
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (5 - index), 1));
+    const monthEnd = new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 1));
+    const createdBeforeMonthEnd = (createdAt: string) => new Date(createdAt).getTime() < monthEnd.getTime();
+    return {
+      label: monthFormatter.format(monthStart),
+      users: users.filter((item) => createdBeforeMonthEnd(item.createdAt)).length,
+      clubs: clubs.filter((item) => createdBeforeMonthEnd(item.createdAt)).length,
+      events: events.filter((item) => createdBeforeMonthEnd(item.createdAt)).length,
+    };
+  });
 }
 
 function buildDistribution(clubs: ClubRecord[]) {
