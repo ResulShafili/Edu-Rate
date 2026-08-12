@@ -27,14 +27,16 @@ import {
   platformSearchItems,
   type PlatformRouteContext,
 } from "../data/platform-shell";
+import { useAuth } from "./AuthProvider";
 
-type UtilityTab = "search" | "shortcuts" | "updates";
+export type UtilityTab = "search" | "shortcuts" | "updates";
 
 type PlatformUtilityRailProps = {
   mobileOpen: boolean;
   onMobileClose: () => void;
   desktopOpen: boolean;
   onDesktopOpenChange: (open: boolean) => void;
+  requestedTab: UtilityTab;
 };
 
 type UtilityContentProps = {
@@ -55,7 +57,7 @@ const utilityTabs: readonly {
 }[] = [
   { id: "search", label: "Axtarış", icon: Search },
   { id: "shortcuts", label: "Qısa yollar", icon: Command },
-  { id: "updates", label: "Yeniliklər", icon: Bell },
+  { id: "updates", label: "Bildirişlər", icon: Bell },
 ];
 
 function normalizeSearchValue(value: string) {
@@ -72,9 +74,35 @@ function UtilityContent({
   searchInputRef,
   idPrefix,
 }: UtilityContentProps) {
+  const { user } = useAuth();
   const [upcomingEvents,setUpcomingEvents]=useState<Array<{id:string;title:string;startAt:string;location:string}>>([]);
   const [activeAnnouncements,setActiveAnnouncements]=useState<Array<{id:string;title:string;dateLabel:string;source:string}>>([]);
+  const [incomingConnections,setIncomingConnections]=useState<Array<{id:string;name:string}>>([]);
+  const [unreadConversations,setUnreadConversations]=useState<Array<{id:string;peerName:string;unreadCount:number}>>([]);
   useEffect(()=>{let cancelled=false;void Promise.all([fetch("/api/catalog/events",{cache:"no-store"}),fetch("/api/network",{cache:"no-store"})]).then(async([eventsResponse,networkResponse])=>{const eventsPayload=await eventsResponse.json() as {data?:Array<{id:string;title:string;startAt:string;location:string}>};const networkPayload=await networkResponse.json() as {data?:{announcements?:Array<{id:string;title:string;dateLabel:string;source:string}>}};if(!cancelled){setUpcomingEvents((eventsPayload.data??[]).filter((item)=>new Date(item.startAt).getTime()>=Date.now()).slice(0,3));setActiveAnnouncements((networkPayload.data?.announcements??[]).slice(0,3));}}).catch(()=>undefined);return()=>{cancelled=true;};},[]);
+  useEffect(() => {
+    if (!user || activeTab !== "updates") return;
+    let cancelled = false;
+    const controller = new AbortController();
+    void Promise.all([
+      fetch("/api/community/users", { cache: "no-store", signal: controller.signal }),
+      fetch("/api/community/connections", { cache: "no-store", signal: controller.signal }),
+      fetch("/api/community/conversations", { cache: "no-store", signal: controller.signal }),
+    ]).then(async ([usersResponse, connectionsResponse, conversationsResponse]) => {
+      const usersPayload = await usersResponse.json() as { data?: Array<{ id: string; name: string }> };
+      const connectionsPayload = await connectionsResponse.json() as { data?: Array<{ id: string; requesterId: string; recipientId: string; status: string }> };
+      const conversationsPayload = await conversationsResponse.json() as { data?: Array<{ id: string; peer: { name: string }; unreadCount: number }> };
+      if (cancelled) return;
+      const names = new Map((usersPayload.data ?? []).map((entry) => [entry.id, entry.name]));
+      setIncomingConnections((connectionsPayload.data ?? [])
+        .filter((entry) => entry.status === "pending" && entry.recipientId === user.id)
+        .map((entry) => ({ id: entry.id, name: names.get(entry.requesterId) ?? "EduRate istifadəçisi" })));
+      setUnreadConversations((conversationsPayload.data ?? [])
+        .filter((entry) => entry.unreadCount > 0)
+        .map((entry) => ({ id: entry.id, peerName: entry.peer.name, unreadCount: entry.unreadCount })));
+    }).catch(() => undefined);
+    return () => { cancelled = true; controller.abort(); };
+  }, [activeTab, user]);
   const filteredItems = useMemo(() => {
     const normalizedQuery = normalizeSearchValue(query);
     if (!normalizedQuery) return platformSearchItems.slice(0, 6);
@@ -172,7 +200,36 @@ function UtilityContent({
   }
 
   return (
-    <div id={`${idPrefix}-updates`} className="platform-utility-content" role="tabpanel" aria-label="Yaxın yeniliklər">
+    <div id={`${idPrefix}-updates`} className="platform-utility-content" role="tabpanel" aria-label="Bildirişlər">
+      <section className="platform-update-group" aria-labelledby={`${idPrefix}-notifications-title`}>
+        <header>
+          <Bell size={15} aria-hidden="true" />
+          <h3 id={`${idPrefix}-notifications-title`}>Sənə gələnlər</h3>
+        </header>
+        {!user ? (
+          <Link href="/auth" onClick={onNavigate}>
+            <span className="platform-update-dot" aria-hidden="true" />
+            <span><strong>Bildirişləri görmək üçün daxil ol</strong><small>Hesab bildirişləri girişdən sonra görünür.</small></span>
+          </Link>
+        ) : incomingConnections.length || unreadConversations.length ? (
+          <>
+            {incomingConnections.map((connection) => (
+              <Link key={connection.id} href="/community" onClick={onNavigate}>
+                <span className="platform-update-dot" aria-hidden="true" />
+                <span><strong>{connection.name} əlaqə sorğusu göndərib</strong><small>Qəbul etmək üçün İcma bölməsinə keç.</small></span>
+              </Link>
+            ))}
+            {unreadConversations.map((conversation) => (
+              <Link key={conversation.id} href="/community" onClick={onNavigate}>
+                <span className="platform-update-dot" aria-hidden="true" />
+                <span><strong>{conversation.peerName}: yeni mesaj</strong><small>{conversation.unreadCount} oxunmamış mesaj</small></span>
+              </Link>
+            ))}
+          </>
+        ) : (
+          <p className="platform-search-empty">Hazırda yeni hesab bildirişi yoxdur.</p>
+        )}
+      </section>
       <section className="platform-update-group" aria-labelledby={`${idPrefix}-events-title`}>
         <header>
           <CalendarDays size={15} aria-hidden="true" />
@@ -207,6 +264,7 @@ export function PlatformUtilityRail({
   onMobileClose,
   desktopOpen,
   onDesktopOpenChange,
+  requestedTab,
 }: PlatformUtilityRailProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -217,8 +275,8 @@ export function PlatformUtilityRail({
   const desktopSearchRef = useRef<HTMLInputElement>(null);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
   const context = getPlatformRouteContext(pathname);
-  const displayedMobileTab = activeTab ?? "search";
-  const displayedDesktopTab = desktopOpen ? activeTab ?? "search" : null;
+  const displayedMobileTab = activeTab ?? requestedTab;
+  const displayedDesktopTab = desktopOpen ? activeTab ?? requestedTab : null;
 
   const closeDesktopPanel = useCallback((restoreFocus = true) => {
     const fallbackTrigger = document.querySelector<HTMLElement>(
@@ -282,7 +340,7 @@ export function PlatformUtilityRail({
   function toggleDesktopTab(tab: UtilityTab, trigger: HTMLButtonElement) {
     lastDesktopTriggerRef.current = trigger;
     setActiveTab((current) => {
-      const next = current === tab ? null : tab;
+      const next = (current ?? requestedTab) === tab ? null : tab;
       onDesktopOpenChange(Boolean(next));
       return next;
     });
@@ -301,7 +359,7 @@ export function PlatformUtilityRail({
         <div role="tablist" aria-label="Qlobal alətlər">
           {utilityTabs.map((tab) => {
             const Icon = tab.icon;
-            const selected = activeTab === tab.id;
+            const selected = displayedDesktopTab === tab.id;
             return (
               <button
                 key={tab.id}

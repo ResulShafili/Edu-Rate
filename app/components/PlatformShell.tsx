@@ -13,7 +13,7 @@ import {
 import { useAuth } from "./AuthProvider";
 import { PlatformHeader } from "./PlatformHeader";
 import { PlatformNavigationRail } from "./PlatformNavigationRail";
-import { PlatformUtilityRail } from "./PlatformUtilityRail";
+import { PlatformUtilityRail, type UtilityTab } from "./PlatformUtilityRail";
 import { RouteTransition } from "./RouteTransition";
 
 type PlatformShellProps = {
@@ -26,6 +26,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
   const [navigationState, setNavigationState] = useState({ pathname, open: false });
   const [toolsState, setToolsState] = useState({ pathname, open: false });
   const [desktopToolsState, setDesktopToolsState] = useState({ pathname, open: false });
+  const [requestedUtilityTab, setRequestedUtilityTab] = useState<UtilityTab>("search");
   const navigationButtonRef = useRef<HTMLButtonElement>(null);
   const toolsButtonRef = useRef<HTMLButtonElement>(null);
   const navigationOpen = navigationState.pathname === pathname && navigationState.open;
@@ -107,6 +108,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
       }
 
       event.preventDefault();
+      setRequestedUtilityTab("search");
       setNavigationState({ pathname, open: false });
       if (window.matchMedia("(max-width: 767px)").matches) {
         setToolsState((current) => ({
@@ -134,13 +136,15 @@ export function PlatformShell({ children }: PlatformShellProps) {
     }));
   }
 
-  function toggleTools() {
+  function toggleTools(tab: UtilityTab = "search") {
+    const sameTab = requestedUtilityTab === tab;
+    setRequestedUtilityTab(tab);
     setNavigationState({ pathname, open: false });
     if (window.matchMedia("(max-width: 767px)").matches) {
       setDesktopToolsState({ pathname, open: false });
       setToolsState((current) => ({
         pathname,
-        open: current.pathname === pathname ? !current.open : true,
+        open: current.pathname === pathname && sameTab ? !current.open : true,
       }));
       return;
     }
@@ -148,7 +152,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
     setToolsState({ pathname, open: false });
     setDesktopToolsState((current) => ({
       pathname,
-      open: current.pathname === pathname ? !current.open : true,
+      open: current.pathname === pathname && sameTab ? !current.open : true,
     }));
   }
 
@@ -172,7 +176,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
         ref={toolsButtonRef}
         type="button"
         className="platform-mobile-tools-trigger"
-        onClick={toggleTools}
+        onClick={() => toggleTools("search")}
         aria-expanded={toolsOpen}
         aria-controls="platform-mobile-utility-sheet"
         aria-label={toolsOpen ? "Səhifə alətlərini bağla" : "Səhifə alətlərini aç"}
@@ -195,7 +199,12 @@ export function PlatformShell({ children }: PlatformShellProps) {
         onMobileClose={closeNavigation}
       />
       <div className="platform-workspace">
-        <PlatformHeader toolsOpen={desktopToolsOpen} onToolsToggle={toggleTools} />
+        <PlatformHeader
+          searchOpen={desktopToolsOpen && requestedUtilityTab === "search"}
+          updatesOpen={desktopToolsOpen && requestedUtilityTab === "updates"}
+          onSearchToggle={() => toggleTools("search")}
+          onUpdatesToggle={() => toggleTools("updates")}
+        />
 
         <div className="platform-route-content">
           <RouteTransition>{children}</RouteTransition>
@@ -211,11 +220,12 @@ export function PlatformShell({ children }: PlatformShellProps) {
         </div>
       </div>
       <PlatformUtilityRail
-        key={pathname}
+        key={`${pathname}:${requestedUtilityTab}`}
         mobileOpen={toolsOpen}
         onMobileClose={closeTools}
         desktopOpen={desktopToolsOpen}
         onDesktopOpenChange={(open) => setDesktopToolsState({ pathname, open })}
+        requestedTab={requestedUtilityTab}
       />
     </div>
   );

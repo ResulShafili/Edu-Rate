@@ -8,11 +8,13 @@ import { useSyncExternalStore } from "react";
 import { getPlatformRouteContext } from "../data/platform-shell";
 
 type PlatformHeaderProps = {
-  toolsOpen: boolean;
-  onToolsToggle: () => void;
+  searchOpen: boolean;
+  updatesOpen: boolean;
+  onSearchToggle: () => void;
+  onUpdatesToggle: () => void;
 };
 
-export function PlatformHeader({ toolsOpen, onToolsToggle }: PlatformHeaderProps) {
+export function PlatformHeader({ searchOpen, updatesOpen, onSearchToggle, onUpdatesToggle }: PlatformHeaderProps) {
   const pathname = usePathname();
   const { user } = useAuth();
   const context = getPlatformRouteContext(pathname);
@@ -36,8 +38,8 @@ export function PlatformHeader({ toolsOpen, onToolsToggle }: PlatformHeaderProps
         <button
           type="button"
           className="platform-header-search"
-          onClick={onToolsToggle}
-          aria-expanded={toolsOpen}
+          onClick={onSearchToggle}
+          aria-expanded={searchOpen}
           aria-controls="platform-desktop-utility-panel"
         >
           <Search size={17} aria-hidden="true" />
@@ -47,9 +49,11 @@ export function PlatformHeader({ toolsOpen, onToolsToggle }: PlatformHeaderProps
         <button
           type="button"
           className="platform-header-icon"
-          onClick={onToolsToggle}
-          aria-label="Yeniliklər panelini aç"
-          title="Yeniliklər"
+          onClick={onUpdatesToggle}
+          aria-label="Bildirişlər panelini aç"
+          aria-expanded={updatesOpen}
+          aria-controls="platform-desktop-utility-panel"
+          title="Bildirişlər"
         >
           <Bell size={18} aria-hidden="true" />
           <i aria-hidden="true" />
