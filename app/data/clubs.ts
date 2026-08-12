@@ -617,11 +617,16 @@ export function getClubBySlug(slug: string) {
   return clubs.find((club) => club.slug === slug);
 }
 
-export type ClubApiRecord={slug:string;name:string;category:string;coordinatorInitials:string;memberCount:number;eventCount:number;status:string};
+export type ClubApiRecord={
+  slug:string;name:string;shortName:string;category:string;coordinatorInitials:string;memberCount:number;eventCount:number;status:string;
+  tagline:string;description:string;about:string[];tone:ClubTone;visualMark:string;meeting:ClubMeeting;focusTags:string[];
+  events:ClubEvent[];members:ClubMember[];history:ClubHistoryMilestone[];
+};
 
 export function clubFromApi(record:ClubApiRecord):Club {
-  const existing=getClubBySlug(record.slug);if(existing)return {...existing,name:record.name,category:normalizeClubCategory(record.category),stats:[{label:"üzv",value:String(record.memberCount)},{label:"tədbir",value:String(record.eventCount)}]};
-  return {slug:record.slug,name:record.name,shortName:record.name,category:normalizeClubCategory(record.category),tagline:"Birlikdə öyrən və yarat.",description:"Universitet tələbələrinin birgə fəaliyyəti üçün açıq klub.",about:["Klub haqqında ətraflı məlumat rəhbərlik tərəfindən əlavə ediləcək."],stats:[{label:"üzv",value:String(record.memberCount)},{label:"tədbir",value:String(record.eventCount)}],tone:"lime",visualMark:record.coordinatorInitials,meeting:{cadence:"Yenilənir",day:"—",time:"—",place:"Kampus"},focusTags:[record.category],events:[],members:[],history:[]};
+  return {slug:record.slug,name:record.name,shortName:record.shortName,category:normalizeClubCategory(record.category),tagline:record.tagline,
+    description:record.description,about:record.about,stats:[{label:"Üzv",value:String(record.memberCount)},{label:"Tədbir",value:String(record.events.length)}],
+    tone:record.tone,visualMark:record.visualMark,meeting:record.meeting,focusTags:record.focusTags,events:record.events,members:record.members,history:record.history};
 }
 
 function normalizeClubCategory(value:string):ClubCategory {if(value==="Texnologiya"||value==="Akademik"||value==="Yaradıcılıq"||value==="Sosial təsir"||value==="Mədəniyyət")return value;return "Akademik";}

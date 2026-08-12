@@ -10,6 +10,17 @@ export type ClubRecord = {
   name: string;
   category: string;
   coordinatorInitials: string;
+  shortName: string;
+  tagline: string;
+  description: string;
+  about: string[];
+  tone: "lime" | "violet" | "cyan" | "coral" | "amber" | "mint";
+  visualMark: string;
+  meeting: { cadence: string; day: string; time: string; place: string };
+  focusTags: string[];
+  events: Array<{ id: string; title: string; summary: string; date: string; dateLabel: string; timeLabel: string; place: string; format: string }>;
+  members: Array<{ id: string; initials: string; role: string; focus: string }>;
+  history: Array<{ year: string; title: string; description: string }>;
   memberCount: number;
   eventCount: number;
   status: ClubStatus;
@@ -17,7 +28,7 @@ export type ClubRecord = {
   updatedAt: string;
 };
 
-export type ClubInput = Pick<ClubRecord, "slug" | "name" | "category" | "coordinatorInitials"> & {
+export type ClubInput = Pick<ClubRecord, "slug" | "name" | "category" | "coordinatorInitials"> & Partial<Pick<ClubRecord,"shortName"|"tagline"|"description"|"about"|"tone"|"visualMark"|"meeting"|"focusTags">> & {
   status?: ClubStatus;
 };
 
@@ -53,7 +64,7 @@ export type SupportTicketRecord = {
   createdAt: string;
 };
 
-const clubSeeds: Omit<ClubRecord, "id" | "createdAt" | "updatedAt">[] = [
+const rawClubSeeds: Array<Pick<ClubRecord,"slug"|"name"|"category"|"coordinatorInitials"|"memberCount"|"eventCount"|"status">> = [
   { slug: "innovasiya-robototexnika", name: "İnnovasiya və Robototexnika Klubu", category: "Texnologiya", coordinatorInitials: "NH", memberCount: 186, eventCount: 8, status: "Aktiv" },
   { slug: "debat-natiqlik", name: "Debat və Natiqlik Cəmiyyəti", category: "Akademik", coordinatorInitials: "NA", memberCount: 142, eventCount: 6, status: "Aktiv" },
   { slug: "yasil-kampus", name: "Yaşıl Kampus Birliyi", category: "Sosial təsir", coordinatorInitials: "LM", memberCount: 118, eventCount: 5, status: "Aktiv" },
@@ -61,6 +72,21 @@ const clubSeeds: Omit<ClubRecord, "id" | "createdAt" | "updatedAt">[] = [
   { slug: "konulluler-sebekesi", name: "Könüllülər Şəbəkəsi", category: "Sosial təsir", coordinatorInitials: "RA", memberCount: 214, eventCount: 11, status: "Aktiv" },
   { slug: "sehne-musiqi", name: "Səhnə və Musiqi Birliyi", category: "Mədəniyyət", coordinatorInitials: "SD", memberCount: 124, eventCount: 9, status: "Aktiv" },
 ];
+
+const clubSeeds: Omit<ClubRecord, "id" | "createdAt" | "updatedAt">[] = rawClubSeeds.map((club,index)=>({
+  ...club,
+  shortName:club.name.replace(/ (Klubu|Birliyi|Cəmiyyəti|Təşkilatı)$/u,""),
+  tagline:["Fikri birlikdə sına, nəticəni kampusla paylaş.","Aydın düşün, diqqətlə dinlə və əsaslı danış.","Kiçik addımlarla ölçülə bilən dəyişiklik yarat.","Kampusu yeni baxışla gör və hekayəni paylaş.","Vaxtını mənalı təşəbbüslərə çevir.","Səhnədə özünü ifadə et və birlikdə yarat."][index]!,
+  description:`${club.category} istiqamətində tələbələri bir araya gətirən açıq universitet klubudur.`,
+  about:[`${club.name} tələbələrin bilik, təcrübə və ideyalarını təhlükəsiz, əməkdaşlığa açıq mühitdə inkişaf etdirməsi üçün fəaliyyət göstərir.`],
+  tone:(['lime','violet','mint','coral','amber','cyan'] as const)[index]!,
+  visualMark:`K${String(index+1).padStart(2,"0")}`,
+  meeting:{cadence:"Həftəlik",day:"Cədvəl üzrə",time:"18:00",place:"Universitet kampusu"},
+  focusTags:[club.category,"Komanda işi","Tələbə təşəbbüsü"],
+  events:[],
+  members:[{id:`${club.slug}-coordinator`,initials:club.coordinatorInitials,role:"Klub koordinatoru",focus:"Proqram və üzvlər"}],
+  history:[],
+}));
 
 const now = () => new Date().toISOString();
 const memoryClubs = new Map<string, ClubRecord>(
@@ -84,8 +110,19 @@ function mapClub(row: Record<string, unknown>): ClubRecord {
     name: String(row.name),
     category: String(row.category),
     coordinatorInitials: String(row.coordinator_initials),
+    shortName:String(row.short_name ?? row.name),
+    tagline:String(row.tagline ?? ""),
+    description:String(row.description ?? ""),
+    about:Array.isArray(row.about) ? row.about.map(String) : [],
+    tone:(row.tone ?? "lime") as ClubRecord["tone"],
+    visualMark:String(row.visual_mark ?? row.coordinator_initials),
+    meeting:typeof row.meeting === "object" && row.meeting ? row.meeting as ClubRecord["meeting"] : {cadence:"Yenilənir",day:"—",time:"—",place:"Kampus"},
+    focusTags:Array.isArray(row.focus_tags) ? row.focus_tags.map(String) : [],
+    events:Array.isArray(row.events) ? row.events as ClubRecord["events"] : [],
+    members:Array.isArray(row.members) ? row.members as ClubRecord["members"] : [],
+    history:Array.isArray(row.history) ? row.history as ClubRecord["history"] : [],
     memberCount: Number(row.member_count),
-    eventCount: Number(row.event_count),
+    eventCount: Array.isArray(row.events) ? row.events.length : 0,
     status: row.status as ClubStatus,
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
@@ -122,6 +159,17 @@ export async function initializePlatformDatabase() {
       name VARCHAR(140) NOT NULL,
       category VARCHAR(80) NOT NULL,
       coordinator_initials VARCHAR(6) NOT NULL,
+      short_name VARCHAR(100) NOT NULL DEFAULT '',
+      tagline VARCHAR(220) NOT NULL DEFAULT '',
+      description VARCHAR(800) NOT NULL DEFAULT '',
+      about JSONB NOT NULL DEFAULT '[]'::jsonb,
+      tone VARCHAR(16) NOT NULL DEFAULT 'lime',
+      visual_mark VARCHAR(12) NOT NULL DEFAULT '',
+      meeting JSONB NOT NULL DEFAULT '{}'::jsonb,
+      focus_tags TEXT[] NOT NULL DEFAULT '{}',
+      events JSONB NOT NULL DEFAULT '[]'::jsonb,
+      members JSONB NOT NULL DEFAULT '[]'::jsonb,
+      history JSONB NOT NULL DEFAULT '[]'::jsonb,
       member_count INTEGER NOT NULL DEFAULT 0 CHECK (member_count >= 0),
       event_count INTEGER NOT NULL DEFAULT 0 CHECK (event_count >= 0),
       status VARCHAR(32) NOT NULL DEFAULT 'Aktiv' CHECK (status IN ('Aktiv', 'Gözləmədə', 'Məhdudlaşdırılıb')),
@@ -164,14 +212,36 @@ export async function initializePlatformDatabase() {
       status VARCHAR(24) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved')),
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS short_name VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS tagline VARCHAR(220) NOT NULL DEFAULT '';
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS description VARCHAR(800) NOT NULL DEFAULT '';
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS about JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS tone VARCHAR(16) NOT NULL DEFAULT 'lime';
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS visual_mark VARCHAR(12) NOT NULL DEFAULT '';
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS meeting JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS focus_tags TEXT[] NOT NULL DEFAULT '{}';
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS events JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS members JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE clubs ADD COLUMN IF NOT EXISTS history JSONB NOT NULL DEFAULT '[]'::jsonb;
   `);
 
   for (const club of clubSeeds) {
     await databasePool.query(
-      `INSERT INTO clubs (id, slug, name, category, coordinator_initials, member_count, event_count, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       ON CONFLICT (slug) DO NOTHING`,
-      [randomUUID(), club.slug, club.name, club.category, club.coordinatorInitials, club.memberCount, club.eventCount, club.status],
+      `INSERT INTO clubs (id, slug, name, category, coordinator_initials, member_count, event_count, status,
+         short_name,tagline,description,about,tone,visual_mark,meeting,focus_tags,events,members,history)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+       ON CONFLICT (slug) DO UPDATE SET
+         short_name=CASE WHEN clubs.short_name='' THEN EXCLUDED.short_name ELSE clubs.short_name END,
+         tagline=CASE WHEN clubs.tagline='' THEN EXCLUDED.tagline ELSE clubs.tagline END,
+         description=CASE WHEN clubs.description='' THEN EXCLUDED.description ELSE clubs.description END,
+         about=CASE WHEN clubs.about='[]'::jsonb THEN EXCLUDED.about ELSE clubs.about END,
+         visual_mark=CASE WHEN clubs.visual_mark='' THEN EXCLUDED.visual_mark ELSE clubs.visual_mark END,
+         meeting=CASE WHEN clubs.meeting='{}'::jsonb THEN EXCLUDED.meeting ELSE clubs.meeting END,
+         focus_tags=CASE WHEN cardinality(clubs.focus_tags)=0 THEN EXCLUDED.focus_tags ELSE clubs.focus_tags END,
+         members=CASE WHEN clubs.members='[]'::jsonb THEN EXCLUDED.members ELSE clubs.members END`,
+      [randomUUID(),club.slug,club.name,club.category,club.coordinatorInitials,club.memberCount,club.eventCount,club.status,
+        club.shortName,club.tagline,club.description,JSON.stringify(club.about),club.tone,club.visualMark,JSON.stringify(club.meeting),club.focusTags,JSON.stringify(club.events),JSON.stringify(club.members),JSON.stringify(club.history)],
     );
   }
 }
@@ -180,6 +250,7 @@ export async function listClubs(): Promise<ClubRecord[]> {
   if (!databasePool) return [...memoryClubs.values()].map((club)=>({
     ...club,
     memberCount:[...memoryMemberships].filter((key)=>key.endsWith(`:${club.slug}`)).length,
+    eventCount:club.events.length,
   })).sort((a, b) => a.name.localeCompare(b.name, "az"));
   const result = await databasePool.query(`SELECT clubs.*,
     (SELECT COUNT(*)::int FROM club_memberships WHERE club_id=clubs.id) AS member_count
@@ -190,7 +261,7 @@ export async function listClubs(): Promise<ClubRecord[]> {
 export async function findClub(idOrSlug: string): Promise<ClubRecord | null> {
   if (!databasePool) {
     const club=[...memoryClubs.values()].find((item) => item.id === idOrSlug || item.slug === idOrSlug);
-    return club ? {...club,memberCount:[...memoryMemberships].filter((key)=>key.endsWith(`:${club.slug}`)).length} : null;
+    return club ? {...club,memberCount:[...memoryMemberships].filter((key)=>key.endsWith(`:${club.slug}`)).length,eventCount:club.events.length} : null;
   }
   const result = await databasePool.query(`SELECT clubs.*,
     (SELECT COUNT(*)::int FROM club_memberships WHERE club_id=clubs.id) AS member_count
@@ -199,16 +270,25 @@ export async function findClub(idOrSlug: string): Promise<ClubRecord | null> {
 }
 
 export async function createClub(input: ClubInput): Promise<ClubRecord> {
-  const club: ClubRecord = { id: randomUUID(), ...input, memberCount: 0, eventCount: 0, status: input.status ?? "Gözləmədə", createdAt: now(), updatedAt: now() };
+  const club: ClubRecord = { id: randomUUID(), ...input,
+    shortName:input.shortName??input.name,tagline:input.tagline??"Birlikdə öyrən, yarat və kampusla paylaş.",
+    description:input.description??`${input.category} istiqamətində tələbələri bir araya gətirən açıq universitet klubudur.`,
+    about:input.about??[`${input.name} tələbələrin ortaq maraq və təşəbbüslərini inkişaf etdirməsi üçün fəaliyyət göstərir.`],
+    tone:input.tone??"lime",visualMark:input.visualMark??input.coordinatorInitials,
+    meeting:input.meeting??{cadence:"Yenilənir",day:"Cədvəl üzrə",time:"18:00",place:"Universitet kampusu"},
+    focusTags:input.focusTags??[input.category],memberCount: 0, eventCount: 0,
+    events:[],members:[{id:`${input.slug}-coordinator`,initials:input.coordinatorInitials,role:"Klub koordinatoru",focus:"Proqram və üzvlər"}],history:[],
+    status: input.status ?? "Gözləmədə", createdAt: now(), updatedAt: now() };
   if (!databasePool) {
     if (memoryClubs.has(club.slug)) throw new ApiError(409, "CLUB_EXISTS", "Bu qısa adla klub artıq mövcuddur.");
     memoryClubs.set(club.slug, club);
     return club;
   }
   const result = await databasePool.query(
-    `INSERT INTO clubs (id, slug, name, category, coordinator_initials, status)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [club.id, club.slug, club.name, club.category, club.coordinatorInitials, club.status],
+    `INSERT INTO clubs (id,slug,name,category,coordinator_initials,status,short_name,tagline,description,about,tone,visual_mark,meeting,focus_tags,members)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+    [club.id,club.slug,club.name,club.category,club.coordinatorInitials,club.status,club.shortName,club.tagline,club.description,
+      JSON.stringify(club.about),club.tone,club.visualMark,JSON.stringify(club.meeting),club.focusTags,JSON.stringify(club.members)],
   );
   return mapClub(result.rows[0]);
 }
@@ -225,9 +305,12 @@ export async function updateClub(id: string, input: Partial<ClubInput>): Promise
   const result = await databasePool.query(
     `UPDATE clubs SET slug = COALESCE($2, slug), name = COALESCE($3, name),
        category = COALESCE($4, category), coordinator_initials = COALESCE($5, coordinator_initials),
-       status = COALESCE($6, status), updated_at = NOW()
+       status = COALESCE($6, status), short_name=COALESCE($7,short_name),tagline=COALESCE($8,tagline),
+       description=COALESCE($9,description),about=COALESCE($10,about),tone=COALESCE($11,tone),
+       visual_mark=COALESCE($12,visual_mark),meeting=COALESCE($13,meeting),focus_tags=COALESCE($14,focus_tags),updated_at = NOW()
      WHERE id::text = $1 OR slug = $1 RETURNING *`,
-    [id, input.slug, input.name, input.category, input.coordinatorInitials, input.status],
+    [id,input.slug,input.name,input.category,input.coordinatorInitials,input.status,input.shortName,input.tagline,input.description,
+      input.about ? JSON.stringify(input.about) : undefined,input.tone,input.visualMark,input.meeting ? JSON.stringify(input.meeting) : undefined,input.focusTags],
   );
   return result.rows[0] ? mapClub(result.rows[0]) : null;
 }

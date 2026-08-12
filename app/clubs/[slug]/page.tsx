@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ClubDetailExperience } from "../../components/ClubDetailExperience";
-import { clubs, clubFromApi, getClubBySlug, type ClubApiRecord } from "../../data/clubs";
+import { clubFromApi, type ClubApiRecord } from "../../data/clubs";
 import { requestRemoteApi } from "../../lib/auth/remote-credential";
 
 type ClubDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
-
-export function generateStaticParams() {
-  return clubs.map((club) => ({ slug: club.slug }));
-}
 
 export async function generateMetadata({ params }: ClubDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -43,4 +39,4 @@ export default async function ClubDetailPage({ params }: ClubDetailPageProps) {
   );
 }
 
-async function loadClub(slug:string){return await requestRemoteApi<ClubApiRecord>(`/api/clubs/${encodeURIComponent(slug)}`).then(clubFromApi).catch(()=>getClubBySlug(slug)??null);}
+async function loadClub(slug:string){return await requestRemoteApi<ClubApiRecord>(`/api/clubs/${encodeURIComponent(slug)}`).then(clubFromApi).catch(()=>null);}

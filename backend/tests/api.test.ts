@@ -36,6 +36,7 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/events/{eventId}"]);
     assert.ok(response.body.paths["/api/mentorship/requests"]);
     assert.ok(response.body.paths["/api/clubs/{clubId}/memberships"]);
+    assert.ok(response.body.paths["/api/clubs/{clubId}"]);
     assert.ok(response.body.paths["/api/reviews"]);
     assert.ok(response.body.paths["/api/network/announcements"]);
     assert.ok(response.body.paths["/api/network/feed"]);
@@ -539,9 +540,20 @@ describe("EduRate API", () => {
         slug: clubSlug,
         category: "Texnologiya",
         coordinatorInitials: "RK",
+        shortName:"RBAC Klub",
+        tagline:"Tələbə ideyalarını birlikdə işlək layihəyə çevir.",
+        description:"Texnologiya və məhsul ideyaları üzərində çalışan açıq tələbə klubudur.",
+        about:["Klub müxtəlif ixtisaslardan tələbələri real kampus problemləri ətrafında birləşdirir."],
+        tone:"lime",visualMark:"RK",meeting:{cadence:"Həftəlik",day:"Çərşənbə",time:"18:00",place:"İnnovasiya zalı"},
+        focusTags:["Texnologiya","Komanda işi"],
+        status:"Aktiv",
       })
       .expect(201);
     const clubId = createdClub.body.data.id as string;
+    const publicClub=await request(app).get(`/api/clubs/${clubSlug}`).expect(200);
+    assert.equal(publicClub.body.data.tagline,"Tələbə ideyalarını birlikdə işlək layihəyə çevir.");
+    assert.equal(publicClub.body.data.memberCount,0);
+    assert.deepEqual(publicClub.body.data.focusTags,["Texnologiya","Komanda işi"]);
     await request(app)
       .patch(`/api/admin/clubs/${clubId}`)
       .set("Authorization", assistantAuthorization)

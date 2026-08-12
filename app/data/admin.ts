@@ -53,6 +53,14 @@ export type AdminClub = AdminRecordBase<AdminClubStatus> & {
   slug: string;
   category: string;
   coordinatorInitials: string;
+  shortName?:string;
+  tagline?:string;
+  description?:string;
+  about?:string[];
+  tone?:"lime"|"violet"|"cyan"|"coral"|"amber"|"mint";
+  visualMark?:string;
+  meeting?:{cadence:string;day:string;time:string;place:string};
+  focusTags?:string[];
   memberCount: number;
   eventCount: number;
   createdAt: string;
@@ -145,10 +153,10 @@ export type AdminUserCreateInput = Pick<
 
 export type AdminUserUpdateInput = Partial<AdminUserCreateInput>;
 
-export type AdminClubCreateInput = Pick<
-  AdminClub,
-  "name" | "slug" | "category" | "coordinatorInitials"
-> & {
+export type AdminClubCreateInput = Pick<AdminClub,"name"|"slug"|"category"|"coordinatorInitials"> & {
+  shortName:string;tagline:string;description:string;about:string[];
+  tone:"lime"|"violet"|"cyan"|"coral"|"amber"|"mint";visualMark:string;
+  meeting:{cadence:string;day:string;time:string;place:string};focusTags:string[];
   status?: AdminClub["status"];
 };
 

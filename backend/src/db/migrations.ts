@@ -148,6 +148,27 @@ const migrations: Migration[] = [
         ON club_memberships (user_id, created_at DESC);
     `,
   },
+  {
+    version: 8,
+    name: "database backed club profiles",
+    sql: `
+      UPDATE clubs SET
+        short_name = name WHERE short_name = '';
+      UPDATE clubs SET
+        visual_mark = coordinator_initials WHERE visual_mark = '';
+      UPDATE clubs SET
+        description = category || ' istiqamətində tələbələri bir araya gətirən açıq universitet klubudur.'
+        WHERE description = '';
+      UPDATE clubs SET
+        tagline = 'Birlikdə öyrən, yarat və kampusla paylaş.' WHERE tagline = '';
+      UPDATE clubs SET
+        about = jsonb_build_array(description) WHERE about = '[]'::jsonb;
+      UPDATE clubs SET
+        meeting = '{"cadence":"Yenilənir","day":"Cədvəl üzrə","time":"18:00","place":"Universitet kampusu"}'::jsonb
+        WHERE meeting = '{}'::jsonb;
+      UPDATE clubs SET focus_tags = ARRAY[category] WHERE cardinality(focus_tags) = 0;
+    `,
+  },
 ];
 
 export async function runMigrations() {

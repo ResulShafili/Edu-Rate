@@ -320,6 +320,29 @@ function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
       <Field label="Koordinator inisialları" name="coordinatorInitials" required>
         <input name="coordinatorInitials" defaultValue={record?.coordinatorInitials} minLength={2} maxLength={4} required />
       </Field>
+      <Field label="Qısa ad" name="shortName" required>
+        <input name="shortName" defaultValue={record?.shortName} minLength={2} maxLength={100} required />
+      </Field>
+      <Field label="Şüar" name="tagline" required>
+        <input name="tagline" defaultValue={record?.tagline} minLength={5} maxLength={220} required />
+      </Field>
+      <Field label="Qısa təsvir" name="description" required>
+        <textarea name="description" defaultValue={record?.description} minLength={10} maxLength={800} rows={3} required />
+      </Field>
+      <Field label="Haqqında" name="about" hint="Hər abzası yeni sətirdən yaz" required>
+        <textarea name="about" defaultValue={record?.about?.join("\n")} minLength={10} maxLength={3000} rows={4} required />
+      </Field>
+      <Field label="Vurğu rəngi" name="tone" required>
+        <select name="tone" defaultValue={record?.tone ?? "lime"} required>
+          <option value="lime">Yaşıl</option><option value="violet">Bənövşəyi</option><option value="cyan">Mavi</option><option value="coral">Mərcan</option><option value="amber">Kəhrəba</option><option value="mint">Nanə</option>
+        </select>
+      </Field>
+      <Field label="Vizual işarə" name="visualMark" required><input name="visualMark" defaultValue={record?.visualMark} minLength={1} maxLength={12} required /></Field>
+      <Field label="Görüş tezliyi" name="meetingCadence" required><input name="meetingCadence" defaultValue={record?.meeting?.cadence} minLength={2} maxLength={80} required /></Field>
+      <Field label="Görüş günü" name="meetingDay" required><input name="meetingDay" defaultValue={record?.meeting?.day} minLength={1} maxLength={80} required /></Field>
+      <Field label="Görüş saatı" name="meetingTime" required><input name="meetingTime" defaultValue={record?.meeting?.time} minLength={1} maxLength={40} required /></Field>
+      <Field label="Görüş yeri" name="meetingPlace" required><input name="meetingPlace" defaultValue={record?.meeting?.place} minLength={2} maxLength={180} required /></Field>
+      <Field label="Mövzular" name="focusTags" hint="Vergüllə ayır" required><input name="focusTags" defaultValue={record?.focusTags?.join(", ")} minLength={2} maxLength={300} required /></Field>
       <Field label="Vəziyyət" name="status" required>
         <select name="status" defaultValue={record?.status ?? "Gözləmədə"} required>
           <option value="Aktiv">Aktiv</option>
@@ -435,6 +458,14 @@ function createSubmission(
         slug: fieldValue(formData, "slug").toLocaleLowerCase("az"),
         category: fieldValue(formData, "category"),
         coordinatorInitials: fieldValue(formData, "coordinatorInitials").toLocaleUpperCase("az"),
+        shortName:fieldValue(formData,"shortName"),
+        tagline:fieldValue(formData,"tagline"),
+        description:fieldValue(formData,"description"),
+        about:fieldValue(formData,"about").split(/\r?\n/).map((value)=>value.trim()).filter(Boolean),
+        tone:fieldValue(formData,"tone") as NonNullable<AdminClub["tone"]>,
+        visualMark:fieldValue(formData,"visualMark"),
+        meeting:{cadence:fieldValue(formData,"meetingCadence"),day:fieldValue(formData,"meetingDay"),time:fieldValue(formData,"meetingTime"),place:fieldValue(formData,"meetingPlace")},
+        focusTags:fieldValue(formData,"focusTags").split(",").map((value)=>value.trim()).filter(Boolean),
         status: fieldValue(formData, "status") as AdminClub["status"],
       },
     };

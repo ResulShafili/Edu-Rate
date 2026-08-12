@@ -7,9 +7,10 @@ import { ClubCard } from "./ClubCard";
 
 type ClubsExperienceProps = {
   clubs: readonly Club[];
+  failed?:boolean;
 };
 
-export function ClubsExperience({ clubs }: ClubsExperienceProps) {
+export function ClubsExperience({ clubs, failed=false }: ClubsExperienceProps) {
   const reducedMotion = useReducedMotion();
 
   return (
@@ -43,11 +44,13 @@ export function ClubsExperience({ clubs }: ClubsExperienceProps) {
           </div>
         </header>
 
-        <div className="clubs-directory-grid">
+        {failed ? <div className="clubs-catalog-state" role="alert"><strong>Klub kataloqu yüklənmədi.</strong><p>Bağlantını yoxlayıb səhifəni yenidən açın.</p></div>
+        : clubs.length===0 ? <div className="clubs-catalog-state"><strong>Aktiv klub yoxdur.</strong><p>Yeni klublar təsdiqləndikdə burada görünəcək.</p></div>
+        : <div className="clubs-directory-grid">
           {clubs.map((club, index) => (
             <ClubCard key={club.slug} club={club} index={index} />
           ))}
-        </div>
+        </div>}
       </section>
 
     </div>

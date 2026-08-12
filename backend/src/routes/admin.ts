@@ -60,6 +60,14 @@ const clubSchema = z.object({
   slug: z.string().trim().min(3).max(90).regex(/^[a-z0-9-]+$/),
   category: z.string().trim().min(2).max(80),
   coordinatorInitials: z.string().trim().min(2).max(6),
+  shortName:z.string().trim().min(2).max(100).optional(),
+  tagline:z.string().trim().min(5).max(220).optional(),
+  description:z.string().trim().min(10).max(800).optional(),
+  about:z.array(z.string().trim().min(10).max(1200)).min(1).max(4).optional(),
+  tone:z.enum(["lime","violet","cyan","coral","amber","mint"]).optional(),
+  visualMark:z.string().trim().min(1).max(12).optional(),
+  meeting:z.object({cadence:z.string().trim().min(2).max(80),day:z.string().trim().min(1).max(80),time:z.string().trim().min(1).max(40),place:z.string().trim().min(2).max(180)}).optional(),
+  focusTags:z.array(z.string().trim().min(1).max(50)).min(1).max(8).optional(),
   status: userStatus.optional(),
 });
 const eventSchema = z.object({

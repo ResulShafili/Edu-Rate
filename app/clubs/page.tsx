@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ClubsExperience } from "../components/ClubsExperience";
-import { clubs, clubFromApi, type ClubApiRecord } from "../data/clubs";
+import { clubFromApi, type ClubApiRecord } from "../data/clubs";
 import { requestRemoteApi } from "../lib/auth/remote-credential";
 
 export const metadata: Metadata = {
@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default async function ClubsPage() {
-  const liveClubs=await requestRemoteApi<ClubApiRecord[]>("/api/clubs").then((items)=>items.map(clubFromApi)).catch(()=>[...clubs]);
+  const result=await requestRemoteApi<ClubApiRecord[]>("/api/clubs").then((items)=>({clubs:items.map(clubFromApi),failed:false})).catch(()=>({clubs:[],failed:true}));
   return (
     <main id="main-content" className="route-page" tabIndex={-1}>
-      <ClubsExperience clubs={liveClubs} />
+      <ClubsExperience clubs={result.clubs} failed={result.failed} />
     </main>
   );
 }

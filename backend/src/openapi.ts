@@ -187,6 +187,10 @@ export const openApiDocument = {
     "/api/clubs/memberships/me": {
       get: { tags: ["Clubs"], summary: "Üzv olduğum klubları göstər", security: [{ bearerAuth: [] }], responses: { "200": { description: "Klub üzvlükləri" } } },
     },
+    "/api/clubs/{clubId}": {
+      parameters: [{ name: "clubId", in: "path", required: true, schema: { type: "string" } }],
+      get: { tags: ["Clubs"], summary: "Klubun database əsaslı profilini göstər", responses: { "200": { description: "Klub profili, real üzv sayı və görüş məlumatı" }, "404": { description: "Aktiv klub tapılmadı" } } },
+    },
     "/api/clubs/{clubId}/memberships": {
       parameters: [{ name: "clubId", in: "path", required: true, schema: { type: "string" } }],
       post: { tags: ["Clubs"], summary: "Kluba qoşul", security: [{ bearerAuth: [] }], responses: { "201": { description: "Üzvlük yaradıldı" }, "409": { description: "Artıq üzvdür" } } },
