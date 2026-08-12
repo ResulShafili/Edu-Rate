@@ -137,6 +137,17 @@ const migrations: Migration[] = [
         ON mentor_applications (status, created_at DESC);
     `,
   },
+  {
+    version: 7,
+    name: "reconcile club membership counters",
+    sql: `
+      UPDATE clubs SET member_count = (
+        SELECT COUNT(*)::int FROM club_memberships WHERE club_memberships.club_id = clubs.id
+      );
+      CREATE INDEX IF NOT EXISTS club_memberships_user_idx
+        ON club_memberships (user_id, created_at DESC);
+    `,
+  },
 ];
 
 export async function runMigrations() {

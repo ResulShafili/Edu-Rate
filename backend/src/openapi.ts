@@ -336,6 +336,30 @@ export const openApiDocument = {
       patch: { tags: ["Administration"], summary: "Tədbiri yenilə", security: [{ bearerAuth: [] }], responses: { "200": { description: "Tədbir yeniləndi" }, "403": { description: "Admin icazəsi tələb olunur" } } },
       delete: { tags: ["Administration"], summary: "Tədbiri sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Tədbir silindi" }, "403": { description: "Admin icazəsi tələb olunur" } } },
     },
+    "/api/admin/announcements": {
+      get: { tags: ["Administration"], summary: "Bütün elanları idarəetmə üçün siyahıla", security: [{ bearerAuth: [] }], responses: { "200": { description: "Elanlar" } } },
+      post: { tags: ["Administration"], summary: "Yeni elan yarat", security: [{ bearerAuth: [] }], responses: { "201": { description: "Elan yaradıldı" } } },
+    },
+    "/api/admin/announcements/{id}": {
+      parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+      patch: { tags: ["Administration"], summary: "Elanı yenilə və ya yayımla", security: [{ bearerAuth: [] }], responses: { "200": { description: "Elan yeniləndi" } } },
+      delete: { tags: ["Administration"], summary: "Elanı sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Elan silindi" } } },
+    },
+    "/api/admin/feed": {
+      get: { tags: ["Administration"], summary: "Lent moderasiya növbəsini siyahıla", security: [{ bearerAuth: [] }], responses: { "200": { description: "Lent paylaşımları" } } },
+    },
+    "/api/admin/feed/{id}": {
+      parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+      patch: { tags: ["Administration"], summary: "Lent paylaşımını təsdiqlə və ya rədd et", security: [{ bearerAuth: [] }], responses: { "200": { description: "Paylaşım yeniləndi" } } },
+      delete: { tags: ["Administration"], summary: "Lent paylaşımını sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Paylaşım silindi" } } },
+    },
+    "/api/admin/support-tickets": {
+      get: { tags: ["Administration"], summary: "Dəstək müraciətlərini siyahıla", security: [{ bearerAuth: [] }], responses: { "200": { description: "Dəstək müraciətləri" } } },
+    },
+    "/api/admin/support-tickets/{id}": {
+      parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+      patch: { tags: ["Administration"], summary: "Dəstək müraciətinin statusunu dəyiş", security: [{ bearerAuth: [] }], responses: { "200": { description: "Müraciət yeniləndi" } } },
+    },
     "/api/admin/reviews": {
       get: {
         tags: ["Administration"], summary: "Rəyləri moderasiya üçün siyahıla", security: [{ bearerAuth: [] }],

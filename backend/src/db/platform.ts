@@ -177,14 +177,24 @@ export async function initializePlatformDatabase() {
 }
 
 export async function listClubs(): Promise<ClubRecord[]> {
-  if (!databasePool) return [...memoryClubs.values()].sort((a, b) => a.name.localeCompare(b.name, "az"));
-  const result = await databasePool.query("SELECT * FROM clubs ORDER BY name ASC");
+  if (!databasePool) return [...memoryClubs.values()].map((club)=>({
+    ...club,
+    memberCount:[...memoryMemberships].filter((key)=>key.endsWith(`:${club.slug}`)).length,
+  })).sort((a, b) => a.name.localeCompare(b.name, "az"));
+  const result = await databasePool.query(`SELECT clubs.*,
+    (SELECT COUNT(*)::int FROM club_memberships WHERE club_id=clubs.id) AS member_count
+    FROM clubs ORDER BY name ASC`);
   return result.rows.map(mapClub);
 }
 
 export async function findClub(idOrSlug: string): Promise<ClubRecord | null> {
-  if (!databasePool) return [...memoryClubs.values()].find((club) => club.id === idOrSlug || club.slug === idOrSlug) ?? null;
-  const result = await databasePool.query("SELECT * FROM clubs WHERE id::text = $1 OR slug = $1 LIMIT 1", [idOrSlug]);
+  if (!databasePool) {
+    const club=[...memoryClubs.values()].find((item) => item.id === idOrSlug || item.slug === idOrSlug);
+    return club ? {...club,memberCount:[...memoryMemberships].filter((key)=>key.endsWith(`:${club.slug}`)).length} : null;
+  }
+  const result = await databasePool.query(`SELECT clubs.*,
+    (SELECT COUNT(*)::int FROM club_memberships WHERE club_id=clubs.id) AS member_count
+    FROM clubs WHERE id::text = $1 OR slug = $1 LIMIT 1`, [idOrSlug]);
   return result.rows[0] ? mapClub(result.rows[0]) : null;
 }
 
@@ -237,7 +247,9 @@ export async function listMyClubMemberships(userId: string): Promise<ClubRecord[
     return [...memoryClubs.values()].filter((club) => slugs.has(club.slug));
   }
   const result = await databasePool.query(
-    `SELECT clubs.* FROM club_memberships JOIN clubs ON clubs.id = club_memberships.club_id
+    `SELECT clubs.*,
+       (SELECT COUNT(*)::int FROM club_memberships all_members WHERE all_members.club_id=clubs.id) AS member_count
+     FROM club_memberships JOIN clubs ON clubs.id = club_memberships.club_id
      WHERE club_memberships.user_id = $1 ORDER BY club_memberships.created_at DESC`,
     [userId],
   );
@@ -259,7 +271,9 @@ export async function joinClub(id: string, userId: string): Promise<ClubRecord> 
   try {
     await client.query("BEGIN");
     await client.query("INSERT INTO club_memberships (club_id, user_id) VALUES ($1, $2)", [club.id, userId]);
-    const result = await client.query("UPDATE clubs SET member_count = member_count + 1, updated_at = NOW() WHERE id = $1 RETURNING *", [club.id]);
+    const result = await client.query(`UPDATE clubs SET
+      member_count = (SELECT COUNT(*)::int FROM club_memberships WHERE club_id=$1),
+      updated_at = NOW() WHERE id = $1 RETURNING *`, [club.id]);
     await client.query("COMMIT");
     return mapClub(result.rows[0]);
   } catch (error) {
@@ -288,7 +302,9 @@ export async function leaveClub(id: string, userId: string): Promise<ClubRecord>
     await client.query("BEGIN");
     const deleted = await client.query("DELETE FROM club_memberships WHERE club_id = $1 AND user_id = $2", [club.id, userId]);
     if (!deleted.rowCount) throw new ApiError(404, "MEMBERSHIP_NOT_FOUND", "Klub üzvlüyü tapılmadı.");
-    const result = await client.query("UPDATE clubs SET member_count = GREATEST(0, member_count - 1), updated_at = NOW() WHERE id = $1 RETURNING *", [club.id]);
+    const result = await client.query(`UPDATE clubs SET
+      member_count = (SELECT COUNT(*)::int FROM club_memberships WHERE club_id=$1),
+      updated_at = NOW() WHERE id = $1 RETURNING *`, [club.id]);
     await client.query("COMMIT");
     return mapClub(result.rows[0]);
   } catch (error) {

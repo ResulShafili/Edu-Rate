@@ -40,6 +40,9 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/network/announcements"]);
     assert.ok(response.body.paths["/api/network/feed"]);
     assert.ok(response.body.paths["/api/admin/reviews"]);
+    assert.ok(response.body.paths["/api/admin/announcements"]);
+    assert.ok(response.body.paths["/api/admin/feed"]);
+    assert.ok(response.body.paths["/api/admin/support-tickets"]);
     assert.ok(response.body.paths["/api/workspace"]);
     assert.ok(response.body.paths["/api/workspace/mentorship/{id}"]);
     assert.ok(response.body.paths["/api/support/tickets"]);
@@ -816,5 +819,38 @@ describe("EduRate API", () => {
     const history=await request(app).get(`/api/community/conversations/${id}/messages`).set("Authorization",peerAuthorization).expect(200);
     assert.equal(history.body.data[0].id,sent.body.data.id);
     await request(app).patch(`/api/community/conversations/${id}/read`).set("Authorization",peerAuthorization).send({}).expect(200);
+  });
+
+  it("elan, lent moderasiyası və dəstək statusunu admin axınında tamamlayır",async()=>{
+    const adminAuthorization=`Bearer ${reusableAdminToken}`;
+    const signup=await request(app).post("/api/auth/signup").set("X-Forwarded-For","203.0.113.90").send({
+      name:"Məzmun Testi",email:`content.${Date.now()}@example.az`,password:"EduRate2026",university:"Qarabağ Universiteti",
+      faculty:"Mühəndislik fakültəsi",program:"Kompüter mühəndisliyi",accountType:"student",
+    }).expect(201);
+    const studentAuthorization=`Bearer ${signup.body.data.token}`;
+    const announcement=await request(app).post("/api/admin/announcements").set("Authorization",adminAuthorization).send({
+      category:"official",title:"Sprint təqdimatı",summary:"Sprint təqdimatı üçün zal və proqram məlumatları yenilənib.",source:"Tələbə İşləri",sourceInitials:"Tİ",tone:"lime",
+      startsAt:"2027-03-10T10:00:00+04:00",expiresAt:"2027-03-10T18:00:00+04:00",priority:true,status:"draft",
+    }).expect(201);
+    let publicAnnouncements=await request(app).get("/api/network/announcements").expect(200);
+    assert.equal(publicAnnouncements.body.data.some((item:{id:string})=>item.id===announcement.body.data.id),false);
+    await request(app).patch(`/api/admin/announcements/${announcement.body.data.id}`).set("Authorization",adminAuthorization).send({status:"published"}).expect(200);
+    publicAnnouncements=await request(app).get("/api/network/announcements").expect(200);
+    assert.equal(publicAnnouncements.body.data.some((item:{id:string})=>item.id===announcement.body.data.id),true);
+
+    const post=await request(app).post("/api/network/feed").set("Authorization",studentAuthorization).send({title:"Layihə komandası",summary:"Yeni tələbə layihəsi üçün iki komanda yoldaşı axtarılır.",tags:["Komanda"]}).expect(202);
+    let publicFeed=await request(app).get("/api/network/feed").expect(200);
+    assert.equal(publicFeed.body.data.some((item:{id:string})=>item.id===post.body.data.id),false);
+    await request(app).patch(`/api/admin/feed/${post.body.data.id}`).set("Authorization",adminAuthorization).send({status:"published"}).expect(200);
+    publicFeed=await request(app).get("/api/network/feed").expect(200);
+    assert.equal(publicFeed.body.data.some((item:{id:string})=>item.id===post.body.data.id),true);
+
+    const ticket=await request(app).post("/api/support/tickets").set("Authorization",studentAuthorization).set("X-Forwarded-For","203.0.113.91").send({name:"Dəstək Testi",email:"support@example.az",topic:"Profil",message:"Profil məlumatlarımın yenilənməsi üçün köməyə ehtiyacım var."}).expect(201);
+    const tickets=await request(app).get("/api/admin/support-tickets").set("Authorization",adminAuthorization).expect(200);
+    const stored=tickets.body.data.find((item:{reference:string})=>item.reference===ticket.body.data.reference);
+    assert.ok(stored);
+    await request(app).patch(`/api/admin/support-tickets/${stored.id}`).set("Authorization",adminAuthorization).send({status:"resolved"}).expect(200);
+    const mine=await request(app).get("/api/support/tickets/me").set("Authorization",studentAuthorization).expect(200);
+    assert.equal(mine.body.data.find((item:{id:string})=>item.id===stored.id).status,"resolved");
   });
 });

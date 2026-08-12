@@ -3,6 +3,8 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, ChevronDown, LifeBuoy, Send } from "lucide-react";
 import {
+  useCallback,
+  useEffect,
   useState,
   type ChangeEvent,
   type FormEvent,
@@ -18,6 +20,7 @@ type TicketFields = {
 
 const initialFields: TicketFields = { name: "", email: "", topic: "", message: "" };
 const ease = [0.22, 1, 0.36, 1] as const;
+type TicketHistoryItem = { id: string; reference: string; topic: string; status: "open" | "in_progress" | "resolved"; createdAt: string };
 
 function getTicketValidity(fields: TicketFields) {
   return {
@@ -36,10 +39,26 @@ export function SupportCenter() {
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [reference, setReference] = useState("");
+  const [tickets, setTickets] = useState<TicketHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyRequiresLogin, setHistoryRequiresLogin] = useState(false);
   const reduceMotion = useReducedMotion();
 
   const validity = getTicketValidity(fields);
   const formValid = Object.values(validity).every(Boolean);
+
+  const loadHistory = useCallback(async () => {
+    try {
+      const response = await fetch("/api/support/tickets", { cache: "no-store" });
+      if (response.status === 401) { setHistoryRequiresLogin(true); return; }
+      const payload = await response.json() as { data?: TicketHistoryItem[] };
+      if (response.ok) setTickets(payload.data ?? []);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void loadHistory(); }, [loadHistory]);
 
   function updateField(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const name = event.target.name as keyof TicketFields;
@@ -68,6 +87,7 @@ export function SupportCenter() {
       if (!response.ok) throw new Error(payload.error?.message ?? "Sorğu göndərilmədi.");
       setReference(payload.data?.reference ?? "");
       setSubmitted(true);
+      await loadHistory();
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Sorğu göndərilmədi. Yenidən yoxla.");
     } finally {
@@ -298,6 +318,32 @@ export function SupportCenter() {
           </AnimatePresence>
         </motion.div>
       </div>
+      <section className="ticket-history" aria-labelledby="ticket-history-title">
+        <header>
+          <span>Müraciətlərim</span>
+          <h2 id="ticket-history-title">Dəstək tarixçəsi</h2>
+        </header>
+        {historyLoading ? (
+          <div className="ticket-history__loading" aria-label="Müraciətlər yüklənir"><i /><i /></div>
+        ) : historyRequiresLogin ? (
+          <p className="ticket-history__empty">Müraciət tarixçəsini görmək üçün hesabınıza daxil olun.</p>
+        ) : tickets.length === 0 ? (
+          <p className="ticket-history__empty">Hesabınıza bağlı dəstək müraciəti yoxdur.</p>
+        ) : (
+          <div className="ticket-history__list">
+            {tickets.map((ticket) => (
+              <article key={ticket.id}>
+                <div><small>{ticket.reference}</small><strong>{ticket.topic}</strong></div>
+                <span className={`is-${ticket.status}`}>{ticketStatusLabel(ticket.status)}</span>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </section>
   );
+}
+
+function ticketStatusLabel(status: TicketHistoryItem["status"]) {
+  return status === "open" ? "Açıq" : status === "in_progress" ? "İcradadır" : "Həll edilib";
 }

@@ -23,10 +23,12 @@ import {
   createClub,
   deleteClub,
   getPlatformCounts,
+  listSupportTickets,
   listTeacherReviews,
   listClubs,
   updateTeacherReviewStatus,
   updateClub,
+  updateSupportTicketStatus,
   type ClubRecord,
 } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
@@ -37,7 +39,7 @@ import {
   synchronizeProfessionalProfilesForUser,
 } from "../db/professionals.js";
 import { listAudit, writeAudit } from "../db/audit.js";
-import { createAnnouncement, deleteAnnouncement, listAdminAnnouncements, updateAnnouncement } from "../db/network.js";
+import { createAnnouncement, deleteAnnouncement, deleteFeedPost, listAdminAnnouncements, listAdminFeed, updateAnnouncement, updateFeedPostStatus } from "../db/network.js";
 import { decideMentorApplication, listMentorApplications } from "../db/mentor-applications.js";
 
 export const adminRouter = Router();
@@ -241,6 +243,35 @@ adminRouter.get("/announcements",async(_request,response)=>response.json({data:a
 adminRouter.post("/announcements",async(request,response)=>{const item=await createAnnouncement(announcementSchema.parse(request.body));await writeAudit(request.auth!.userId,"Elan yaradıldı","announcement",String(item.id));response.status(201).json({data:item});});
 adminRouter.patch("/announcements/:id",async(request,response)=>{const id=z.string().parse(request.params.id);const item=await updateAnnouncement(id,announcementSchema.partial().parse(request.body));if(!item)throw new ApiError(404,"ANNOUNCEMENT_NOT_FOUND","Elan tapılmadı.");await writeAudit(request.auth!.userId,"Elan yeniləndi","announcement",id);response.json({data:item});});
 adminRouter.delete("/announcements/:id",async(request,response)=>{const id=z.string().parse(request.params.id);if(!await deleteAnnouncement(id))throw new ApiError(404,"ANNOUNCEMENT_NOT_FOUND","Elan tapılmadı.");await writeAudit(request.auth!.userId,"Elan silindi","announcement",id);response.status(204).send();});
+
+adminRouter.get("/feed",async(request,response)=>{
+  const {status}=z.object({status:z.enum(["pending","published","rejected"]).optional()}).parse(request.query);
+  response.json({data:await listAdminFeed(status)});
+});
+adminRouter.patch("/feed/:id",async(request,response)=>{
+  const id=z.string().parse(request.params.id);
+  const {status}=z.object({status:z.enum(["published","rejected"])}).strict().parse(request.body);
+  const item=await updateFeedPostStatus(id,status);
+  if(!item)throw new ApiError(404,"FEED_POST_NOT_FOUND","Lent paylaşımı tapılmadı.");
+  await writeAudit(request.auth!.userId,status==="published"?"Lent paylaşımı yayımlandı":"Lent paylaşımı rədd edildi","feed_post",id);
+  response.json({data:item});
+});
+adminRouter.delete("/feed/:id",async(request,response)=>{
+  const id=z.string().parse(request.params.id);
+  if(!await deleteFeedPost(id))throw new ApiError(404,"FEED_POST_NOT_FOUND","Lent paylaşımı tapılmadı.");
+  await writeAudit(request.auth!.userId,"Lent paylaşımı silindi","feed_post",id);
+  response.status(204).send();
+});
+
+adminRouter.get("/support-tickets",async(_request,response)=>response.json({data:await listSupportTickets()}));
+adminRouter.patch("/support-tickets/:id",async(request,response)=>{
+  const id=z.string().uuid().parse(request.params.id);
+  const {status}=z.object({status:z.enum(["open","in_progress","resolved"])}).strict().parse(request.body);
+  const ticket=await updateSupportTicketStatus(id,status);
+  if(!ticket)throw new ApiError(404,"TICKET_NOT_FOUND","Dəstək müraciəti tapılmadı.");
+  await writeAudit(request.auth!.userId,"Dəstək müraciətinin statusu dəyişdirildi","support_ticket",id,{status});
+  response.json({data:ticket});
+});
 
 adminRouter.get("/reviews", async (request, response) => {
   const query = z.object({

@@ -53,6 +53,7 @@ import {
 import { AdminSkeleton } from "./AdminSkeleton";
 import { ReviewModerationPanel } from "./ReviewModerationPanel";
 import { MentorApplicationPanel } from "./MentorApplicationPanel";
+import { AdminOperationsPanel } from "./AdminOperationsPanel";
 
 const metricIcons: Record<AdminMetric["id"], LucideIcon> = {
   users: UsersRound,
@@ -435,6 +436,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
         />
         <ReviewModerationPanel />
         <MentorApplicationPanel />
+        <AdminOperationsPanel />
       </div>
 
       <AdminRecordFormSheet

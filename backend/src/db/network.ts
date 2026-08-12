@@ -40,6 +40,15 @@ const feed: FeedRecord[] = [
   { id: "debate-intake-august", kind: "notification", category: "clubs", title: "Debat klubuna yeni üzv qəbulu", summary: "Açıq məşqdə klubun iş tərzi və həftəlik proqramı ilə tanış ola bilərsən.", source: "Debat Klubu", sourceInitials: "DK", publishedAt: "2026-08-08T18:40:00+04:00", timeLabel: "8 avqust · 18:40", tone: "coral", tags: ["Debat", "Üzvlük"] },
 ];
 
+type FeedStatus = "pending" | "published" | "rejected";
+export type AdminFeedRecord = FeedRecord & { status: FeedStatus; userId: string | null };
+const memoryAnnouncements = new Map<string, AnnouncementRecord & { status: "draft" | "published" }>(
+  announcements.map((item) => [item.id, { ...item, status: "published" }]),
+);
+const memoryFeed = new Map<string, AdminFeedRecord>(
+  feed.map((item) => [item.id, { ...item, status: "published", userId: null }]),
+);
+
 export async function initializeNetworkDatabase() {
   if (!databasePool) return;
   await databasePool.query(`
@@ -73,7 +82,7 @@ export async function initializeNetworkDatabase() {
 }
 
 export async function listAnnouncements(category?: NetworkCategory): Promise<AnnouncementRecord[]> {
-  if (!databasePool) return announcements.filter((item) => !category || item.category === category);
+  if (!databasePool) return [...memoryAnnouncements.values()].filter((item) => item.status === "published" && (!category || item.category === category));
   const result = await databasePool.query(
     `SELECT * FROM announcements WHERE status='published' ${category ? "AND category = $1" : ""} ORDER BY priority DESC, published_at DESC`,
     category ? [category] : [],
@@ -82,7 +91,7 @@ export async function listAnnouncements(category?: NetworkCategory): Promise<Ann
 }
 
 export async function listFeed(category?: NetworkCategory): Promise<FeedRecord[]> {
-  if (!databasePool) return feed.filter((item) => !category || item.category === category);
+  if (!databasePool) return [...memoryFeed.values()].filter((item) => item.status === "published" && (!category || item.category === category));
   const result = await databasePool.query(
     `SELECT * FROM feed_posts WHERE status='published' ${category ? "AND category = $1" : ""} ORDER BY published_at DESC LIMIT 100`,
     category ? [category] : [],
@@ -91,11 +100,29 @@ export async function listFeed(category?: NetworkCategory): Promise<FeedRecord[]
 }
 
 export type AnnouncementInput={category:NetworkCategory;title:string;summary:string;source:string;sourceInitials:string;tone:NetworkTone;startsAt:string;expiresAt:string;priority:boolean;status:"draft"|"published"};
-export async function listAdminAnnouncements(){if(!databasePool)return announcements;const result=await databasePool.query("SELECT *,status FROM announcements ORDER BY published_at DESC");return result.rows;}
-export async function createAnnouncement(input:AnnouncementInput){if(!databasePool)return{id:randomUUID(),...input,publishedAt:new Date().toISOString()};const id=randomUUID();const result=await databasePool.query(`INSERT INTO announcements(id,category,title,summary,source,source_initials,published_at,tone,starts_at,expires_at,priority,status) VALUES($1,$2,$3,$4,$5,$6,NOW(),$7,$8,$9,$10,$11) RETURNING *`,[id,input.category,input.title,input.summary,input.source,input.sourceInitials,input.tone,input.startsAt,input.expiresAt,input.priority,input.status]);return result.rows[0];}
-export async function updateAnnouncement(id:string,input:Partial<AnnouncementInput>){if(!databasePool)return null;const result=await databasePool.query(`UPDATE announcements SET category=COALESCE($2,category),title=COALESCE($3,title),summary=COALESCE($4,summary),source=COALESCE($5,source),source_initials=COALESCE($6,source_initials),tone=COALESCE($7,tone),starts_at=COALESCE($8,starts_at),expires_at=COALESCE($9,expires_at),priority=COALESCE($10,priority),status=COALESCE($11,status) WHERE id=$1 RETURNING *`,[id,input.category,input.title,input.summary,input.source,input.sourceInitials,input.tone,input.startsAt,input.expiresAt,input.priority,input.status]);return result.rows[0]??null;}
-export async function deleteAnnouncement(id:string){if(!databasePool)return false;const result=await databasePool.query("DELETE FROM announcements WHERE id=$1",[id]);return Boolean(result.rowCount);}
-export async function createFeedPost(userId:string,input:{title:string;summary:string;tags:string[]},source:string){const id=randomUUID();if(!databasePool)return{id,kind:"post",category:"clubs",...input,source,status:"pending"};const initials=source.split(/\s+/).slice(0,2).map((part)=>part[0]?.toLocaleUpperCase("az")).join("");const result=await databasePool.query(`INSERT INTO feed_posts(id,kind,category,title,summary,source,source_initials,published_at,tone,tags,status,user_id) VALUES($1,'post','clubs',$2,$3,$4,$5,NOW(),'blue',$6,'pending',$7) RETURNING *`,[id,input.title,input.summary,source,initials,input.tags,userId]);return result.rows[0];}
+export async function listAdminAnnouncements(){if(!databasePool)return [...memoryAnnouncements.values()].sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));const result=await databasePool.query("SELECT *,status FROM announcements ORDER BY published_at DESC");return result.rows;}
+export async function createAnnouncement(input:AnnouncementInput){const id=randomUUID();const publishedAt=new Date().toISOString();if(!databasePool){const item={id,kind:"announcement" as const,...input,publishedAt,timeLabel:formatTime(publishedAt),dateLabel:formatDate(input.startsAt)};memoryAnnouncements.set(id,item);return item;}const result=await databasePool.query(`INSERT INTO announcements(id,category,title,summary,source,source_initials,published_at,tone,starts_at,expires_at,priority,status) VALUES($1,$2,$3,$4,$5,$6,NOW(),$7,$8,$9,$10,$11) RETURNING *`,[id,input.category,input.title,input.summary,input.source,input.sourceInitials,input.tone,input.startsAt,input.expiresAt,input.priority,input.status]);return result.rows[0];}
+export async function updateAnnouncement(id:string,input:Partial<AnnouncementInput>){if(!databasePool){const current=memoryAnnouncements.get(id);if(!current)return null;const next={...current,...input};memoryAnnouncements.set(id,next);return next;}const result=await databasePool.query(`UPDATE announcements SET category=COALESCE($2,category),title=COALESCE($3,title),summary=COALESCE($4,summary),source=COALESCE($5,source),source_initials=COALESCE($6,source_initials),tone=COALESCE($7,tone),starts_at=COALESCE($8,starts_at),expires_at=COALESCE($9,expires_at),priority=COALESCE($10,priority),status=COALESCE($11,status) WHERE id=$1 RETURNING *`,[id,input.category,input.title,input.summary,input.source,input.sourceInitials,input.tone,input.startsAt,input.expiresAt,input.priority,input.status]);return result.rows[0]??null;}
+export async function deleteAnnouncement(id:string){if(!databasePool)return memoryAnnouncements.delete(id);const result=await databasePool.query("DELETE FROM announcements WHERE id=$1",[id]);return Boolean(result.rowCount);}
+export async function createFeedPost(userId:string,input:{title:string;summary:string;tags:string[]},source:string){const id=randomUUID();const initials=source.split(/\s+/).slice(0,2).map((part)=>part[0]?.toLocaleUpperCase("az")).join("");if(!databasePool){const item:AdminFeedRecord={id,kind:"post",category:"clubs",...input,source,sourceInitials:initials,publishedAt:new Date().toISOString(),timeLabel:"indi",tone:"blue",status:"pending",userId};memoryFeed.set(id,item);return item;}const result=await databasePool.query(`INSERT INTO feed_posts(id,kind,category,title,summary,source,source_initials,published_at,tone,tags,status,user_id) VALUES($1,'post','clubs',$2,$3,$4,$5,NOW(),'blue',$6,'pending',$7) RETURNING *`,[id,input.title,input.summary,source,initials,input.tags,userId]);return result.rows[0];}
+
+export async function listAdminFeed(status?: FeedStatus) {
+  if (!databasePool) return [...memoryFeed.values()].filter((item) => !status || item.status === status).sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));
+  const result=await databasePool.query(`SELECT * FROM feed_posts ${status?"WHERE status=$1":""} ORDER BY published_at DESC LIMIT 200`,status?[status]:[]);
+  return result.rows;
+}
+
+export async function updateFeedPostStatus(id:string,status:FeedStatus){
+  if(!databasePool){const current=memoryFeed.get(id);if(!current)return null;const next={...current,status};memoryFeed.set(id,next);return next;}
+  const result=await databasePool.query("UPDATE feed_posts SET status=$2 WHERE id=$1 RETURNING *",[id,status]);
+  return result.rows[0]??null;
+}
+
+export async function deleteFeedPost(id:string){
+  if(!databasePool)return memoryFeed.delete(id);
+  const result=await databasePool.query("DELETE FROM feed_posts WHERE id=$1",[id]);
+  return Boolean(result.rowCount);
+}
 
 function formatDate(value: unknown) {
   return new Intl.DateTimeFormat("az-AZ", { day: "numeric", month: "long", timeZone: "Asia/Baku" }).format(new Date(String(value)));
