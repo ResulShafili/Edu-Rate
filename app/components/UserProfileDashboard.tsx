@@ -7,7 +7,9 @@ import {
   Bookmark,
   CalendarDays,
   Check,
+  GraduationCap,
   LogOut,
+  Mail,
   MapPin,
   Pencil,
   Sparkles,
@@ -18,6 +20,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import useSWR from "swr";
 import {
   canonicalUniversity,
   faculties,
@@ -41,6 +44,19 @@ const statIcons: Record<ProfileStat["id"], LucideIcon> = {
   connections: UsersRound,
   saved: Bookmark,
 };
+const metricIcons: LucideIcon[] = [CalendarDays, UsersRound, Bookmark, BadgeCheck];
+
+type ProfileWorkspace = {
+  metrics: Array<{ label: string; value: string | number }>;
+  items: Array<{ id: string; title?: string; text?: string; status: string; type?: string }>;
+};
+
+async function loadProfileWorkspace(): Promise<ProfileWorkspace> {
+  const response = await fetch("/api/workspace", { cache: "no-store" });
+  const payload = await response.json() as { data?: ProfileWorkspace; error?: { message?: string } };
+  if (!response.ok || !payload.data) throw new Error(payload.error?.message ?? "Profil göstəriciləri yüklənmədi.");
+  return payload.data;
+}
 
 export function UserProfileDashboard() {
   const [editing, setEditing] = useState(false);
@@ -58,6 +74,9 @@ export function UserProfileDashboard() {
     user,
   } = useAuth();
   const submitting = status === "submitting";
+  const workspace = useSWR(user ? `profile-workspace-summary:${user.id}` : null, loadProfileWorkspace, {
+    revalidateOnFocus: false,
+  });
 
   async function handleSignOut() {
     if (submitting) return;
@@ -138,8 +157,14 @@ export function UserProfileDashboard() {
     );
   }
 
-  const firstName = user.name.trim().split(/\s+/)[0] || user.name;
   const isStudent = user.accessRole === "student";
+  const profileMetrics = workspace.data?.metrics.map((metric, index) => ({
+    id: `workspace-${index}`,
+    label: metric.label,
+    value: metric.value,
+    Icon: metricIcons[index % metricIcons.length],
+  })) ?? user.stats.map((stat) => ({ ...stat, Icon: statIcons[stat.id] }));
+  const recentItems = workspace.data?.items ?? [];
 
   return (
     <section className="profile-section" aria-labelledby="profile-title">
@@ -159,10 +184,12 @@ export function UserProfileDashboard() {
         </div>
 
         <div className="profile-hero-copy">
-          <span className="profile-kicker">{isStudent ? "Tələbə profili" : user.accessRole === "teacher" ? "Müəllim profili" : user.accessRole === "mentor" ? "Mentor profili" : "Rəhbərlik profili"}</span>
-          <h1 id="profile-title">Salam, <em>{firstName}.</em></h1>
+          <span className="profile-kicker">Profil</span>
+          <h1 id="profile-title">{user.name}</h1>
+          <p>{user.program}</p>
           <div className="profile-identity-meta">
             <span><BadgeCheck size={14} aria-hidden="true" /> {user.role}</span>
+            <span><Mail size={14} aria-hidden="true" /> {user.email}</span>
             <span><MapPin size={14} aria-hidden="true" /> {user.city}</span>
           </div>
         </div>
@@ -187,7 +214,7 @@ export function UserProfileDashboard() {
               }}
             >
               {editing ? <X size={15} aria-hidden="true" /> : <Pencil size={15} aria-hidden="true" />}
-              {editing ? "Redaktəni bağla" : "Profilə düzəliş et"}
+              {editing ? "Redaktəni bağla" : "Məlumatları redaktə et"}
             </button>
           )}
           {signOutHref ? (
@@ -298,12 +325,13 @@ export function UserProfileDashboard() {
         transition={enterTransition}
         aria-label="Profil göstəriciləri"
       >
-        {user.stats.map((stat) => {
-          const Icon = statIcons[stat.id];
+        {profileMetrics.map((stat) => {
+          const Icon = stat.Icon;
+          const value = typeof stat.value === "number" ? String(stat.value).padStart(2, "0") : stat.value;
           return (
             <article key={stat.id} className="profile-stat-card">
               <span><Icon size={16} aria-hidden="true" /></span>
-              <strong>{String(stat.value).padStart(2, "0")}</strong>
+              <strong>{value}</strong>
               <p>{stat.label}</p>
             </article>
           );
@@ -321,13 +349,14 @@ export function UserProfileDashboard() {
         >
           <span className="profile-card-number">01</span>
           <div>
-            <span className="profile-card-kicker">Mənim haqqımda</span>
-            <h2>{user.program}</h2>
-            <p>{user.about}</p>
+            <span className="profile-card-kicker">Təhsil məlumatları</span>
+            <h2>{isStudent ? "Akademik profil" : "Peşəkar profil"}</h2>
+            <p>{user.about || "Haqqında qısa məlumat əlavə edilməyib."}</p>
           </div>
           <dl className="profile-facts">
             <div><dt>Universitet</dt><dd>{user.university}</dd></div>
             {isStudent && <div><dt>Fakültə</dt><dd>{user.faculty}</dd></div>}
+            <div><dt>{isStudent ? "İxtisas" : user.accessRole === "teacher" ? "Tədris sahəsi" : "Ekspertiza sahəsi"}</dt><dd>{user.program}</dd></div>
             <div><dt>{isStudent ? "Kurs" : "Təcrübə / vəzifə"}</dt><dd>{user.year}</dd></div>
           </dl>
         </motion.article>
@@ -342,9 +371,9 @@ export function UserProfileDashboard() {
         >
           <span className="profile-card-number">02</span>
           <div>
-            <span className="profile-card-kicker">Profil tamamlanması</span>
+            <span className="profile-card-kicker">Profil vəziyyəti</span>
             <strong>{user.completion}%</strong>
-            <p>Bir neçə detal daha əlavə etsən, uyğun tədbir və mentor tövsiyələri daha dəqiq olacaq.</p>
+            <p>{user.completion >= 100 ? "Bütün profil məlumatları tamamlanıb." : "Çatışmayan məlumatları redaktə bölməsindən tamamlaya bilərsən."}</p>
           </div>
           <div
             className="profile-progress-track"
@@ -373,16 +402,14 @@ export function UserProfileDashboard() {
         >
           <span className="profile-card-number">03</span>
           <div>
-            <span className="profile-card-kicker">Maraq dairəm</span>
-            <h2>Səni hərəkətə gətirən mövzular.</h2>
+            <span className="profile-card-kicker">Hesab məlumatları</span>
+            <h2>Hesabın</h2>
           </div>
-          {user.interests.length > 0 ? (
-            <ul className="profile-interest-list">
-              {user.interests.map((interest) => <li key={interest}>{interest}</li>)}
-            </ul>
-          ) : (
-            <p className="profile-empty-copy">Maraq dairən hələ əlavə edilməyib.</p>
-          )}
+          <dl className="profile-account-details">
+            <div><dt>E-poçt</dt><dd><Mail size={14} aria-hidden="true" />{user.email}</dd></div>
+            <div><dt>Hesab növü</dt><dd><BadgeCheck size={14} aria-hidden="true" />{user.role}</dd></div>
+            <div><dt>İstiqamət</dt><dd><GraduationCap size={14} aria-hidden="true" />{user.program}</dd></div>
+          </dl>
         </motion.article>
 
         <motion.article
@@ -395,10 +422,24 @@ export function UserProfileDashboard() {
         >
           <span className="profile-card-number">04</span>
           <div>
-            <span className="profile-card-kicker">Son fəaliyyət</span>
+            <span className="profile-card-kicker">Fəaliyyət</span>
             <h2>Son fəaliyyətlər</h2>
           </div>
-          {user.activities.length > 0 ? (
+          {recentItems.length > 0 ? (
+            <ol className="profile-activity-list">
+              {recentItems.slice(0, 5).map((activity) => (
+                <li key={activity.id}>
+                  <span className="profile-activity-dot" aria-hidden="true" />
+                  <div>
+                    <span>{activity.type ?? "Fəaliyyət"}</span>
+                    <h3>{activity.title ?? "EduRate fəaliyyəti"}</h3>
+                    {activity.text ? <p>{activity.text}</p> : null}
+                  </div>
+                  <time>{activity.status}</time>
+                </li>
+              ))}
+            </ol>
+          ) : user.activities.length > 0 ? (
             <ol className="profile-activity-list">
               {user.activities.map((activity) => (
                 <li key={activity.id}>

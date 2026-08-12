@@ -1550,17 +1550,39 @@ body {
 .kuds-shell .workspace-skeleton { display: grid; gap: 14px; }
 .kuds-shell .workspace-skeleton i { display: block; height: 128px; border-radius: 14px; background: linear-gradient(90deg, var(--kuds-bg), #fff, var(--kuds-bg)); background-size: 220% 100%; animation: kuds-shimmer 1.4s infinite linear; }
 
-.kuds-shell .profile-section { min-height: auto !important; padding: 0 !important; }
+.kuds-shell .profile-section { min-height: auto !important; padding: 0 !important; color: var(--kuds-text); }
 .kuds-shell .profile-ambient { display: none; }
-.kuds-shell .profile-hero { padding: 0 0 24px !important; border-color: var(--kuds-border) !important; }
-.kuds-shell .profile-avatar { color: var(--ku-dark-green) !important; background: var(--ku-soft-green) !important; box-shadow: none !important; }
+.kuds-shell .profile-hero {
+  padding: clamp(22px, 3vw, 34px) !important;
+  grid-template-columns: 104px minmax(0, 1fr) auto;
+  gap: clamp(20px, 3vw, 36px);
+  border: 1px solid var(--kuds-border) !important;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff 0%, #f5f8f6 100%);
+  box-shadow: var(--kuds-shadow-sm);
+}
+.kuds-shell .profile-avatar-shell { width: 104px; height: 104px; }
+.kuds-shell .profile-avatar { width: 82px; height: 82px; color: #fff !important; background: var(--ku-dark-green) !important; box-shadow: 0 16px 36px rgb(22 66 60 / 18%) !important; }
 .kuds-shell .profile-avatar-orbit { border-color: rgb(68 118 108 / 30%) !important; }
+.kuds-shell .profile-avatar-status { right: 5px; bottom: 10px; border-color: #fff; }
 .kuds-shell .profile-hero-copy :is(h1, p, span),
 .kuds-shell .profile-identity-meta span { color: var(--kuds-text) !important; font-family: inherit !important; font-style: normal !important; }
+.kuds-shell .profile-hero-copy h1 { margin: 6px 0 5px; color: var(--kuds-text) !important; font-size: clamp(30px, 3vw, 44px); font-weight: 720; line-height: 1.05; letter-spacing: -.04em; }
 .kuds-shell .profile-hero-copy > p,
 .kuds-shell .profile-identity-meta span { color: var(--kuds-muted) !important; }
+.kuds-shell .profile-hero-copy > p { margin: 0; color: var(--ku-dark-green) !important; font-size: 13px; font-weight: 650; }
+.kuds-shell .profile-hero-copy .profile-kicker { color: var(--ku-green) !important; }
+.kuds-shell .profile-identity-meta { gap: 8px 16px; margin-top: 15px; }
+.kuds-shell .profile-identity-meta span { font-size: 11px; }
+.kuds-shell .profile-identity-meta svg { color: var(--ku-green); }
+.kuds-shell .profile-hero-actions { align-items: stretch; }
+.kuds-shell .profile-hero-actions :is(button, a) { min-height: 42px; padding: 0 14px; color: var(--kuds-text); font-size: 11px; font-weight: 700; border: 1px solid var(--kuds-border); border-radius: 10px; background: #fff; }
+.kuds-shell .profile-hero-actions .profile-edit-button { color: #fff; border-color: var(--ku-green); background: var(--ku-green); }
+.kuds-shell .profile-hero-actions .profile-edit-button:hover { color: #fff; background: var(--ku-dark-green); }
+.kuds-shell .profile-hero-actions .profile-signout-button:hover { color: #991b1b; border-color: #fecaca; background: #fef2f2; }
 .kuds-shell .profile-edit-panel,
-.kuds-shell .profile-info-card { background: var(--kuds-surface) !important; }
+.kuds-shell .profile-info-card { color: var(--kuds-text) !important; border: 1px solid var(--kuds-border) !important; background: var(--kuds-surface) !important; box-shadow: var(--kuds-shadow-xs) !important; backdrop-filter: none; }
+.kuds-shell .profile-edit-panel { margin-top: 16px; padding: clamp(20px, 3vw, 30px); border: 1px solid var(--kuds-border); border-radius: 16px; background: var(--kuds-surface) !important; box-shadow: var(--kuds-shadow-sm); backdrop-filter: none; }
 .kuds-shell .profile-edit-heading,
 .kuds-shell .profile-activity-list li { border-color: var(--kuds-border) !important; }
 .kuds-shell .profile-edit-heading :is(h2, p, span),
@@ -1571,8 +1593,41 @@ body {
 .kuds-shell .profile-facts dt,
 .kuds-shell .profile-activity-list p,
 .kuds-shell .profile-activity-list time { color: var(--kuds-muted) !important; }
-.kuds-shell .profile-stats { gap: 16px !important; margin-top: 24px !important; }
-.kuds-shell .profile-stat-card { color: var(--kuds-text) !important; border: 1px solid var(--kuds-border) !important; border-radius: 12px !important; background: var(--kuds-surface) !important; box-shadow: var(--kuds-shadow-xs) !important; }
+.kuds-shell .profile-edit-form { gap: 14px; padding-top: 22px; }
+.kuds-shell .profile-edit-field > span { color: var(--kuds-text); font-size: 11px; font-weight: 700; }
+.kuds-shell .profile-edit-field :is(input, textarea, select) { color: var(--kuds-text); border-color: var(--kuds-border); background: var(--kuds-bg); }
+.kuds-shell .profile-edit-field select option { color: var(--kuds-text); background: #fff; }
+.kuds-shell .profile-edit-field :is(input, textarea, select):focus { border-color: var(--ku-green); background: #fff; box-shadow: 0 0 0 3px rgb(68 118 108 / 12%); }
+.kuds-shell .profile-edit-footer button { color: var(--kuds-text); border-color: var(--kuds-border); background: var(--kuds-bg); }
+.kuds-shell .profile-edit-footer .profile-save-button { color: #fff; border-color: var(--ku-green); background: var(--ku-green); }
+.kuds-shell .profile-status-message { min-height: 0; margin: 12px auto 0; padding: 0 4px; color: var(--kuds-success); font-size: 12px; }
+.kuds-shell .profile-status-message[role="alert"] { color: #b42318; }
+.kuds-shell .profile-stats { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important; gap: 12px !important; margin-top: 16px !important; }
+.kuds-shell .profile-stat-card { min-height: 118px; padding: 18px; color: var(--kuds-text) !important; border: 1px solid var(--kuds-border) !important; border-radius: 14px !important; background: var(--kuds-surface) !important; box-shadow: var(--kuds-shadow-xs) !important; }
+.kuds-shell .profile-stat-card > span { color: #fff; background: var(--ku-green); }
+.kuds-shell .profile-stat-card strong { color: var(--kuds-text); font-family: inherit; font-size: 34px; font-weight: 720; }
+.kuds-shell .profile-stat-card p { color: var(--kuds-muted) !important; font-size: 10px; }
+.kuds-shell .profile-dashboard-grid { gap: 12px; margin-top: 12px; }
+.kuds-shell .profile-info-card { min-height: 250px; padding: clamp(20px, 2.5vw, 30px); border-radius: 16px; }
+.kuds-shell .profile-info-card::before { opacity: .28; background: radial-gradient(circle, rgb(211 232 191 / 75%), transparent 70%); }
+.kuds-shell .profile-info-card h2 { color: var(--kuds-text) !important; font-size: clamp(23px, 2.3vw, 32px); font-weight: 720; line-height: 1.1; }
+.kuds-shell .profile-card-kicker { margin-bottom: 8px; color: var(--ku-green) !important; font-size: 9px; }
+.kuds-shell .profile-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 22px; }
+.kuds-shell .profile-facts div { padding: 12px; border-color: var(--kuds-border); background: var(--kuds-bg); }
+.kuds-shell .profile-facts dt { color: var(--kuds-muted) !important; font-size: 8px; }
+.kuds-shell .profile-facts dd { color: var(--kuds-text) !important; font-size: 11px; white-space: normal; }
+.kuds-shell .profile-progress-track { background: #e5ebe8; }
+.kuds-shell .profile-progress-card strong { color: var(--ku-green); }
+.kuds-shell .profile-progress-track i { background: var(--ku-green); }
+.kuds-shell .profile-account-details { position: relative; z-index: 1; display: grid; margin: 20px 0 0; gap: 8px; }
+.kuds-shell .profile-account-details div { padding: 11px 12px; border: 1px solid var(--kuds-border); border-radius: 10px; background: var(--kuds-bg); }
+.kuds-shell .profile-account-details dt { margin-bottom: 5px; color: var(--kuds-muted); font-size: 8px; font-weight: 700; text-transform: uppercase; }
+.kuds-shell .profile-account-details dd { display: flex; min-width: 0; margin: 0; align-items: center; gap: 7px; color: var(--kuds-text); font-size: 11px; overflow-wrap: anywhere; }
+.kuds-shell .profile-account-details svg { flex: none; color: var(--ku-green); }
+.kuds-shell .profile-activity-list h3 { color: var(--kuds-text) !important; }
+.kuds-shell .profile-activity-list li > div > span { color: var(--ku-green) !important; }
+.kuds-shell .profile-activity-dot { border-color: #fff; background: var(--ku-green); }
+.kuds-shell .profile-empty-copy { color: var(--kuds-muted) !important; }
 
 /* Admin and technical page */
 .kuds-shell .admin-dashboard { display: block !important; min-height: auto !important; padding: 0 !important; }
@@ -2519,6 +2574,22 @@ body {
   .kuds-shell .ticket-progress-head { margin-bottom: 18px; }
   .kuds-shell .rating-panel-copy h3 { font-size: 25px; }
   .kuds-shell .profile-hero-copy h1 { font-size: 30px; }
+  .kuds-shell .profile-hero { padding: 18px !important; }
+  .kuds-shell .profile-hero-copy > p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kuds-shell .profile-identity-meta { display: grid; grid-template-columns: 1fr; gap: 7px; }
+  .kuds-shell .profile-identity-meta span { min-width: 0; overflow-wrap: anywhere; }
+  .kuds-shell .profile-hero-actions { display: grid; width: 100%; grid-template-columns: 1fr 1fr; }
+  .kuds-shell .profile-hero-actions :is(button, a) { width: 100%; padding-inline: 10px; }
+  .kuds-shell .profile-edit-panel { padding: 18px; }
+  .kuds-shell .profile-edit-form { grid-template-columns: 1fr; }
+  .kuds-shell .profile-edit-about,
+  .kuds-shell .profile-edit-footer { grid-column: 1; }
+  .kuds-shell .profile-edit-footer { display: grid; grid-template-columns: 1fr 1fr; }
+  .kuds-shell .profile-edit-footer button { width: 100%; }
+  .kuds-shell .profile-info-card { min-height: 0; }
+  .kuds-shell .profile-facts { grid-template-columns: 1fr; }
+  .kuds-shell .profile-activity-list li { grid-template-columns: 10px minmax(0, 1fr); }
+  .kuds-shell .profile-activity-list time { grid-column: 2; white-space: normal; }
   .kuds-shell .drawer-content h2 { font-size: 30px; }
   .kuds-shell .club-detail-hero h1 { font-size: 36px; }
   .kuds-shell .club-detail-hero { min-height: 0; padding: 20px 18px 30px; gap: 44px; border-radius: 14px 14px 0 0; }

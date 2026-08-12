@@ -6,8 +6,8 @@ import { getServerRequestIdentity } from "../lib/auth/request-identity";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Tələbə profili — EduRate",
-  description: "EduRate öyrənmə yolunu, universitet əlaqələrini və son fəaliyyətlərini bir yerdə gör.",
+  title: "Profil — EduRate",
+  description: "Hesab, təhsil və platforma fəaliyyəti məlumatlarını idarə et.",
   robots: { index: false, follow: false },
 };
 
