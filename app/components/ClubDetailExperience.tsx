@@ -201,6 +201,12 @@ export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
                     </li>
                   ))}
                 </ol>
+                {club.events.length === 0 && (
+                  <div className="club-tab-empty">
+                    <CalendarDays size={22} aria-hidden="true" />
+                    <div><h3>Hələ tədbir əlavə edilməyib</h3><p>Klubun növbəti tədbiri yayımlandıqda burada görünəcək.</p></div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -218,6 +224,12 @@ export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
                     </li>
                   ))}
                 </ul>
+                {club.members.length === 0 && (
+                  <div className="club-tab-empty">
+                    <UsersRound size={22} aria-hidden="true" />
+                    <div><h3>Üzv siyahısı hələ formalaşır</h3><p>Kluba qoşulan üzvlər məxfilik qorunmaqla burada göstəriləcək.</p></div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -236,6 +248,12 @@ export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
                     </li>
                   ))}
                 </ol>
+                {club.history.length === 0 && (
+                  <div className="club-tab-empty">
+                    <Clock3 size={22} aria-hidden="true" />
+                    <div><h3>Tarixçə məlumatı əlavə edilməyib</h3><p>Klubun əsas mərhələləri təsdiqləndikdən sonra burada görünəcək.</p></div>
+                  </div>
+                )}
               </div>
             )}
           </motion.section>
