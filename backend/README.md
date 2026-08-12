@@ -69,10 +69,17 @@ Vercel project **Settings → Environment Variables** bölməsində bunları Ren
 ```env
 NEXT_PUBLIC_API_BASE_URL=https://edurate-api.onrender.com
 EDURATE_API_BASE_URL=https://edurate-api.onrender.com
-ADMIN_EMAILS=admin@example.az
 ```
 
-Render servisində eyni ünvanı `ADMIN_EMAILS=admin@example.az` kimi təyin edin. Bu hesab yenidən daxil olduqda admin JWT-si alacaq.
+İlkin administrator açıq qeydiyyat vasitəsilə yaradılmır. Hesab adi qaydada yaradıldıqdan sonra yalnız database sahibi Render PostgreSQL konsolunda həmin hesabı bir dəfə yüksəltməlidir:
+
+```sql
+UPDATE users
+SET role = 'admin', status = 'Aktiv', updated_at = NOW()
+WHERE email = 'admin@example.az';
+```
+
+Bu əməliyyatdan əvvəl e-poçtun doğru şəxsə məxsus olduğunu təşkilati qaydada yoxlayın. Sonrakı admin və admin köməkçisi rolları əsas administratorun qorunan panelindən idarə olunur.
 
 Sonra frontend-i Vercel-də redeploy edin.
 

@@ -164,13 +164,13 @@ export const openApiDocument = {
       patch: {
         tags: ["Events"], summary: "Yaratdığın tədbiri yenilə", security: [{ bearerAuth: [] }],
         requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/EventInput" } } } },
-        responses: { "200": { description: "Tədbir yeniləndi" }, "403": { description: "İcazə yoxdur" }, "404": { description: "Tədbir tapılmadı" }, "422": { description: "Validasiya xətası" } },
+        responses: { "200": { description: "Tədbir yeniləndi" }, "403": { description: "İcazə yoxdur" }, "404": { description: "Tədbir tapılmadı" }, "409": { description: "Tutum mövcud qeydiyyat sayından azdır" }, "422": { description: "Validasiya xətası" } },
       },
       delete: { tags: ["Events"], summary: "Yaratdığın tədbiri sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Tədbir silindi" }, "403": { description: "İcazə yoxdur" }, "404": { description: "Tədbir tapılmadı" } } },
     },
     "/api/events/{eventId}/registrations": {
       parameters: [{ name: "eventId", in: "path", required: true, schema: { type: "string" } }],
-      post: { tags: ["Events"], summary: "Tədbirə qeydiyyatdan keç", security: [{ bearerAuth: [] }], responses: { "201": { description: "Qeydiyyat tamamlandı" }, "409": { description: "Qeydiyyat bağlıdır, yer yoxdur və ya təkrardır" } } },
+      post: { tags: ["Events"], summary: "Tədbirə qeydiyyatdan keç", security: [{ bearerAuth: [] }], responses: { "201": { description: "Qeydiyyat tamamlandı" }, "409": { description: "Tədbir yayımlanmayıb, qeydiyyat bağlıdır, yer yoxdur və ya qeydiyyat təkrardır" } } },
       delete: { tags: ["Events"], summary: "Tədbir qeydiyyatını ləğv et", security: [{ bearerAuth: [] }], responses: { "200": { description: "Qeydiyyat ləğv edildi" }, "404": { description: "Qeydiyyat tapılmadı" } } },
     },
     "/api/events/registrations/me": {

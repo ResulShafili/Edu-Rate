@@ -243,6 +243,13 @@ export async function updateEvent(id: string, input: EventInput): Promise<EventR
     const current = memoryEvents.get(id);
     if (!current) return null;
     const registeredCount = current.capacity - current.availableSpots;
+    if (input.capacity < registeredCount) {
+      throw new ApiError(
+        409,
+        "CAPACITY_BELOW_REGISTRATIONS",
+        `Tədbirin tutumu mövcud ${registeredCount} qeydiyyatdan az ola bilməz.`,
+      );
+    }
     const next = {
       ...current,
       ...input,
@@ -254,22 +261,45 @@ export async function updateEvent(id: string, input: EventInput): Promise<EventR
     return next;
   }
 
-  const result = await databasePool.query(
-    `UPDATE events SET
-      title=$2, category=$3, description=$4, long_description=$5, location=$6,
-      city=$7, organizer=$8, start_at=$9, end_at=$10, registration_deadline=$11,
-      speakers=$12::jsonb, capacity=$13,
-      available_spots=GREATEST(0, $13 - (capacity - available_spots)),
-      accent=$14, glow=$15, admin_status=COALESCE($16, admin_status), updated_at=NOW()
-    WHERE id=$1 RETURNING *`,
-    [
-      id, input.title, input.category, input.description, input.longDescription,
-      input.location, input.city, input.organizer, input.startAt, input.endAt,
-      input.registrationDeadline, JSON.stringify(input.speakers), input.capacity,
-      input.accent, input.glow, input.adminStatus,
-    ],
-  );
-  return result.rows[0] ? mapEvent(result.rows[0]) : null;
+  const client = await databasePool.connect();
+  try {
+    await client.query("BEGIN");
+    const selected = await client.query("SELECT * FROM events WHERE id=$1 FOR UPDATE", [id]);
+    if (!selected.rows[0]) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+    const current = mapEvent(selected.rows[0]);
+    const registeredCount = current.capacity - current.availableSpots;
+    if (input.capacity < registeredCount) {
+      throw new ApiError(
+        409,
+        "CAPACITY_BELOW_REGISTRATIONS",
+        `Tədbirin tutumu mövcud ${registeredCount} qeydiyyatdan az ola bilməz.`,
+      );
+    }
+    const result = await client.query(
+      `UPDATE events SET
+        title=$2, category=$3, description=$4, long_description=$5, location=$6,
+        city=$7, organizer=$8, start_at=$9, end_at=$10, registration_deadline=$11,
+        speakers=$12::jsonb, capacity=$13, available_spots=$14,
+        accent=$15, glow=$16, admin_status=COALESCE($17, admin_status), updated_at=NOW()
+       WHERE id=$1 RETURNING *`,
+      [
+        id, input.title, input.category, input.description, input.longDescription,
+        input.location, input.city, input.organizer, input.startAt, input.endAt,
+        input.registrationDeadline, JSON.stringify(input.speakers), input.capacity,
+        input.capacity - registeredCount, input.accent, input.glow, input.adminStatus,
+      ],
+    );
+    await client.query("COMMIT");
+    return mapEvent(result.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {
@@ -279,6 +309,9 @@ export async function deleteEvent(id: string): Promise<boolean> {
 }
 
 function assertRegistrationOpen(event: EventRecord) {
+  if (event.adminStatus !== "Açıq") {
+    throw new ApiError(409, "EVENT_NOT_PUBLISHED", "Bu tədbir ictimai qeydiyyat üçün açıq deyil.");
+  }
   const currentTime = Date.now();
   if (new Date(event.registrationDeadline).getTime() < currentTime || new Date(event.startAt).getTime() <= currentTime) {
     throw new ApiError(409, "REGISTRATION_CLOSED", "Bu tədbir üçün qeydiyyat müddəti bitib.");

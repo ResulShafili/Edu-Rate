@@ -57,7 +57,9 @@ eventsRouter.get("/registrations/me", authenticate, async (request, response) =>
 eventsRouter.get("/:eventId", async (request, response) => {
   const eventId = z.string().parse(request.params.eventId);
   const event = await findEventById(eventId);
-  if (!event) throw new ApiError(404, "EVENT_NOT_FOUND", "Tədbir tapılmadı.");
+  if (!event || event.adminStatus !== "Açıq") {
+    throw new ApiError(404, "EVENT_NOT_FOUND", "Tədbir tapılmadı.");
+  }
   response.json({ data: event });
 });
 

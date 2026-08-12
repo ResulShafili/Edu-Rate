@@ -109,12 +109,6 @@ export async function initializeDatabase() {
     ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('Aktiv', 'Gözləmədə', 'Məhdudlaşdırılıb'));
   `);
 
-  if (env.ADMIN_EMAILS.length > 0) {
-    await databasePool.query(
-      "UPDATE users SET role = 'admin', status = 'Aktiv', updated_at = NOW() WHERE email = ANY($1::text[])",
-      [env.ADMIN_EMAILS],
-    );
-  }
 }
 
 export async function closeDatabase() {
@@ -160,8 +154,10 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
     year: "Kurs məlumatı əlavə edilməyib",
     city: "Xankəndi",
     about: "EduRate icmasında universitet həyatını daha əlaqəli yaşamaq üçün buradayam.",
-    role: env.ADMIN_EMAILS.includes(normalizedEmail) ? "admin" : input.role ?? "student",
-    status: env.ADMIN_EMAILS.includes(normalizedEmail) ? "Aktiv" : input.status ?? "Aktiv",
+    // Privileged roles must only come from an already-authorized server flow.
+    // An e-mail address alone is never proof of administrator ownership.
+    role: input.role ?? "student",
+    status: input.status ?? "Aktiv",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

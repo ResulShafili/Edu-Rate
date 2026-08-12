@@ -7,7 +7,6 @@ process.env.NODE_ENV = "test";
 process.env.JWT_SECRET = "edurate-test-secret-with-at-least-32-characters";
 process.env.FRONTEND_URL = "http://localhost:3000";
 process.env.TRUST_PROXY = "true";
-process.env.ADMIN_EMAILS = "admin.test@example.az,bootstrap.admin@example.az";
 
 let app: Express;
 let reusableStudentId = "";
@@ -19,7 +18,7 @@ before(async () => {
   const module = await import("../src/app.js");
   app = module.createApp();
   const [{createUser},{createAccessToken,hashPassword}]=await Promise.all([import("../src/db/database.js"),import("../src/lib/auth.js")]);
-  const admin=await createUser({name:"Başlanğıc Administrator",email:"bootstrap.admin@example.az",passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Pedaqoji fakültə",program:"Riyaziyyat müəllimliyi"});
+  const admin=await createUser({name:"Başlanğıc Administrator",email:"bootstrap.admin@example.az",passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Pedaqoji fakültə",program:"Riyaziyyat müəllimliyi",role:"admin",status:"Aktiv"});
   reusableAdminToken=createAccessToken(admin);
 });
 
@@ -380,9 +379,13 @@ describe("EduRate API", () => {
         program: "Riyaziyyat müəllimliyi",
       })
       .expect(201);
-    assert.equal(signup.body.data.user.role, "admin");
-    const authorization = `Bearer ${signup.body.data.token}`;
-    reusableAdminToken = signup.body.data.token;
+    assert.equal(signup.body.data.user.role, "student");
+    const denied = await request(app)
+      .get("/api/admin/overview")
+      .set("Authorization", `Bearer ${signup.body.data.token}`)
+      .expect(403);
+    assert.equal(denied.body.error.code, "ADMIN_REQUIRED");
+    const authorization = `Bearer ${reusableAdminToken}`;
 
     const overview = await request(app).get("/api/admin/overview").set("Authorization", authorization).expect(200);
     assert.equal(overview.body.data.metrics.length, 4);
@@ -659,6 +662,19 @@ describe("EduRate API", () => {
     assert.equal(teacherWorkspace.body.data.role, "teacher");
     assert.equal(teacherWorkspace.body.data.focus, "Riyaziyyat");
 
+    const teacherCatalog = await request(app).get("/api/teachers").expect(200);
+    const teacherProfile = teacherCatalog.body.data.find((item: { userId: string }) => item.userId === teacherSignup.body.data.user.id);
+    assert.ok(teacherProfile);
+
+    await request(app).patch("/api/auth/profile").set("Authorization", teacherAuthorization).send({
+      name: "Səma Həsənova", university: "Qarabağ Universiteti", faculty: "Müəllim heyəti",
+      program: "Riyaziyyat müəllimliyi", year: "Müəllim", about: "Riyazi düşüncəni praktik nümunələrlə inkişaf etdirirəm.",
+    }).expect(200);
+    const updatedTeacherCatalog = await request(app).get("/api/teachers").expect(200);
+    const updatedTeacherProfile = updatedTeacherCatalog.body.data.find((item: { userId: string }) => item.userId === teacherSignup.body.data.user.id);
+    assert.equal(updatedTeacherProfile.name, "Səma Həsənova");
+    assert.equal(updatedTeacherProfile.specialty, "Riyaziyyat müəllimliyi");
+
     await request(app).post("/api/auth/signup").set("X-Forwarded-For", "203.0.113.64").send({
       name: "Ayrıca Mentor", email: `mentor.${suffix}@example.az`, password: "EduRate2026",
       university: "Qarabağ Universiteti", accountType: "mentor", program: "Məhsul strategiyası",
@@ -703,6 +719,11 @@ describe("EduRate API", () => {
     const accepted = await request(app).patch(`/api/workspace/mentorship/${mentorship.body.data.id}`)
       .set("Authorization", teacherAuthorization).send({ status: "accepted" }).expect(200);
     assert.equal(accepted.body.data.status, "accepted");
+
+    await request(app).patch(`/api/admin/users/${teacherSignup.body.data.user.id}`)
+      .set("Authorization", adminAuthorization).send({ status: "Məhdudlaşdırılıb" }).expect(200);
+    const restrictedCatalog = await request(app).get("/api/teachers").expect(200);
+    assert.equal(restrictedCatalog.body.data.some((item: { userId: string }) => item.userId === teacherSignup.body.data.user.id), false);
   });
 
   it("legacy akademik məlumatlı hesabların sessiya və profil axınını pozmur", async () => {
@@ -758,12 +779,27 @@ describe("EduRate API", () => {
     const authorization=`Bearer ${reusableAdminToken}`;
     const created=await request(app).post("/api/admin/events").set("Authorization",authorization).send({name:"Qaralama seminar",category:"Technology",organizer:"EduRate",startAt:"2027-01-12T10:00:00+04:00",capacity:30,place:"Kampus",status:"Qaralama"}).expect(201);
     const id=created.body.data.id as string;
-    const before=await request(app).get(`/api/events/${id}`).expect(200);
-    await request(app).patch(`/api/admin/events/${id}`).set("Authorization",authorization).send({name:"Yenilənmiş qaralama seminar"}).expect(200);
-    const after=await request(app).get(`/api/events/${id}`).expect(200);
-    assert.equal(after.body.data.description,before.body.data.description);
+    await request(app).get(`/api/events/${id}`).expect(404);
+    const after=await request(app).patch(`/api/admin/events/${id}`).set("Authorization",authorization).send({name:"Yenilənmiş qaralama seminar"}).expect(200);
+    assert.equal(after.body.data.description,created.body.data.description);
     const publicEvents=await request(app).get("/api/events").expect(200);
     assert.equal(publicEvents.body.data.some((item:{id:string})=>item.id===id),false);
+
+    const [{createUser},{createAccessToken,hashPassword}]=await Promise.all([import("../src/db/database.js"),import("../src/lib/auth.js")]);
+    const attendee=await createUser({name:"Qaralama Testi",email:`draft.${Date.now()}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Mühəndislik fakültəsi",program:"Kompüter mühəndisliyi"});
+    await request(app).post(`/api/events/${id}/registrations`).set("Authorization",`Bearer ${createAccessToken(attendee)}`).expect(409);
+  });
+
+  it("tədbirin tutumunu mövcud qeydiyyatdan aşağı salmağa icazə vermir", async()=>{
+    const authorization=`Bearer ${reusableAdminToken}`;
+    const event=await request(app).post("/api/admin/events").set("Authorization",authorization).send({name:"Tutum sınağı",category:"Technology",organizer:"EduRate",startAt:"2027-02-12T10:00:00+04:00",capacity:2,place:"Kampus",status:"Açıq"}).expect(201);
+    const [{createUser},{createAccessToken,hashPassword}]=await Promise.all([import("../src/db/database.js"),import("../src/lib/auth.js")]);
+    for(const index of [1,2]){
+      const attendee=await createUser({name:`İştirakçı ${index}`,email:`capacity.${index}.${Date.now()}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Mühəndislik fakültəsi",program:"Kompüter mühəndisliyi"});
+      await request(app).post(`/api/events/${event.body.data.id}/registrations`).set("Authorization",`Bearer ${createAccessToken(attendee)}`).expect(201);
+    }
+    const response=await request(app).patch(`/api/admin/events/${event.body.data.id}`).set("Authorization",authorization).send({capacity:1}).expect(409);
+    assert.equal(response.body.error.code,"CAPACITY_BELOW_REGISTRATIONS");
   });
 
   it("iki real hesab arasında əlaqə, qalıcı mesaj və oxunma axınını tamamlayır",async()=>{

@@ -115,7 +115,7 @@ npm run build
 - Qeydiyyat, profil, tədbirlər, klub üzvlükləri, mentorluq müraciətləri, müəllim rəyləri və dəstək sorğuları PostgreSQL-də qalıcı saxlanılır.
 - Admin istifadəçi, klub və tədbir CRUD-u JWT rol yoxlaması ilə qorunur.
 - Mentor, müəllim və elan məzmunlarının bir hissəsi idarə olunan kataloq məlumatıdır; istifadəçi əməliyyatları isə real API-yə bağlıdır.
-- Admin e-poçtları yalnız Render-də `ADMIN_EMAILS` dəyişənində saxlanılır; frontend rol məlumatını qorunan backend sessiyasından alır.
+- Administrator rolu açıq qeydiyyatdan verilmir; ilkin admin yalnız idarə olunan PostgreSQL əməliyyatı ilə təyin olunur və frontend rol məlumatını qorunan backend sessiyasından alır.
 - Vercel-də `NEXT_PUBLIC_SITE_URL` və `EDURATE_APP_ORIGIN` real frontend domeninə bərabər olmalıdır.
 
 Ətraflı tətbiq təhlükəsizliyi nəticələri və production nəzarət siyahısı üçün

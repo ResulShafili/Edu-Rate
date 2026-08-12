@@ -22,8 +22,6 @@ services:
         value: 8h
       - key: FRONTEND_URL
         value: https://edu-rate-nu.vercel.app
-      - key: ADMIN_EMAILS
-        sync: false
       - key: TRUST_PROXY
         value: "true"
 

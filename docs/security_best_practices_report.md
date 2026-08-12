@@ -72,7 +72,7 @@ Bu maddələr kod xətası deyil, production idarəetməsi üçün tələb oluna
 
 1. Render-də `JWT_SECRET` ən azı 32 simvolluq unikal secret olaraq saxlanmalı və periodik rotasiya edilməlidir.
 2. Vercel-də `NEXT_PUBLIC_SITE_URL` və `EDURATE_APP_ORIGIN` yalnız real frontend origin-inə bərabər olmalıdır.
-3. Render-də `FRONTEND_URL` yalnız real frontend origin-inə bərabər olmalı, `ADMIN_EMAILS` isə minimum sayda hesab saxlamalıdır.
+3. Render-də `FRONTEND_URL` yalnız real frontend origin-inə bərabər olmalı, ilkin administrator isə e-poçt sahibliyi yoxlanıldıqdan sonra idarə olunan PostgreSQL əməliyyatı ilə təyin edilməlidir.
 4. PostgreSQL backup, bərpa sınağı və secret-lərin giriş auditləri platforma səviyyəsində aktiv edilməlidir.
 5. E-poçt təsdiqi, parolun bərpası, refresh-token rotasiyası və admin üçün MFA növbəti autentifikasiya sprintində əlavə edilməlidir.
 6. Vercel/Render tərəfində WAF və paylanmış rate limiting aktivləşdirilməlidir; tətbiq daxilindəki limitlər əlavə müdafiə qatıdır.

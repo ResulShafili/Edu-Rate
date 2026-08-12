@@ -32,7 +32,10 @@ import {
 import { ApiError } from "../lib/api-error.js";
 import { hashPassword } from "../lib/auth.js";
 import { authenticate, requireAdmin, requirePrimaryAdmin } from "../middleware/authenticate.js";
-import { ensureProfessionalProfileForUser } from "../db/professionals.js";
+import {
+  deactivateProfessionalProfilesForUser,
+  synchronizeProfessionalProfilesForUser,
+} from "../db/professionals.js";
 import { listAudit, writeAudit } from "../db/audit.js";
 import { createAnnouncement, deleteAnnouncement, listAdminAnnouncements, updateAnnouncement } from "../db/network.js";
 import { decideMentorApplication, listMentorApplications } from "../db/mentor-applications.js";
@@ -101,6 +104,7 @@ adminRouter.get("/users", async (request, response) => {
 adminRouter.post("/users", requirePrimaryAdmin, async (request, response) => {
   const input = userSchema.parse(request.body);
   const user = await createUser({ ...input, passwordHash: await hashPassword(randomBytes(24).toString("base64url")) });
+  await synchronizeProfessionalProfilesForUser(user);
   response.status(201).json({ data: toAdminUser(user) });
 });
 
@@ -133,7 +137,7 @@ adminRouter.patch("/users/:id", async (request, response) => {
         "İstifadəçinin rolu dəyişib. Siyahını yeniləyib təkrar yoxlayın.",
       );
     }
-    await ensureProfessionalProfileForUser(user);
+    await synchronizeProfessionalProfilesForUser(user);
     await writeAudit(request.auth!.userId,"İstifadəçi rolu dəyişdirildi","user",id,{role:input.role});
     response.json({ data: toAdminUser(user) });
     return;
@@ -153,7 +157,7 @@ adminRouter.patch("/users/:id", async (request, response) => {
   }
   const user = await adminUpdateUser(id, patch);
   if (!user) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
-  await ensureProfessionalProfileForUser(user);
+  await synchronizeProfessionalProfilesForUser(user);
   await writeAudit(request.auth!.userId,"İstifadəçi yeniləndi","user",id,{role:patch.role,status:patch.status});
   response.json({ data: toAdminUser(user) });
 });
@@ -161,6 +165,7 @@ adminRouter.patch("/users/:id", async (request, response) => {
 adminRouter.delete("/users/:id", requirePrimaryAdmin, async (request, response) => {
   const id = z.string().parse(request.params.id);
   if (id === request.auth!.userId) throw new ApiError(409, "SELF_DELETE_FORBIDDEN", "Aktiv admin hesabını silmək olmaz.");
+  await deactivateProfessionalProfilesForUser(id);
   if (!(await deleteUser(id))) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
   await writeAudit(request.auth!.userId,"İstifadəçi silindi","user",id);
   response.status(204).send();

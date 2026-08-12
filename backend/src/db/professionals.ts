@@ -9,6 +9,16 @@ export type ProfessionalProfile = {
   status: "pending" | "approved" | "rejected"; visible: boolean;
 };
 
+type ProfessionalUser = {
+  id: string;
+  name: string;
+  role: string;
+  status: string;
+  program: string;
+  city: string;
+  about?: string;
+};
+
 const seedProfiles: Omit<ProfessionalProfile, "id" | "userId">[] = [
   { kind:"teacher", slug:"leyla-memmedova", name:"Leyla Məmmədova", headline:"Riyaziyyat müəllimi", specialty:"Riyaziyyat", biography:"Mürəkkəb mövzuları gündəlik nümunələrlə sadələşdirir.", city:"Bakı", experienceYears:11, availability:"Bu gün · 18:30-dan sonra", meetingMode:"Hibrid", languages:["Azərbaycan dili"], expertise:["Cəbr","Analiz"], status:"approved", visible:true },
   { kind:"teacher", slug:"nigar-huseynli", name:"Nigar Hüseynli", headline:"İngilis dili müəllimi", specialty:"İngilis dili", biography:"Danışıq və akademik yazı bacarıqlarını praktik yanaşma ilə inkişaf etdirir.", city:"Xankəndi", experienceYears:8, availability:"Həftəiçi", meetingMode:"Onlayn", languages:["Azərbaycan dili","İngilis dili"], expertise:["Speaking","Writing"], status:"approved", visible:true },
@@ -86,14 +96,100 @@ export async function findProfessionalByUser(userId:string, kind:ProfessionalKin
   return result.rows[0]?map(result.rows[0]):null;
 }
 
-export async function ensureProfessionalProfileForUser(user:{id:string;name:string;role:string;program:string;city:string}) {
-  if (user.role!=="teacher"&&user.role!=="mentor") return null;
-  const existing=await findProfessionalByUser(user.id,user.role); if (existing) return existing;
-  if (!databasePool) return null;
-  const slug=`${user.role}-${user.id}`;
-  const result=await databasePool.query(`INSERT INTO professional_profiles
-    (id,user_id,kind,slug,display_name,headline,specialty,biography,city,status,visible)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'approved',TRUE) RETURNING *`,
-    [randomUUID(),user.id,user.role,slug,user.name,user.role==="teacher"?"Müəllim":"Mentor",user.program,"",user.city]);
+function shouldShowProfile(user: ProfessionalUser, profile: ProfessionalProfile) {
+  if (user.status !== "Aktiv" || profile.status !== "approved") return false;
+  if (user.role === "teacher") return profile.kind === "teacher" || profile.kind === "mentor";
+  return user.role === "mentor" && profile.kind === "mentor";
+}
+
+function primaryKind(user: ProfessionalUser): ProfessionalKind | null {
+  if (user.status !== "Aktiv") return null;
+  return user.role === "teacher" || user.role === "mentor" ? user.role : null;
+}
+
+export async function synchronizeProfessionalProfilesForUser(user: ProfessionalUser) {
+  const kind = primaryKind(user);
+
+  if (!databasePool) {
+    for (const [slug, profile] of memory.entries()) {
+      if (profile.userId !== user.id) continue;
+      const next: ProfessionalProfile = {
+        ...profile,
+        name: user.name,
+        city: user.city,
+        ...(profile.kind === "teacher" ? {
+          headline: `${user.program} müəllimi`,
+          specialty: user.program,
+          biography: user.about?.trim() || profile.biography,
+        } : {}),
+      };
+      next.visible = shouldShowProfile(user, next);
+      memory.set(slug, next);
+    }
+
+    if (!kind) return null;
+    const existing = await findProfessionalByUser(user.id, kind);
+    if (existing) return existing;
+    const slug = `${kind}-${user.id}`;
+    const created: ProfessionalProfile = {
+      id: randomUUID(), userId: user.id, kind, slug, name: user.name,
+      headline: `${user.program} ${kind === "teacher" ? "müəllimi" : "mentoru"}`,
+      specialty: user.program, biography: user.about?.trim() ?? "", city: user.city,
+      experienceYears: 0, availability: "", meetingMode: "Onlayn", languages: [],
+      expertise: [user.program], status: "approved", visible: true,
+    };
+    memory.set(slug, created);
+    return created;
+  }
+
+  await databasePool.query(
+    `UPDATE professional_profiles SET
+       display_name=$2, city=$3,
+       headline=CASE WHEN kind='teacher' THEN $4 ELSE headline END,
+       specialty=CASE WHEN kind='teacher' THEN $5 ELSE specialty END,
+       biography=CASE WHEN kind='teacher' AND $6<>'' THEN $6 ELSE biography END,
+       visible=CASE
+         WHEN $7='Aktiv' AND status='approved' AND
+           (($8='teacher' AND kind IN ('teacher','mentor')) OR ($8='mentor' AND kind='mentor'))
+         THEN TRUE ELSE FALSE END,
+       updated_at=NOW()
+     WHERE user_id=$1`,
+    [user.id, user.name, user.city, `${user.program} müəllimi`, user.program, user.about?.trim() ?? "", user.status, user.role],
+  );
+
+  if (!kind) return null;
+  const slug = `${kind}-${user.id}`;
+  const result = await databasePool.query(
+    `INSERT INTO professional_profiles
+       (id,user_id,kind,slug,display_name,headline,specialty,biography,city,expertise,status,visible)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'approved',TRUE)
+     ON CONFLICT (user_id,kind) WHERE user_id IS NOT NULL DO UPDATE SET
+       display_name=EXCLUDED.display_name, headline=EXCLUDED.headline,
+       specialty=EXCLUDED.specialty,
+       biography=CASE WHEN EXCLUDED.biography<>'' THEN EXCLUDED.biography ELSE professional_profiles.biography END,
+       city=EXCLUDED.city, expertise=EXCLUDED.expertise,
+       status='approved', visible=TRUE, updated_at=NOW()
+     RETURNING *`,
+    [randomUUID(), user.id, kind, slug, user.name,
+      `${user.program} ${kind === "teacher" ? "müəllimi" : "mentoru"}`,
+      user.program, user.about?.trim() ?? "", user.city, [user.program]],
+  );
   return map(result.rows[0]);
+}
+
+export async function ensureProfessionalProfileForUser(user: ProfessionalUser) {
+  return synchronizeProfessionalProfilesForUser(user);
+}
+
+export async function deactivateProfessionalProfilesForUser(userId: string) {
+  if (!databasePool) {
+    for (const [slug, profile] of memory.entries()) {
+      if (profile.userId === userId) memory.set(slug, { ...profile, visible: false });
+    }
+    return;
+  }
+  await databasePool.query(
+    "UPDATE professional_profiles SET visible=FALSE, updated_at=NOW() WHERE user_id=$1",
+    [userId],
+  );
 }

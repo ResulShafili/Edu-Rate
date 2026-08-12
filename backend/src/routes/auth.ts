@@ -20,6 +20,7 @@ import {
   verifyPassword,
 } from "../lib/auth.js";
 import { authenticate } from "../middleware/authenticate.js";
+import { synchronizeProfessionalProfilesForUser } from "../db/professionals.js";
 
 export const authRouter = Router();
 
@@ -192,6 +193,8 @@ authRouter.patch("/profile", authenticate, async (request, response) => {
   if (!user) {
     throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
   }
+
+  await synchronizeProfessionalProfilesForUser(user);
 
   response.json({ data: { user: toPublicUser(user) } });
 });

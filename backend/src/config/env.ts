@@ -16,7 +16,6 @@ const envSchema = z
     FRONTEND_URL: z
       .string()
       .default("http://localhost:3000,https://edu-rate-nu.vercel.app"),
-    ADMIN_EMAILS: z.string().default(""),
     TRUST_PROXY: booleanValue,
   })
   .superRefine((value, context) => {
@@ -49,8 +48,5 @@ export const env = {
   DATABASE_URL: parsed.data.DATABASE_URL || undefined,
   ALLOWED_ORIGINS: parsed.data.FRONTEND_URL.split(",")
     .map((origin) => origin.trim())
-    .filter(Boolean),
-  ADMIN_EMAILS: parsed.data.ADMIN_EMAILS.split(",")
-    .map((email) => email.trim().toLowerCase())
     .filter(Boolean),
 };
