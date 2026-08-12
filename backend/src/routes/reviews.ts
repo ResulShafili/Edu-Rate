@@ -29,6 +29,20 @@ const reviewSchema = z.object({
   }),
 }).strict();
 
+reviewsRouter.get("/mine", authenticate, async (request, response) => {
+  const query = z.object({
+    semester: z.string().trim().min(2).max(80),
+  }).parse(request.query);
+  const reviews = await listTeacherReviews({
+    userId: request.auth!.userId,
+    semester: query.semester,
+    limit: 100,
+  });
+  response.json({
+    data: reviews.map(({ userId: _userId, text: _text, ...review }) => review),
+  });
+});
+
 reviewsRouter.get("/", async (request, response) => {
   const query = z.object({
     teacherId: z.string().trim().min(2).max(120).optional(),

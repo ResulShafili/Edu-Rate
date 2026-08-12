@@ -359,6 +359,14 @@ describe("EduRate API", () => {
     const createdReview = await request(app).post("/api/reviews").set("Authorization", authorization).send(reviewInput).expect(201);
     reusableReviewId = createdReview.body.data.id;
     await request(app).post("/api/reviews").set("Authorization", authorization).send(reviewInput).expect(409);
+    const currentSemesterReviews = await request(app)
+      .get(`/api/reviews/mine?semester=${encodeURIComponent(reviewInput.semester)}`)
+      .set("Authorization", authorization)
+      .expect(200);
+    assert.equal(currentSemesterReviews.body.data.length, 1);
+    assert.equal(currentSemesterReviews.body.data[0].teacherId, reviewInput.teacherId);
+    assert.equal(currentSemesterReviews.body.data[0].semester, reviewInput.semester);
+    assert.equal(currentSemesterReviews.body.data[0].userId, undefined);
     await request(app).post("/api/reviews").set("Authorization", authorization).send({ ...reviewInput, semester: "2027-yaz", text: "Açıq mətn API tərəfindən qəbul edilməməlidir." }).expect(422);
 
     const ticket = await request(app).post("/api/support/tickets").set("Authorization", authorization).send({

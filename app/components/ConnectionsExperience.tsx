@@ -15,6 +15,7 @@ export function ConnectionsExperience() {
   return (
     <PeerDirectory
       canInteract={Boolean(user)}
+      currentUserId={user?.id}
       onMessage={user ? openConversation : requireAuth}
       onRequireAuth={requireAuth}
     />

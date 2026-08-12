@@ -20,6 +20,7 @@ type MagneticJoinButtonProps = {
 export function MagneticJoinButton({ clubId, clubName, onJoin }: MagneticJoinButtonProps) {
   const { user } = useAuth();
   const [joined, setJoined] = useState(false);
+  const [loadedMembershipKey, setLoadedMembershipKey] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const reduceMotion = Boolean(useReducedMotion());
@@ -28,18 +29,22 @@ export function MagneticJoinButton({ clubId, clubName, onJoin }: MagneticJoinBut
   const x = useSpring(pointerX, magneticSpring);
   const y = useSpring(pointerY, magneticSpring);
   const isJoined = Boolean(user && joined);
+  const membershipKey = user ? `${user.id}:${clubId}` : null;
+  const membershipLoading = Boolean(membershipKey && loadedMembershipKey !== membershipKey);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !membershipKey) return;
+    let cancelled = false;
     const controller = new AbortController();
     void fetch("/api/clubs/memberships", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => response.ok ? response.json() : null)
+      .then(async (response) => response.ok ? response.json() : Promise.reject(new Error("Üzvlük vəziyyəti yoxlanmadı.")))
       .then((payload: { data?: Array<{ slug?: string }> } | null) => {
-        if (payload?.data) setJoined(payload.data.some((club) => club.slug === clubId));
+        if (!cancelled && payload?.data) setJoined(payload.data.some((club) => club.slug === clubId));
       })
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, [clubId, user]);
+      .catch((cause) => { if (!cancelled && cause instanceof Error && cause.name !== "AbortError") setError(cause.message); })
+      .finally(() => { if (!cancelled) setLoadedMembershipKey(membershipKey); });
+    return () => { cancelled = true; controller.abort(); };
+  }, [clubId, membershipKey, user]);
 
   function resetPosition() {
     pointerX.set(0);
@@ -71,12 +76,16 @@ export function MagneticJoinButton({ clubId, clubName, onJoin }: MagneticJoinBut
       window.location.assign(`/auth?returnTo=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
+    if (membershipLoading) return;
     setPending(true);
     try {
       const response = await fetch(`/api/clubs/${encodeURIComponent(clubId)}/memberships`, { method: isJoined ? "DELETE" : "POST" });
-      const payload = await response.json() as { data?: { joined?: boolean }; error?: { message?: string } };
-      if (!response.ok) throw new Error(payload.error?.message ?? "Əməliyyat tamamlanmadı.");
-      setJoined(Boolean(payload.data?.joined));
+      const payload = await response.json() as { data?: { joined?: boolean }; error?: { code?: string; message?: string } };
+      if (!response.ok) {
+        if (payload.error?.code === "ALREADY_MEMBER") { setJoined(true); return; }
+        throw new Error(payload.error?.message ?? "Əməliyyat tamamlanmadı.");
+      }
+      setJoined(payload.data?.joined ?? !isJoined);
       if (!isJoined) onJoin?.();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Əməliyyat tamamlanmadı.");
@@ -95,7 +104,7 @@ export function MagneticJoinButton({ clubId, clubName, onJoin }: MagneticJoinBut
       aria-pressed={isJoined}
       aria-busy={pending}
       aria-describedby={error ? "club-join-error" : undefined}
-      disabled={pending}
+      disabled={pending || membershipLoading}
       onClick={() => void handleJoin()}
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPosition}
@@ -122,7 +131,7 @@ export function MagneticJoinButton({ clubId, clubName, onJoin }: MagneticJoinBut
           aria-live="polite"
         >
           {isJoined ? <Check size={17} strokeWidth={2.4} aria-hidden="true" /> : <Plus size={17} aria-hidden="true" />}
-          {pending ? "Gözlə…" : isJoined ? "Qoşuldun" : "Kluba qoşul"}
+          {membershipLoading ? "Yoxlanılır…" : pending ? "Gözlə…" : isJoined ? "Kluba qoşuldun" : "Kluba qoşul"}
         </motion.span>
       </AnimatePresence>
 
@@ -139,6 +148,7 @@ export function MagneticJoinButton({ clubId, clubName, onJoin }: MagneticJoinBut
         )}
       </AnimatePresence>
       </motion.button>
+      {isJoined ? <small className="club-join-action__status" role="status">Bu klubun üzvüsən.</small> : null}
       <AnimatePresence>
         {error && (
           <motion.small

@@ -27,6 +27,7 @@ import { TeacherCard } from "./TeacherCard";
 import { TeacherProfileDrawer } from "./TeacherProfileDrawer";
 import { useAuth } from "./AuthProvider";
 import { formatDecimalScore, formatInteger } from "../lib/number-format";
+import { getCurrentAcademicSemester } from "../lib/academic-semester";
 
 const confettiPieces = Array.from({ length: 12 }, (_, index) => index);
 
@@ -47,6 +48,12 @@ type PublishedReview = {
   initials: string;
   criteria: CriteriaRatings;
   createdAt: string;
+};
+
+type MySemesterReview = {
+  teacherId: string;
+  semester: string;
+  status: "pending" | "approved" | "rejected";
 };
 
 type ProfessionalTeacher={id:string;profileId:string;available:boolean;name:string;headline:string;specialty:string;biography:string;city:string;experienceYears:number;availability:string;meetingMode:string;languages:string[];rating:number;reviewCount:number};
@@ -82,6 +89,8 @@ export function TeacherEvaluation() {
   const [availableTeacherIds,setAvailableTeacherIds]=useState<Set<string>|null>(null);
   const [teacherCatalogError,setTeacherCatalogError]=useState("");
   const [catalogTeachers,setCatalogTeachers]=useState<Teacher[]>([]);
+  const [semesterReviews, setSemesterReviews] = useState<Record<string, MySemesterReview>>({});
+  const [semesterReviewsOwnerId, setSemesterReviewsOwnerId] = useState<string | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const ratingPanelRef = useRef<HTMLDivElement>(null);
   const confirmationTimer = useRef<number | null>(null);
@@ -90,13 +99,42 @@ export function TeacherEvaluation() {
   const ratingScrollPending = useRef(false);
   const reduceMotion = useReducedMotion();
   const { user } = useAuth();
+  const currentSemester = useMemo(() => getCurrentAcademicSemester(), []);
+  const semesterReviewsLoading = Boolean(user && semesterReviewsOwnerId !== user.id);
   const publishedReviews = useSWR("published-teacher-reviews", loadPublishedReviews, {
     revalidateOnFocus: false,
     dedupingInterval: 30_000,
   });
   const teachers = catalogTeachers;
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const controller = new AbortController();
+    void fetch(`/api/reviews/mine?semester=${encodeURIComponent(currentSemester)}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const payload = await response.json() as { data?: MySemesterReview[] };
+        if (!response.ok || !payload.data) throw new Error("Review history unavailable");
+        if (!cancelled) {
+          setSemesterReviews(Object.fromEntries(payload.data.map((review) => [review.teacherId, review])));
+          setSemesterReviewsOwnerId(user.id);
+        }
+      })
+      .catch((cause) => {
+        if (!cancelled && cause instanceof Error && cause.name !== "AbortError") {
+          setSemesterReviews({});
+          setSemesterReviewsOwnerId(user.id);
+        }
+      })
+    return () => { cancelled = true; controller.abort(); };
+  }, [currentSemester, user]);
   useEffect(()=>{let cancelled=false;void fetch("/api/catalog/teachers",{cache:"no-store"}).then(async(response)=>{const payload=await response.json() as {data?:ProfessionalTeacher[];error?:{message?:string}};if(!response.ok)throw new Error(payload.error?.message??"Müəllim kataloqu yüklənmədi.");if(!cancelled){const active=(payload.data??[]).filter((item)=>item.available);setAvailableTeacherIds(new Set(active.map((item)=>item.id)));setCatalogTeachers(active.map(toTeacher));}}).catch((value)=>{if(!cancelled){setAvailableTeacherIds(new Set());setTeacherCatalogError(value instanceof Error?value.message:"Müəllim kataloqu yüklənmədi.");}});return()=>{cancelled=true;};},[]);
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedId) ?? null;
+  const selectedSemesterReview = selectedTeacher && semesterReviewsOwnerId === user?.id
+    ? semesterReviews[selectedTeacher.id]
+    : undefined;
   const liveReviews = useMemo<TeacherReview[]>(() => (publishedReviews.data ?? []).map((review) => {
     const teacher = teachers.find((item) => item.id === review.teacherId);
     return {
@@ -128,6 +166,8 @@ export function TeacherEvaluation() {
   const rating = calculateCriteriaAverage(criteriaRatings);
   const canSubmit = Boolean(selectedTeacher)
     && areCriteriaComplete(criteriaRatings)
+    && !selectedSemesterReview
+    && !semesterReviewsLoading
     && !reviewSent
     && !reviewChecking;
 
@@ -212,7 +252,7 @@ export function TeacherEvaluation() {
           criteria: criteriaRatings,
           teacherId: selectedTeacher.id,
           course: selectedTeacher.subject,
-          semester: "2026-payız",
+          semester: currentSemester,
         }),
       });
       validation = await response.json() as ReviewValidationResponse;
@@ -233,6 +273,14 @@ export function TeacherEvaluation() {
       setReviewChecking(false);
     }
 
+    setSemesterReviews((reviews) => ({
+      ...reviews,
+      [selectedTeacher.id]: {
+        teacherId: selectedTeacher.id,
+        semester: currentSemester,
+        status: validation.status ?? "pending",
+      },
+    }));
     setReviewSent(true);
 
     if (confirmationTimer.current) window.clearTimeout(confirmationTimer.current);
@@ -369,7 +417,20 @@ export function TeacherEvaluation() {
             </div>
           </div>
 
-          {user ? <form className="rating-form" onSubmit={submitReview}>
+          {user ? selectedSemesterReview && !reviewSent ? (
+            <div className="teacher-review-existing" role="status">
+              <i><Check size={22} aria-hidden="true" /></i>
+              <span>Cari semestr qiymətləndirməsi</span>
+              <h3>Sən bu müəllimə cari semestr üçün artıq rəy vermisən.</h3>
+              <p>
+                {selectedSemesterReview.status === "approved"
+                  ? "Qiymətləndirmən təsdiqlənib və müəllimin göstəricilərinə əlavə olunub."
+                  : selectedSemesterReview.status === "rejected"
+                    ? "Qiymətləndirmən moderasiya qaydalarına uyğun olmadığı üçün qəbul edilməyib."
+                    : "Qiymətləndirmən yoxlanılır. Nəticə təsdiqdən sonra ümumi göstəricilərə əlavə olunacaq."}
+              </p>
+            </div>
+          ) : <form className="rating-form" onSubmit={submitReview}>
             <CriteriaRating
               value={criteriaRatings}
               onChange={(nextRatings) => {

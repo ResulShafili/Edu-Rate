@@ -235,6 +235,21 @@ export const openApiDocument = {
         responses: { "201": { description: "Qiymətləndirmə saxlanıldı" }, "409": { description: "Cari semestr üçün qiymətləndirmə mövcuddur" }, "422": { description: "Açıq mətn, naməlum sahə və ya natamam meyar qəbul edilmir" } },
       },
     },
+    "/api/reviews/mine": {
+      get: {
+        tags: ["Reviews"],
+        summary: "Cari semestr üçün göndərdiyim qiymətləndirmələri siyahıla",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "semester", in: "query", required: true, schema: { type: "string", example: "2026-payız" } },
+        ],
+        responses: {
+          "200": { description: "Cari istifadəçinin semestr qiymətləndirmələri" },
+          "401": { description: "Daxil olmaq tələb olunur" },
+          "422": { description: "Semestr parametrində validasiya xətası" },
+        },
+      },
+    },
     "/api/network/announcements": {
       get: {
         tags: ["Catalog"], summary: "Aktiv universitet elanlarını siyahıla",

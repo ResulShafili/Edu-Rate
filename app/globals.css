@@ -3065,6 +3065,7 @@ a { color: inherit; text-decoration: none; }
 .magnetic-join-button__success-ring { position: absolute; pointer-events: none; inset: -9px; border: 2px solid var(--club-secondary); border-radius: inherit; }
 .club-join-action { display: grid; justify-items: end; gap: 10px; min-width: 172px; }
 .club-join-action__error { max-width: 260px; color: #b42318; font-size: 12px; font-weight: 650; line-height: 1.45; text-align: right; }
+.club-join-action__status { color: #44766c; font-size: 12px; font-weight: 700; line-height: 1.4; text-align: right; }
 
 .club-detail-body { position: relative; z-index: 4; min-height: 760px; padding: 42px clamp(22px, 5.2vw, 84px) 150px; color: var(--ink); border-radius: 38px 38px 0 0; background: radial-gradient(circle at 93% 8%, color-mix(in srgb, var(--club-secondary), transparent 84%), transparent 23%), var(--paper); }
 .club-detail-tabs { position: sticky; z-index: 20; top: 104px; display: grid; width: min(100%, 1080px); margin: 0 auto 54px; padding: 5px; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; border: 1px solid rgba(13, 14, 13, 0.11); border-radius: 999px; background: rgba(243, 241, 233, 0.86); box-shadow: 0 16px 48px rgba(13, 14, 13, 0.08); backdrop-filter: blur(18px); }
@@ -4205,6 +4206,7 @@ a { color: inherit; text-decoration: none; }
   .magnetic-join-button { width: 100%; min-height: 48px; }
   .club-join-action { width: 100%; justify-items: stretch; }
   .club-join-action__error { max-width: none; text-align: left; }
+  .club-join-action__status { text-align: left; }
   .club-detail-body { min-height: 650px; padding: 20px var(--mobile-gutter) 88px; }
   .club-detail-tabs { top: calc(76px + env(safe-area-inset-top)); display: flex; width: calc(100vw - 2 * var(--mobile-gutter)); margin-bottom: 30px; overflow-x: auto; border-radius: 16px; scroll-snap-type: x proximity; scrollbar-width: none; }
   .club-detail-tabs::-webkit-scrollbar { display: none; }

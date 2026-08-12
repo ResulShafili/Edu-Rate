@@ -429,6 +429,8 @@ export async function createTeacherReview(
 
 export async function listTeacherReviews(filters: {
   teacherId?: string;
+  userId?: string;
+  semester?: string;
   status?: TeacherReviewStatus;
   limit?: number;
 } = {}): Promise<TeacherReviewRecord[]> {
@@ -436,6 +438,8 @@ export async function listTeacherReviews(filters: {
   if (!databasePool) {
     return [...memoryReviews.values()]
       .filter((review) => !filters.teacherId || review.teacherId === filters.teacherId)
+      .filter((review) => !filters.userId || review.userId === filters.userId)
+      .filter((review) => !filters.semester || review.semester === filters.semester)
       .filter((review) => !filters.status || review.status === filters.status)
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
       .slice(0, limit);
@@ -446,6 +450,14 @@ export async function listTeacherReviews(filters: {
   if (filters.teacherId) {
     values.push(filters.teacherId);
     clauses.push(`(teacher_id = $${values.length} OR teacher_profile_id::text = $${values.length})`);
+  }
+  if (filters.userId) {
+    values.push(filters.userId);
+    clauses.push(`user_id = $${values.length}`);
+  }
+  if (filters.semester) {
+    values.push(filters.semester);
+    clauses.push(`semester = $${values.length}`);
   }
   if (filters.status) {
     values.push(filters.status);

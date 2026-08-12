@@ -1191,6 +1191,8 @@ body {
 .kuds-shell .mentor-availability span { color: var(--ku-dark-green) !important; border-color: rgb(68 118 108 / 20%) !important; background: rgb(211 232 191 / 45%) !important; }
 .kuds-shell .peer-actions button { color: var(--ku-dark-green) !important; border-color: var(--kuds-border) !important; border-radius: 8px !important; background: var(--kuds-surface) !important; }
 .kuds-shell .peer-actions button:first-child { color: #fff !important; border-color: var(--ku-green) !important; background: var(--ku-green) !important; }
+.kuds-shell .peer-actions button:disabled { cursor: default; opacity: 1; }
+.kuds-shell .peer-actions button.is-connected { color: var(--ku-dark-green) !important; border-color: #b8d4c8 !important; background: #e3f0e9 !important; }
 .kuds-shell .peer-skeleton {
   min-height: 300px !important;
   border-color: var(--kuds-border) !important;
@@ -2282,6 +2284,11 @@ body {
 .kuds-shell .rating-auth-required h3 { margin: 0; font-size: 22px; }
 .kuds-shell .rating-auth-required p { margin: 0; color: var(--kuds-muted); font-size: 13px; }
 .kuds-shell .rating-auth-required a { display: inline-flex; width: fit-content; min-height: 42px; align-items: center; gap: 7px; margin-top: 6px; padding: 0 14px; color: #fff; border-radius: 8px; background: var(--ku-green); font-size: 13px; font-weight: 700; }
+.kuds-shell .teacher-review-existing { display: grid; align-content: center; gap: 9px; min-height: 260px; padding: 28px; border: 1px solid #b8d4c8; border-radius: 12px; background: #f1f7f4; }
+.kuds-shell .teacher-review-existing > i { display: grid; width: 44px; height: 44px; place-items: center; color: #fff; border-radius: 50%; background: var(--ku-green); }
+.kuds-shell .teacher-review-existing > span { color: var(--ku-green); font-size: 11px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.kuds-shell .teacher-review-existing h3 { max-width: 520px; margin: 0; color: var(--kuds-ink); font-size: clamp(20px, 2vw, 27px); line-height: 1.15; }
+.kuds-shell .teacher-review-existing p { max-width: 560px; margin: 0; color: var(--kuds-muted); font-size: 13px; line-height: 1.65; }
 .kuds-shell .reviews-load-more { display: flex; min-height: 42px; align-items: center; justify-content: center; margin: 20px auto 0; padding: 0 16px; cursor: pointer; color: var(--ku-dark-green); border: 1px solid var(--kuds-border); border-radius: 8px; background: var(--kuds-surface); font-size: 13px; font-weight: 700; }
 .kuds-shell .mentor-request-error,
 .kuds-shell .ticket-submit-error { margin: 10px 0 0; color: var(--kuds-danger) !important; font-size: 12px; line-height: 1.5; }
