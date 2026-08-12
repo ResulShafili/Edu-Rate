@@ -218,10 +218,11 @@ describe("EduRate API", () => {
   });
 
   it("kataloq endpoint-lərini təqdim edir", async () => {
-    const [events, clubs, mentors, announcements, feed] = await Promise.all([
+    const [events, clubs, mentors, teachers, announcements, feed] = await Promise.all([
       request(app).get("/api/events").expect(200),
       request(app).get("/api/clubs").expect(200),
       request(app).get("/api/mentors").expect(200),
+      request(app).get("/api/teachers").expect(200),
       request(app).get("/api/network/announcements").expect(200),
       request(app).get("/api/network/feed").expect(200),
     ]);
@@ -229,6 +230,9 @@ describe("EduRate API", () => {
     assert.ok(events.body.data.length > 0);
     assert.ok(clubs.body.data.length > 0);
     assert.ok(mentors.body.data.length > 0);
+    assert.ok(teachers.body.data.length > 0);
+    assert.equal(typeof teachers.body.data[0].rating, "number");
+    assert.equal(typeof teachers.body.data[0].reviewCount, "number");
     assert.ok(announcements.body.data.length > 0);
     assert.ok(feed.body.data.length > 0);
   });

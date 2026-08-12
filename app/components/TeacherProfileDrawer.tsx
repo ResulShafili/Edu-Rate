@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import type { Teacher } from "../data/teachers";
+import type { Teacher } from "../types/professionals";
 import { formatDecimalScore, formatInteger } from "../lib/number-format";
 import { TeacherSilhouette } from "./TeacherSilhouette";
 
@@ -140,7 +140,7 @@ export function TeacherProfileDrawer({
                 >
                   <TeacherSilhouette />
                 </motion.div>
-                <span><Star size={13} fill="currentColor" /> {formatDecimalScore(teacher.rating)}</span>
+                <span>{teacher.reviewCount > 0 ? <><Star size={13} fill="currentColor" /> {formatDecimalScore(teacher.rating)}</> : "Yeni profil"}</span>
               </div>
 
               <div className="teacher-profile-identity">
@@ -163,7 +163,7 @@ export function TeacherProfileDrawer({
               </div>
               <div>
                 <dt><Users size={16} /> İcma</dt>
-                <dd>{formatInteger(teacher.studentsCount)} tələbə · {formatInteger(teacher.reviewCount)} rəy</dd>
+                <dd>{teacher.reviewCount > 0 ? `${formatInteger(teacher.reviewCount)} təsdiqlənmiş rəy` : "Hələ təsdiqlənmiş rəy yoxdur"}</dd>
               </div>
               <div>
                 <dt><CalendarClock size={16} /> Uyğun vaxt</dt>

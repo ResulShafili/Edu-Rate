@@ -5,7 +5,7 @@ export const platformRoutes = [
     number: "01",
     title: "Yeni təcrübələr kəşf et",
     description: "Kiçik qruplar, böyük ideyalar və düşünülmüş görüşlər.",
-    metric: "6 seçilmiş tədbir",
+    metric: "Yayımlanmış tədbirlər",
     accent: "#c8ff4d",
   },
   {
@@ -14,7 +14,7 @@ export const platformRoutes = [
     number: "02",
     title: "Doğru insanlarla tanış ol",
     description: "Ortaq maraqlardan başlayan səmimi və məqsədli əlaqələr.",
-    metric: "2 418 aktiv üzv",
+    metric: "Aktiv icma üzvləri",
     accent: "#77b8ff",
   },
   {
@@ -32,7 +32,7 @@ export const platformRoutes = [
     number: "04",
     title: "Növbəti addımını aydınlaşdır",
     description: "Sənin keçdiyin yoldan daha əvvəl keçmiş insanlardan dəstək al.",
-    metric: "6 təcrübəli mentor",
+    metric: "Təsdiqlənmiş mentor profilləri",
     accent: "#ff9e7a",
   },
   {
@@ -59,7 +59,7 @@ export const platformRoutes = [
     number: "07",
     title: "Maraq dairəni icmaya çevir",
     description: "Tələbə klubları, təşkilatlar və ortaq məqsədlər ətrafında yaranan birliklər.",
-    metric: "6 tələbə klubu",
+    metric: "Aktiv tələbə klubları",
     accent: "#ff9e7a",
   },
 ] as const;

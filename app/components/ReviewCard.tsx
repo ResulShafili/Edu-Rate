@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Star } from "lucide-react";
 import type { CSSProperties } from "react";
-import type { TeacherReview } from "../data/teachers";
+import type { TeacherReview } from "../types/professionals";
 import { criteriaLabels, type ReviewCriterionKey } from "./CriteriaRating";
 import { formatDecimalScore } from "../lib/number-format";
 

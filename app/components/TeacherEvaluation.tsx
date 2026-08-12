@@ -14,7 +14,7 @@ import {
   type FormEvent,
   type UIEvent,
 } from "react";
-import { teachers as teacherTemplates, type Teacher, type TeacherReview } from "../data/teachers";
+import type { Teacher, TeacherReview } from "../types/professionals";
 import {
   areCriteriaComplete,
   calculateCriteriaAverage,
@@ -49,9 +49,13 @@ type PublishedReview = {
   createdAt: string;
 };
 
-type ProfessionalTeacher={id:string;profileId:string;available:boolean;name:string;headline:string;specialty:string;biography:string;city:string;experienceYears:number;availability:string;meetingMode:string;languages:string[]};
-
-function toTeacher(profile:ProfessionalTeacher):Teacher{const template=teacherTemplates.find((item)=>item.id===profile.id);if(template)return{...template,name:profile.name,role:profile.headline,subject:profile.specialty,bio:profile.biography,city:profile.city,experience:`${profile.experienceYears} il təcrübə`,availability:profile.availability,teachingMode:normalizeMode(profile.meetingMode),language:profile.languages.includes("İngilis dili")?"İngilis dili":"Azərbaycan dili"};return{id:profile.id,name:profile.name,initials:profile.name.split(/\s+/).slice(0,2).map((part)=>part[0]?.toLocaleUpperCase("az")).join(""),role:profile.headline,subject:profile.specialty,bio:profile.biography,city:profile.city,experience:`${profile.experienceYears} il təcrübə`,availability:profile.availability,teachingMode:normalizeMode(profile.meetingMode),language:profile.languages.includes("İngilis dili")?"İngilis dili":"Azərbaycan dili",studentsCount:0,rating:0,reviewCount:0,accent:"#44766c",glow:"rgba(68,118,108,.24)"};}
+type ProfessionalTeacher={id:string;profileId:string;available:boolean;name:string;headline:string;specialty:string;biography:string;city:string;experienceYears:number;availability:string;meetingMode:string;languages:string[];rating:number;reviewCount:number};
+const teacherPalette = [
+  { accent: "#44766c", glow: "rgba(68,118,108,.24)" },
+  { accent: "#6f62a8", glow: "rgba(111,98,168,.22)" },
+  { accent: "#b48652", glow: "rgba(180,134,82,.2)" },
+] as const;
+function toTeacher(profile:ProfessionalTeacher,index:number):Teacher{const color=teacherPalette[index%teacherPalette.length];return{id:profile.id,name:profile.name,initials:profile.name.split(/\s+/).filter(Boolean).slice(0,2).map((part)=>part[0]?.toLocaleUpperCase("az")).join(""),role:profile.headline,subject:profile.specialty,bio:profile.biography,city:profile.city,experience:profile.experienceYears>0?`${profile.experienceYears} il təcrübə`:"Təcrübə məlumatı əlavə edilməyib",availability:profile.availability||"Vaxt məlumatı əlavə edilməyib",teachingMode:normalizeMode(profile.meetingMode),language:profile.languages.includes("İngilis dili")?"İngilis dili":"Azərbaycan dili",studentsCount:0,rating:profile.rating,reviewCount:profile.reviewCount,...color};}
 function normalizeMode(value:string):Teacher["teachingMode"]{return value==="Onlayn"||value==="Əyani"||value==="Hibrid"?value:"Onlayn";}
 
 async function loadPublishedReviews(): Promise<PublishedReview[]> {
@@ -86,11 +90,11 @@ export function TeacherEvaluation() {
   const ratingScrollPending = useRef(false);
   const reduceMotion = useReducedMotion();
   const { user } = useAuth();
-  const teachers=catalogTeachers;
   const publishedReviews = useSWR("published-teacher-reviews", loadPublishedReviews, {
     revalidateOnFocus: false,
     dedupingInterval: 30_000,
   });
+  const teachers = catalogTeachers;
   useEffect(()=>{let cancelled=false;void fetch("/api/catalog/teachers",{cache:"no-store"}).then(async(response)=>{const payload=await response.json() as {data?:ProfessionalTeacher[];error?:{message?:string}};if(!response.ok)throw new Error(payload.error?.message??"Müəllim kataloqu yüklənmədi.");if(!cancelled){const active=(payload.data??[]).filter((item)=>item.available);setAvailableTeacherIds(new Set(active.map((item)=>item.id)));setCatalogTeachers(active.map(toTeacher));}}).catch((value)=>{if(!cancelled){setAvailableTeacherIds(new Set());setTeacherCatalogError(value instanceof Error?value.message:"Müəllim kataloqu yüklənmədi.");}});return()=>{cancelled=true;};},[]);
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedId) ?? null;
   const liveReviews = useMemo<TeacherReview[]>(() => (publishedReviews.data ?? []).map((review) => {

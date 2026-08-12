@@ -3,7 +3,7 @@
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowUpRight, Check, Star } from "lucide-react";
 import { useRef, type CSSProperties, type RefObject } from "react";
-import type { Teacher } from "../data/teachers";
+import type { Teacher } from "../types/professionals";
 import { formatDecimalScore } from "../lib/number-format";
 import { TeacherSilhouette } from "./TeacherSilhouette";
 
@@ -79,9 +79,13 @@ export function TeacherCard({
           <span className="teacher-subject">{teacher.subject}</span>
           <strong>{teacher.name}</strong>
           <span className="teacher-card-rating">
-            <Star size={12} fill="currentColor" />
-            {formatDecimalScore(teacher.rating)}
-            <small>reytinq</small>
+            {teacher.reviewCount > 0 ? (
+              <>
+                <Star size={12} fill="currentColor" />
+                {formatDecimalScore(teacher.rating)}
+                <small>{teacher.reviewCount} rəy</small>
+              </>
+            ) : <small>Yeni profil</small>}
           </span>
         </span>
 

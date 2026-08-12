@@ -31,7 +31,7 @@ const routeContexts: Record<string, PlatformRouteContext> = {
     label: "Tədbirlər",
     title: "Tədbir alətləri",
     description: "Kateqoriyaları süzgəcdən keçir və uyğun görüşün detallarını aç.",
-    metric: "6 seçilmiş tədbir",
+    metric: "Yayımlanmış tədbirlər",
     shortcuts: [
       { href: "/events#events", label: "Tədbir kataloqu", description: "Bütün kateqoriyaları bir yerdə gör." },
       { href: "/feed", label: "Kampus yenilikləri", description: "Elan və xəbərləri izlə." },
@@ -41,7 +41,7 @@ const routeContexts: Record<string, PlatformRouteContext> = {
     label: "İcma",
     title: "İcma alətləri",
     description: "Tələbələri maraq sahəsinə görə kəşf et, əlaqə qur və söhbətə başla.",
-    metric: "2 418 aktiv üzv",
+    metric: "Aktiv icma üzvləri",
     shortcuts: [
       { href: "/community#peers", label: "İcma kataloqu", description: "Uyğun insanları və maraqları gör." },
       { href: "/clubs", label: "Klublara bax", description: "Daimi kampus icmalarını kəşf et." },
@@ -61,7 +61,7 @@ const routeContexts: Record<string, PlatformRouteContext> = {
     label: "Mentorlar",
     title: "Mentorluq alətləri",
     description: "Təcrübə sahəsini və uyğun vaxtı yoxla, sonra mentorluq sorğusu göndər.",
-    metric: "6 təcrübəli mentor",
+    metric: "Təsdiqlənmiş mentor profilləri",
     shortcuts: [
       { href: "/mentors#mentors", label: "Mentorları tap", description: "Profil və uyğunluq məlumatlarını aç." },
       { href: "/support", label: "Dəstəyə müraciət et", description: "Əlavə kömək üçün dəstək mərkəzinə keç." },
@@ -91,7 +91,7 @@ const routeContexts: Record<string, PlatformRouteContext> = {
     label: "Klublar",
     title: "Klub alətləri",
     description: "Tələbə klublarını və təşkilatlarını bir kataloqda kəşf et.",
-    metric: "6 tələbə klubu",
+    metric: "Aktiv tələbə klubları",
     shortcuts: [
       { href: "/clubs#clubs-list-title", label: "Klub kataloqu", description: "Bütün tələbə klublarına bax." },
     ],

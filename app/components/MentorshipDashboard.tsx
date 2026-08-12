@@ -11,13 +11,19 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
-import { mentors as mentorTemplates, type Mentor } from "../data/mentors";
+import type { Mentor } from "../types/professionals";
 import { useAuth } from "./AuthProvider";
 import { ErrorState, Skeleton } from "./ui/Primitives";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 type ProfessionalMentor={id:string;profileId:string;available:boolean;name:string;headline:string;specialty:string;biography:string;city:string;experienceYears:number;availability:string;meetingMode:string;languages:string[];expertise:string[]};
-function toMentor(profile:ProfessionalMentor):Mentor{const template=mentorTemplates.find((item)=>item.id===profile.id);if(template)return{...template,name:profile.name,role:profile.headline,focus:profile.specialty,bio:profile.biography,location:`${profile.city}, Azərbaycan`,experience:`${profile.experienceYears} il təcrübə`,responseTime:profile.availability,mode:normalizeMentorMode(profile.meetingMode),languages:profile.languages,expertise:profile.expertise};return{id:profile.id,name:profile.name,initials:profile.name.split(/\s+/).slice(0,2).map((part)=>part[0]?.toLocaleUpperCase("az")).join(""),role:profile.headline,focus:profile.specialty,bio:profile.biography,location:`${profile.city}, Azərbaycan`,timezone:"UTC+4",experience:`${profile.experienceYears} il təcrübə`,responseTime:profile.availability,availability:[],mode:normalizeMentorMode(profile.meetingMode),languages:profile.languages,expertise:profile.expertise,outcome:"",accent:"#44766c",glow:"rgba(68,118,108,.24)"};}
+const mentorPalette = [
+  { accent: "#44766c", glow: "rgba(68,118,108,.24)" },
+  { accent: "#6f62a8", glow: "rgba(111,98,168,.22)" },
+  { accent: "#b48652", glow: "rgba(180,134,82,.2)" },
+] as const;
+function initials(name:string){return name.split(/\s+/).filter(Boolean).slice(0,2).map((part)=>part[0]?.toLocaleUpperCase("az")).join("");}
+function toMentor(profile:ProfessionalMentor,index:number):Mentor{const color=mentorPalette[index%mentorPalette.length];return{id:profile.id,name:profile.name,initials:initials(profile.name),role:profile.headline,focus:profile.specialty,bio:profile.biography,location:profile.city?`${profile.city}, Azərbaycan`:"Azərbaycan",timezone:"UTC+4",experience:profile.experienceYears>0?`${profile.experienceYears} il təcrübə`:"Təcrübə məlumatı əlavə edilməyib",responseTime:profile.availability||"Uyğun vaxtı mentorla dəqiqləşdir",availability:profile.availability?[profile.availability]:[],mode:normalizeMentorMode(profile.meetingMode),languages:profile.languages,expertise:profile.expertise,outcome:"",...color};}
 function normalizeMentorMode(value:string):Mentor["mode"]{return value==="Onlayn"||value==="Əyani"||value==="Hibrid"?value:"Onlayn";}
 
 export function MentorshipDashboard() {
@@ -31,7 +37,6 @@ export function MentorshipDashboard() {
   const [requestError, setRequestError] = useState("");
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("all");
-  const [day, setDay] = useState("all");
   const [language, setLanguage] = useState("all");
   const [response, setResponse] = useState("all");
   const reduceMotion = useReducedMotion();
@@ -81,13 +86,12 @@ export function MentorshipDashboard() {
     return mentors.filter((mentor) => {
       if (!availableMentorIds?.has(mentor.id)) return false;
       const matchesQuery = !normalized || `${mentor.name} ${mentor.role} ${mentor.expertise.join(" ")}`.toLocaleLowerCase("az").includes(normalized);
-      const matchesDay = day === "all" || mentor.availability.some((slot) => slot.startsWith(day));
       const matchesLanguage = language === "all" || mentor.languages.includes(language);
       const fastResponse = /4 saat|6 saat|8 saat/.test(mentor.responseTime);
       const matchesResponse = response === "all" || (response === "fast" ? fastResponse : !fastResponse);
-      return matchesQuery && matchesDay && matchesLanguage && matchesResponse && (mode === "all" || mentor.mode === mode);
+      return matchesQuery && matchesLanguage && matchesResponse && (mode === "all" || mentor.mode === mode);
     });
-  }, [availableMentorIds, day, language, mentors, mode, query, response]);
+  }, [availableMentorIds, language, mentors, mode, query, response]);
 
   async function requestMentorship(mentorId: string) {
     if (requestingId) return;
@@ -133,7 +137,6 @@ export function MentorshipDashboard() {
       <div className="mentor-filters" aria-label="Mentor filtrləri">
         <label><span>Ad və ya ixtisas</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Məsələn, məhsul strategiyası" /></label>
         <label><span>Görüş formatı</span><select value={mode} onChange={(event) => setMode(event.target.value)}><option value="all">Bütün formatlar</option><option value="Onlayn">Onlayn</option><option value="Əyani">Əyani</option><option value="Hibrid">Hibrid</option></select></label>
-        <label><span>Uyğun gün</span><select value={day} onChange={(event) => setDay(event.target.value)}><option value="all">Bütün günlər</option><option value="Bazar ertəsi">Bazar ertəsi</option><option value="Çərşənbə axşamı">Çərşənbə axşamı</option><option value="Çərşənbə">Çərşənbə</option><option value="Cümə axşamı">Cümə axşamı</option><option value="Cümə">Cümə</option><option value="Şənbə">Şənbə</option><option value="Bazar">Bazar</option></select></label>
         <label><span>Dil</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option value="all">Bütün dillər</option><option value="Azərbaycan dili">Azərbaycan dili</option><option value="İngilis dili">İngilis dili</option></select></label>
         <label><span>Cavab vaxtı</span><select value={response} onChange={(event) => setResponse(event.target.value)}><option value="all">Fərq etmir</option><option value="fast">8 saata qədər</option><option value="daily">Bir günədək</option></select></label>
       </div>
@@ -215,7 +218,7 @@ export function MentorshipDashboard() {
                     <div className="mentor-details-inner">
                       <div className="mentor-story">
                         <p>{mentor.bio}</p>
-                        <blockquote>{mentor.outcome}</blockquote>
+                        {mentor.outcome ? <blockquote>{mentor.outcome}</blockquote> : null}
                       </div>
 
                       <div className="mentor-practice">
