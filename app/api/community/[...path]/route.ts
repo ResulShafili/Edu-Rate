@@ -10,7 +10,7 @@ async function handle(request:Request,context:Context){
     if(request.method!=="GET")assertTrustedMutation(request);
     const token=readRemoteCredentialToken(request);if(!token)throw new ApiHttpError(401,"UNAUTHENTICATED","İcma funksiyaları üçün hesaba daxil ol.");
     const {path}=await context.params;const method=request.method as "GET"|"POST"|"PATCH"|"DELETE";
-    const body=method==="POST"||method==="PATCH"?await readJsonBody<unknown>(request):undefined;
+    const body=(method==="POST"||method==="PATCH")&&request.body?await readJsonBody<unknown>(request):undefined;
     const query=new URL(request.url).searchParams.toString();
     const data=await requestRemoteApi<unknown>(`/api/community/${path.map(encodeURIComponent).join("/")}${query?`?${query}`:""}`,{method,body,token});
     return data===undefined?apiNoContent():apiSuccess(data,method==="POST"?201:200);

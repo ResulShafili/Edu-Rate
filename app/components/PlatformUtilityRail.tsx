@@ -5,9 +5,11 @@ import {
   ArrowUpRight,
   Bell,
   CalendarDays,
+  Check,
   Command,
   Search,
   Sparkles,
+  UserX,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -79,6 +81,8 @@ function UtilityContent({
   const [activeAnnouncements,setActiveAnnouncements]=useState<Array<{id:string;title:string;dateLabel:string;source:string}>>([]);
   const [incomingConnections,setIncomingConnections]=useState<Array<{id:string;name:string}>>([]);
   const [unreadConversations,setUnreadConversations]=useState<Array<{id:string;peerName:string;unreadCount:number}>>([]);
+  const [connectionActionId,setConnectionActionId]=useState<string|null>(null);
+  const [connectionActionError,setConnectionActionError]=useState("");
   useEffect(()=>{let cancelled=false;void Promise.all([fetch("/api/catalog/events",{cache:"no-store"}),fetch("/api/network",{cache:"no-store"})]).then(async([eventsResponse,networkResponse])=>{const eventsPayload=await eventsResponse.json() as {data?:Array<{id:string;title:string;startAt:string;location:string}>};const networkPayload=await networkResponse.json() as {data?:{announcements?:Array<{id:string;title:string;dateLabel:string;source:string}>}};if(!cancelled){setUpcomingEvents((eventsPayload.data??[]).filter((item)=>new Date(item.startAt).getTime()>=Date.now()).slice(0,3));setActiveAnnouncements((networkPayload.data?.announcements??[]).slice(0,3));}}).catch(()=>undefined);return()=>{cancelled=true;};},[]);
   useEffect(() => {
     if (!user || activeTab !== "updates") return;
@@ -103,6 +107,29 @@ function UtilityContent({
     }).catch(() => undefined);
     return () => { cancelled = true; controller.abort(); };
   }, [activeTab, user]);
+
+  async function decideConnection(connectionId: string, decision: "accept" | "reject") {
+    if (connectionActionId) return;
+    setConnectionActionId(connectionId);
+    setConnectionActionError("");
+    try {
+      const response = await fetch(`/api/community/connections/${connectionId}`, {
+        method: decision === "accept" ? "PATCH" : "DELETE",
+        headers: decision === "accept" ? { "content-type": "application/json" } : undefined,
+        body: decision === "accept" ? JSON.stringify({}) : undefined,
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+        throw new Error(payload?.error?.message ?? "Əlaqə sorğusu yenilənmədi.");
+      }
+      setIncomingConnections((current) => current.filter((item) => item.id !== connectionId));
+      window.dispatchEvent(new CustomEvent("edurate:connections-changed"));
+    } catch (error) {
+      setConnectionActionError(error instanceof Error ? error.message : "Əlaqə sorğusu yenilənmədi.");
+    } finally {
+      setConnectionActionId(null);
+    }
+  }
   const filteredItems = useMemo(() => {
     const normalizedQuery = normalizeSearchValue(query);
     if (!normalizedQuery) return platformSearchItems.slice(0, 6);
@@ -214,10 +241,27 @@ function UtilityContent({
         ) : incomingConnections.length || unreadConversations.length ? (
           <>
             {incomingConnections.map((connection) => (
-              <Link key={connection.id} href="/community" onClick={onNavigate}>
+              <article key={connection.id} className="platform-connection-request">
                 <span className="platform-update-dot" aria-hidden="true" />
-                <span><strong>{connection.name} əlaqə sorğusu göndərib</strong><small>Qəbul etmək üçün İcma bölməsinə keç.</small></span>
-              </Link>
+                <span><strong>{connection.name}</strong><small>Əlaqə sorğusu göndərib</small></span>
+                <div className="platform-connection-actions">
+                  <button
+                    type="button"
+                    className="is-accept"
+                    onClick={() => void decideConnection(connection.id, "accept")}
+                    disabled={connectionActionId === connection.id}
+                  >
+                    <Check size={13} aria-hidden="true" /> Qəbul et
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void decideConnection(connection.id, "reject")}
+                    disabled={connectionActionId === connection.id}
+                  >
+                    <UserX size={13} aria-hidden="true" /> Rədd et
+                  </button>
+                </div>
+              </article>
             ))}
             {unreadConversations.map((conversation) => (
               <Link key={conversation.id} href="/community" onClick={onNavigate}>
@@ -229,6 +273,7 @@ function UtilityContent({
         ) : (
           <p className="platform-search-empty">Hazırda yeni hesab bildirişi yoxdur.</p>
         )}
+        {connectionActionError ? <p className="platform-connection-error" role="alert">{connectionActionError}</p> : null}
       </section>
       <section className="platform-update-group" aria-labelledby={`${idPrefix}-events-title`}>
         <header>

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import useSWR from "swr";
 import {
   canonicalUniversity,
@@ -51,6 +51,14 @@ type ProfileWorkspace = {
   items: Array<{ id: string; title?: string; text?: string; status: string; type?: string }>;
 };
 
+type ProfileConnection = {
+  id: string;
+  name: string;
+  role: string;
+  program: string;
+  city: string;
+};
+
 async function loadProfileWorkspace(): Promise<ProfileWorkspace> {
   const response = await fetch("/api/workspace", { cache: "no-store" });
   const payload = await response.json() as { data?: ProfileWorkspace; error?: { message?: string } };
@@ -58,11 +66,39 @@ async function loadProfileWorkspace(): Promise<ProfileWorkspace> {
   return payload.data;
 }
 
+async function loadProfileConnections(currentUserId: string): Promise<ProfileConnection[]> {
+  const [usersResponse, connectionsResponse] = await Promise.all([
+    fetch("/api/community/users", { cache: "no-store" }),
+    fetch("/api/community/connections", { cache: "no-store" }),
+  ]);
+  const usersPayload = await usersResponse.json() as {
+    data?: Array<{ id: string; name: string; role: string; program: string; city: string }>;
+    error?: { message?: string };
+  };
+  const connectionsPayload = await connectionsResponse.json() as {
+    data?: Array<{ id: string; requesterId: string; recipientId: string; status: string }>;
+    error?: { message?: string };
+  };
+  if (!usersResponse.ok || !connectionsResponse.ok) {
+    throw new Error(usersPayload.error?.message ?? connectionsPayload.error?.message ?? "Əlaqələr yüklənmədi.");
+  }
+
+  const users = new Map((usersPayload.data ?? []).map((entry) => [entry.id, entry]));
+  return (connectionsPayload.data ?? [])
+    .filter((entry) => entry.status === "accepted")
+    .flatMap((entry) => {
+      const peerId = entry.requesterId === currentUserId ? entry.recipientId : entry.requesterId;
+      const peer = users.get(peerId);
+      return peer ? [{ id: peer.id, name: peer.name, role: peer.role, program: peer.program, city: peer.city }] : [];
+    });
+}
+
 export function UserProfileDashboard() {
   const [editing, setEditing] = useState(false);
   const [profileMessage, setProfileMessage] = useState("");
   const [editFaculty, setEditFaculty] = useState<FacultyName | "">("");
   const [editProgram, setEditProgram] = useState("");
+  const [connectionsOpen, setConnectionsOpen] = useState(false);
   const reduceMotion = Boolean(useReducedMotion());
   const router = useRouter();
   const {
@@ -77,6 +113,17 @@ export function UserProfileDashboard() {
   const workspace = useSWR(user ? `profile-workspace-summary:${user.id}` : null, loadProfileWorkspace, {
     revalidateOnFocus: false,
   });
+  const profileConnections = useSWR(
+    user ? `profile-connections:${user.id}` : null,
+    () => loadProfileConnections(user!.id),
+    { revalidateOnFocus: false },
+  );
+
+  useEffect(() => {
+    const refreshConnections = () => { void profileConnections.mutate(); };
+    window.addEventListener("edurate:connections-changed", refreshConnections);
+    return () => window.removeEventListener("edurate:connections-changed", refreshConnections);
+  }, [profileConnections]);
 
   async function handleSignOut() {
     if (submitting) return;
@@ -158,12 +205,21 @@ export function UserProfileDashboard() {
   }
 
   const isStudent = user.accessRole === "student";
-  const profileMetrics = workspace.data?.metrics.map((metric, index) => ({
+  const baseProfileMetrics = workspace.data?.metrics.map((metric, index) => ({
     id: `workspace-${index}`,
     label: metric.label,
     value: metric.value,
     Icon: metricIcons[index % metricIcons.length],
   })) ?? user.stats.map((stat) => ({ ...stat, Icon: statIcons[stat.id] }));
+  const profileMetrics = [
+    ...baseProfileMetrics.filter((metric) => metric.id !== "connections" && !metric.label.toLocaleLowerCase("az").includes("əlaqə")),
+    {
+      id: "connections",
+      label: "Əlaqələr",
+      value: profileConnections.isLoading ? "—" : profileConnections.data?.length ?? 0,
+      Icon: UsersRound,
+    },
+  ];
   const recentItems = workspace.data?.items ?? [];
 
   return (
@@ -329,14 +385,66 @@ export function UserProfileDashboard() {
           const Icon = stat.Icon;
           const value = typeof stat.value === "number" ? String(stat.value).padStart(2, "0") : stat.value;
           return (
-            <article key={stat.id} className="profile-stat-card">
+            <button
+              key={stat.id}
+              type="button"
+              className={`profile-stat-card${stat.id === "connections" ? " profile-stat-button" : ""}`}
+              onClick={stat.id === "connections" ? () => setConnectionsOpen(true) : undefined}
+              disabled={stat.id !== "connections"}
+              aria-haspopup={stat.id === "connections" ? "dialog" : undefined}
+            >
               <span><Icon size={16} aria-hidden="true" /></span>
               <strong>{value}</strong>
               <p>{stat.label}</p>
-            </article>
+            </button>
           );
         })}
       </motion.div>
+
+      <AnimatePresence>
+        {connectionsOpen ? (
+          <motion.div
+            className="profile-connections-layer"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <button type="button" className="profile-connections-backdrop" onClick={() => setConnectionsOpen(false)} aria-label="Əlaqələr siyahısını bağla" />
+            <motion.section
+              className="profile-connections-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="profile-connections-title"
+              initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.985 }}
+              transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 360, damping: 32 }}
+            >
+              <header>
+                <div><span>İcma</span><h2 id="profile-connections-title">Əlaqələrin</h2></div>
+                <button type="button" onClick={() => setConnectionsOpen(false)} aria-label="Bağla"><X size={18} /></button>
+              </header>
+              {profileConnections.error ? (
+                <p className="profile-connections-empty" role="alert">Əlaqələri yükləmək mümkün olmadı.</p>
+              ) : profileConnections.isLoading ? (
+                <div className="profile-connections-loading" aria-label="Əlaqələr yüklənir"><i /><i /><i /></div>
+              ) : profileConnections.data?.length ? (
+                <ul className="profile-connections-list">
+                  {profileConnections.data.map((connection) => (
+                    <li key={connection.id}>
+                      <span className="profile-connection-avatar" aria-hidden="true">{connection.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toLocaleUpperCase("az")}</span>
+                      <div><strong>{connection.name}</strong><small>{connection.program || connection.role}{connection.city ? ` · ${connection.city}` : ""}</small></div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="profile-connections-empty">Hələ qəbul edilmiş əlaqən yoxdur.</p>
+              )}
+              <Link href="/community" className="profile-connections-link" onClick={() => setConnectionsOpen(false)}>İcmanı aç <ArrowRight size={15} /></Link>
+            </motion.section>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <div className="profile-dashboard-grid">
         <motion.article

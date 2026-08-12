@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { ApiError } from "../lib/api-error.js";
-import { databasePool } from "./database.js";
+import { databasePool, listUsers } from "./database.js";
 
 export type CommunityUser={id:string;name:string;role:string;faculty:string;program:string;city:string};
 export type Connection={id:string;requesterId:string;recipientId:string;status:"pending"|"accepted"|"blocked";createdAt:string};
@@ -14,7 +14,9 @@ const now=()=>new Date().toISOString();
 const iso=(value:unknown)=>new Date(String(value)).toISOString();
 
 export async function listCommunityUsers(currentUserId:string):Promise<CommunityUser[]> {
-  if(!databasePool) return [];
+  if(!databasePool) return (await listUsers(100))
+    .filter((user)=>user.id!==currentUserId&&user.status==="Aktiv")
+    .map((user)=>({id:user.id,name:user.name,role:user.role,faculty:user.faculty,program:user.program,city:user.city}));
   const result=await databasePool.query(`SELECT id,name,role,faculty,program,city FROM users
     WHERE id<>$1 AND status='Aktiv' ORDER BY updated_at DESC LIMIT 100`,[currentUserId]);
   return result.rows.map((r)=>({id:String(r.id),name:String(r.name),role:String(r.role),faculty:String(r.faculty),program:String(r.program),city:String(r.city)}));

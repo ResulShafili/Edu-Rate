@@ -852,11 +852,18 @@ describe("EduRate API", () => {
     const sender=await createUser({name:"Göndərən Test",email:`sender.${suffix}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"İqtisadiyyat fakültəsi",program:"İqtisadiyyat"});
     const peer=await createUser({name:"Mesaj Testi",email:`message.${suffix}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"İqtisadiyyat fakültəsi",program:"Maliyyə"});
     const withdrawnPeer=await createUser({name:"Geri çəkmə Testi",email:`withdraw.${suffix}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"İqtisadiyyat fakültəsi",program:"Menecment"});
+    const rejectedPeer=await createUser({name:"Rədd Testi",email:`reject.${suffix}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"İqtisadiyyat fakültəsi",program:"Mühasibat"});
     const studentAuthorization=`Bearer ${createAccessToken(sender)}`;const peerAuthorization=`Bearer ${createAccessToken(peer)}`;
     const withdrawnConnection=await request(app).post("/api/community/connections").set("Authorization",studentAuthorization).send({userId:withdrawnPeer.id}).expect(201);
     await request(app).delete(`/api/community/connections/${withdrawnConnection.body.data.id}`).set("Authorization",studentAuthorization).expect(204);
     const connectionsAfterWithdrawal=await request(app).get("/api/community/connections").set("Authorization",studentAuthorization).expect(200);
     assert.equal(connectionsAfterWithdrawal.body.data.some((item:{id:string})=>item.id===withdrawnConnection.body.data.id),false);
+    const rejectedConnection=await request(app).post("/api/community/connections").set("Authorization",`Bearer ${createAccessToken(rejectedPeer)}`).send({userId:sender.id}).expect(201);
+    await request(app).delete(`/api/community/connections/${rejectedConnection.body.data.id}`).set("Authorization",studentAuthorization).expect(204);
+    const connectionsAfterRejection=await request(app).get("/api/community/connections").set("Authorization",studentAuthorization).expect(200);
+    assert.equal(connectionsAfterRejection.body.data.some((item:{id:string})=>item.id===rejectedConnection.body.data.id),false);
+    const communityUsers=await request(app).get("/api/community/users").set("Authorization",studentAuthorization).expect(200);
+    assert.equal(communityUsers.body.data.some((item:{id:string;name:string})=>item.id===peer.id&&item.name===peer.name),true);
     const connection=await request(app).post("/api/community/connections").set("Authorization",studentAuthorization).send({userId:peer.id}).expect(201);
     await request(app).patch(`/api/community/connections/${connection.body.data.id}`).set("Authorization",peerAuthorization).send({}).expect(200);
     const conversation=await request(app).post("/api/community/conversations").set("Authorization",studentAuthorization).send({peerId:peer.id}).expect(201);

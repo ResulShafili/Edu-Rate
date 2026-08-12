@@ -2655,6 +2655,103 @@ body {
   z-index: 220;
 }
 
+.kuds-shell .profile-stat-card:is(button) {
+  appearance: none;
+  color: var(--kuds-text) !important;
+}
+
+.kuds-shell .profile-stat-button:hover {
+  border-color: rgba(30, 87, 74, .34) !important;
+  box-shadow: 0 12px 32px rgba(29, 55, 49, .12) !important;
+}
+
+.kuds-shell .profile-stat-button:focus-visible {
+  outline-color: var(--ku-green);
+}
+
+.kuds-shell .profile-connections-backdrop {
+  background: rgba(16, 35, 31, .42);
+  backdrop-filter: blur(8px);
+}
+
+.kuds-shell .profile-connections-dialog {
+  color: var(--kuds-text);
+  border-color: var(--kuds-border);
+  background: #fff;
+  box-shadow: 0 30px 80px rgba(18, 45, 39, .2);
+}
+
+.kuds-shell .profile-connections-dialog > header {
+  border-bottom-color: var(--kuds-border);
+}
+
+.kuds-shell .profile-connections-dialog > header span {
+  color: var(--ku-green);
+}
+
+.kuds-shell .profile-connections-dialog > header button {
+  color: var(--kuds-text);
+  border-color: var(--kuds-border);
+  background: var(--kuds-soft);
+}
+
+.kuds-shell .profile-connections-list li {
+  border-color: var(--kuds-border);
+  background: var(--kuds-soft);
+}
+
+.kuds-shell .profile-connection-avatar {
+  color: #fff;
+  background: var(--ku-green);
+}
+
+.kuds-shell .profile-connections-list small,
+.kuds-shell .profile-connections-empty {
+  color: var(--kuds-muted);
+}
+
+.kuds-shell .profile-connections-empty {
+  border-color: var(--kuds-border);
+}
+
+.kuds-shell .profile-connections-loading i {
+  background: var(--ku-green);
+}
+
+.kuds-shell .profile-connections-link {
+  color: #fff;
+  background: var(--ku-green);
+}
+
+.kuds-shell .platform-connection-request {
+  border: 1px solid var(--kuds-border);
+  background: #fff;
+}
+
+.kuds-shell .platform-connection-request > span:nth-child(2) strong {
+  color: var(--kuds-text);
+}
+
+.kuds-shell .platform-connection-request > span:nth-child(2) small {
+  color: var(--kuds-muted);
+}
+
+.kuds-shell .platform-connection-actions button {
+  color: var(--kuds-text);
+  border-color: var(--kuds-border);
+  background: var(--kuds-soft);
+}
+
+.kuds-shell .platform-connection-actions button.is-accept {
+  color: #fff;
+  border-color: var(--ku-green);
+  background: var(--ku-green);
+}
+
+.kuds-shell .platform-connection-error {
+  color: #b42318;
+}
+
 @media (max-width: 720px) {
   .kuds-shell .event-card-skeleton { min-height: 250px; }
   .kuds-shell .mentor-card-skeleton { min-height: 190px; }

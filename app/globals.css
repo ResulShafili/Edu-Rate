@@ -2822,6 +2822,31 @@ a { color: inherit; text-decoration: none; }
 .profile-stat-card > span { display: grid; width: 34px; height: 34px; color: var(--ink); place-items: center; border-radius: 50%; background: var(--lime); }
 .profile-stat-card strong { justify-self: end; font-family: var(--font-instrument-serif), Georgia, serif; font-size: clamp(36px, 4vw, 56px); font-weight: 400; line-height: 0.8; }
 .profile-stat-card p { grid-column: 1 / -1; margin: 0; color: rgba(13, 14, 13, 0.5); font-size: 9px; font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; }
+.profile-stat-card:is(button) { width: 100%; color: var(--ink); font: inherit; text-align: left; border: 0; }
+.profile-stat-card:is(button):disabled { opacity: 1; }
+.profile-stat-button { cursor: pointer; transition: transform 200ms ease, box-shadow 200ms ease; }
+.profile-stat-button:hover { transform: translateY(-4px); box-shadow: 0 18px 46px rgba(0, 0, 0, 0.2); }
+.profile-stat-button:focus-visible { outline: 3px solid var(--lime); outline-offset: 3px; }
+
+.profile-connections-layer { position: fixed; z-index: 160; inset: 0; display: grid; padding: 20px; place-items: center; }
+.profile-connections-backdrop { position: absolute; inset: 0; border: 0; background: rgba(4, 5, 5, 0.76); backdrop-filter: blur(12px); }
+.profile-connections-dialog { position: relative; overflow: hidden; width: min(100%, 520px); max-height: min(720px, calc(100dvh - 40px)); padding: 22px; color: var(--paper); border: 1px solid rgba(243, 241, 233, 0.14); border-radius: 24px; background: rgba(14, 15, 14, 0.96); box-shadow: 0 32px 90px rgba(0, 0, 0, 0.44); }
+.profile-connections-dialog > header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; border-bottom: 1px solid rgba(243, 241, 233, 0.1); }
+.profile-connections-dialog > header span { color: var(--lime); font-size: 8px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.profile-connections-dialog > header h2 { margin: 4px 0 0; font-size: 25px; font-weight: 550; letter-spacing: -.035em; }
+.profile-connections-dialog > header button { display: grid; width: 38px; height: 38px; cursor: pointer; color: var(--paper); place-items: center; border: 1px solid rgba(243, 241, 233, 0.12); border-radius: 50%; background: rgba(243, 241, 233, 0.04); }
+.profile-connections-list { overflow: auto; display: grid; max-height: 430px; gap: 7px; margin: 16px 0; padding: 0; list-style: none; }
+.profile-connections-list li { display: grid; min-width: 0; min-height: 66px; padding: 10px; grid-template-columns: 42px minmax(0, 1fr); align-items: center; gap: 11px; border: 1px solid rgba(243, 241, 233, 0.08); border-radius: 14px; background: rgba(243, 241, 233, 0.035); }
+.profile-connection-avatar { display: grid; width: 42px; height: 42px; color: var(--ink); place-items: center; border-radius: 50%; background: var(--lime); font-size: 11px; font-weight: 750; }
+.profile-connections-list strong, .profile-connections-list small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-connections-list strong { font-size: 12px; }
+.profile-connections-list small { margin-top: 4px; color: rgba(243, 241, 233, 0.48); font-size: 9px; }
+.profile-connections-empty { margin: 16px 0; padding: 28px 16px; color: rgba(243, 241, 233, 0.52); font-size: 11px; text-align: center; border: 1px dashed rgba(243, 241, 233, 0.14); border-radius: 14px; }
+.profile-connections-loading { display: flex; min-height: 120px; align-items: center; justify-content: center; gap: 6px; }
+.profile-connections-loading i { width: 7px; height: 7px; border-radius: 50%; background: var(--lime); animation: typing-dot 1.1s infinite ease-in-out; }
+.profile-connections-loading i:nth-child(2) { animation-delay: 120ms; }
+.profile-connections-loading i:nth-child(3) { animation-delay: 240ms; }
+.profile-connections-link { display: flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; color: var(--ink); border-radius: 12px; background: var(--lime); font-size: 10px; font-weight: 700; }
 
 .profile-dashboard-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
 .profile-info-card { position: relative; display: flex; min-width: 0; min-height: 330px; padding: clamp(25px, 3vw, 40px); overflow: hidden; flex-direction: column; justify-content: space-between; border: 1px solid rgba(243, 241, 233, 0.11); border-radius: 20px; background: rgba(255, 255, 255, 0.035); }
@@ -5178,6 +5203,17 @@ a { color: inherit; text-decoration: none; }
   background: var(--lilac);
   box-shadow: 0 0 14px rgba(185, 167, 255, 0.42);
 }
+
+.platform-connection-request { display: grid; min-height: 88px; padding: 10px 9px; grid-template-columns: 38px minmax(0, 1fr); align-items: center; gap: 9px; border-radius: 13px; background: rgba(243, 241, 233, 0.025); }
+.platform-connection-request > span:nth-child(2) strong, .platform-connection-request > span:nth-child(2) small { display: block; }
+.platform-connection-request > span:nth-child(2) strong { font-size: 10px; line-height: 1.35; }
+.platform-connection-request > span:nth-child(2) small { margin-top: 3px; color: rgba(243, 241, 233, 0.42); font-size: 8px; }
+.platform-connection-actions { display: grid; grid-column: 1 / -1; grid-template-columns: 1fr 1fr; gap: 6px; }
+.platform-connection-actions button { display: inline-flex; min-height: 32px; cursor: pointer; align-items: center; justify-content: center; gap: 5px; color: rgba(243, 241, 233, 0.7); border: 1px solid rgba(243, 241, 233, 0.11); border-radius: 9px; background: rgba(243, 241, 233, 0.035); font: inherit; font-size: 8px; font-weight: 700; transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease; }
+.platform-connection-actions button.is-accept { color: var(--ink); border-color: var(--lime); background: var(--lime); }
+.platform-connection-actions button:hover { transform: translateY(-1px); border-color: rgba(200, 255, 77, .5); }
+.platform-connection-actions button:disabled { cursor: progress; opacity: .55; transform: none; }
+.platform-connection-error { margin: 8px 0 0; color: #ff9c9c; font-size: 9px; line-height: 1.45; }
 
 .platform-mobile-utility-layer {
   display: none;
