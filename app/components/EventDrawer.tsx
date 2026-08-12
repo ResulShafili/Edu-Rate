@@ -19,26 +19,65 @@ type EventDrawerProps = {
 
 export function EventDrawer({ event, onClose }: EventDrawerProps) {
   const { user } = useAuth();
+  const userId = user?.id;
   const [registeredEventIds, setRegisteredEventIds] = useState<Set<string>>(() => new Set());
+  const [availableSpotsByEvent, setAvailableSpotsByEvent] = useState<Record<string, number>>({});
+  const [loadedRegistrationUserId, setLoadedRegistrationUserId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationError, setRegistrationError] = useState("");
+  const [registrationFeedback, setRegistrationFeedback] = useState("");
   const closeRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
+  const availableSpots = event ? availableSpotsByEvent[event.id] ?? event.availableSpots : 0;
   const registrationOpen = event
-    ? getDeadlineStatus(event.registrationDeadline) === "open" && event.availableSpots > 0 && getTemporalStatus(event.startAt, event.endAt) !== "finished"
+    ? getDeadlineStatus(event.registrationDeadline) === "open" && availableSpots > 0 && getTemporalStatus(event.startAt, event.endAt) !== "finished"
     : false;
   const isRegistered = event ? registeredEventIds.has(event.id) : false;
+  const isRegistrationStateLoading = Boolean(userId && loadedRegistrationUserId !== userId);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const controller = new AbortController();
+
+    void fetch("/api/events/registrations", {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const payload = await response.json() as {
+          data?: Array<{ id: string; availableSpots: number }>;
+          error?: { message?: string };
+        };
+        if (!response.ok) throw new Error(payload.error?.message ?? "Tədbir qeydiyyatları yüklənmədi.");
+        const registrations = payload.data ?? [];
+        setRegisteredEventIds(new Set(registrations.map((item) => item.id)));
+        setAvailableSpotsByEvent(Object.fromEntries(registrations.map((item) => [item.id, item.availableSpots])));
+        setLoadedRegistrationUserId(userId);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setRegistrationError(error instanceof Error ? error.message : "Tədbir qeydiyyatları yüklənmədi.");
+        setLoadedRegistrationUserId(userId);
+      });
+
+    return () => controller.abort();
+  }, [userId]);
 
   async function toggleRegistration() {
     if (!event || isSubmitting) return;
     setIsSubmitting(true);
     setRegistrationError("");
+    setRegistrationFeedback("");
     try {
       const response = await fetch(`/api/events/${encodeURIComponent(event.id)}/registrations`, {
         method: isRegistered ? "DELETE" : "POST",
       });
-      const payload = await response.json() as { error?: { message?: string } };
+      const payload = await response.json() as {
+        data?: { registered: boolean; event: { id: string; availableSpots: number } };
+        error?: { message?: string };
+      };
       if (!response.ok) throw new Error(payload.error?.message ?? "Qeydiyyat tamamlanmadı.");
       setRegisteredEventIds((current) => {
         const next = new Set(current);
@@ -46,6 +85,14 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
         else next.add(event.id);
         return next;
       });
+      const updatedEvent = payload.data?.event;
+      if (updatedEvent) {
+        setAvailableSpotsByEvent((current) => ({
+          ...current,
+          [updatedEvent.id]: updatedEvent.availableSpots,
+        }));
+      }
+      setRegistrationFeedback(isRegistered ? "Tədbir qeydiyyatın geri çəkildi." : "Tədbirə qeydiyyatdan keçdin.");
     } catch (error) {
       setRegistrationError(error instanceof Error ? error.message : "Qeydiyyat tamamlanmadı.");
     } finally {
@@ -176,11 +223,11 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
               </div>
 
               <div className="drawer-bottom">
-                <span>{event.capacity} · {event.availableSpots} boş yer</span>
+                <span>{event.capacity} · {availableSpots} boş yer</span>
                 {registrationOpen || isRegistered ? (
                   user ? (
-                    <button type="button" className={`reserve-button${isRegistered ? " is-registered" : ""}`} onClick={() => void toggleRegistration()} disabled={isSubmitting}>
-                      {isSubmitting ? "Gözlə…" : isRegistered ? "Qeydiyyatı ləğv et" : "Qeydiyyatdan keç"}
+                    <button type="button" className={`reserve-button${isRegistered ? " is-registered" : ""}`} onClick={() => void toggleRegistration()} disabled={isSubmitting || isRegistrationStateLoading}>
+                      {isRegistrationStateLoading ? "Yoxlanılır…" : isSubmitting ? (isRegistered ? "Geri çəkilir…" : "Qeydiyyat edilir…") : isRegistered ? "Qeydiyyatı geri çək" : "Qeydiyyatdan keç"}
                       {isRegistered ? <Check size={17} /> : <ArrowRight size={17} />}
                     </button>
                   ) : (
@@ -193,7 +240,7 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
                 )}
               </div>
               {registrationError && <p className="event-registration-error" role="alert">{registrationError}</p>}
-              <span className="sr-only" aria-live="polite">{isRegistered && event ? `${event.title} tədbirinə qeydiyyatdan keçdin.` : ""}</span>
+              <span className="sr-only" aria-live="polite">{registrationFeedback}</span>
             </div>
           </motion.aside>
         </motion.div>

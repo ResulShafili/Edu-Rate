@@ -302,6 +302,17 @@ describe("EduRate API", () => {
       .set("Authorization", authorization)
       .expect(200);
 
+    const registrationsAfterCancellation = await request(app)
+      .get("/api/events/registrations/me")
+      .set("Authorization", authorization)
+      .expect(200);
+    assert.ok(!registrationsAfterCancellation.body.data.some((event: { id: string }) => event.id === eventId));
+
+    const eventAfterCancellation = await request(app)
+      .get(`/api/events/${eventId}`)
+      .expect(200);
+    assert.equal(eventAfterCancellation.body.data.availableSpots, 40);
+
     const mentorship = await request(app)
       .post("/api/mentorship/requests")
       .set("Authorization", authorization)
