@@ -76,6 +76,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
   const [selectedFaculty, setSelectedFaculty] = useState<FacultyName | "">("");
   const [selectedProgram, setSelectedProgram] = useState("");
   const [accountType, setAccountType] = useState<AccountType>("student");
+  const [pendingTeacherEmail, setPendingTeacherEmail] = useState("");
   const reduceMotion = Boolean(useReducedMotion());
   const formId = useId();
   const router = useRouter();
@@ -100,6 +101,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
     setSelectedFaculty("");
     setSelectedProgram("");
     setAccountType("student");
+    setPendingTeacherEmail("");
   }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -161,7 +163,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
           accountType: values.accountType as AccountType,
         });
         if (result.requiresApproval) {
-          setFormMessage("Müraciətin qəbul edildi. Rəhbərlik hesabını təsdiqlədikdən sonra daxil ola biləcəksən.");
+          setPendingTeacherEmail(values.email);
           form.reset();
           setSelectedFaculty("");
           setSelectedProgram("");
@@ -294,7 +296,19 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
               exit={reduceMotion ? { opacity: 1 } : { opacity: 0, x: mode === "login" ? 18 : -18 }}
               transition={reduceMotion ? { duration: 0 } : panelTransition}
             >
-              <form
+              {mode === "register" && pendingTeacherEmail ? (
+                <section className="auth-registration-receipt" aria-live="polite">
+                  <span className="auth-registration-check"><Check size={26} aria-hidden="true" /></span>
+                  <div>
+                    <span>Müəllim qeydiyyatı tamamlandı</span>
+                    <h2>Müraciətin təsdiq gözləyir.</h2>
+                    <p><strong>{pendingTeacherEmail}</strong> ünvanı ilə hesab yaradıldı. Rəhbərlik müəllim statusunu təsdiqlədikdən sonra həmin e-poçt və şifrə ilə daxil ola biləcəksən.</p>
+                  </div>
+                  <button type="button" className="auth-submit" onClick={() => selectMode("login")}>
+                    <span>Daxil ol bölməsinə keç</span><ArrowRight size={16} aria-hidden="true" />
+                  </button>
+                </section>
+              ) : <form
                 className={`auth-form auth-form-${mode}`}
                 noValidate
                 aria-busy={submitting}
@@ -485,7 +499,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                 <p className="auth-legal-links">
                   Davam etməklə <a href="/terms">istifadə şərtləri</a> və <a href="/privacy">məxfilik siyasəti</a> ilə razılaşırsan.
                 </p>
-              </form>
+              </form>}
             </motion.div>
           </AnimatePresence>
         </motion.div>

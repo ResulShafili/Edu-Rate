@@ -101,6 +101,9 @@ authRouter.post("/signup", signupLimiter, async (request, response) => {
   const existingUser = await findUserByEmail(input.email);
 
   if (existingUser) {
+    if (existingUser.role === "teacher" && existingUser.status === "Gözləmədə") {
+      throw new ApiError(409, "TEACHER_APPROVAL_PENDING", "Bu e-poçtla müəllim müraciəti artıq yaradılıb və rəhbərliyin təsdiqini gözləyir.");
+    }
     throw new ApiError(409, "EMAIL_EXISTS", "Bu e-poçt artıq istifadə olunur.");
   }
 

@@ -641,6 +641,12 @@ describe("EduRate API", () => {
     assert.equal(teacherSignup.body.data.user.role, "teacher");
     assert.equal(teacherSignup.body.data.user.status, "Gözləmədə");
 
+    const repeatedTeacherSignup = await request(app).post("/api/auth/signup").set("X-Forwarded-For", "203.0.113.66").send({
+      name: "Səma Həsənli", email: `teacher.${suffix}@example.az`, password: "EduRate2026",
+      university: "Qarabağ Universiteti", accountType: "teacher", program: "Riyaziyyat",
+    }).expect(409);
+    assert.equal(repeatedTeacherSignup.body.error.code, "TEACHER_APPROVAL_PENDING");
+
     await request(app).post("/api/auth/login").set("X-Forwarded-For", "203.0.113.62")
       .send({ email: `teacher.${suffix}@example.az`, password: "EduRate2026" }).expect(403);
     await request(app).patch(`/api/admin/users/${teacherSignup.body.data.user.id}`)
