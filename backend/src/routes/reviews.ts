@@ -5,6 +5,7 @@ import { createTeacherReview, listTeacherReviews } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { findProfessionalProfile } from "../db/professionals.js";
+import { findUserById } from "../db/database.js";
 
 export const reviewsRouter = Router();
 
@@ -56,13 +57,16 @@ reviewsRouter.get("/", async (request, response) => {
   response.json({
     data: reviews.map(({ userId: _userId, text: _text, ...review }) => ({
       ...review,
-      author: "Təsdiqlənmiş tələbə",
-      initials: "TT",
+      author: "Təsdiqlənmiş EduRate hesabı",
+      initials: "ER",
     })),
   });
 });
 
 reviewsRouter.post("/", limiter, authenticate, async (request, response) => {
+  const reviewer=await findUserById(request.auth!.userId);
+  if(!reviewer||reviewer.role!=="student")throw new ApiError(403,"STUDENT_ACCOUNT_REQUIRED","Müəllim qiymətləndirməsi yalnız tələbə hesabı üçündür.");
+  if(!reviewer.emailVerifiedAt)throw new ApiError(403,"EMAIL_NOT_VERIFIED","Rəy vermək üçün e-poçt ünvanını təsdiqlə.");
   const input = reviewSchema.parse(request.body);
   const teacher = await findProfessionalProfile(input.teacherId, "teacher");
   if (!teacher || teacher.status !== "approved" || !teacher.visible) {

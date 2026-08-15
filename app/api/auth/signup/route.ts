@@ -24,14 +24,16 @@ export async function POST(request: Request) {
     }
 
     const input = await readJsonBody<RegisterInput>(request);
-    const result = await requestRemoteApi<{ token?: string; user: RemoteApiUser; requiresApproval?: boolean }>(
+    const result = await requestRemoteApi<{ token?: string; user: RemoteApiUser; requiresApproval?: boolean; requiresEmailVerification?:boolean }>(
       "/api/auth/signup",
       { method: "POST", body: input },
     );
-    const requiresApproval = Boolean(result.requiresApproval || !result.token);
+    const requiresApproval = Boolean(result.requiresApproval);
+    const requiresEmailVerification = Boolean(result.requiresEmailVerification);
     const response = apiSuccess({
-      user: requiresApproval ? null : mapRemoteUserToProfile(result.user),
+      user: result.token ? mapRemoteUserToProfile(result.user) : null,
       requiresApproval,
+      requiresEmailVerification,
     }, 201);
     if (result.token) {
       response.cookies.set(

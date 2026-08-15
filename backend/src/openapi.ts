@@ -97,6 +97,14 @@ export const openApiDocument = {
         },
       },
     },
+    "/api/auth/verify-email/request": { post: { tags:["Authentication"], summary:"E-poçt təsdiq keçidini yenidən göndər", responses:{"202":{description:"Sorğu qəbul edildi"},"429":{description:"Çox sayda cəhd"}} } },
+    "/api/auth/verify-email/confirm": { post: { tags:["Authentication"], summary:"Birdəfəlik tokenlə e-poçtu təsdiqlə", responses:{"200":{description:"E-poçt təsdiqləndi"},"422":{description:"Token etibarsızdır və ya vaxtı bitib"}} } },
+    "/api/auth/password/forgot": { post: { tags:["Authentication"], summary:"Şifrə bərpası məktubu istə", responses:{"202":{description:"Sorğu qəbul edildi"}} } },
+    "/api/auth/password/reset": { post: { tags:["Authentication"], summary:"Birdəfəlik tokenlə şifrəni yenilə", responses:{"200":{description:"Şifrə yeniləndi və sessiyalar ləğv edildi"},"422":{description:"Token etibarsızdır"}} } },
+    "/api/auth/sessions": { get:{tags:["Authentication"],summary:"Aktiv cihaz sessiyalarını göstər",security:[{bearerAuth:[]}],responses:{"200":{description:"Sessiyalar"}}},delete:{tags:["Authentication"],summary:"Cari sessiyadan başqa bütün sessiyaları bağla",security:[{bearerAuth:[]}],responses:{"204":{description:"Sessiyalar bağlandı"}}} },
+    "/api/community/reports": { post:{tags:["Community"],summary:"Məzmun və ya profil haqqında təhlükəsizlik şikayəti yarat",security:[{bearerAuth:[]}],responses:{"201":{description:"Şikayət moderasiya növbəsinə əlavə edildi"}}} },
+    "/api/admin/reports": { get:{tags:["Administration"],summary:"Məzmun şikayətlərinin moderasiya növbəsini göstər",security:[{bearerAuth:[]}],responses:{"200":{description:"Şikayətlər"},"403":{description:"Admin icazəsi tələb olunur"}}} },
+    "/api/admin/reports/{id}": { patch:{tags:["Administration"],summary:"Şikayət üzrə əsaslandırılmış qərar yaz",security:[{bearerAuth:[]}],parameters:[{name:"id",in:"path",required:true,schema:{type:"string",format:"uuid"}}],responses:{"200":{description:"Şikayət yeniləndi"},"404":{description:"Şikayət tapılmadı"}}} },
     "/api/auth/profile": {
       patch: {
         tags: ["Authentication"],
@@ -490,7 +498,7 @@ export const openApiDocument = {
       },
       SignupInput: {
         type: "object",
-        required: ["name", "email", "password", "accountType", "program"],
+        required: ["name", "email", "password", "accountType", "program", "legalAccepted"],
         properties: {
           name: { type: "string", example: "Nümunə Tələbə" },
           email: { type: "string", format: "email", example: "telebe@example.az" },
@@ -518,6 +526,7 @@ export const openApiDocument = {
             description: "Tələbə üçün ixtisas, müəllim üçün tədris sahəsi.",
             example: "Kompüter mühəndisliyi",
           },
+          legalAccepted: { type: "boolean", enum: [true], description: "Cari istifadə şərtləri və məxfilik siyasətinin açıq qəbulu." },
         },
       },
       LoginInput: {

@@ -172,6 +172,13 @@ describe("EduRate API", () => {
       .expect(200);
 
     assert.equal(profile.body.data.user.program, "Kompüter mühəndisliyi");
+
+    const devices = await request(app).get("/api/auth/sessions").set("Authorization", `Bearer ${login.body.data.token}`).expect(200);
+    assert.equal(devices.body.data.filter((item: { current: boolean }) => item.current).length, 1);
+    await request(app).delete("/api/auth/sessions").set("Authorization", `Bearer ${login.body.data.token}`).expect(204);
+    await request(app).get("/api/auth/session").set("Authorization", `Bearer ${signup.body.data.token}`).expect(401);
+    await request(app).get("/api/auth/session").set("Authorization", `Bearer ${login.body.data.token}`).expect(200);
+    reusableStudentToken = login.body.data.token;
   });
 
   it("rəsmi akademik kataloqu və fakültə-ixtisas uyğunluğunu qoruyur", async () => {
@@ -475,7 +482,7 @@ describe("EduRate API", () => {
     assert.ok(review);
     assert.equal(review.userId, undefined);
     assert.equal(review.text, undefined);
-    assert.equal(review.author, "Təsdiqlənmiş tələbə");
+    assert.equal(review.author, "Təsdiqlənmiş EduRate hesabı");
   });
 
   it("iki səviyyəli admin icazələrini server tərəfində tətbiq edir", async () => {
@@ -936,12 +943,18 @@ describe("EduRate API", () => {
     const conversation=await request(app).post("/api/community/conversations").set("Authorization",studentAuthorization).send({peerId:peer.id}).expect(201);
     const id=conversation.body.data.id as string;
     const sent=await request(app).post(`/api/community/conversations/${id}/messages`).set("Authorization",studentAuthorization).send({body:"Salam, layihəni birlikdə yoxlayaq."}).expect(201);
+    const report=await request(app).post("/api/community/reports").set("Authorization",peerAuthorization).send({entityType:"message",entityId:sent.body.data.id,reason:"spam",details:"Moderator yoxlaması üçün test şikayəti."}).expect(201);
+    const reportQueue=await request(app).get("/api/admin/reports?status=open").set("Authorization",`Bearer ${reusableAdminToken}`).expect(200);
+    assert.equal(reportQueue.body.data.some((item:{id:string})=>item.id===report.body.data.id),true);
+    await request(app).patch(`/api/admin/reports/${report.body.data.id}`).set("Authorization",`Bearer ${reusableAdminToken}`).send({status:"resolved",resolutionNote:"Məzmun yoxlanıldı və qərar auditə yazıldı."}).expect(200);
     const history=await request(app).get(`/api/community/conversations/${id}/messages`).set("Authorization",peerAuthorization).expect(200);
     assert.equal(history.body.data[0].id,sent.body.data.id);
     await request(app).delete(`/api/community/conversations/${id}/messages/${sent.body.data.id}`).set("Authorization",peerAuthorization).expect(404);
     await request(app).delete(`/api/community/conversations/${id}/messages/${sent.body.data.id}`).set("Authorization",studentAuthorization).expect(204);
     const historyAfterDeletion=await request(app).get(`/api/community/conversations/${id}/messages`).set("Authorization",peerAuthorization).expect(200);
-    assert.equal(historyAfterDeletion.body.data.length,0);
+    assert.equal(historyAfterDeletion.body.data.length,1);
+    assert.equal(historyAfterDeletion.body.data[0].body,"Mesaj silindi");
+    assert.equal(historyAfterDeletion.body.data[0].deleted,true);
     await request(app).patch(`/api/community/conversations/${id}/read`).set("Authorization",peerAuthorization).send({}).expect(200);
   });
 

@@ -6,13 +6,15 @@ export type CommunityUser = { id: string; name: string; role: string; faculty: s
 export type Connection = { id: string; requesterId: string; recipientId: string; status: "pending" | "accepted" | "blocked"; createdAt: string };
 export type Conversation = { id: string; peer: CommunityUser; lastMessage: string; updatedAt: string; unreadCount: number };
 export type ClubConversation = { id: string; kind: "club"; club: { id: string; slug: string; name: string }; memberCount: number; isAdmin: boolean; lastMessage: string; updatedAt: string; unreadCount: number };
-export type Message = { id: string; conversationId: string; senderId: string; senderName: string; senderInitials: string; body: string; createdAt: string };
+export type Message = { id: string; conversationId: string; senderId: string; senderName: string; senderInitials: string; body: string; createdAt: string; deleted?:boolean };
+export type ContentReport = { id:string; reporterId:string; entityType:"message"|"profile"|"review"|"club"; entityId:string; reason:string; details:string; status:"open"|"reviewing"|"resolved"|"dismissed"; reviewedBy:string|null; resolutionNote:string; createdAt:string; updatedAt:string };
 
 type MemoryConversation = { id: string; participants: string[]; updatedAt: string; kind: "direct" | "club"; clubId?: string; clubSlug?: string; title?: string; createdBy?: string | null };
 
 const connections = new Map<string, Connection>();
 const conversations = new Map<string, MemoryConversation>();
 const messages = new Map<string, Message[]>();
+const reports = new Map<string, ContentReport>();
 const now = () => new Date().toISOString();
 const iso = (value: unknown) => new Date(String(value)).toISOString();
 const initials = (name: string) => name.split(/\s+/).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase("az")).join("");
@@ -92,6 +94,14 @@ export async function deleteConnection(id: string, userId: string): Promise<bool
   }
   const result = await databasePool.query("DELETE FROM connections WHERE id=$1 AND (requester_id=$2 OR recipient_id=$2)", [id, userId]);
   return Boolean(result.rowCount);
+}
+
+export async function blockConnection(userId:string,peerId:string){
+  if(userId===peerId)throw new ApiError(422,"SELF_BLOCK","Öz hesabını bloklamaq olmaz.");
+  if(!databasePool){const existing=[...connections.values()].find((item)=>pairMatches(item,userId,peerId));if(existing)existing.status="blocked";else {const id=randomUUID();connections.set(id,{id,requesterId:userId,recipientId:peerId,status:"blocked",createdAt:now()});}return;}
+  const existing=await databasePool.query("SELECT id FROM connections WHERE (requester_id=$1 AND recipient_id=$2) OR (requester_id=$2 AND recipient_id=$1) LIMIT 1",[userId,peerId]);
+  if(existing.rows[0])await databasePool.query("UPDATE connections SET status='blocked',requester_id=$1,recipient_id=$2,updated_at=NOW() WHERE id=$3",[userId,peerId,existing.rows[0].id]);
+  else await databasePool.query("INSERT INTO connections(id,requester_id,recipient_id,status) VALUES($1,$2,$3,'blocked')",[randomUUID(),userId,peerId]);
 }
 
 export async function createConversation(userId: string, peerId: string): Promise<{ id: string }> {
@@ -201,7 +211,7 @@ export async function listMessages(conversationId: string, userId: string, befor
   if (before) values.push(before);
   const result = await databasePool.query(`SELECT m.*,u.name sender_name FROM messages m JOIN users u ON u.id=m.sender_id
     WHERE m.conversation_id=$1 ${cursor} ORDER BY m.created_at DESC,m.id DESC LIMIT $2`, values);
-  return result.rows.reverse().map((row) => ({ id: String(row.id), conversationId: String(row.conversation_id), senderId: String(row.sender_id), senderName: String(row.sender_name), senderInitials: initials(String(row.sender_name)), body: String(row.body), createdAt: iso(row.created_at) }));
+  return result.rows.reverse().map((row) => ({ id: String(row.id), conversationId: String(row.conversation_id), senderId: String(row.sender_id), senderName: String(row.sender_name), senderInitials: initials(String(row.sender_name)), body: row.deleted_at ? "Mesaj silindi" : String(row.body), createdAt: iso(row.created_at), deleted:Boolean(row.deleted_at) }));
 }
 
 export async function createMessage(conversationId: string, senderId: string, body: string): Promise<Message> {
@@ -227,7 +237,7 @@ export async function createMessage(conversationId: string, senderId: string, bo
   return { ...message, id: String(result.rows[0].id), createdAt: iso(result.rows[0].created_at) };
 }
 
-export async function deleteMessage(conversationId: string, messageId: string, userId: string): Promise<boolean> {
+export async function deleteMessage(conversationId: string, messageId: string, userId: string, reason="İstifadəçi tərəfindən silindi"): Promise<boolean> {
   await assertParticipant(conversationId, userId);
   if (!databasePool) {
     const conversationMessages = messages.get(conversationId) ?? [];
@@ -235,18 +245,28 @@ export async function deleteMessage(conversationId: string, messageId: string, u
     const conversation = conversations.get(conversationId);
     const canModerate = conversation?.kind === "club" && conversation.createdBy === userId;
     if (!target || (target.senderId !== userId && !canModerate)) return false;
-    messages.set(conversationId, conversationMessages.filter((message) => message.id !== messageId));
+    target.body="Mesaj silindi";target.deleted=true;
     return true;
   }
   const result = await databasePool.query(
-    `DELETE FROM messages m USING conversations c, conversation_participants cp
+    `UPDATE messages m SET body='',deleted_at=NOW(),deleted_by=$3,deletion_reason=$4 FROM conversations c, conversation_participants cp
      WHERE m.id=$1 AND m.conversation_id=$2 AND c.id=m.conversation_id
        AND cp.conversation_id=c.id AND cp.user_id=$3
        AND (m.sender_id=$3 OR (c.kind='club' AND cp.role='admin'))`,
-    [messageId, conversationId, userId],
+    [messageId, conversationId, userId,reason.slice(0,240)],
   );
   return Boolean(result.rowCount);
 }
+
+export async function muteConversation(conversationId:string,userId:string,muted:boolean){await assertParticipant(conversationId,userId);if(databasePool)await databasePool.query("UPDATE conversation_participants SET muted_until=CASE WHEN $3 THEN NOW()+INTERVAL '100 years' ELSE NULL END WHERE conversation_id=$1 AND user_id=$2",[conversationId,userId,muted]);}
+
+export async function reportContent(reporterId:string,input:{entityType:"message"|"profile"|"review"|"club";entityId:string;reason:"abuse"|"threat"|"discrimination"|"spam"|"fake_profile"|"personal_data"|"other";details:string}){const id=randomUUID();if(!databasePool){const createdAt=now();const report:ContentReport={id,reporterId,entityType:input.entityType,entityId:input.entityId,reason:input.reason,details:input.details,status:"open",reviewedBy:null,resolutionNote:"",createdAt,updatedAt:createdAt};reports.set(id,report);return report;}const result=await databasePool.query("INSERT INTO content_reports(id,reporter_id,entity_type,entity_id,reason,details) VALUES($1,$2,$3,$4,$5,$6) RETURNING *",[id,reporterId,input.entityType,input.entityId,input.reason,input.details]);return mapReport(result.rows[0]);}
+
+export async function listContentReports(status?:ContentReport["status"]):Promise<ContentReport[]>{if(!databasePool)return [...reports.values()].filter((item)=>!status||item.status===status).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));const result=await databasePool.query(`SELECT * FROM content_reports WHERE ($1::text IS NULL OR status=$1) ORDER BY created_at DESC LIMIT 200`,[status??null]);return result.rows.map(mapReport);}
+
+export async function updateContentReport(id:string,reviewerId:string,input:{status:"reviewing"|"resolved"|"dismissed";resolutionNote:string}):Promise<ContentReport|null>{if(!databasePool){const report=reports.get(id);if(!report)return null;report.status=input.status;report.reviewedBy=reviewerId;report.resolutionNote=input.resolutionNote;report.updatedAt=now();return report;}const result=await databasePool.query("UPDATE content_reports SET status=$2,reviewed_by=$3,reviewed_at=NOW(),resolution_note=$4,updated_at=NOW() WHERE id=$1 RETURNING *",[id,input.status,reviewerId,input.resolutionNote]);return result.rows[0]?mapReport(result.rows[0]):null;}
+
+function mapReport(row:Record<string,unknown>):ContentReport{return{id:String(row.id),reporterId:String(row.reporter_id),entityType:row.entity_type as ContentReport["entityType"],entityId:String(row.entity_id),reason:String(row.reason),details:String(row.details??""),status:row.status as ContentReport["status"],reviewedBy:row.reviewed_by?String(row.reviewed_by):null,resolutionNote:String(row.resolution_note??""),createdAt:iso(row.created_at),updatedAt:iso(row.updated_at)};}
 
 export async function markRead(conversationId: string, userId: string) {
   await assertParticipant(conversationId, userId);

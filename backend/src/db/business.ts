@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { events as seedEvents } from "../data/catalog.js";
 import { ApiError } from "../lib/api-error.js";
 import { databasePool } from "./database.js";
+import { env } from "../config/env.js";
 
 export type EventCategory = "Design" | "Technology" | "Culture" | "Wellness";
 
@@ -159,7 +160,7 @@ export async function initializeBusinessDatabase() {
     CREATE INDEX IF NOT EXISTS mentorship_requests_user_idx ON mentorship_requests (user_id, created_at DESC);
   `);
 
-  for (const event of seedEvents) {
+  if (env.SEED_DEMO_DATA) for (const event of seedEvents) {
     await databasePool.query(
       `INSERT INTO events (
         id, title, category, description, long_description, location, city, organizer,

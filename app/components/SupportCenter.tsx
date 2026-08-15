@@ -10,6 +10,7 @@ import {
   type FormEvent,
 } from "react";
 import { supportFaqs, ticketTopics } from "../data/support";
+import { useAuth } from "./AuthProvider";
 
 type TicketFields = {
   name: string;
@@ -32,6 +33,7 @@ function getTicketValidity(fields: TicketFields) {
 }
 
 export function SupportCenter() {
+  const { user }=useAuth();
   const [openFaq, setOpenFaq] = useState<string | null>(supportFaqs[0]?.id ?? null);
   const [fields, setFields] = useState<TicketFields>(initialFields);
   const [touched, setTouched] = useState<Set<keyof TicketFields>>(() => new Set());
@@ -48,6 +50,7 @@ export function SupportCenter() {
   const formValid = Object.values(validity).every(Boolean);
 
   const loadHistory = useCallback(async () => {
+    if(!user){setHistoryRequiresLogin(true);setHistoryLoading(false);return;}
     try {
       const response = await fetch("/api/support/tickets", { cache: "no-store" });
       if (response.status === 401) { setHistoryRequiresLogin(true); return; }
@@ -56,9 +59,12 @@ export function SupportCenter() {
     } finally {
       setHistoryLoading(false);
     }
-  }, []);
+  }, [user]);
 
-  useEffect(() => { void loadHistory(); }, [loadHistory]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadHistory(), 0);
+    return () => window.clearTimeout(timer);
+  }, [loadHistory]);
 
   function updateField(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const name = event.target.name as keyof TicketFields;

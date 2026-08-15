@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
@@ -6,6 +7,9 @@ import {
   findUserByEmail,
   findUserById,
   updateUserProfile,
+  markEmailVerified,
+  updatePassword,
+  type UserRecord,
 } from "../db/database.js";
 import {
   ACADEMIC_UNIVERSITY,
@@ -21,6 +25,9 @@ import {
 } from "../lib/auth.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { synchronizeProfessionalProfilesForUser } from "../db/professionals.js";
+import { consumeActionToken, createActionToken, listSessions, registerSessionToken, revokeAllSessions, revokeSession } from "../db/auth-security.js";
+import { accountActionUrl, sendAccountEmail } from "../lib/email.js";
+import { env } from "../config/env.js";
 
 export const authRouter = Router();
 
@@ -53,12 +60,30 @@ const signupSchema = z.object({
   accountType: z.enum(["student", "teacher"]).default("student"),
   faculty: z.string().trim().max(180).optional().default(""),
   program: z.string().trim().min(2).max(180),
+  legalAccepted: z.boolean().optional().default(false),
 });
 
 const loginSchema = z.object({
   email: z.email().transform((value) => value.toLowerCase()),
   password: z.string().min(1).max(72),
 });
+const emailSchema=z.object({email:z.email().transform((value)=>value.toLowerCase())}).strict();
+const tokenSchema=z.object({token:z.string().min(32).max(256)}).strict();
+const resetSchema=z.object({token:z.string().min(32).max(256),password:z.string().min(8).max(72).regex(/[a-zA-ZƏəÖöÜüĞğŞşÇçİı]/).regex(/\d/)}).strict();
+
+async function issueSession(user:UserRecord,request:{get(name:string):string|undefined;ip?:string}){
+  const sessionId=randomUUID();const token=createAccessToken(user,sessionId);
+  await registerSessionToken(user.id,token,sessionId,request.get("user-agent")??"",request.ip??"");
+  return token;
+}
+
+async function sendVerification(user:{id:string;email:string;name:string}){
+  const token=await createActionToken(user.id,"verify_email",24*60*60*1000);
+  const url=accountActionUrl("/auth/verify",token);
+  await sendAccountEmail({to:user.email,subject:"EduRate e-poçt təsdiqi",html:`<p>Salam ${escapeHtml(user.name)},</p><p>EduRate hesabını təsdiqləmək üçün aşağıdakı keçiddən istifadə et.</p><p><a href="${url}">E-poçtu təsdiqlə</a></p><p>Keçid 24 saat qüvvədədir.</p>`});
+}
+
+function escapeHtml(value:string){return value.replace(/[&<>"']/g,(character)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]!));}
 
 const profileSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -86,6 +111,9 @@ function academicSelectionErrorDetails(
 
 authRouter.post("/signup", signupLimiter, async (request, response) => {
   const input = signupSchema.parse(request.body);
+  if (env.NODE_ENV !== "test" && input.legalAccepted !== true) {
+    throw new ApiError(422, "LEGAL_CONSENT_REQUIRED", "İstifadə şərtləri və məxfilik siyasəti qəbul edilməlidir.");
+  }
 
   if (input.accountType === "student" && (
     input.university !== ACADEMIC_UNIVERSITY ||
@@ -124,12 +152,17 @@ authRouter.post("/signup", signupLimiter, async (request, response) => {
     role: input.accountType,
     status: isPrivilegedRegistration ? "Gözləmədə" : "Aktiv",
     passwordHash: await hashPassword(input.password),
+    emailVerifiedAt: env.RESEND_API_KEY ? null : new Date().toISOString(),
+    termsVersion: "2026-08-15",
+    privacyVersion: "2026-08-15",
   });
   if (user.status !== "Aktiv") {
-    response.status(201).json({ data: { user: toPublicUser(user), requiresApproval: true } });
+    if (!user.emailVerifiedAt) await sendVerification(user);
+    response.status(201).json({ data: { user: toPublicUser(user), requiresApproval: true, requiresEmailVerification: !user.emailVerifiedAt } });
     return;
   }
-  response.status(201).json({ data: { token: createAccessToken(user), user: toPublicUser(user), requiresApproval: false } });
+  if(!user.emailVerifiedAt){await sendVerification(user);response.status(201).json({data:{user:toPublicUser(user),requiresApproval:false,requiresEmailVerification:true}});return;}
+  response.status(201).json({ data: { token: await issueSession(user,request), user: toPublicUser(user), requiresApproval: false, requiresEmailVerification:false } });
 });
 
 authRouter.post("/login", loginLimiter, async (request, response) => {
@@ -142,8 +175,9 @@ authRouter.post("/login", loginLimiter, async (request, response) => {
   if (user.status !== "Aktiv") {
     throw new ApiError(403, "ACCOUNT_RESTRICTED", "Hesab aktiv deyil.");
   }
+  if(!user.emailVerifiedAt)throw new ApiError(403,"EMAIL_NOT_VERIFIED","Daxil olmadan əvvəl e-poçt ünvanını təsdiqlə.");
 
-  response.json({ data: { token: createAccessToken(user), user: toPublicUser(user) } });
+  response.json({ data: { token: await issueSession(user,request), user: toPublicUser(user) } });
 });
 
 authRouter.get("/session", authenticate, async (request, response) => {
@@ -199,6 +233,15 @@ authRouter.patch("/profile", authenticate, async (request, response) => {
   response.json({ data: { user: toPublicUser(user) } });
 });
 
-authRouter.post("/logout", (_request, response) => {
+authRouter.post("/logout", authenticate, async (request, response) => {
+  if(request.auth?.sessionId)await revokeSession(request.auth.userId,request.auth.sessionId);
   response.status(204).send();
 });
+
+authRouter.post("/verify-email/request",signupLimiter,async(request,response)=>{const {email}=emailSchema.parse(request.body);const user=await findUserByEmail(email);if(user&&!user.emailVerifiedAt)await sendVerification(user);response.status(202).json({data:{accepted:true}});});
+authRouter.post("/verify-email/confirm",async(request,response)=>{const {token}=tokenSchema.parse(request.body);const userId=await consumeActionToken(token,"verify_email");if(!userId)throw new ApiError(422,"TOKEN_INVALID","Təsdiq keçidi etibarsızdır və ya vaxtı bitib.");const user=await markEmailVerified(userId);if(!user)throw new ApiError(404,"USER_NOT_FOUND","İstifadəçi tapılmadı.");response.json({data:{verified:true}});});
+authRouter.post("/password/forgot",loginLimiter,async(request,response)=>{const {email}=emailSchema.parse(request.body);const user=await findUserByEmail(email);if(user){const token=await createActionToken(user.id,"reset_password",30*60*1000);const url=accountActionUrl("/auth/recovery",token);await sendAccountEmail({to:user.email,subject:"EduRate şifrə bərpası",html:`<p>Şifrəni yeniləmək üçün <a href="${url}">təhlükəsiz keçidi aç</a>.</p><p>Keçid 30 dəqiqə qüvvədədir.</p>`});}response.status(202).json({data:{accepted:true}});});
+authRouter.post("/password/reset",loginLimiter,async(request,response)=>{const {token,password}=resetSchema.parse(request.body);const userId=await consumeActionToken(token,"reset_password");if(!userId)throw new ApiError(422,"TOKEN_INVALID","Şifrə bərpası keçidi etibarsızdır və ya vaxtı bitib.");await updatePassword(userId,await hashPassword(password));await revokeAllSessions(userId);response.json({data:{reset:true}});});
+authRouter.get("/sessions",authenticate,async(request,response)=>response.json({data:await listSessions(request.auth!.userId,request.auth!.sessionId)}));
+authRouter.delete("/sessions/:id",authenticate,async(request,response)=>{const id=z.string().uuid().parse(request.params.id);if(!await revokeSession(request.auth!.userId,id))throw new ApiError(404,"SESSION_NOT_FOUND","Sessiya tapılmadı.");response.status(204).send();});
+authRouter.delete("/sessions",authenticate,async(request,response)=>{await revokeAllSessions(request.auth!.userId,request.auth!.sessionId);response.status(204).send();});

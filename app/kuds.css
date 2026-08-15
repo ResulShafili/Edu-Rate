@@ -2161,6 +2161,40 @@ body {
   .kuds-shell .api-method { width: fit-content; }
 }
 
+/* Final accessibility and compact mobile pass. */
+.kuds-shell .teachers-heading-aside,
+.kuds-shell .teachers-heading-aside :is(p,span,strong),
+.kuds-shell .ticket-progress-head :is(span,small),
+.kuds-shell .support-panel-label,
+.kuds-shell .faq-answer,
+.kuds-shell .chat-dock :is(input,textarea) { color: var(--kuds-text) !important; }
+.kuds-shell .teachers-heading-aside p,
+.kuds-shell .ticket-progress-head small,
+.kuds-shell .faq-answer p { opacity: .78; }
+.kuds-shell .teacher-carousel-controls span { color: var(--kuds-text) !important; }
+.kuds-shell .account-recovery-form { display:grid; gap:16px; max-width:520px; margin:24px 0; }
+.kuds-shell .account-recovery-form label { display:grid; gap:8px; color:var(--kuds-text); font-weight:700; }
+.kuds-shell .account-recovery-form input { min-height:48px; padding:0 14px; color:var(--kuds-text); border:1px solid var(--kuds-border); border-radius:10px; background:var(--kuds-surface); }
+.kuds-shell .account-recovery-form button { width:fit-content; min-height:44px; padding:0 18px; color:#fff; border:0; border-radius:9px; background:var(--ku-green); font-weight:750; }
+.kuds-shell .chat-safety-actions { display:flex; align-items:center; gap:6px; margin-left:auto; }
+.kuds-shell .chat-safety-actions button { display:grid; width:34px; height:34px; place-items:center; color:var(--kuds-text); border:1px solid var(--kuds-border); border-radius:50%; background:var(--kuds-surface); cursor:pointer; }
+.kuds-shell .profile-security-card { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; margin:18px 0; padding:20px; color:var(--kuds-text); border:1px solid var(--kuds-border); border-radius:12px; background:var(--kuds-surface); box-shadow:var(--kuds-shadow-sm); }
+.kuds-shell .profile-security-card>div:first-child { display:flex; gap:12px; }
+.kuds-shell .profile-security-card h2,.kuds-shell .profile-security-card p { margin:0; }
+.kuds-shell .profile-security-card p,.kuds-shell .profile-security-card small { color:var(--kuds-muted); }
+.kuds-shell .profile-security-card>button,.kuds-shell .profile-close-sessions { align-self:start; min-height:40px; padding:0 13px; color:#fff; border:0; border-radius:8px; background:var(--ku-green); font-weight:700; }
+.kuds-shell .profile-session-list { grid-column:1/-1; display:grid; gap:8px; padding-top:14px; border-top:1px solid var(--kuds-border); }
+.kuds-shell .profile-session-list article { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px; border-radius:9px; background:var(--kuds-bg); }
+.kuds-shell .profile-session-list article div { display:grid; }
+@media(max-width:767px){.kuds-shell .profile-security-card{grid-template-columns:1fr}.kuds-shell .profile-security-card>button{width:100%}}
+.kuds-shell .message-row [data-deleted="true"] { opacity:.68; font-style:italic; }
+@media (max-width: 767px) {
+  .kuds-shell :is(.teacher-directory-filters,.mentor-filters) { display:grid !important; grid-template-columns:minmax(0,1fr) !important; width:100%; overflow:visible; gap:10px; }
+  .kuds-shell :is(.teacher-directory-filters,.mentor-filters) label { width:100%; min-width:0; max-width:none; }
+  .kuds-shell :is(.teacher-directory-filters,.mentor-filters) label:first-child { grid-column:auto !important; }
+  .kuds-shell :is(.peers-section,.mentor-section,.teachers-section,.clubs-experience) { padding-top:16px !important; }
+}
+
 @media (max-width: 767px) {
   .kuds-shell .peers-section { padding-top: 24px !important; }
   .kuds-shell :is(.teacher-directory-filters, .mentor-filters) {
@@ -2935,3 +2969,4 @@ body {
   .kuds-shell .event-card-skeleton { min-height: 250px; }
   .kuds-shell .mentor-card-skeleton { min-height: 190px; }
 }
+.auth-legal-consent{align-items:flex-start!important;cursor:pointer;text-align:left!important}.auth-legal-consent input{width:17px;height:17px;margin-top:1px;accent-color:#44766c;flex:0 0 auto}.auth-legal-consent span{display:inline;line-height:1.5}.auth-legal-consent a{color:#16423c;text-decoration:underline;text-underline-offset:2px}

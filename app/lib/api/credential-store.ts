@@ -113,7 +113,7 @@ function validateRegistration(input: RegisterInput): RegisterInput {
     throw new ApiHttpError(422, "VALIDATION_ERROR", "Məlumatları yenidən yoxla.", errors);
   }
 
-  return { name, email: email ?? "", password, university, faculty, program, accountType };
+  return { name, email: email ?? "", password, university, faculty, program, accountType, legalAccepted: true };
 }
 
 function validateProfileUpdate(input: ProfileUpdateInput): ProfileUpdateInput {

@@ -45,11 +45,13 @@ export type RegisterInput = {
   faculty: string;
   program: string;
   accountType: "student" | "teacher";
+  legalAccepted: true;
 };
 
 export type RegisterResult = {
   user: UserProfile | null;
   requiresApproval: boolean;
+  requiresEmailVerification?: boolean;
   accountType: RegisterInput["accountType"];
 };
 

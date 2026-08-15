@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { databasePool } from "./database.js";
+import { env } from "../config/env.js";
 
 export type ProfessionalKind = "teacher" | "mentor";
 export type ProfessionalProfile = {
@@ -56,7 +57,7 @@ export function activateMemoryMentorProfile(input: {
 }
 
 export async function seedProfessionalProfiles() {
-  if (!databasePool) return;
+  if (!databasePool || !env.SEED_DEMO_DATA) return;
   for (const profile of seedProfiles) {
     await databasePool.query(`INSERT INTO professional_profiles
       (id,kind,slug,display_name,headline,specialty,biography,city,experience_years,availability,meeting_mode,languages,expertise,status,visible)

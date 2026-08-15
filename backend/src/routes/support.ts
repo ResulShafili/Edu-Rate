@@ -2,7 +2,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { createSupportTicket, listSupportTickets, updateSupportTicketStatus } from "../db/platform.js";
-import { authenticate, requireAdmin } from "../middleware/authenticate.js";
+import { authenticate, optionalAuthenticate, requireAdmin } from "../middleware/authenticate.js";
 import { findUserById } from "../db/database.js";
 import { ApiError } from "../lib/api-error.js";
 
@@ -39,10 +39,9 @@ supportRouter.patch("/tickets/:id", authenticate, requireAdmin, async (request, 
   response.json({data:ticket});
 });
 
-supportRouter.post("/tickets", limiter, authenticate, async (request, response) => {
-  const user=await findUserById(request.auth!.userId);
-  if(!user) throw new ApiError(404,"USER_NOT_FOUND","İstifadəçi tapılmadı.");
+supportRouter.post("/tickets", limiter, optionalAuthenticate, async (request, response) => {
+  const user=request.auth ? await findUserById(request.auth.userId) : null;
   const input=ticketSchema.parse(request.body);
-  const ticket = await createSupportTicket({ ...input, name:user.name, email:user.email }, user.id);
+  const ticket = await createSupportTicket(user ? { ...input, name:user.name, email:user.email } : input, user?.id??null);
   response.status(201).json({ data: { reference: ticket.reference, status: ticket.status } });
 });

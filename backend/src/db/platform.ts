@@ -1,6 +1,7 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { ApiError } from "../lib/api-error.js";
 import { databasePool } from "./database.js";
+import { env } from "../config/env.js";
 
 export type ClubStatus = "Aktiv" | "Gözləmədə" | "Məhdudlaşdırılıb";
 
@@ -229,7 +230,7 @@ export async function initializePlatformDatabase() {
     ALTER TABLE clubs ADD COLUMN IF NOT EXISTS history JSONB NOT NULL DEFAULT '[]'::jsonb;
   `);
 
-  for (const club of clubSeeds) {
+  if (env.SEED_DEMO_DATA) for (const club of clubSeeds) {
     await databasePool.query(
       `INSERT INTO clubs (id, slug, name, category, coordinator_initials, member_count, event_count, status,
          short_name,tagline,description,about,tone,visual_mark,meeting,focus_tags,events,members,history)

@@ -41,7 +41,7 @@ import {
 import { listAudit, writeAudit } from "../db/audit.js";
 import { createAnnouncement, deleteAnnouncement, deleteFeedPost, listAdminAnnouncements, listAdminFeed, updateAnnouncement, updateFeedPostStatus } from "../db/network.js";
 import { decideMentorApplication, listMentorApplications } from "../db/mentor-applications.js";
-import { ensureClubConversation } from "../db/messaging.js";
+import { ensureClubConversation, listContentReports, updateContentReport } from "../db/messaging.js";
 
 export const adminRouter = Router();
 adminRouter.use(authenticate, requireAdmin);
@@ -296,10 +296,25 @@ adminRouter.get("/reviews", async (request, response) => {
 
 adminRouter.patch("/reviews/:id", async (request, response) => {
   const id = z.string().uuid().parse(request.params.id);
-  const { status } = z.object({ status: z.enum(["approved", "rejected"]) }).strict().parse(request.body);
+  const { status, reason } = z.object({ status: z.enum(["approved", "rejected"]), reason:z.string().trim().min(3).max(500).default("Moderasiya qərarı") }).strict().parse(request.body);
   const review = await updateTeacherReviewStatus(id, status);
   if (!review) throw new ApiError(404, "REVIEW_NOT_FOUND", "Rəy tapılmadı.");
+  await writeAudit(request.auth!.userId,status==="approved"?"Rəy təsdiqləndi":"Rəy rədd edildi","teacher_review",id,{status,reason});
   response.json({ data: review });
+});
+
+adminRouter.get("/reports", async (request, response) => {
+  const { status } = z.object({ status: z.enum(["open", "reviewing", "resolved", "dismissed"]).optional() }).parse(request.query);
+  response.json({ data: await listContentReports(status) });
+});
+
+adminRouter.patch("/reports/:id", async (request, response) => {
+  const id = z.string().uuid().parse(request.params.id);
+  const input = z.object({ status: z.enum(["reviewing", "resolved", "dismissed"]), resolutionNote: z.string().trim().min(3).max(1000) }).strict().parse(request.body);
+  const report = await updateContentReport(id, request.auth!.userId, input);
+  if (!report) throw new ApiError(404, "REPORT_NOT_FOUND", "Şikayət tapılmadı.");
+  await writeAudit(request.auth!.userId, "Məzmun şikayəti yeniləndi", "content_report", id, { status: input.status, reason: input.resolutionNote });
+  response.json({ data: report });
 });
 
 adminRouter.get("/mentor-applications", async (request, response) => {

@@ -2,14 +2,14 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps -- remote chat hydration and external target synchronization are intentionally effect-driven */
 
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from "framer-motion";
-import { Check, Crown, MessageCircle, MessagesSquare, Send, Trash2, UsersRound, X } from "lucide-react";
+import { Ban, BellOff, Check, Crown, Flag, MessageCircle, MessagesSquare, Send, Trash2, UsersRound, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { Peer } from "../data/peers";
 import { useAuth } from "./AuthProvider";
 import type { ClubChatTarget } from "./PlatformProvider";
 
-type ApiMessage = { id: string; conversationId: string; senderId: string; senderName?: string; senderInitials?: string; body: string; createdAt: string };
+type ApiMessage = { id: string; conversationId: string; senderId: string; senderName?: string; senderInitials?: string; body: string; createdAt: string; deleted?:boolean };
 type ApiConversation = { id: string; peer: { id: string; name: string; role: string; faculty: string; program: string; city: string }; lastMessage: string; updatedAt: string; unreadCount: number };
 type ApiGroup = { id: string; kind: "club"; club: { id: string; slug: string; name: string }; memberCount: number; isAdmin: boolean; lastMessage: string; updatedAt: string; unreadCount: number };
 type ActiveChat = { kind: "direct"; conversationId?: string; peer: Peer } | { kind: "group"; conversationId: string; peer: Peer; group: ClubChatTarget };
@@ -98,7 +98,7 @@ export function ChatDock({ peer, group, open, onOpenChange }: Props) {
           socketRef.current = socket;
           socket.emit("conversation:join", id);
           socket.on("message:new", (message: ApiMessage) => message.conversationId === id && setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]));
-          socket.on("message:deleted", (payload: { conversationId: string; messageId: string }) => payload.conversationId === id && setMessages((current) => current.filter((item) => item.id !== payload.messageId)));
+          socket.on("message:deleted", (payload: { conversationId: string; messageId: string }) => payload.conversationId === id && setMessages((current) => current.map((item) => item.id===payload.messageId?{...item,body:"Mesaj silindi",deleted:true}:item)));
           socket.on("typing", (payload: { conversationId: string; userId: string; active: boolean }) => payload.conversationId === id && payload.userId !== user.id && setTyping(payload.active));
         }
       } catch (value) {
@@ -139,9 +139,13 @@ export function ChatDock({ peer, group, open, onOpenChange }: Props) {
     if (!id) return;
     const response = await fetch(`/api/community/conversations/${id}/messages/${messageId}`, { method: "DELETE" });
     if (!response.ok) { setError("Mesaj silinmədi."); return; }
-    setMessages((current) => current.filter((message) => message.id !== messageId));
+    setMessages((current) => current.map((message) => message.id===messageId?{...message,body:"Mesaj silindi",deleted:true}:message));
     void refreshDirectory();
   }
+
+  async function report(entityType:"message"|"profile"|"club",entityId:string){const response=await fetch("/api/community/reports",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({entityType,entityId,reason:"abuse",details:"İstifadəçi tərəfindən yoxlanılması istənildi."})});setError(response.ok?"Şikayət moderasiya komandasına göndərildi.":"Şikayət göndərilmədi.");}
+  async function mute(){if(!active?.conversationId)return;const response=await fetch(`/api/community/conversations/${active.conversationId}/mute`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({muted:true})});setError(response.ok?"Bu söhbətin bildirişləri səssizə alındı.":"Söhbət səssizə alınmadı.");}
+  async function block(){if(!active||active.kind!=="direct")return;const response=await fetch("/api/community/blocks",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({userId:active.peer.id})});if(response.ok){setError("İstifadəçi bloklandı. Yeni mesaj göndərilə bilməz.");void refreshDirectory();}else setError("İstifadəçi bloklanmadı.");}
 
   function changeDraft(value: string) {
     setDraft(value);
@@ -176,7 +180,7 @@ export function ChatDock({ peer, group, open, onOpenChange }: Props) {
           <main className="chat-center-main">
             <button type="button" className="chat-center-close" onClick={() => onOpenChange(false)} aria-label="Mesajları bağla"><X size={19} /></button>
             {active ? <>
-              <header className="chat-header" onPointerDown={(event) => canDrag && dragControls.start(event)}><div className="chat-person"><span className="chat-person-avatar">{active.kind === "group" ? <UsersRound size={17} /> : active.peer.initials}<i className="online" /></span><div><h2>{active.peer.name}</h2><p>{active.kind === "group" ? `${active.group.memberCount} üzv · klub qrupu` : active.peer.role}</p></div></div></header>
+              <header className="chat-header" onPointerDown={(event) => canDrag && dragControls.start(event)}><div className="chat-person"><span className="chat-person-avatar">{active.kind === "group" ? <UsersRound size={17} /> : active.peer.initials}<i className="online" /></span><div><h2>{active.peer.name}</h2><p>{active.kind === "group" ? `${active.group.memberCount} üzv · klub qrupu` : active.peer.role}</p></div></div><div className="chat-safety-actions" onPointerDown={(event)=>event.stopPropagation()}><button type="button" onClick={()=>void mute()} title="Bildirişləri səssizə al" aria-label="Bildirişləri səssizə al"><BellOff size={15}/></button><button type="button" onClick={()=>void report(active.kind==="group"?"club":"profile",active.peer.id)} title="Şikayət et" aria-label="Şikayət et"><Flag size={15}/></button>{active.kind==="direct"?<button type="button" onClick={()=>void block()} title="İstifadəçini blokla" aria-label="İstifadəçini blokla"><Ban size={15}/></button>:null}</div></header>
               <div ref={listRef} className="message-list" role="log" aria-live="polite"><div className="message-day"><span>Mesajlar</span></div>{loading ? <p className="chat-state">Yüklənir…</p> : null}{error ? <p className="form-error" role="alert">{error}</p> : null}{!loading && !error && !messages.length ? <p className="chat-state">İlk mesajı sən yaz.</p> : null}<AnimatePresence initial={false}>{messages.map((message) => { const own = message.senderId === user?.id; const canDelete = own || (active.kind === "group" && active.group.isAdmin); return <motion.div key={message.id} className={`message-row ${own ? "message-own" : "message-peer"}`} initial={reduceMotion ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>{!own ? <span className="message-avatar">{message.senderInitials || active.peer.initials}</span> : null}<div>{active.kind === "group" && !own ? <strong className="message-sender-name">{message.senderName || "Klub üzvü"}</strong> : null}<p>{message.body}</p><span>{new Intl.DateTimeFormat("az-AZ", { hour: "2-digit", minute: "2-digit" }).format(new Date(message.createdAt))}{own ? <Check size={11} /> : null}{canDelete ? <button type="button" className="message-delete" onClick={() => void removeMessage(message.id)} aria-label="Mesajı sil"><Trash2 size={11} /></button> : null}</span></div></motion.div>; })}{typing ? <motion.div className="typing-row" initial={{ opacity: 0 }} animate={{ opacity: 1 }}><span className="message-avatar">{active.peer.initials}</span><div className="typing-bubble"><i /><i /><i /></div></motion.div> : null}</AnimatePresence></div>
               <form className="chat-composer" onSubmit={(event) => void send(event)}><label className="sr-only" htmlFor="chat-message">Mesaj</label><textarea id="chat-message" value={draft} onChange={(event) => changeDraft(event.target.value)} onKeyDown={keyDown} rows={1} maxLength={2000} placeholder="Mesajını yaz…" /><button type="submit" disabled={!draft.trim() || !active.conversationId}><Send size={17} /></button><span className="composer-hint">Enter ilə göndər · Shift + Enter ilə yeni sətir</span></form>
             </> : <div className="chat-center-empty"><MessagesSquare size={30} /><h2>Söhbət seç</h2><p>Şəxsi söhbətlər və klub qrupları ayrı siyahılarda saxlanılır.</p></div>}

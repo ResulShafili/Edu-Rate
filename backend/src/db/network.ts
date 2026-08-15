@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { databasePool } from "./database.js";
+import { env } from "../config/env.js";
 
 export type NetworkCategory = "official" | "faculties" | "clubs" | "scholarship" | "events";
 export type NetworkTone = "lime" | "lilac" | "blue" | "coral" | "mint" | "gold";
@@ -67,13 +68,13 @@ export async function initializeNetworkDatabase() {
     );
     CREATE INDEX IF NOT EXISTS feed_posts_published_at_idx ON feed_posts (published_at DESC);
   `);
-  for (const item of announcements) {
+  if (env.SEED_DEMO_DATA) for (const item of announcements) {
     await databasePool.query(`INSERT INTO announcements
       (id, category, title, summary, source, source_initials, published_at, tone, starts_at, expires_at, priority)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (id) DO NOTHING`,
       [item.id, item.category, item.title, item.summary, item.source, item.sourceInitials, item.publishedAt, item.tone, item.startsAt, item.expiresAt, item.priority]);
   }
-  for (const item of feed) {
+  if (env.SEED_DEMO_DATA) for (const item of feed) {
     await databasePool.query(`INSERT INTO feed_posts
       (id, kind, category, title, summary, source, source_initials, published_at, tone, tags)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (id) DO NOTHING`,

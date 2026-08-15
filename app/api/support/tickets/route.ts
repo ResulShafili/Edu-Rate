@@ -22,7 +22,6 @@ export async function POST(request: Request) {
       throw new ApiHttpError(422, "INVALID_TICKET", "Məcburi xanaları düzgün doldurun.");
     }
     const token=readRemoteCredentialToken(request);
-    if(!token) throw new ApiHttpError(401,"UNAUTHENTICATED","Dəstək müraciəti üçün hesaba daxil ol.");
     const data = await requestRemoteApi<{ reference: string; status: string }>("/api/support/tickets", { method: "POST", body, token });
     return apiSuccess(data, 201);
   } catch (error) {
@@ -33,7 +32,7 @@ export async function POST(request: Request) {
 export async function GET(request:Request) {
   try {
     const token=readRemoteCredentialToken(request);
-    if(!token) throw new ApiHttpError(401,"UNAUTHENTICATED","Müraciətləri görmək üçün hesaba daxil ol.");
+    if(!token) return apiSuccess([]);
     return apiSuccess(await requestRemoteApi<unknown[]>("/api/support/tickets/me",{token}));
   } catch(error) { return apiError(error); }
 }

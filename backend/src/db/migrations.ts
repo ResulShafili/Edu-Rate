@@ -247,7 +247,90 @@ const migrations: Migration[] = [
       ON CONFLICT DO NOTHING;
     `,
   },
+  {
+    version: 11,
+    name: "verified identities revocable sessions and legal consent",
+    sql: `
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_version VARCHAR(32);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS privacy_version VARCHAR(32);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS legal_accepted_at TIMESTAMPTZ;
+
+      CREATE TABLE IF NOT EXISTS auth_sessions (
+        id UUID PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash VARCHAR(64) NOT NULL UNIQUE,
+        user_agent VARCHAR(300) NOT NULL DEFAULT '',
+        ip_address VARCHAR(80) NOT NULL DEFAULT '',
+        expires_at TIMESTAMPTZ NOT NULL,
+        last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        revoked_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS auth_sessions_user_idx ON auth_sessions(user_id, revoked_at, expires_at DESC);
+
+      CREATE TABLE IF NOT EXISTS auth_action_tokens (
+        id UUID PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        purpose VARCHAR(32) NOT NULL CHECK (purpose IN ('verify_email','reset_password','activate_account')),
+        token_hash VARCHAR(64) NOT NULL UNIQUE,
+        expires_at TIMESTAMPTZ NOT NULL,
+        used_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS auth_action_tokens_user_idx ON auth_action_tokens(user_id, purpose, created_at DESC);
+
+      UPDATE users SET email_verified_at=COALESCE(email_verified_at, created_at)
+      WHERE email_verified_at IS NULL AND created_at < NOW() - INTERVAL '1 minute';
+
+      DELETE FROM teacher_reviews WHERE teacher_profile_id IN
+        (SELECT id FROM professional_profiles WHERE user_id IS NULL);
+      DELETE FROM mentorship_requests WHERE mentor_profile_id IN
+        (SELECT id FROM professional_profiles WHERE user_id IS NULL);
+      DELETE FROM professional_profiles WHERE user_id IS NULL;
+    `,
+  },
+  {
+    version: 12,
+    name: "remove production demonstration catalog content",
+    sql: `
+      DELETE FROM event_registrations WHERE event_id IN ('future-forms','human-machine','afterlight','soft-reset');
+      DELETE FROM events WHERE id IN ('future-forms','human-machine','afterlight','soft-reset');
+      DELETE FROM club_memberships WHERE club_id IN (SELECT id FROM clubs WHERE created_by IS NULL);
+      DELETE FROM conversations WHERE club_id IN (SELECT id FROM clubs WHERE created_by IS NULL);
+      DELETE FROM clubs WHERE created_by IS NULL;
+      DELETE FROM announcements WHERE id IN ('2026-orientation','2026-scholarship','2026-robotics-lab');
+      DELETE FROM feed_posts WHERE id IN ('library-hours-august','frontend-team-august','engineering-showcase-august','digital-safety-august','debate-intake-august');
+    `,
+  },
+  {
+    version: 13,
+    name: "message safety reports tombstones and mute controls",
+    sql: `
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS deleted_by UUID REFERENCES users(id) ON DELETE SET NULL;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS deletion_reason VARCHAR(240);
+      ALTER TABLE conversation_participants ADD COLUMN IF NOT EXISTS muted_until TIMESTAMPTZ;
+      CREATE TABLE IF NOT EXISTS content_reports (
+        id UUID PRIMARY KEY,
+        reporter_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        entity_type VARCHAR(24) NOT NULL CHECK(entity_type IN ('message','profile','review','club')),
+        entity_id VARCHAR(120) NOT NULL,
+        reason VARCHAR(32) NOT NULL CHECK(reason IN ('abuse','threat','discrimination','spam','fake_profile','personal_data','other')),
+        details VARCHAR(1000) NOT NULL DEFAULT '',
+        status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK(status IN ('open','reviewing','resolved','dismissed')),
+        reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        reviewed_at TIMESTAMPTZ,
+        resolution_note VARCHAR(1000) NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS content_reports_queue_idx ON content_reports(status,created_at DESC);
+    `,
+  },
 ];
+
+export const latestMigrationVersion = Math.max(...migrations.map((migration) => migration.version));
 
 export async function runMigrations() {
   if (!databasePool) return;

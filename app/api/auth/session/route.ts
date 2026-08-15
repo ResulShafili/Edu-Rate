@@ -1,4 +1,4 @@
-import { ApiHttpError, apiError, apiSuccess } from "../../../lib/api/http";
+import { apiError, apiSuccess } from "../../../lib/api/http";
 import {
   getRemoteSession,
   mapRemoteUserToProfile,
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   try {
     const token = readRemoteCredentialToken(request);
     if (!token) {
-      throw new ApiHttpError(401, "UNAUTHENTICATED", "Sessiya tapılmadı və ya vaxtı bitib.");
+      return apiSuccess({ user: null });
     }
 
     const session = await getRemoteSession(token);

@@ -211,10 +211,10 @@ export function PlatformShell({ children }: PlatformShellProps) {
 
           <footer className="site-footer">
             <Link href="/" className="brand"><span className="brand-mark"><span /></span>EDURATE</Link>
-            <p>Universitet həyatını vahid və əlçatan rəqəmsal təcrübədə birləşdiririk.</p>
+            <p>EduRate müstəqil tələbə pilotudur və Qarabağ Universitetinin rəsmi informasiya sistemi deyil.</p>
             <div>
               <span>© 2026 EduRate</span>
-              <a href="mailto:hello@edurate.az">hello@edurate.az</a>
+              <Link href="/support?topic=privacy">Əlaqə və məxfilik sorğusu</Link>
             </div>
           </footer>
         </div>

@@ -30,12 +30,13 @@ export function verifyPassword(password: string, passwordHash: string) {
   return bcrypt.compare(password, passwordHash);
 }
 
-export function createAccessToken(user: UserRecord) {
+export function createAccessToken(user: UserRecord, sessionId?:string) {
   return jwt.sign({ role: user.role }, env.JWT_SECRET, {
     algorithm: "HS256",
     subject: user.id,
     issuer,
     audience,
+    ...(sessionId ? { jwtid: sessionId } : {}),
     expiresIn: env.JWT_EXPIRES_IN as SignOptions["expiresIn"],
   });
 }
@@ -63,7 +64,7 @@ export function verifyAccessToken(token: string) {
       throw new Error("Token rolu yanlışdır.");
     }
 
-    return { userId: payload.sub, role };
+    return { userId: payload.sub, role, sessionId: payload.jti };
   } catch {
     throw new ApiError(401, "INVALID_TOKEN", "Sessiya etibarlı deyil.");
   }

@@ -18,6 +18,10 @@ export interface UserRecord {
   about: string;
   role: UserRole;
   status: UserStatus;
+  emailVerifiedAt: string | null;
+  termsVersion: string | null;
+  privacyVersion: string | null;
+  legalAcceptedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -31,6 +35,9 @@ export interface CreateUserRecord {
   program?: string;
   role?: UserRole;
   status?: UserStatus;
+  emailVerifiedAt?: string | null;
+  termsVersion?: string | null;
+  privacyVersion?: string | null;
 }
 
 export interface UpdateUserRecord {
@@ -67,6 +74,10 @@ function mapUser(row: Record<string, unknown>): UserRecord {
     about: String(row.about ?? "EduRate icmasına xoş gəlmisən."),
     role: row.role as UserRole,
     status: (row.status ?? "Aktiv") as UserStatus,
+    emailVerifiedAt: row.email_verified_at ? new Date(String(row.email_verified_at)).toISOString() : null,
+    termsVersion: row.terms_version ? String(row.terms_version) : null,
+    privacyVersion: row.privacy_version ? String(row.privacy_version) : null,
+    legalAcceptedAt: row.legal_accepted_at ? new Date(String(row.legal_accepted_at)).toISOString() : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at ?? row.created_at)).toISOString(),
   };
@@ -158,6 +169,10 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
     // An e-mail address alone is never proof of administrator ownership.
     role: input.role ?? "student",
     status: input.status ?? "Aktiv",
+    emailVerifiedAt: input.emailVerifiedAt === undefined ? new Date().toISOString() : input.emailVerifiedAt,
+    termsVersion: input.termsVersion ?? null,
+    privacyVersion: input.privacyVersion ?? null,
+    legalAcceptedAt: input.termsVersion && input.privacyVersion ? new Date().toISOString() : null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -168,8 +183,8 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
   }
 
   const result = await databasePool.query(
-    `INSERT INTO users (id, name, email, password_hash, university, faculty, program, role, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `INSERT INTO users (id, name, email, password_hash, university, faculty, program, role, status, email_verified_at, terms_version, privacy_version, legal_accepted_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      RETURNING *`,
     [
       user.id,
@@ -181,10 +196,26 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
       user.program,
       user.role,
       user.status,
+      user.emailVerifiedAt,
+      user.termsVersion,
+      user.privacyVersion,
+      user.legalAcceptedAt,
     ],
   );
 
   return mapUser(result.rows[0]);
+}
+
+export async function markEmailVerified(id:string):Promise<UserRecord|null>{
+  if(!databasePool){const current=[...memoryUsers.values()].find((user)=>user.id===id);if(!current)return null;current.emailVerifiedAt=new Date().toISOString();current.updatedAt=current.emailVerifiedAt;return current;}
+  const result=await databasePool.query("UPDATE users SET email_verified_at=NOW(),updated_at=NOW() WHERE id=$1 RETURNING *",[id]);
+  return result.rows[0]?mapUser(result.rows[0]):null;
+}
+
+export async function updatePassword(id:string,passwordHash:string):Promise<boolean>{
+  if(!databasePool){const current=[...memoryUsers.values()].find((user)=>user.id===id);if(!current)return false;current.passwordHash=passwordHash;current.updatedAt=new Date().toISOString();return true;}
+  const result=await databasePool.query("UPDATE users SET password_hash=$2,updated_at=NOW() WHERE id=$1",[id,passwordHash]);
+  return Boolean(result.rowCount);
 }
 
 export async function listUsers(limit = 50): Promise<UserRecord[]> {

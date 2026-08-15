@@ -8,6 +8,7 @@ import { initializeNetworkDatabase } from "./db/network.js";
 import { runMigrations } from "./db/migrations.js";
 import { seedProfessionalProfiles } from "./db/professionals.js";
 import { attachRealtime, closeRealtime } from "./realtime.js";
+import { cleanupExpiredSecurityData } from "./db/auth-security.js";
 
 await initializeDatabase();
 await initializeBusinessDatabase();
@@ -15,9 +16,12 @@ await initializePlatformDatabase();
 await initializeNetworkDatabase();
 await runMigrations();
 await seedProfessionalProfiles();
+await cleanupExpiredSecurityData();
 
 const server = createServer(createApp());
 attachRealtime(server);
+const cleanupTimer=setInterval(()=>void cleanupExpiredSecurityData().catch((error)=>console.error("Təhlükəsizlik məlumatlarının təmizlənməsi alınmadı.",error)),6*60*60*1000);
+cleanupTimer.unref();
 server.requestTimeout = 30_000;
 server.headersTimeout = 15_000;
 server.keepAliveTimeout = 5_000;
@@ -34,6 +38,7 @@ server.listen(env.PORT, "0.0.0.0", () => {
 async function shutdown(signal: string) {
   console.log(`${signal} alındı; server dayandırılır.`);
   server.close(async () => {
+    clearInterval(cleanupTimer);
     await closeRealtime();
     await closeDatabase();
     process.exit(0);

@@ -80,15 +80,17 @@ export function createApp() {
   app.use("/api/realtime", realtimeRouter);
   app.use("/api", catalogRouter);
   app.use("/api/admin", adminRouter);
-  app.get("/api/openapi.json", (_request, response) => response.json(openApiDocument));
-  app.use(
-    "/api-docs",
-    swaggerUi.serve,
-    swaggerUi.setup(openApiDocument, {
-      customSiteTitle: "EduRate API sənədləri",
-      swaggerOptions: { persistAuthorization: false, displayRequestDuration: true },
-    }),
-  );
+  if(env.NODE_ENV!=="production"||env.SWAGGER_PUBLIC){
+    app.get("/api/openapi.json", (_request, response) => response.json(openApiDocument));
+    app.use(
+      "/api-docs",
+      swaggerUi.serve,
+      swaggerUi.setup(openApiDocument, {
+        customSiteTitle: "EduRate API sənədləri",
+        swaggerOptions: { persistAuthorization: false, displayRequestDuration: true },
+      }),
+    );
+  }
 
   app.use(notFound);
   app.use(errorHandler);

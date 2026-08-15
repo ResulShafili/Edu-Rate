@@ -1,9 +1,9 @@
 "use client";
 
-import { Check, FileText, Inbox, Megaphone, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { Check, FileText, Flag, Inbox, Megaphone, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
-type Tab = "announcements" | "feed" | "support-tickets";
+type Tab = "announcements" | "feed" | "support-tickets" | "reports";
 type Item = {
   id: string;
   title?: string;
@@ -13,6 +13,9 @@ type Item = {
   source?: string;
   name?: string;
   reference?: string;
+  reason?: string;
+  details?: string;
+  entityType?: string;
   status: string;
 };
 
@@ -20,6 +23,7 @@ const tabs: Array<{ id: Tab; label: string; icon: typeof Megaphone }> = [
   { id: "announcements", label: "Elanlar", icon: Megaphone },
   { id: "feed", label: "Lent moderasiyası", icon: FileText },
   { id: "support-tickets", label: "Dəstək", icon: Inbox },
+  { id: "reports", label: "Şikayətlər", icon: Flag },
 ];
 
 export function AdminOperationsPanel() {
@@ -68,7 +72,7 @@ export function AdminOperationsPanel() {
       const response = await fetch(`/api/admin/${tab}/${encodeURIComponent(item.id)}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(tab === "reports" ? { status, resolutionNote: status === "resolved" ? "Moderator məzmunu yoxladı və şikayəti həll etdi." : "Moderator şikayəti əsassız hesab etdi." } : { status }),
       });
       const payload = await response.json() as { data?: Item; error?: { message?: string } };
       if (!response.ok || !payload.data) throw new Error(payload.error?.message ?? "Status dəyişmədi.");
@@ -162,9 +166,9 @@ export function AdminOperationsPanel() {
           {items.map((item) => (
             <article key={item.id}>
               <div>
-                <small>{item.reference ?? item.source ?? item.name ?? "EduRate"}</small>
-                <h3>{item.title ?? item.topic ?? "Müraciət"}</h3>
-                <p>{item.summary ?? item.message ?? "Əlavə məlumat yoxdur."}</p>
+                <small>{item.reference ?? item.source ?? item.name ?? item.entityType ?? "EduRate"}</small>
+                <h3>{item.title ?? item.topic ?? item.reason ?? "Müraciət"}</h3>
+                <p>{item.summary ?? item.message ?? item.details ?? "Əlavə məlumat yoxdur."}</p>
               </div>
               <footer>
                 <span className={`is-${item.status}`}>{statusLabel(item.status)}</span>
@@ -183,7 +187,11 @@ export function AdminOperationsPanel() {
                     <Check size={14} /> {item.status === "open" ? "İcraya al" : "Həll et"}
                   </button>
                 )}
-                {tab !== "support-tickets" && <button className="is-danger" disabled={busyId === item.id} onClick={() => void remove(item)} aria-label="Qeydi sil"><Trash2 size={14} /></button>}
+                {tab === "reports" && (item.status === "open" || item.status === "reviewing") && <>
+                  <button disabled={busyId === item.id} onClick={() => void changeStatus(item, "resolved")}><Check size={14} /> Həll et</button>
+                  <button disabled={busyId === item.id} onClick={() => void changeStatus(item, "dismissed")}><X size={14} /> Əsassızdır</button>
+                </>}
+                {tab !== "support-tickets" && tab !== "reports" && <button className="is-danger" disabled={busyId === item.id} onClick={() => void remove(item)} aria-label="Qeydi sil"><Trash2 size={14} /></button>}
               </footer>
             </article>
           ))}
@@ -194,5 +202,5 @@ export function AdminOperationsPanel() {
 }
 
 function statusLabel(status: string) {
-  return ({ pending: "Gözləyir", published: "Yayımlanıb", rejected: "Rədd edilib", draft: "Qaralama", open: "Açıq", in_progress: "İcradadır", resolved: "Həll edilib" } as Record<string,string>)[status] ?? status;
+  return ({ pending: "Gözləyir", published: "Yayımlanıb", rejected: "Rədd edilib", draft: "Qaralama", open: "Açıq", reviewing: "Yoxlanılır", dismissed: "Əsassızdır", in_progress: "İcradadır", resolved: "Həll edilib" } as Record<string,string>)[status] ?? status;
 }

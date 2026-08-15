@@ -34,6 +34,7 @@ import {
   isAuthProviderUnavailable,
   useAuth,
 } from "./AuthProvider";
+import { SessionManager } from "./SessionManager";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const enterTransition = { duration: 0.62, ease };
@@ -372,6 +373,8 @@ export function UserProfileDashboard() {
       >
         {profileMessage}
       </p>
+
+      <SessionManager />
 
       <motion.div
         className="profile-stats"

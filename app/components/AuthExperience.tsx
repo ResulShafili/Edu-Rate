@@ -161,6 +161,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
           faculty: values.accountType === "student" ? values.faculty : "Müəllim heyəti",
           program: values.program,
           accountType: values.accountType as AccountType,
+          legalAccepted: true,
         });
         if (result.requiresApproval) {
           setPendingTeacherEmail(values.email);
@@ -169,6 +170,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
           setSelectedProgram("");
           return;
         }
+        if(result.requiresEmailVerification){setFormMessage("Təsdiq keçidi e-poçt ünvanına göndərildi. Məktubdakı keçidi aç.");form.reset();return;}
         setFormMessage("Hazırsan — hesabın yaradıldı. Profilin açılır.");
         form.reset();
         router.push(getRoleHome(result.user?.accessRole, returnTo));
@@ -465,11 +467,14 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
 
                 <div className="auth-form-footer">
                   {mode === "login" && (
-                    <a className="auth-forgot-link" href="/support?topic=account">Şifrəni unutmusansa, dəstək al</a>
+                    <a className="auth-forgot-link" href="/auth/recovery">Şifrəni unutmusansa, bərpa et</a>
                   )}
-                  <p className="auth-privacy-note">
-                    <Check size={13} aria-hidden="true" /> Məlumatların yalnız şəxsi təcrübəni qurmaq üçün istifadə olunur.
-                  </p>
+                  {mode === "register" ? (
+                    <label className="auth-privacy-note auth-legal-consent">
+                      <input type="checkbox" name="legalAccepted" value="true" required />
+                      <span><Check size={13} aria-hidden="true" /> <a href="/terms" target="_blank">İstifadə şərtlərini</a> və <a href="/privacy" target="_blank">məxfilik siyasətini</a> oxudum və qəbul edirəm.</span>
+                    </label>
+                  ) : null}
                   <motion.button
                     type="submit"
                     className="auth-submit"
@@ -496,9 +501,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                 >
                   {visibleMessage}
                 </p>
-                <p className="auth-legal-links">
-                  Davam etməklə <a href="/terms">istifadə şərtləri</a> və <a href="/privacy">məxfilik siyasəti</a> ilə razılaşırsan.
-                </p>
+                <p className="auth-legal-links">EduRate müstəqil tələbə pilotudur və universitetin rəsmi informasiya sistemi deyil.</p>
               </form>}
             </motion.div>
           </AnimatePresence>

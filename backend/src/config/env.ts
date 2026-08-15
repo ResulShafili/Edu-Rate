@@ -17,6 +17,11 @@ const envSchema = z
       .string()
       .default("http://localhost:3000,https://edu-rate-nu.vercel.app"),
     TRUST_PROXY: booleanValue,
+    SEED_DEMO_DATA: booleanValue,
+    RESEND_API_KEY: z.string().optional().or(z.literal("")),
+    EMAIL_FROM: z.string().default("EduRate <onboarding@resend.dev>"),
+    PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
+    SWAGGER_PUBLIC: booleanValue,
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV === "production" && value.JWT_SECRET.length < 32) {
@@ -49,4 +54,5 @@ export const env = {
   ALLOWED_ORIGINS: parsed.data.FRONTEND_URL.split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
+  RESEND_API_KEY: parsed.data.RESEND_API_KEY || undefined,
 };

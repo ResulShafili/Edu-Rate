@@ -4,6 +4,7 @@ declare global {
       auth?: {
         userId: string;
         role: "student" | "mentor" | "teacher" | "assistant_admin" | "admin";
+        sessionId?: string;
       };
     }
   }
