@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { AdminAccessState } from "../components/AdminAccessState";
 import { TechnicalPresentation } from "../components/TechnicalPresentation";
 import { resolveAdminAccess } from "../lib/auth/admin-access";
@@ -14,7 +14,6 @@ export const metadata: Metadata = {
 };
 
 export default async function TechnicalPresentationPage() {
-  if (process.env.EDURATE_TECHNICAL_PRESENTATION_ENABLED !== "true") notFound();
   const access = await resolveAdminAccess();
   if (access.status === "signed-out") redirect("/auth?returnTo=%2Ftechnical-presentation");
 
