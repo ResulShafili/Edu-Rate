@@ -307,6 +307,13 @@ export const openApiDocument = {
       patch:{tags:["Community"],summary:"Gələn əlaqə sorğusunu qəbul et",security:[{bearerAuth:[]}],responses:{"200":{description:"Əlaqə qəbul edildi"},"403":{description:"Bu sorğunu idarə etmək olmaz"},"404":{description:"Sorğu tapılmadı"}}},
       delete:{tags:["Community"],summary:"Sorğunu geri çək, rədd et və ya əlaqəni sil",security:[{bearerAuth:[]}],responses:{"204":{description:"Əlaqə silindi"},"404":{description:"Əlaqə tapılmadı"}}},
     },
+    "/api/community/blocks": {
+      post:{tags:["Community"],summary:"İstifadəçini blokla",security:[{bearerAuth:[]}],requestBody:{required:true,content:{"application/json":{schema:{type:"object",additionalProperties:false,required:["userId"],properties:{userId:{type:"string",format:"uuid"}}}}}},responses:{"204":{description:"İstifadəçi bloklandı"},"422":{description:"Öz hesabını bloklamaq olmaz"}}},
+    },
+    "/api/community/blocks/{userId}": {
+      parameters:[{name:"userId",in:"path",required:true,schema:{type:"string",format:"uuid"}}],
+      delete:{tags:["Community"],summary:"Öz tətbiq etdiyin bloku aç",security:[{bearerAuth:[]}],responses:{"204":{description:"Blok açıldı"},"404":{description:"Açılması mümkün olan blok tapılmadı"}}},
+    },
     "/api/community/conversations": {
       get:{tags:["Messaging"],summary:"Söhbətləri siyahıla",security:[{bearerAuth:[]}],responses:{"200":{description:"Söhbətlər"}}},
       post:{tags:["Messaging"],summary:"Şəxsi söhbət yarat",security:[{bearerAuth:[]}],requestBody:{required:true,content:{"application/json":{schema:{type:"object",additionalProperties:false,required:["peerId"],properties:{peerId:{type:"string",format:"uuid"}}}}}},responses:{"201":{description:"Söhbət yaradıldı"},"403":{description:"Qəbul edilmiş əlaqə tələb olunur"}}},
@@ -328,6 +335,10 @@ export const openApiDocument = {
       patch:{tags:["Messaging"],summary:"Söhbətin mesajlarını oxunmuş kimi işarələ",security:[{bearerAuth:[]}],responses:{"200":{description:"Oxunma vəziyyəti yeniləndi"},"403":{description:"Söhbətə giriş yoxdur"},"404":{description:"Söhbət tapılmadı"}}},
     },
     "/api/realtime/ticket": { post:{tags:["Messaging"],summary:"Birdəfəlik realtime bileti al",security:[{bearerAuth:[]}],responses:{"201":{description:"60 saniyəlik bilet"}}} },
+    "/api/community/conversations/{id}/mute": {
+      parameters:[{name:"id",in:"path",required:true,schema:{type:"string",format:"uuid"}}],
+      patch:{tags:["Messaging"],summary:"Söhbəti səssizə al və ya səsi aktiv et",security:[{bearerAuth:[]}],requestBody:{required:true,content:{"application/json":{schema:{type:"object",additionalProperties:false,required:["muted"],properties:{muted:{type:"boolean"}}}}}},responses:{"200":{description:"Bildiriş seçimi yeniləndi"},"403":{description:"Söhbətə giriş yoxdur"}}},
+    },
     "/api/admin/overview": {
       get: { tags: ["Administration"], summary: "Canlı idarəetmə göstəricilərini göstər", security: [{ bearerAuth: [] }], responses: { "200": { description: "İdarəetmə icmalı" }, "403": { description: "Admin icazəsi tələb olunur" } } },
     },

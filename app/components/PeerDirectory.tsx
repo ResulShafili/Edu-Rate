@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect -- the authenticated directory refresh is effect-driven */
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Check, MapPin, MessageCircle, RefreshCw, UserPlus } from "lucide-react";
+import { Ban, Check, MapPin, MessageCircle, RefreshCw, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import type { Peer } from "../data/peers";
 
@@ -46,6 +46,7 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
   const [directory, setDirectory] = useState<Peer[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [actionPeerId, setActionPeerId] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
 
@@ -82,13 +83,16 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
   async function updateConnection(peerId: string) {
     if (!canInteract) { onRequireAuth(); return; }
     const current = connections.find((item) => item.requesterId === peerId || item.recipientId === peerId);
-    if (current?.status === "accepted" || current?.status === "blocked") return;
+    if (current?.status === "accepted") return;
+    const blockedByMe = current?.status === "blocked" && current.requesterId === currentUserId;
+    if (current?.status === "blocked" && !blockedByMe) return;
     const outgoing = current?.status === "pending" && current.requesterId === currentUserId;
-    const method = outgoing ? "DELETE" : current ? "PATCH" : "POST";
-    const path = current ? `/api/community/connections/${current.id}` : "/api/community/connections";
+    const method = blockedByMe || outgoing ? "DELETE" : current ? "PATCH" : "POST";
+    const path = blockedByMe ? `/api/community/blocks/${peerId}` : current ? `/api/community/connections/${current.id}` : "/api/community/connections";
     const hasBody = method === "POST" || method === "PATCH";
     setActionPeerId(peerId);
     setError("");
+    setNotice("");
     try {
       const response = await fetch(path, {
         method,
@@ -101,6 +105,7 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
       }
       if (method === "DELETE") {
         setConnections((items) => items.filter((item) => item.id !== current?.id));
+        setNotice(blockedByMe ? "İstifadəçi blokdan çıxarıldı. İstəsən, yenidən əlaqə sorğusu göndərə bilərsən." : "Əlaqə sorğusu geri çəkildi.");
         window.dispatchEvent(new CustomEvent("edurate:connections-changed"));
         return;
       }
@@ -123,6 +128,7 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
 
       <div className="directory-meta"><span><i />{directory.length} aktiv istifadəçi</span></div>
       {error ? <p className="form-error" role="alert">{error}</p> : null}
+      {notice ? <p className="form-success" role="status">{notice}</p> : null}
       {!canInteract && !loading ? <div className="empty-state"><h2>İcmaya qoşul</h2><p>Real istifadəçiləri görmək və əlaqə qurmaq üçün hesabına daxil ol.</p><button type="button" className="kuds-primary-button" onClick={onRequireAuth}>Daxil ol</button></div> : null}
       <div className="peers-grid" aria-busy={loading}>
         <AnimatePresence mode="popLayout">
@@ -130,6 +136,7 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
             const connection = connections.find((item) => item.requesterId === peer.id || item.recipientId === peer.id);
             const accepted = connection?.status === "accepted";
             const blocked = connection?.status === "blocked";
+            const blockedByMe = blocked && connection?.requesterId === currentUserId;
             const incoming = connection?.status === "pending" && connection.recipientId === currentUserId;
             const outgoing = connection?.status === "pending" && connection.requesterId === currentUserId;
             const actionPending = actionPeerId === peer.id;
@@ -142,8 +149,8 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
                 <div className="peer-tags">{peer.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
                 <div className="peer-location"><MapPin size={12} />{peer.city}</div>
                 <div className="peer-actions">
-                  <button type="button" className={accepted || outgoing ? "is-connected" : ""} disabled={accepted || blocked || actionPending} aria-busy={actionPending} title={outgoing ? "Sorğunu geri çək" : undefined} onClick={() => void updateConnection(peer.id)}>
-                    {accepted ? <Check size={14} /> : <UserPlus size={14} />}{actionPending ? outgoing ? "Geri çəkilir…" : "Göndərilir…" : accepted ? "Əlaqədəsiniz" : blocked ? "Əlaqə məhdudlaşdırılıb" : incoming ? "Qəbul et" : outgoing ? "Sorğunu geri çək" : "Əlaqə qur"}
+                  <button type="button" className={accepted || outgoing ? "is-connected" : blockedByMe ? "is-unblock" : ""} disabled={accepted || (blocked && !blockedByMe) || actionPending} aria-busy={actionPending} title={outgoing ? "Sorğunu geri çək" : blockedByMe ? "İstifadəçini blokdan çıxar" : undefined} onClick={() => void updateConnection(peer.id)}>
+                    {blockedByMe ? <Ban size={14} /> : accepted ? <Check size={14} /> : <UserPlus size={14} />}{actionPending ? blockedByMe ? "Blok açılır…" : outgoing ? "Geri çəkilir…" : "Göndərilir…" : accepted ? "Əlaqədəsiniz" : blockedByMe ? "Blokdan çıxar" : blocked ? "Sizi bloklayıb" : incoming ? "Qəbul et" : outgoing ? "Sorğunu geri çək" : "Əlaqə qur"}
                   </button>
                   <button type="button" className="peer-message" disabled={!accepted} title={!accepted ? "Əvvəlcə əlaqə qəbul edilməlidir" : undefined} onClick={() => onMessage(peer)}><MessageCircle size={14} />Mesaj yaz</button>
                 </div>

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
-import { acceptConnection, blockConnection, createConnection, createConversation, createMessage, deleteConnection, deleteMessage, listClubConversations, listCommunityUsers, listConnections, listConversations, listMessages, markRead, muteConversation, reportContent } from "../db/messaging.js";
+import { acceptConnection, blockConnection, createConnection, createConversation, createMessage, deleteConnection, deleteMessage, listClubConversations, listCommunityUsers, listConnections, listConversations, listMessages, markRead, muteConversation, reportContent, unblockConnection } from "../db/messaging.js";
 import { ApiError } from "../lib/api-error.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { publishRealtime } from "../realtime.js";
@@ -15,6 +15,7 @@ communityRouter.post("/connections",async(req,res)=>{const {userId}=z.object({us
 communityRouter.patch("/connections/:id",async(req,res)=>{const id=z.string().uuid().parse(req.params.id);const c=await acceptConnection(id,req.auth!.userId);if(!c)throw new ApiError(404,"CONNECTION_NOT_FOUND","Gözləyən əlaqə tapılmadı.");res.json({data:c});});
 communityRouter.delete("/connections/:id",async(req,res)=>{if(!await deleteConnection(z.string().uuid().parse(req.params.id),req.auth!.userId))throw new ApiError(404,"CONNECTION_NOT_FOUND","Əlaqə tapılmadı.");res.status(204).send();});
 communityRouter.post("/blocks",async(req,res)=>{const {userId}=z.object({userId:z.string().uuid()}).strict().parse(req.body);await blockConnection(req.auth!.userId,userId);res.status(204).send();});
+communityRouter.delete("/blocks/:userId",async(req,res)=>{const peerId=z.string().uuid().parse(req.params.userId);if(!await unblockConnection(req.auth!.userId,peerId))throw new ApiError(404,"BLOCK_NOT_FOUND","Açılması mümkün olan blok tapılmadı.");res.status(204).send();});
 communityRouter.get("/conversations",async(req,res)=>res.json({data:await listConversations(req.auth!.userId)}));
 communityRouter.get("/groups",async(req,res)=>res.json({data:await listClubConversations(req.auth!.userId)}));
 communityRouter.post("/conversations",async(req,res)=>{const {peerId}=z.object({peerId:z.string().uuid()}).strict().parse(req.body);res.status(201).json({data:await createConversation(req.auth!.userId,peerId)});});

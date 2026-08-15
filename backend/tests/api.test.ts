@@ -966,6 +966,11 @@ describe("EduRate API", () => {
     const directoryAfterBlock=await request(app).get("/api/community/conversations").set("Authorization",studentAuthorization).expect(200);
     assert.equal(directoryAfterBlock.body.data.some((item:{id:string})=>item.id===id),false);
     await request(app).post(`/api/community/conversations/${id}/messages`).set("Authorization",peerAuthorization).send({body:"Bu mesaj blokdan sonra göndərilməməlidir."}).expect(403);
+    await request(app).delete(`/api/community/blocks/${sender.id}`).set("Authorization",peerAuthorization).expect(404);
+    await request(app).delete(`/api/community/blocks/${peer.id}`).set("Authorization",studentAuthorization).expect(204);
+    const linksAfterUnblock=await request(app).get("/api/community/connections").set("Authorization",studentAuthorization).expect(200);
+    assert.equal(linksAfterUnblock.body.data.some((item:{requesterId:string;recipientId:string})=>item.requesterId===peer.id||item.recipientId===peer.id),false);
+    await request(app).post("/api/community/connections").set("Authorization",studentAuthorization).send({userId:peer.id}).expect(201);
   });
 
   it("hər klub üçün üzvlərə açıq qrup yaradır və yaradıcını qrup admini edir", async () => {

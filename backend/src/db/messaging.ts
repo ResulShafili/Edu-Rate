@@ -90,9 +90,10 @@ export async function ensureMentorshipConversation(studentId: string, mentorId: 
 export async function deleteConnection(id: string, userId: string): Promise<boolean> {
   if (!databasePool) {
     const connection = connections.get(id);
-    return Boolean(connection && (connection.requesterId === userId || connection.recipientId === userId) && connections.delete(id));
+    const canDelete = connection && (connection.status === "blocked" ? connection.requesterId === userId : connection.requesterId === userId || connection.recipientId === userId);
+    return Boolean(canDelete && connections.delete(id));
   }
-  const result = await databasePool.query("DELETE FROM connections WHERE id=$1 AND (requester_id=$2 OR recipient_id=$2)", [id, userId]);
+  const result = await databasePool.query("DELETE FROM connections WHERE id=$1 AND ((status='blocked' AND requester_id=$2) OR (status<>'blocked' AND (requester_id=$2 OR recipient_id=$2)))", [id, userId]);
   return Boolean(result.rowCount);
 }
 
@@ -102,6 +103,15 @@ export async function blockConnection(userId:string,peerId:string){
   const existing=await databasePool.query("SELECT id FROM connections WHERE (requester_id=$1 AND recipient_id=$2) OR (requester_id=$2 AND recipient_id=$1) LIMIT 1",[userId,peerId]);
   if(existing.rows[0])await databasePool.query("UPDATE connections SET status='blocked',requester_id=$1,recipient_id=$2,updated_at=NOW() WHERE id=$3",[userId,peerId,existing.rows[0].id]);
   else await databasePool.query("INSERT INTO connections(id,requester_id,recipient_id,status) VALUES($1,$2,$3,'blocked')",[randomUUID(),userId,peerId]);
+}
+
+export async function unblockConnection(userId:string,peerId:string):Promise<boolean>{
+  if(!databasePool){
+    const existing=[...connections.values()].find((item)=>item.requesterId===userId&&item.recipientId===peerId&&item.status==="blocked");
+    return Boolean(existing&&connections.delete(existing.id));
+  }
+  const result=await databasePool.query("DELETE FROM connections WHERE requester_id=$1 AND recipient_id=$2 AND status='blocked'",[userId,peerId]);
+  return Boolean(result.rowCount);
 }
 
 export async function createConversation(userId: string, peerId: string): Promise<{ id: string }> {
