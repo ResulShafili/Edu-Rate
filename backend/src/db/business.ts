@@ -457,6 +457,25 @@ export async function decideMentorshipRequest(
   return result.rows[0] ? mapMentorshipRequest(result.rows[0]) : null;
 }
 
+export async function endMentorshipRequest(
+  id: string,
+  mentorId: string,
+  mentorProfileId?: string,
+): Promise<MentorshipRequestRecord | null> {
+  if (!databasePool) {
+    const current = memoryMentorshipRequests.get(id);
+    if (!current || current.mentorId !== mentorId || current.status !== "accepted") return null;
+    const next: MentorshipRequestRecord = { ...current, status: "cancelled", updatedAt: now() };
+    memoryMentorshipRequests.set(id, next);
+    return next;
+  }
+  const result = await databasePool.query(
+    "UPDATE mentorship_requests SET status='cancelled', updated_at=NOW() WHERE id=$1 AND (mentor_id=$2 OR mentor_profile_id=$3) AND status='accepted' RETURNING *",
+    [id, mentorId, mentorProfileId ?? null],
+  );
+  return result.rows[0] ? mapMentorshipRequest(result.rows[0]) : null;
+}
+
 export async function updateMentorshipRequest(id: string, userId: string, note: string): Promise<MentorshipRequestRecord | null> {
   if (!databasePool) {
     const current = memoryMentorshipRequests.get(id);

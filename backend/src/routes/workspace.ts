@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { decideMentorshipRequest, listEvents, listMentorRequests, listMentorshipRequests, listMyEventRegistrations } from "../db/business.js";
+import { decideMentorshipRequest, endMentorshipRequest, listEvents, listMentorRequests, listMentorshipRequests, listMyEventRegistrations } from "../db/business.js";
 import { findUserById, listUsers } from "../db/database.js";
 import { getPlatformCounts, listMyClubMemberships, listSupportTickets, listTeacherReviews } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
@@ -115,9 +115,13 @@ workspaceRouter.patch("/mentorship/:id", async (request, response) => {
     throw new ApiError(403, "MENTOR_REQUIRED", "Bu əməliyyat yalnız təsdiqlənmiş mentor üçündür.");
   }
   const id = z.string().uuid().parse(request.params.id);
-  const { status } = z.object({ status: z.enum(["accepted", "rejected"]) }).strict().parse(request.body);
-  const result = await decideMentorshipRequest(id, mentorProfile.slug, status, mentorProfile.id);
-  if (!result) throw new ApiError(404, "MENTORSHIP_REQUEST_NOT_FOUND", "Gözləyən mentorluq müraciəti tapılmadı.");
+  const { status } = z.object({ status: z.enum(["accepted", "rejected", "cancelled"]) }).strict().parse(request.body);
+  const result = status === "cancelled"
+    ? await endMentorshipRequest(id, mentorProfile.slug, mentorProfile.id)
+    : await decideMentorshipRequest(id, mentorProfile.slug, status, mentorProfile.id);
+  if (!result) throw new ApiError(404, "MENTORSHIP_REQUEST_NOT_FOUND", status === "cancelled"
+    ? "Aktiv mentorluq tapılmadı."
+    : "Gözləyən mentorluq müraciəti tapılmadı.");
   const conversation = status === "accepted"
     ? await ensureMentorshipConversation(result.userId, user.id)
     : null;

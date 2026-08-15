@@ -1538,6 +1538,10 @@ body {
 .kuds-shell .workspace-items button { display: inline-flex; min-height: 34px; padding: 0 10px; align-items: center; gap: 5px; color: var(--ku-dark-green); font-size: 10px; font-weight: 700; border: 1px solid var(--kuds-border); border-radius: 8px; background: #fff; }
 .kuds-shell .workspace-action-error { margin: 0 0 12px; padding: 10px 12px; color: #991b1b; border: 1px solid #fecaca; border-radius: 9px; background: #fef2f2; font-size: 12px; }
 .kuds-shell .workspace-items button:last-child { color: #fff; border-color: var(--ku-green); background: var(--ku-green); }
+.kuds-shell .workspace-items .workspace-message-button { color: #fff; border-color: var(--ku-green); background: var(--ku-green); }
+.kuds-shell .workspace-items .workspace-remove-button { color: #a13f3f; border-color: #e7caca; background: #fff7f7; }
+.kuds-shell .workspace-items .workspace-remove-button:hover,
+.kuds-shell .workspace-items .workspace-remove-button.is-confirming { color: #fff; border-color: #a13f3f; background: #a13f3f; }
 .kuds-shell .workspace-mentor-path { display: grid; margin-top: 24px; padding: 20px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 20px; border: 1px solid color-mix(in srgb, var(--ku-green), transparent 72%); border-radius: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--ku-green), transparent 92%), var(--kuds-surface)); box-shadow: var(--kuds-shadow-xs); }
 .kuds-shell .workspace-mentor-copy > span { display: inline-flex; align-items: center; gap: 6px; color: var(--ku-green); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .kuds-shell .workspace-mentor-copy h2 { margin: 7px 0 0; color: var(--kuds-text); font-size: 23px; letter-spacing: -.035em; }

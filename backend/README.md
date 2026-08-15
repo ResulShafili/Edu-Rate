@@ -54,7 +54,7 @@ Render build mərhələsində TypeScript və tip paketlərini quraşdırmaq üç
 - `GET /api/admin/reviews` — moderasiya növbəsini göstər
 - `PATCH /api/admin/reviews/:id` — rəyi təsdiqlə və ya rədd et
 - `GET /api/workspace` — tələbə, müəllim, mentor və rəhbərlik üçün rol əsaslı panel məlumatları
-- `PATCH /api/workspace/mentorship/:id` — mentorun ona ünvanlanan müraciəti qəbul və ya rədd etməsi
+- `PATCH /api/workspace/mentorship/:id` — mentorun müraciəti qəbul/rədd etməsi və ya aktiv mentorluğu bitirməsi
 - `GET/POST/PATCH/DELETE /api/community/connections` — əlaqə sorğusu, qəbul, rədd və geri çəkmə
 - `GET/POST /api/community/conversations` — qalıcı 1–1 söhbətlərin idarəsi
 - `GET/POST /api/community/conversations/:id/messages` — cursor əsaslı mesaj tarixçəsi və mesaj göndərilməsi

@@ -452,8 +452,8 @@ export const openApiDocument = {
     "/api/workspace/mentorship/{id}": {
       parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
       patch: {
-        tags: ["Mentorship"], summary: "Mentorluq müraciətini qəbul et və ya rədd et", security: [{ bearerAuth: [] }],
-        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["status"], properties: { status: { type: "string", enum: ["accepted", "rejected"] } } } } } },
+        tags: ["Mentorship"], summary: "Mentorluq müraciətini qəbul et, rədd et və ya aktiv mentorluğu bitir", security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["status"], properties: { status: { type: "string", enum: ["accepted", "rejected", "cancelled"] } } } } } },
         responses: { "200": { description: "Müraciət yeniləndi" }, "403": { description: "Mentor icazəsi tələb olunur" }, "404": { description: "Müraciət tapılmadı" } },
       },
     },

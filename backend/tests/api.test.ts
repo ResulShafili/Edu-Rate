@@ -811,6 +811,23 @@ describe("EduRate API", () => {
       .set("Authorization", `Bearer ${studentSignup.body.data.token}`).expect(200);
     assert.equal(mentorshipMessages.body.data.length, 2);
 
+    const endedMentorship = await request(app).patch(`/api/workspace/mentorship/${mentorship.body.data.id}`)
+      .set("Authorization", teacherAuthorization).send({ status: "cancelled" }).expect(200);
+    assert.equal(endedMentorship.body.data.status, "cancelled");
+    await request(app).patch(`/api/workspace/mentorship/${mentorship.body.data.id}`)
+      .set("Authorization", teacherAuthorization).send({ status: "cancelled" }).expect(404);
+
+    const workspaceAfterEnding = await request(app).get("/api/workspace")
+      .set("Authorization", `Bearer ${studentSignup.body.data.token}`).expect(200);
+    const endedItem = workspaceAfterEnding.body.data.items.find((item: { id: string }) => item.id === mentorship.body.data.id);
+    assert.equal(endedItem.status, "cancelled");
+    assert.equal(endedItem.chatPeer, undefined);
+
+    await request(app).post("/api/mentorship/requests")
+      .set("Authorization", `Bearer ${studentSignup.body.data.token}`)
+      .send({ mentorId: `mentor-${teacherSignup.body.data.user.id}`, note: "Yeni dövr üçün yenidən müraciət edirəm." })
+      .expect(201);
+
     await request(app).patch(`/api/admin/users/${teacherSignup.body.data.user.id}`)
       .set("Authorization", adminAuthorization).send({ status: "Məhdudlaşdırılıb" }).expect(200);
     const restrictedCatalog = await request(app).get("/api/teachers").expect(200);
