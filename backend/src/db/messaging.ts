@@ -4,12 +4,12 @@ import { databasePool, listUsers } from "./database.js";
 
 export type CommunityUser = { id: string; name: string; role: string; faculty: string; program: string; city: string };
 export type Connection = { id: string; requesterId: string; recipientId: string; status: "pending" | "accepted" | "blocked"; createdAt: string };
-export type Conversation = { id: string; peer: CommunityUser; lastMessage: string; updatedAt: string; unreadCount: number };
-export type ClubConversation = { id: string; kind: "club"; club: { id: string; slug: string; name: string }; memberCount: number; isAdmin: boolean; lastMessage: string; updatedAt: string; unreadCount: number };
+export type Conversation = { id: string; peer: CommunityUser; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
+export type ClubConversation = { id: string; kind: "club"; club: { id: string; slug: string; name: string }; memberCount: number; isAdmin: boolean; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
 export type Message = { id: string; conversationId: string; senderId: string; senderName: string; senderInitials: string; body: string; createdAt: string; deleted?:boolean };
 export type ContentReport = { id:string; reporterId:string; entityType:"message"|"profile"|"review"|"club"; entityId:string; reason:string; details:string; status:"open"|"reviewing"|"resolved"|"dismissed"; reviewedBy:string|null; resolutionNote:string; createdAt:string; updatedAt:string };
 
-type MemoryConversation = { id: string; participants: string[]; updatedAt: string; kind: "direct" | "club"; clubId?: string; clubSlug?: string; title?: string; createdBy?: string | null };
+type MemoryConversation = { id: string; participants: string[]; updatedAt: string; kind: "direct" | "club"; clubId?: string; clubSlug?: string; title?: string; createdBy?: string | null; mutedParticipants?:Set<string> };
 
 const connections = new Map<string, Connection>();
 const conversations = new Map<string, MemoryConversation>();
@@ -136,16 +136,18 @@ export async function listConversations(userId: string): Promise<Conversation[]>
     return [...conversations.values()].filter((conversation) => conversation.kind === "direct" && conversation.participants.includes(userId)).map((conversation) => {
       const peer = users.find((user) => conversation.participants.includes(user.id) && user.id !== userId);
       if (!peer) return null;
-      return { id: conversation.id, peer: toCommunityUser(peer), lastMessage: messages.get(conversation.id)?.at(-1)?.body ?? "", updatedAt: conversation.updatedAt, unreadCount: 0 };
+      const connection=[...connections.values()].find((item)=>pairMatches(item,userId,peer.id));
+      if(connection?.status!=="accepted")return null;
+      return { id: conversation.id, peer: toCommunityUser(peer), lastMessage: messages.get(conversation.id)?.at(-1)?.body ?? "", updatedAt: conversation.updatedAt, unreadCount: 0, muted:Boolean(conversation.mutedParticipants?.has(userId)) };
     }).filter((item): item is Conversation => Boolean(item));
   }
-  const result = await databasePool.query(`SELECT c.id,c.updated_at,u.id peer_id,u.name,u.role,u.faculty,u.program,u.city,
+  const result = await databasePool.query(`SELECT c.id,c.updated_at,u.id peer_id,u.name,u.role,u.faculty,u.program,u.city,(me.muted_until>NOW()) muted,
     COALESCE((SELECT body FROM messages WHERE conversation_id=c.id ORDER BY created_at DESC,id DESC LIMIT 1),'') last_message,
     (SELECT COUNT(*)::int FROM messages m WHERE m.conversation_id=c.id AND m.sender_id<>$1 AND m.created_at>COALESCE(me.last_read_at,'epoch')) unread_count
     FROM conversations c JOIN conversation_participants me ON me.conversation_id=c.id AND me.user_id=$1
     JOIN conversation_participants other ON other.conversation_id=c.id AND other.user_id<>$1 JOIN users u ON u.id=other.user_id
-    WHERE c.kind='direct' ORDER BY c.updated_at DESC`, [userId]);
-  return result.rows.map((row) => ({ id: String(row.id), peer: { id: String(row.peer_id), name: String(row.name), role: String(row.role), faculty: String(row.faculty), program: String(row.program), city: String(row.city) }, lastMessage: String(row.last_message), updatedAt: iso(row.updated_at), unreadCount: Number(row.unread_count) }));
+    WHERE c.kind='direct' AND EXISTS(SELECT 1 FROM connections cn WHERE cn.status='accepted' AND ((cn.requester_id=$1 AND cn.recipient_id=u.id) OR (cn.recipient_id=$1 AND cn.requester_id=u.id))) ORDER BY c.updated_at DESC`, [userId]);
+  return result.rows.map((row) => ({ id: String(row.id), peer: { id: String(row.peer_id), name: String(row.name), role: String(row.role), faculty: String(row.faculty), program: String(row.program), city: String(row.city) }, lastMessage: String(row.last_message), updatedAt: iso(row.updated_at), unreadCount: Number(row.unread_count), muted:Boolean(row.muted) }));
 }
 
 export async function ensureClubConversation(club: { id: string; slug: string; name: string; createdBy?: string | null }) {
@@ -185,15 +187,15 @@ export async function removeClubConversationMember(clubId: string, userId: strin
 }
 
 export async function listClubConversations(userId: string): Promise<ClubConversation[]> {
-  if (!databasePool) return [...conversations.values()].filter((conversation) => conversation.kind === "club" && conversation.participants.includes(userId)).map((conversation) => ({ id: conversation.id, kind: "club", club: { id: conversation.clubId!, slug: conversation.clubSlug!, name: conversation.title! }, memberCount: conversation.participants.length, isAdmin: conversation.createdBy === userId, lastMessage: messages.get(conversation.id)?.at(-1)?.body ?? "", updatedAt: conversation.updatedAt, unreadCount: 0 }));
+  if (!databasePool) return [...conversations.values()].filter((conversation) => conversation.kind === "club" && conversation.participants.includes(userId)).map((conversation) => ({ id: conversation.id, kind: "club", club: { id: conversation.clubId!, slug: conversation.clubSlug!, name: conversation.title! }, memberCount: conversation.participants.length, isAdmin: conversation.createdBy === userId, lastMessage: messages.get(conversation.id)?.at(-1)?.body ?? "", updatedAt: conversation.updatedAt, unreadCount: 0, muted:Boolean(conversation.mutedParticipants?.has(userId)) }));
   const result = await databasePool.query(`SELECT c.id,c.updated_at,clubs.id club_id,clubs.slug,clubs.name,
     (SELECT COUNT(*)::int FROM conversation_participants WHERE conversation_id=c.id) member_count,
-    (me.role='admin') is_admin,
+    (me.role='admin') is_admin,(me.muted_until>NOW()) muted,
     COALESCE((SELECT body FROM messages WHERE conversation_id=c.id ORDER BY created_at DESC,id DESC LIMIT 1),'') last_message,
     (SELECT COUNT(*)::int FROM messages m WHERE m.conversation_id=c.id AND m.sender_id<>$1 AND m.created_at>COALESCE(me.last_read_at,'epoch')) unread_count
     FROM conversations c JOIN conversation_participants me ON me.conversation_id=c.id AND me.user_id=$1
     JOIN clubs ON clubs.id=c.club_id WHERE c.kind='club' AND clubs.status='Aktiv' ORDER BY c.updated_at DESC`, [userId]);
-  return result.rows.map((row) => ({ id: String(row.id), kind: "club", club: { id: String(row.club_id), slug: String(row.slug), name: String(row.name) }, memberCount: Number(row.member_count), isAdmin: Boolean(row.is_admin), lastMessage: String(row.last_message), updatedAt: iso(row.updated_at), unreadCount: Number(row.unread_count) }));
+  return result.rows.map((row) => ({ id: String(row.id), kind: "club", club: { id: String(row.club_id), slug: String(row.slug), name: String(row.name) }, memberCount: Number(row.member_count), isAdmin: Boolean(row.is_admin), lastMessage: String(row.last_message), updatedAt: iso(row.updated_at), unreadCount: Number(row.unread_count), muted:Boolean(row.muted) }));
 }
 
 export async function listMessages(conversationId: string, userId: string, before?: string, limit = 40): Promise<Message[]> {
@@ -258,7 +260,7 @@ export async function deleteMessage(conversationId: string, messageId: string, u
   return Boolean(result.rowCount);
 }
 
-export async function muteConversation(conversationId:string,userId:string,muted:boolean){await assertParticipant(conversationId,userId);if(databasePool)await databasePool.query("UPDATE conversation_participants SET muted_until=CASE WHEN $3 THEN NOW()+INTERVAL '100 years' ELSE NULL END WHERE conversation_id=$1 AND user_id=$2",[conversationId,userId,muted]);}
+export async function muteConversation(conversationId:string,userId:string,muted:boolean){await assertParticipant(conversationId,userId);if(!databasePool){const conversation=conversations.get(conversationId);if(!conversation)return;conversation.mutedParticipants??=new Set();if(muted)conversation.mutedParticipants.add(userId);else conversation.mutedParticipants.delete(userId);return;}await databasePool.query("UPDATE conversation_participants SET muted_until=CASE WHEN $3 THEN NOW()+INTERVAL '100 years' ELSE NULL END WHERE conversation_id=$1 AND user_id=$2",[conversationId,userId,muted]);}
 
 export async function reportContent(reporterId:string,input:{entityType:"message"|"profile"|"review"|"club";entityId:string;reason:"abuse"|"threat"|"discrimination"|"spam"|"fake_profile"|"personal_data"|"other";details:string}){const id=randomUUID();if(!databasePool){const createdAt=now();const report:ContentReport={id,reporterId,entityType:input.entityType,entityId:input.entityId,reason:input.reason,details:input.details,status:"open",reviewedBy:null,resolutionNote:"",createdAt,updatedAt:createdAt};reports.set(id,report);return report;}const result=await databasePool.query("INSERT INTO content_reports(id,reporter_id,entity_type,entity_id,reason,details) VALUES($1,$2,$3,$4,$5,$6) RETURNING *",[id,reporterId,input.entityType,input.entityId,input.reason,input.details]);return mapReport(result.rows[0]);}
 

@@ -956,6 +956,16 @@ describe("EduRate API", () => {
     assert.equal(historyAfterDeletion.body.data[0].body,"Mesaj silindi");
     assert.equal(historyAfterDeletion.body.data[0].deleted,true);
     await request(app).patch(`/api/community/conversations/${id}/read`).set("Authorization",peerAuthorization).send({}).expect(200);
+    await request(app).patch(`/api/community/conversations/${id}/mute`).set("Authorization",studentAuthorization).send({muted:true}).expect(200);
+    const mutedDirectory=await request(app).get("/api/community/conversations").set("Authorization",studentAuthorization).expect(200);
+    assert.equal(mutedDirectory.body.data.find((item:{id:string})=>item.id===id).muted,true);
+    await request(app).patch(`/api/community/conversations/${id}/mute`).set("Authorization",studentAuthorization).send({muted:false}).expect(200);
+    const unmutedDirectory=await request(app).get("/api/community/conversations").set("Authorization",studentAuthorization).expect(200);
+    assert.equal(unmutedDirectory.body.data.find((item:{id:string})=>item.id===id).muted,false);
+    await request(app).post("/api/community/blocks").set("Authorization",studentAuthorization).send({userId:peer.id}).expect(204);
+    const directoryAfterBlock=await request(app).get("/api/community/conversations").set("Authorization",studentAuthorization).expect(200);
+    assert.equal(directoryAfterBlock.body.data.some((item:{id:string})=>item.id===id),false);
+    await request(app).post(`/api/community/conversations/${id}/messages`).set("Authorization",peerAuthorization).send({body:"Bu mesaj blokdan sonra göndərilməməlidir."}).expect(403);
   });
 
   it("hər klub üçün üzvlərə açıq qrup yaradır və yaradıcını qrup admini edir", async () => {

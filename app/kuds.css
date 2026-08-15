@@ -2970,3 +2970,39 @@ body {
   .kuds-shell .mentor-card-skeleton { min-height: 190px; }
 }
 .auth-legal-consent{align-items:flex-start!important;cursor:pointer;text-align:left!important}.auth-legal-consent input{width:17px;height:17px;margin-top:1px;accent-color:#44766c;flex:0 0 auto}.auth-legal-consent span{display:inline;line-height:1.5}.auth-legal-consent a{color:#16423c;text-decoration:underline;text-underline-offset:2px}
+
+/* Chat overflow menu and original, code-generated conversation patterns. */
+.kuds-shell .chat-center-main .chat-header{padding-right:106px}
+.kuds-shell .chat-more{position:absolute;z-index:24;top:18px;right:58px}
+.kuds-shell .chat-more-trigger{display:grid;width:36px;height:36px;cursor:pointer;color:#536964;place-items:center;border:1px solid #d9e3e0;border-radius:50%;background:#f5f8f7}
+.kuds-shell .chat-more-trigger:hover,.kuds-shell .chat-more-trigger[aria-expanded="true"]{color:#fff;border-color:var(--ku-green);background:var(--ku-green)}
+.kuds-shell .chat-more-menu{position:absolute;top:43px;right:0;width:260px;padding:7px;overflow:hidden;border:1px solid #d7e1de;border-radius:14px;background:rgba(255,255,255,.98);box-shadow:0 18px 44px rgba(20,54,47,.2);backdrop-filter:blur(16px)}
+.kuds-shell .chat-more-menu>button{display:grid;width:100%;min-height:52px;cursor:pointer;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:8px;padding:8px;color:#17342e;text-align:left;border:0;border-radius:10px;background:transparent}
+.kuds-shell .chat-more-menu>button:hover,.kuds-shell .chat-more-menu>button:focus-visible{outline:none;background:#edf4f1}
+.kuds-shell .chat-more-menu>button>svg{color:var(--ku-green);justify-self:center}
+.kuds-shell .chat-more-menu>button span{display:grid;gap:2px}.kuds-shell .chat-more-menu>button strong{font-size:11px}.kuds-shell .chat-more-menu>button small{color:#71827e;font-size:9px;line-height:1.35}
+.kuds-shell .chat-more-menu>button.is-danger{color:#9c2f2f}.kuds-shell .chat-more-menu>button.is-danger>svg{color:#b23d3d}.kuds-shell .chat-more-menu>button.is-danger:hover{background:#fff0f0}
+.kuds-shell .chat-list-muted{color:#71827e!important}
+.kuds-shell .chat-feedback{width:max-content;max-width:90%;margin:8px auto;padding:8px 12px;color:#174d40;font-size:10px;border:1px solid #b9d9cf;border-radius:10px;background:rgba(226,243,237,.96);box-shadow:0 5px 16px rgba(22,66,60,.08)}
+.kuds-shell .message-list[data-pattern="0"]{background-color:#f5f9f7!important;background-image:radial-gradient(circle at 18px 20px,rgba(68,118,108,.08) 0 2px,transparent 2.5px),radial-gradient(circle at 74px 58px,rgba(180,150,95,.07) 0 3px,transparent 3.5px),repeating-linear-gradient(35deg,transparent 0 54px,rgba(68,118,108,.025) 55px 56px)!important;background-size:96px 88px,132px 120px,120px 120px!important}
+.kuds-shell .message-list[data-pattern="1"]{background-color:#f7faf8!important;background-image:radial-gradient(ellipse at 22px 18px,transparent 0 8px,rgba(68,118,108,.055) 8.5px 9.5px,transparent 10px),radial-gradient(circle at 82px 76px,rgba(130,112,170,.055) 0 2px,transparent 2.5px),linear-gradient(120deg,transparent 48%,rgba(68,118,108,.022) 49% 51%,transparent 52%)!important;background-size:106px 96px,128px 112px,84px 84px!important}
+.kuds-shell .message-list[data-pattern="2"]{background-color:#f6f9f7!important;background-image:radial-gradient(circle at 14px 16px,rgba(68,118,108,.065) 0 1.5px,transparent 2px),radial-gradient(circle at 52px 48px,transparent 0 6px,rgba(191,157,93,.055) 6.5px 7.5px,transparent 8px),repeating-linear-gradient(-28deg,transparent 0 62px,rgba(68,118,108,.022) 63px 64px)!important;background-size:72px 72px,110px 104px,132px 132px!important}
+@media(max-width:899px){.kuds-shell .chat-center-main .chat-header{padding-right:90px}.kuds-shell .chat-more{top:13px;right:50px}.kuds-shell .chat-more-trigger{width:34px;height:34px}.kuds-shell .chat-more-menu{position:fixed;top:76px;right:16px;width:min(270px,calc(100vw - 32px))}}
+
+/* ChatDock is rendered in a body portal, so these rules must also work outside .kuds-shell. */
+.chat-center-main .chat-header{padding-right:106px}
+.chat-more{position:absolute;z-index:24;top:18px;right:58px}
+.chat-more-trigger{display:grid;width:36px;height:36px;cursor:pointer;color:#536964;place-items:center;border:1px solid #d9e3e0;border-radius:50%;background:#f5f8f7}
+.chat-more-trigger:hover,.chat-more-trigger[aria-expanded="true"]{color:#fff;border-color:var(--ku-green);background:var(--ku-green)}
+.chat-more-menu{position:absolute;z-index:30;top:43px;right:0;width:260px;padding:7px;overflow:hidden;border:1px solid #d7e1de;border-radius:14px;background:rgba(255,255,255,.98);box-shadow:0 18px 44px rgba(20,54,47,.2);backdrop-filter:blur(16px)}
+.chat-more-menu>button{display:grid;width:100%;min-height:52px;cursor:pointer;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:8px;padding:8px;color:#17342e;text-align:left;border:0;border-radius:10px;background:transparent}
+.chat-more-menu>button:hover,.chat-more-menu>button:focus-visible{outline:none;background:#edf4f1}
+.chat-more-menu>button>svg{color:var(--ku-green);justify-self:center}
+.chat-more-menu>button span{display:grid;min-width:0;gap:2px}.chat-more-menu>button strong{font-size:11px}.chat-more-menu>button small{color:#71827e;font-size:9px;line-height:1.35}
+.chat-more-menu>button.is-danger{color:#9c2f2f}.chat-more-menu>button.is-danger>svg{color:#b23d3d}.chat-more-menu>button.is-danger:hover{background:#fff0f0}
+.chat-list-muted{color:#71827e!important}
+.chat-feedback{width:max-content;max-width:90%;margin:8px auto;padding:8px 12px;color:#174d40;font-size:10px;border:1px solid #b9d9cf;border-radius:10px;background:rgba(226,243,237,.96);box-shadow:0 5px 16px rgba(22,66,60,.08)}
+.message-list[data-pattern="0"]{background-color:#f5f9f7!important;background-image:radial-gradient(circle at 18px 20px,rgba(68,118,108,.08) 0 2px,transparent 2.5px),radial-gradient(circle at 74px 58px,rgba(180,150,95,.07) 0 3px,transparent 3.5px),repeating-linear-gradient(35deg,transparent 0 54px,rgba(68,118,108,.025) 55px 56px)!important;background-size:96px 88px,132px 120px,120px 120px!important}
+.message-list[data-pattern="1"]{background-color:#f7faf8!important;background-image:radial-gradient(ellipse at 22px 18px,transparent 0 8px,rgba(68,118,108,.055) 8.5px 9.5px,transparent 10px),radial-gradient(circle at 82px 76px,rgba(130,112,170,.055) 0 2px,transparent 2.5px),linear-gradient(120deg,transparent 48%,rgba(68,118,108,.022) 49% 51%,transparent 52%)!important;background-size:106px 96px,128px 112px,84px 84px!important}
+.message-list[data-pattern="2"]{background-color:#f6f9f7!important;background-image:radial-gradient(circle at 14px 16px,rgba(68,118,108,.065) 0 1.5px,transparent 2px),radial-gradient(circle at 52px 48px,transparent 0 6px,rgba(191,157,93,.055) 6.5px 7.5px,transparent 8px),repeating-linear-gradient(-28deg,transparent 0 62px,rgba(68,118,108,.022) 63px 64px)!important;background-size:72px 72px,110px 104px,132px 132px!important}
+@media(max-width:899px){.chat-center-main .chat-header{padding-right:90px}.chat-more{top:13px;right:50px}.chat-more-trigger{width:34px;height:34px}.chat-more-menu{position:fixed;top:76px;right:16px;width:min(270px,calc(100vw - 32px))}}
