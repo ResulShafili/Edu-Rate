@@ -15,6 +15,7 @@ import { PlatformHeader } from "./PlatformHeader";
 import { PlatformNavigationRail } from "./PlatformNavigationRail";
 import { PlatformUtilityRail, type UtilityTab } from "./PlatformUtilityRail";
 import { RouteTransition } from "./RouteTransition";
+import { useCurrentAvatar } from "../lib/current-avatar";
 
 type PlatformShellProps = {
   children: ReactNode;
@@ -23,6 +24,7 @@ type PlatformShellProps = {
 export function PlatformShell({ children }: PlatformShellProps) {
   const pathname = usePathname();
   const { isAdmin, signOut, signOutHref, user } = useAuth();
+  const avatar = useCurrentAvatar(user?.id);
   const [navigationState, setNavigationState] = useState({ pathname, open: false });
   const [toolsState, setToolsState] = useState({ pathname, open: false });
   const [desktopToolsState, setDesktopToolsState] = useState({ pathname, open: false });
@@ -190,6 +192,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
         isAdmin={isAdmin}
         accountRole={user?.accessRole}
         accountInitials={user?.initials}
+        accountAvatarUrl={avatar.data?.secureUrl}
         signOutHref={signOutHref}
         onCredentialSignOut={async () => {
           await signOut();

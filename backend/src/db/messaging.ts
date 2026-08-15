@@ -7,7 +7,7 @@ export type CommunityUser = { id: string; name: string; role: string; faculty: s
 export type Connection = { id: string; requesterId: string; recipientId: string; status: "pending" | "accepted" | "blocked"; createdAt: string };
 export type Conversation = { id: string; peer: CommunityUser; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
 export type ClubConversation = { id: string; kind: "club"; club: { id: string; slug: string; name: string }; memberCount: number; isAdmin: boolean; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
-export type Message = { id: string; conversationId: string; senderId: string; senderName: string; senderInitials: string; body: string; createdAt: string; deleted?:boolean };
+export type Message = { id: string; conversationId: string; senderId: string; senderName: string; senderInitials: string; senderAvatarUrl?:string; body: string; createdAt: string; deleted?:boolean };
 export type ContentReport = { id:string; reporterId:string; entityType:"message"|"profile"|"review"|"club"; entityId:string; reason:string; details:string; status:"open"|"reviewing"|"resolved"|"dismissed"; reviewedBy:string|null; resolutionNote:string; createdAt:string; updatedAt:string };
 
 type MemoryConversation = { id: string; participants: string[]; updatedAt: string; kind: "direct" | "club"; clubId?: string; clubSlug?: string; title?: string; createdBy?: string | null; mutedParticipants?:Set<string> };
@@ -144,21 +144,25 @@ export async function createConversation(userId: string, peerId: string): Promis
 export async function listConversations(userId: string): Promise<Conversation[]> {
   if (!databasePool) {
     const users = await listUsers(1000);
-    return [...conversations.values()].filter((conversation) => conversation.kind === "direct" && conversation.participants.includes(userId)).map((conversation) => {
+    const items:Conversation[]=[];
+    for(const conversation of [...conversations.values()].filter((item) => item.kind === "direct" && item.participants.includes(userId))){
       const peer = users.find((user) => conversation.participants.includes(user.id) && user.id !== userId);
-      if (!peer) return null;
+      if (!peer) continue;
       const connection=[...connections.values()].find((item)=>pairMatches(item,userId,peer.id));
-      if(connection?.status!=="accepted")return null;
-      return { id: conversation.id, peer: toCommunityUser(peer), lastMessage: messages.get(conversation.id)?.at(-1)?.body ?? "", updatedAt: conversation.updatedAt, unreadCount: 0, muted:Boolean(conversation.mutedParticipants?.has(userId)) };
-    }).filter((item): item is Conversation => Boolean(item));
+      if(connection?.status!=="accepted")continue;
+      const avatarUrl=(await getMedia("avatar",peer.id))?.secureUrl;
+      items.push({ id: conversation.id, peer: {...toCommunityUser(peer),...(avatarUrl?{avatarUrl}:{})}, lastMessage: messages.get(conversation.id)?.at(-1)?.body ?? "", updatedAt: conversation.updatedAt, unreadCount: 0, muted:Boolean(conversation.mutedParticipants?.has(userId)) });
+    }
+    return items;
   }
-  const result = await databasePool.query(`SELECT c.id,c.updated_at,u.id peer_id,u.name,u.role,u.faculty,u.program,u.city,(me.muted_until>NOW()) muted,
+  const result = await databasePool.query(`SELECT c.id,c.updated_at,u.id peer_id,u.name,u.role,u.faculty,u.program,u.city,media_assets.secure_url avatar_url,(me.muted_until>NOW()) muted,
     COALESCE((SELECT body FROM messages WHERE conversation_id=c.id ORDER BY created_at DESC,id DESC LIMIT 1),'') last_message,
     (SELECT COUNT(*)::int FROM messages m WHERE m.conversation_id=c.id AND m.sender_id<>$1 AND m.created_at>COALESCE(me.last_read_at,'epoch')) unread_count
     FROM conversations c JOIN conversation_participants me ON me.conversation_id=c.id AND me.user_id=$1
     JOIN conversation_participants other ON other.conversation_id=c.id AND other.user_id<>$1 JOIN users u ON u.id=other.user_id
+    LEFT JOIN media_assets ON media_assets.owner_type='avatar' AND media_assets.owner_id=u.id::text
     WHERE c.kind='direct' AND EXISTS(SELECT 1 FROM connections cn WHERE cn.status='accepted' AND ((cn.requester_id=$1 AND cn.recipient_id=u.id) OR (cn.recipient_id=$1 AND cn.requester_id=u.id))) ORDER BY c.updated_at DESC`, [userId]);
-  return result.rows.map((row) => ({ id: String(row.id), peer: { id: String(row.peer_id), name: String(row.name), role: String(row.role), faculty: String(row.faculty), program: String(row.program), city: String(row.city) }, lastMessage: String(row.last_message), updatedAt: iso(row.updated_at), unreadCount: Number(row.unread_count), muted:Boolean(row.muted) }));
+  return result.rows.map((row) => ({ id: String(row.id), peer: { id: String(row.peer_id), name: String(row.name), role: String(row.role), faculty: String(row.faculty), program: String(row.program), city: String(row.city),avatarUrl:row.avatar_url?String(row.avatar_url):undefined }, lastMessage: String(row.last_message), updatedAt: iso(row.updated_at), unreadCount: Number(row.unread_count), muted:Boolean(row.muted) }));
 }
 
 export async function ensureClubConversation(club: { id: string; slug: string; name: string; createdBy?: string | null }) {
@@ -213,18 +217,19 @@ export async function listMessages(conversationId: string, userId: string, befor
   await assertParticipant(conversationId, userId);
   if (!databasePool) {
     const users = await listUsers(1000);
-    return (messages.get(conversationId) ?? []).slice(-limit).map((message) => {
+    return Promise.all((messages.get(conversationId) ?? []).slice(-limit).map(async(message) => {
       const sender = users.find((user) => user.id === message.senderId);
       const senderName = sender?.name ?? message.senderName;
-      return { ...message, senderName, senderInitials: initials(senderName) };
-    });
+      return { ...message, senderName, senderInitials: initials(senderName),senderAvatarUrl:(await getMedia("avatar",message.senderId))?.secureUrl };
+    }));
   }
   const values: unknown[] = [conversationId, limit];
   const cursor = before ? "AND (m.created_at,m.id)<(SELECT created_at,id FROM messages WHERE id=$3)" : "";
   if (before) values.push(before);
-  const result = await databasePool.query(`SELECT m.*,u.name sender_name FROM messages m JOIN users u ON u.id=m.sender_id
+  const result = await databasePool.query(`SELECT m.*,u.name sender_name,media_assets.secure_url sender_avatar_url FROM messages m JOIN users u ON u.id=m.sender_id
+    LEFT JOIN media_assets ON media_assets.owner_type='avatar' AND media_assets.owner_id=u.id::text
     WHERE m.conversation_id=$1 ${cursor} ORDER BY m.created_at DESC,m.id DESC LIMIT $2`, values);
-  return result.rows.reverse().map((row) => ({ id: String(row.id), conversationId: String(row.conversation_id), senderId: String(row.sender_id), senderName: String(row.sender_name), senderInitials: initials(String(row.sender_name)), body: row.deleted_at ? "Mesaj silindi" : String(row.body), createdAt: iso(row.created_at), deleted:Boolean(row.deleted_at) }));
+  return result.rows.reverse().map((row) => ({ id: String(row.id), conversationId: String(row.conversation_id), senderId: String(row.sender_id), senderName: String(row.sender_name), senderInitials: initials(String(row.sender_name)),senderAvatarUrl:row.sender_avatar_url?String(row.sender_avatar_url):undefined, body: row.deleted_at ? "Mesaj silindi" : String(row.body), createdAt: iso(row.created_at), deleted:Boolean(row.deleted_at) }));
 }
 
 export async function createMessage(conversationId: string, senderId: string, body: string): Promise<Message> {
@@ -239,7 +244,7 @@ export async function createMessage(conversationId: string, senderId: string, bo
   }
   const sender = (await listUsers(1000)).find((user) => user.id === senderId);
   const senderName = sender?.name ?? "İstifadəçi";
-  const message: Message = { id: randomUUID(), conversationId, senderId, senderName, senderInitials: initials(senderName), body: body.trim(), createdAt: now() };
+  const message: Message = { id: randomUUID(), conversationId, senderId, senderName, senderInitials: initials(senderName),senderAvatarUrl:(await getMedia("avatar",senderId))?.secureUrl, body: body.trim(), createdAt: now() };
   if (!databasePool) {
     messages.set(conversationId, [...(messages.get(conversationId) ?? []), message]);
     if (memoryConversation) memoryConversation.updatedAt = message.createdAt;

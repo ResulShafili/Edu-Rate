@@ -36,7 +36,7 @@ import {
 } from "./AuthProvider";
 import { SessionManager } from "./SessionManager";
 import { SecureImagePicker } from "./SecureImagePicker";
-import type { MediaAsset } from "../lib/media-upload";
+import { useCurrentAvatar } from "../lib/current-avatar";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const enterTransition = { duration: 0.62, ease };
@@ -68,8 +68,6 @@ async function loadProfileWorkspace(): Promise<ProfileWorkspace> {
   if (!response.ok || !payload.data) throw new Error(payload.error?.message ?? "Profil göstəriciləri yüklənmədi.");
   return payload.data;
 }
-
-async function loadAvatar():Promise<MediaAsset|null>{const response=await fetch("/api/media/avatar/me",{cache:"no-store"});const payload=await response.json() as {data?:MediaAsset|null};return response.ok?payload.data??null:null;}
 
 async function loadProfileConnections(currentUserId: string): Promise<ProfileConnection[]> {
   const [usersResponse, connectionsResponse] = await Promise.all([
@@ -118,7 +116,7 @@ export function UserProfileDashboard() {
   const workspace = useSWR(user ? `profile-workspace-summary:${user.id}` : null, loadProfileWorkspace, {
     revalidateOnFocus: false,
   });
-  const avatar=useSWR(user?`profile-avatar:${user.id}`:null,loadAvatar,{revalidateOnFocus:false});
+  const avatar=useCurrentAvatar(user?.id);
   const profileConnections = useSWR(
     user ? `profile-connections:${user.id}` : null,
     () => loadProfileConnections(user!.id),
