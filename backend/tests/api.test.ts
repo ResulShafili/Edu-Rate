@@ -58,6 +58,7 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/community/connections/{id}"].delete);
     assert.ok(response.body.paths["/api/community/conversations/{id}/read"].patch);
     assert.ok(response.body.paths["/api/community/groups"].get);
+    assert.ok(response.body.paths["/api/community/conversations/{id}/messages/{messageId}"].delete);
   });
 
   it("CORS-u yalnız frontend allowlist-i ilə məhdudlaşdırır", async () => {
@@ -937,6 +938,10 @@ describe("EduRate API", () => {
     const sent=await request(app).post(`/api/community/conversations/${id}/messages`).set("Authorization",studentAuthorization).send({body:"Salam, layihəni birlikdə yoxlayaq."}).expect(201);
     const history=await request(app).get(`/api/community/conversations/${id}/messages`).set("Authorization",peerAuthorization).expect(200);
     assert.equal(history.body.data[0].id,sent.body.data.id);
+    await request(app).delete(`/api/community/conversations/${id}/messages/${sent.body.data.id}`).set("Authorization",peerAuthorization).expect(404);
+    await request(app).delete(`/api/community/conversations/${id}/messages/${sent.body.data.id}`).set("Authorization",studentAuthorization).expect(204);
+    const historyAfterDeletion=await request(app).get(`/api/community/conversations/${id}/messages`).set("Authorization",peerAuthorization).expect(200);
+    assert.equal(historyAfterDeletion.body.data.length,0);
     await request(app).patch(`/api/community/conversations/${id}/read`).set("Authorization",peerAuthorization).send({}).expect(200);
   });
 
@@ -962,6 +967,7 @@ describe("EduRate API", () => {
 
     const sent = await request(app).post(`/api/community/conversations/${group.id}/messages`).set("Authorization", memberAuthorization).send({ body: "Klub qrupuna salam!" }).expect(201);
     assert.equal(sent.body.data.senderName, "Qrup Üzvü");
+    await request(app).delete(`/api/community/conversations/${group.id}/messages/${sent.body.data.id}`).set("Authorization",adminAuthorization).expect(204);
     await request(app).get(`/api/community/conversations/${group.id}/messages`).set("Authorization", outsiderAuthorization).expect(403);
 
     await request(app).delete(`/api/clubs/${club.body.data.id}/memberships`).set("Authorization", memberAuthorization).expect(200);

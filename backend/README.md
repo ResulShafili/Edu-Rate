@@ -58,6 +58,7 @@ Render build mərhələsində TypeScript və tip paketlərini quraşdırmaq üç
 - `GET/POST/PATCH/DELETE /api/community/connections` — əlaqə sorğusu, qəbul, rədd və geri çəkmə
 - `GET/POST /api/community/conversations` — qalıcı 1–1 söhbətlərin idarəsi
 - `GET/POST /api/community/conversations/:id/messages` — cursor əsaslı mesaj tarixçəsi və mesaj göndərilməsi
+- `DELETE /api/community/conversations/:id/messages/:messageId` — şəxsi mesajı silmək (klub qrupunda qrup admini moderasiya edə bilər)
 - `PATCH /api/community/conversations/:id/read` — mesajların oxundu vəziyyəti
 - `POST /api/realtime/ticket` — Socket.IO üçün qısaömürlü birdəfəlik giriş bileti
 

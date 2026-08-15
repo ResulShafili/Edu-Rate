@@ -1,9 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
-import { Check, Plus } from "lucide-react";
+import { Check, MessageCircle, Plus } from "lucide-react";
 import { useEffect, useState, type PointerEvent } from "react";
 import { useAuth } from "./AuthProvider";
+import { usePlatform, type ClubChatTarget } from "./PlatformProvider";
 
 const magneticSpring = {
   stiffness: 270,
@@ -19,10 +20,12 @@ type MagneticJoinButtonProps = {
 
 export function MagneticJoinButton({ clubId, clubName, onJoin }: MagneticJoinButtonProps) {
   const { user } = useAuth();
+  const { openClubConversation } = usePlatform();
   const [joined, setJoined] = useState(false);
   const [loadedMembershipKey, setLoadedMembershipKey] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [clubGroup, setClubGroup] = useState<ClubChatTarget | null>(null);
   const reduceMotion = Boolean(useReducedMotion());
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
@@ -45,6 +48,20 @@ export function MagneticJoinButton({ clubId, clubName, onJoin }: MagneticJoinBut
       .finally(() => { if (!cancelled) setLoadedMembershipKey(membershipKey); });
     return () => { cancelled = true; controller.abort(); };
   }, [clubId, membershipKey, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    void fetch("/api/community/groups", { cache: "no-store" })
+      .then(async (response) => response.ok ? response.json() : Promise.reject(new Error("Qrup söhbəti açılmadı.")))
+      .then((payload: { data?: Array<{ id: string; club: { id: string; slug: string; name: string }; memberCount: number; isAdmin: boolean }> }) => {
+        const group = payload.data?.find((item) => item.club.slug === clubId);
+        if (cancelled) return;
+        setClubGroup(group ? { conversationId: group.id, clubId: group.club.id, name: group.club.name, initials: group.club.name.split(/\s+/).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase("az")).join(""), memberCount: group.memberCount, isAdmin: group.isAdmin } : null);
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [clubId, isJoined, user]);
 
   function resetPosition() {
     pointerX.set(0);
@@ -149,6 +166,7 @@ export function MagneticJoinButton({ clubId, clubName, onJoin }: MagneticJoinBut
       </AnimatePresence>
       </motion.button>
       {isJoined ? <small className="club-join-action__status" role="status">Bu klubun üzvüsən.</small> : null}
+      {clubGroup ? <button type="button" className="club-group-shortcut" onClick={() => openClubConversation(clubGroup)}><MessageCircle size={15} /> Qrup söhbətinə keç</button> : null}
       <AnimatePresence>
         {error && (
           <motion.small

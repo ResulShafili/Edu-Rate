@@ -55,7 +55,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     <MotionConfig reducedMotion="user">
       <PlatformContext.Provider value={value}>
         {children}
-        {user && activePeer ? (
+        {user ? (
           <ChatDock peer={activePeer} group={activeGroup} open={chatOpen} onOpenChange={setChatOpen} />
         ) : null}
       </PlatformContext.Provider>

@@ -311,6 +311,10 @@ export const openApiDocument = {
       get:{tags:["Messaging"],summary:"Cursor əsaslı mesaj tarixçəsi",security:[{bearerAuth:[]}],responses:{"200":{description:"Mesajlar"}}},
       post:{tags:["Messaging"],summary:"Mesaj göndər",security:[{bearerAuth:[]}],requestBody:{required:true,content:{"application/json":{schema:{type:"object",additionalProperties:false,required:["body"],properties:{body:{type:"string",minLength:1,maxLength:2000}}}}}},responses:{"201":{description:"Mesaj saxlanıldı"},"429":{description:"Mesaj limiti aşıldı"}}},
     },
+    "/api/community/conversations/{id}/messages/{messageId}": {
+      parameters:[{name:"id",in:"path",required:true,schema:{type:"string",format:"uuid"}},{name:"messageId",in:"path",required:true,schema:{type:"string",format:"uuid"}}],
+      delete:{tags:["Messaging"],summary:"Öz mesajını sil",security:[{bearerAuth:[]}],responses:{"204":{description:"Mesaj silindi"},"404":{description:"Mesaj tapılmadı"}}},
+    },
     "/api/community/conversations/{id}/read": {
       parameters:[{name:"id",in:"path",required:true,schema:{type:"string",format:"uuid"}}],
       patch:{tags:["Messaging"],summary:"Söhbətin mesajlarını oxunmuş kimi işarələ",security:[{bearerAuth:[]}],responses:{"200":{description:"Oxunma vəziyyəti yeniləndi"},"403":{description:"Söhbətə giriş yoxdur"},"404":{description:"Söhbət tapılmadı"}}},

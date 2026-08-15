@@ -1,7 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
-import { acceptConnection, createConnection, createConversation, createMessage, deleteConnection, listClubConversations, listCommunityUsers, listConnections, listConversations, listMessages, markRead } from "../db/messaging.js";
+import { acceptConnection, createConnection, createConversation, createMessage, deleteConnection, deleteMessage, listClubConversations, listCommunityUsers, listConnections, listConversations, listMessages, markRead } from "../db/messaging.js";
 import { ApiError } from "../lib/api-error.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { publishRealtime } from "../realtime.js";
@@ -19,4 +19,5 @@ communityRouter.get("/groups",async(req,res)=>res.json({data:await listClubConve
 communityRouter.post("/conversations",async(req,res)=>{const {peerId}=z.object({peerId:z.string().uuid()}).strict().parse(req.body);res.status(201).json({data:await createConversation(req.auth!.userId,peerId)});});
 communityRouter.get("/conversations/:id/messages",async(req,res)=>{const id=z.string().uuid().parse(req.params.id);const q=z.object({before:z.string().uuid().optional(),limit:z.coerce.number().int().min(1).max(80).default(40)}).parse(req.query);res.json({data:await listMessages(id,req.auth!.userId,q.before,q.limit)});});
 communityRouter.post("/conversations/:id/messages",messageLimiter,async(req,res)=>{const id=z.string().uuid().parse(req.params.id);const {body}=z.object({body:z.string().trim().min(1).max(2000)}).strict().parse(req.body);const message=await createMessage(id,req.auth!.userId,body);await publishRealtime(id,"message:new",message);res.status(201).json({data:message});});
+communityRouter.delete("/conversations/:id/messages/:messageId",async(req,res)=>{const id=z.string().uuid().parse(req.params.id);const messageId=z.string().uuid().parse(req.params.messageId);if(!await deleteMessage(id,messageId,req.auth!.userId))throw new ApiError(404,"MESSAGE_NOT_FOUND","Silinə bilən mesaj tapılmadı.");await publishRealtime(id,"message:deleted",{conversationId:id,messageId});res.status(204).send();});
 communityRouter.patch("/conversations/:id/read",async(req,res)=>{const id=z.string().uuid().parse(req.params.id);await markRead(id,req.auth!.userId);await publishRealtime(id,"message:read",{conversationId:id,userId:req.auth!.userId});res.json({data:{read:true}});});

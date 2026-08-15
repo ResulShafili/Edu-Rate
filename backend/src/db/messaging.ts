@@ -227,6 +227,27 @@ export async function createMessage(conversationId: string, senderId: string, bo
   return { ...message, id: String(result.rows[0].id), createdAt: iso(result.rows[0].created_at) };
 }
 
+export async function deleteMessage(conversationId: string, messageId: string, userId: string): Promise<boolean> {
+  await assertParticipant(conversationId, userId);
+  if (!databasePool) {
+    const conversationMessages = messages.get(conversationId) ?? [];
+    const target = conversationMessages.find((message) => message.id === messageId);
+    const conversation = conversations.get(conversationId);
+    const canModerate = conversation?.kind === "club" && conversation.createdBy === userId;
+    if (!target || (target.senderId !== userId && !canModerate)) return false;
+    messages.set(conversationId, conversationMessages.filter((message) => message.id !== messageId));
+    return true;
+  }
+  const result = await databasePool.query(
+    `DELETE FROM messages m USING conversations c, conversation_participants cp
+     WHERE m.id=$1 AND m.conversation_id=$2 AND c.id=m.conversation_id
+       AND cp.conversation_id=c.id AND cp.user_id=$3
+       AND (m.sender_id=$3 OR (c.kind='club' AND cp.role='admin'))`,
+    [messageId, conversationId, userId],
+  );
+  return Boolean(result.rowCount);
+}
+
 export async function markRead(conversationId: string, userId: string) {
   await assertParticipant(conversationId, userId);
   if (databasePool) await databasePool.query("UPDATE conversation_participants SET last_read_at=NOW() WHERE conversation_id=$1 AND user_id=$2", [conversationId, userId]);
