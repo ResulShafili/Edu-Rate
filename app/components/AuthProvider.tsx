@@ -64,13 +64,24 @@ export function AuthProvider({
 
   useEffect(() => {
     let cancelled = false;
-
-    void getCredentialSession().then((sessionUser) => {
-      if (!cancelled) setUser(sessionUser);
-    });
+    async function hydrateSession(){
+      for(let attempt=0;attempt<3&&!cancelled;attempt+=1){
+        try{
+          const sessionUser=await getCredentialSession();
+          if(!cancelled)setUser(sessionUser);
+          return;
+        }catch{
+          if(attempt<2)await new Promise((resolve)=>window.setTimeout(resolve,attempt===0?500:1400));
+        }
+      }
+    }
+    void hydrateSession();
+    const restore=()=>void hydrateSession();
+    window.addEventListener("online",restore);
 
     return () => {
       cancelled = true;
+      window.removeEventListener("online",restore);
     };
   }, []);
 

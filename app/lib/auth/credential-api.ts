@@ -1,4 +1,5 @@
 import {
+  ApiError,
   createApiClient,
 } from "../api/client";
 import type {
@@ -36,7 +37,8 @@ export async function getCredentialSession(): Promise<UserProfile | null> {
   try {
     const result = await api.get<SessionPayload>("/auth/session");
     return result.user;
-  } catch {
-    return null;
+  } catch (error) {
+    if(error instanceof ApiError&&error.status===401)return null;
+    throw error;
   }
 }

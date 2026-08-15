@@ -63,22 +63,25 @@ export async function requestRemoteApi<T>(
   if (options.body !== undefined) headers.set("Content-Type", "application/json");
   if (options.token) headers.set("Authorization", `Bearer ${options.token}`);
 
-  let response: Response;
-  try {
-    response = await fetch(`${getRemoteApiBaseUrl()}${normalizePath(path)}`, {
-      method: options.method ?? "GET",
-      headers,
-      cache: "no-store",
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
-      signal: AbortSignal.timeout(65_000),
-    });
-  } catch {
-    throw new ApiHttpError(
-      503,
-      "API_SERVICE_UNAVAILABLE",
-      "EduRate xidməti ilə əlaqə yaratmaq mümkün olmadı. Bir qədər sonra yenidən yoxla.",
-    );
+  const method=options.method??"GET";
+  const attempts=method==="GET"?3:1;
+  let response:Response|null=null;
+  for(let attempt=0;attempt<attempts;attempt+=1){
+    try{
+      response=await fetch(`${getRemoteApiBaseUrl()}${normalizePath(path)}`,{
+        method,
+        headers,
+        cache:"no-store",
+        body:options.body===undefined?undefined:JSON.stringify(options.body),
+        signal:AbortSignal.timeout(65_000),
+      });
+      if(![502,503,504].includes(response.status)||attempt===attempts-1)break;
+    }catch{
+      if(attempt===attempts-1)throw new ApiHttpError(503,"API_SERVICE_UNAVAILABLE","EduRate xidməti ilə əlaqə yaratmaq mümkün olmadı. Bir qədər sonra yenidən yoxla.");
+    }
+    await waitForRetry(attempt);
   }
+  if(!response)throw new ApiHttpError(503,"API_SERVICE_UNAVAILABLE","EduRate xidməti ilə əlaqə yaratmaq mümkün olmadı. Bir qədər sonra yenidən yoxla.");
 
   if (response.status === 204) return undefined as T;
 
@@ -159,3 +162,5 @@ function getRemoteApiBaseUrl() {
 function normalizePath(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
 }
+
+function waitForRetry(attempt:number){return new Promise((resolve)=>setTimeout(resolve,attempt===0?350:900));}
