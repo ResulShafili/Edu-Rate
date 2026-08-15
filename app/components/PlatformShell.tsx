@@ -22,7 +22,7 @@ type PlatformShellProps = {
 
 export function PlatformShell({ children }: PlatformShellProps) {
   const pathname = usePathname();
-  const { isAdmin, signOut, signOutHref, user } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [navigationState, setNavigationState] = useState({ pathname, open: false });
   const [toolsState, setToolsState] = useState({ pathname, open: false });
   const [desktopToolsState, setDesktopToolsState] = useState({ pathname, open: false });
@@ -189,11 +189,6 @@ export function PlatformShell({ children }: PlatformShellProps) {
         authenticated={Boolean(user)}
         isAdmin={isAdmin}
         accountRole={user?.accessRole}
-        signOutHref={signOutHref}
-        onCredentialSignOut={async () => {
-          await signOut();
-          window.location.assign("/");
-        }}
         mobileOpen={navigationOpen}
         onMobileClose={closeNavigation}
       />

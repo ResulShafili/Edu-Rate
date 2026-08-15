@@ -9,7 +9,6 @@ import {
   HeartHandshake,
   Home,
   LogIn,
-  LogOut,
   LayoutDashboard,
   Megaphone,
   Settings,
@@ -31,8 +30,6 @@ type PlatformNavigationRailProps = {
   authenticated: boolean;
   isAdmin: boolean;
   accountRole?: "student" | "mentor" | "teacher" | "admin" | "assistant_admin";
-  signOutHref: string | null;
-  onCredentialSignOut: () => Promise<void>;
   mobileOpen: boolean;
   onMobileClose: () => void;
 };
@@ -68,23 +65,19 @@ export function PlatformNavigationRail(props: PlatformNavigationRailProps) {
           <NavigationLink href="/admin" label="Rəhbərlik paneli" pathname={props.pathname} icon={ShieldCheck} reducedMotion={Boolean(reducedMotion)} />
         </div>
       )}
-    </>
-  );
-
-  const account = props.authenticated ? (
-    <>
-      {!props.isAdmin && <AccountLink href="/workspace" label={props.accountRole === "teacher" ? "Müəllim paneli" : props.accountRole === "mentor" ? "Mentor paneli" : "Şəxsi panel"} icon={LayoutDashboard} pathname={props.pathname} />}
-      <AccountLink href="/settings" label="Parametrlər" icon={Settings} pathname={props.pathname} />
-      {props.signOutHref ? (
-        <a href={props.signOutHref} className="platform-rail-account"><LogOut size={17} aria-hidden="true" /><span>Çıxış</span></a>
+      {props.authenticated ? (
+        <div className="platform-nav-group">
+          <span className="platform-nav-group-label">Hesab</span>
+          {!props.isAdmin && <NavigationLink href="/workspace" label={props.accountRole === "teacher" ? "Müəllim paneli" : props.accountRole === "mentor" ? "Mentor paneli" : "Şəxsi panel"} pathname={props.pathname} icon={LayoutDashboard} reducedMotion={Boolean(reducedMotion)} />}
+          <NavigationLink href="/settings" label="Parametrlər" pathname={props.pathname} icon={Settings} reducedMotion={Boolean(reducedMotion)} />
+        </div>
       ) : (
-        <button type="button" className="platform-rail-account" onClick={() => void props.onCredentialSignOut()}><LogOut size={17} aria-hidden="true" /><span>Çıxış</span></button>
+        <div className="platform-nav-group">
+          <span className="platform-nav-group-label">Hesab</span>
+          <NavigationLink href="/auth" label="Daxil ol" pathname={props.pathname} icon={LogIn} reducedMotion={Boolean(reducedMotion)} />
+          <NavigationLink href="/auth?mode=register" label="Qeydiyyat" pathname={props.pathname} icon={UserPlus} reducedMotion={Boolean(reducedMotion)} />
+        </div>
       )}
-    </>
-  ) : (
-    <>
-      <AccountLink href="/auth" label="Daxil ol" icon={LogIn} pathname={props.pathname} />
-      <AccountLink href="/auth?mode=register" label="Qeydiyyat" icon={UserPlus} pathname={props.pathname} />
     </>
   );
 
@@ -93,7 +86,6 @@ export function PlatformNavigationRail(props: PlatformNavigationRailProps) {
       <aside className="platform-left-rail" aria-label="Əsas naviqasiya">
         <Brand pathname={props.pathname} />
         <nav className="platform-rail-navigation" aria-label="Platforma bölmələri">{navigation}</nav>
-        <div className="platform-sidebar-account"><span>Hesab</span>{account}</div>
       </aside>
 
       <AnimatePresence>
@@ -113,7 +105,6 @@ export function PlatformNavigationRail(props: PlatformNavigationRailProps) {
             >
               <header><Brand pathname={props.pathname} onClick={props.onMobileClose} /><button type="button" onClick={props.onMobileClose} aria-label="Naviqasiyanı bağla"><X size={19} /></button></header>
               <nav aria-label="Platforma bölmələri" onClick={props.onMobileClose}>{navigation}</nav>
-              <footer onClick={props.onMobileClose}>{account}</footer>
             </motion.aside>
           </motion.div>
         )}
@@ -135,9 +126,4 @@ function NavigationLink({ href, label, pathname, icon: Icon, reducedMotion }: { 
       <LinkIcon size={18} aria-hidden="true" /><span>{label}</span>
     </Link>
   );
-}
-
-function AccountLink({ href, label, icon: Icon, pathname }: { href: string; label: string; icon: LucideIcon; pathname: string }) {
-  const current = isPlatformRouteCurrent(pathname, href.split("?")[0]);
-  return <Link href={href} className={`platform-rail-account${current ? " is-active" : ""}`} aria-current={current ? "page" : undefined}><Icon size={17} aria-hidden="true" /><span>{label}</span></Link>;
 }
