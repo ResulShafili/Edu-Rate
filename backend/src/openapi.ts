@@ -204,7 +204,7 @@ export const openApiDocument = {
         summary: "Klubları siyahıla",
         responses: { "200": { description: "Klublar" } },
       },
-      post: { tags: ["Clubs"], summary: "Yeni klub yarat (admin)", security: [{ bearerAuth: [] }], responses: { "201": { description: "Klub yaradıldı" }, "403": { description: "Admin icazəsi tələb olunur" } } },
+      post: { tags: ["Clubs"], summary: "Yeni klub müraciəti yarat (müəllim, mentor və rəhbərlik)", security: [{ bearerAuth: [] }], responses: { "201": { description: "Klub müraciəti yaradıldı" }, "403": { description: "Uyğun rol tələb olunur" } } },
     },
     "/api/clubs/memberships/me": {
       get: { tags: ["Clubs"], summary: "Üzv olduğum klubları göstər", security: [{ bearerAuth: [] }], responses: { "200": { description: "Klub üzvlükləri" } } },

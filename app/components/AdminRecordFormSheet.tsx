@@ -307,16 +307,33 @@ function UserFields({
 }
 
 function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
+  if (!record) {
+    return (
+      <>
+        <Field label="Klubun adı" name="name" required>
+          <input ref={firstFieldRef} name="name" minLength={3} maxLength={100} required />
+        </Field>
+        <Field label="Kateqoriya" name="category" required>
+          <select name="category" defaultValue="" required>
+            <option value="" disabled>Kateqoriya seç</option>
+            <option>Texnologiya</option><option>Akademik</option><option>Yaradıcılıq</option>
+            <option>Sosial təsir</option><option>Mədəniyyət</option><option>İdman</option>
+          </select>
+        </Field>
+        <Field label="Qısa təsvir" name="description" required>
+          <textarea name="description" minLength={10} maxLength={500} rows={4} required />
+        </Field>
+        <p className="admin-permission-note">Texniki məlumatlar avtomatik hazırlanacaq. Örtük şəkli və əlavə detallar klub yaradıldıqdan sonra redaktə edilə bilər.</p>
+      </>
+    );
+  }
+
   return (
     <>
-      {record ? (
-        <div className="admin-record-field is-wide">
-          <span>Klubun örtük şəkli</span>
-          <SecureImagePicker kind="club" ownerId={record.id} currentUrl={record.coverUrl} compact />
-        </div>
-      ) : (
-        <p className="admin-permission-note is-wide">Örtük şəklini klubu yaratdıqdan sonra redaktə bölməsindən əlavə edə bilərsən.</p>
-      )}
+      <div className="admin-record-field is-wide">
+        <span>Klubun örtük şəkli</span>
+        <SecureImagePicker kind="club" ownerId={record.id} currentUrl={record.coverUrl} compact />
+      </div>
       <Field label="Klubun adı" name="name" required>
         <input ref={firstFieldRef} name="name" defaultValue={record?.name} minLength={3} maxLength={100} required />
       </Field>
@@ -460,22 +477,36 @@ function createSubmission(
     };
   }
   if (kind === "clubs") {
+    const name = fieldValue(formData, "name");
+    const category = fieldValue(formData, "category");
+    const description = fieldValue(formData, "description");
+    const coordinatorInitials = fieldValue(formData, "coordinatorInitials") || createInitials(name) || "ER";
+    const generatedSlug = normalizeClubSlug(name);
     return {
       kind,
       input: {
-        name: fieldValue(formData, "name"),
-        slug: fieldValue(formData, "slug").toLocaleLowerCase("az"),
-        category: fieldValue(formData, "category"),
-        coordinatorInitials: fieldValue(formData, "coordinatorInitials").toLocaleUpperCase("az"),
-        shortName:fieldValue(formData,"shortName"),
-        tagline:fieldValue(formData,"tagline"),
-        description:fieldValue(formData,"description"),
-        about:fieldValue(formData,"about").split(/\r?\n/).map((value)=>value.trim()).filter(Boolean),
-        tone:fieldValue(formData,"tone") as NonNullable<AdminClub["tone"]>,
-        visualMark:fieldValue(formData,"visualMark"),
-        meeting:{cadence:fieldValue(formData,"meetingCadence"),day:fieldValue(formData,"meetingDay"),time:fieldValue(formData,"meetingTime"),place:fieldValue(formData,"meetingPlace")},
-        focusTags:fieldValue(formData,"focusTags").split(",").map((value)=>value.trim()).filter(Boolean),
-        status: fieldValue(formData, "status") as AdminClub["status"],
+        name,
+        slug: fieldValue(formData, "slug").toLocaleLowerCase("az") || generatedSlug,
+        category,
+        coordinatorInitials: coordinatorInitials.toLocaleUpperCase("az"),
+        shortName: fieldValue(formData, "shortName") || name,
+        tagline: fieldValue(formData, "tagline") || "Birlikdə öyrən, yarat və paylaş.",
+        description,
+        about: fieldValue(formData, "about").split(/\r?\n/).map((value)=>value.trim()).filter(Boolean).length
+          ? fieldValue(formData, "about").split(/\r?\n/).map((value)=>value.trim()).filter(Boolean)
+          : [description],
+        tone: (fieldValue(formData, "tone") || "lime") as NonNullable<AdminClub["tone"]>,
+        visualMark: fieldValue(formData, "visualMark") || coordinatorInitials,
+        meeting: {
+          cadence: fieldValue(formData, "meetingCadence") || "Cədvəl üzrə",
+          day: fieldValue(formData, "meetingDay") || "Dəqiqləşdiriləcək",
+          time: fieldValue(formData, "meetingTime") || "18:00",
+          place: fieldValue(formData, "meetingPlace") || "Universitet kampusu",
+        },
+        focusTags: fieldValue(formData, "focusTags").split(",").map((value)=>value.trim()).filter(Boolean).length
+          ? fieldValue(formData, "focusTags").split(",").map((value)=>value.trim()).filter(Boolean)
+          : [category],
+        status: (fieldValue(formData, "status") || "Gözləmədə") as AdminClub["status"],
       },
     };
   }
@@ -496,6 +527,22 @@ function createSubmission(
 
 function fieldValue(formData: FormData, name: string): string {
   return String(formData.get(name) ?? "").trim();
+}
+
+function createInitials(name: string): string {
+  return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0] ?? "").join("");
+}
+
+function normalizeClubSlug(name: string): string {
+  const base = name
+    .toLocaleLowerCase("az")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ə/g, "e").replace(/ı/g, "i").replace(/ş/g, "s")
+    .replace(/ç/g, "c").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ğ/g, "g")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "klub";
+  return `${base.slice(0, 70)}-${Date.now().toString(36).slice(-6)}`;
 }
 
 function toLocalDateTime(value?: string): string {

@@ -1358,6 +1358,86 @@ body {
 .kuds-shell .clubs-hero-art { opacity: 0.58; transform: scale(0.72); transform-origin: right center; }
 .kuds-shell .clubs-directory { padding: 0 !important; background: transparent !important; }
 .kuds-shell .clubs-directory-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px !important; }
+.kuds-shell .club-create-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  background: var(--ku-green);
+  box-shadow: 0 10px 24px rgb(28 91 78 / 16%);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.kuds-shell .club-create-trigger:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgb(28 91 78 / 22%); }
+.kuds-shell .club-create-backdrop {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(16 35 32 / 38%);
+  backdrop-filter: blur(8px);
+}
+.kuds-shell .club-create-dialog {
+  width: min(100%, 620px);
+  max-height: min(760px, calc(100dvh - 40px));
+  overflow-y: auto;
+  padding: 26px;
+  border: 1px solid var(--kuds-border);
+  border-radius: 18px;
+  color: var(--kuds-text);
+  background: var(--kuds-surface);
+  box-shadow: 0 28px 80px rgb(16 35 32 / 25%);
+}
+.kuds-shell .club-create-dialog > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.kuds-shell .club-create-dialog > header small { color: var(--ku-green); font-size: 11px; font-weight: 800; letter-spacing: .14em; }
+.kuds-shell .club-create-dialog > header h2 { margin: 5px 0 0; font-size: 30px; line-height: 1.05; }
+.kuds-shell .club-create-dialog > header button {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--kuds-border);
+  border-radius: 50%;
+  color: var(--kuds-text);
+  background: var(--kuds-soft);
+  cursor: pointer;
+}
+.kuds-shell .club-create-intro { margin: 12px 0 22px; color: var(--kuds-muted); font-size: 14px; line-height: 1.6; }
+.kuds-shell .club-create-form { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.kuds-shell .club-create-form label { display: grid; gap: 8px; color: var(--kuds-text); font-size: 13px; font-weight: 700; }
+.kuds-shell .club-create-form label.is-wide,
+.kuds-shell .club-create-form :is(.club-create-message, footer) { grid-column: 1 / -1; }
+.kuds-shell .club-create-form :is(input, select, textarea) {
+  width: 100%;
+  border: 1px solid var(--kuds-border);
+  border-radius: 10px;
+  outline: 0;
+  color: var(--kuds-text);
+  background: var(--kuds-soft);
+  font: inherit;
+  font-weight: 500;
+}
+.kuds-shell .club-create-form :is(input, select) { min-height: 48px; padding: 0 14px; }
+.kuds-shell .club-create-form textarea { min-height: 112px; padding: 13px 14px; resize: vertical; }
+.kuds-shell .club-create-form :is(input, select, textarea):focus { border-color: var(--ku-green); box-shadow: 0 0 0 3px rgb(68 118 108 / 12%); }
+.kuds-shell .club-create-message { margin: 0; padding: 11px 13px; border-radius: 9px; font-size: 13px; }
+.kuds-shell .club-create-message.is-error { color: #8d302a; background: #fff0ee; }
+.kuds-shell .club-create-message.is-success { color: var(--ku-green); background: var(--ku-soft-green); }
+.kuds-shell .club-create-form footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
+.kuds-shell .club-create-form footer button { min-height: 44px; padding: 0 17px; border: 1px solid var(--kuds-border); border-radius: 10px; color: var(--kuds-text); background: var(--kuds-surface); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.kuds-shell .club-create-form footer button[type="submit"] { border-color: var(--ku-green); color: #fff; background: var(--ku-green); }
+.kuds-shell .club-create-form footer button:disabled { cursor: wait; opacity: .64; }
 .kuds-shell .club-directory-card,
 .kuds-shell .club-directory-card:nth-child(n) { grid-column: auto !important; min-height: 0 !important; border-radius: 12px !important; }
 .kuds-shell .club-directory-link {
@@ -3045,3 +3125,14 @@ body {
 .message-list[data-pattern="1"]{background-color:#f7faf8!important;background-image:radial-gradient(ellipse at 22px 18px,transparent 0 8px,rgba(68,118,108,.055) 8.5px 9.5px,transparent 10px),radial-gradient(circle at 82px 76px,rgba(130,112,170,.055) 0 2px,transparent 2.5px),linear-gradient(120deg,transparent 48%,rgba(68,118,108,.022) 49% 51%,transparent 52%)!important;background-size:106px 96px,128px 112px,84px 84px!important}
 .message-list[data-pattern="2"]{background-color:#f6f9f7!important;background-image:radial-gradient(circle at 14px 16px,rgba(68,118,108,.065) 0 1.5px,transparent 2px),radial-gradient(circle at 52px 48px,transparent 0 6px,rgba(191,157,93,.055) 6.5px 7.5px,transparent 8px),repeating-linear-gradient(-28deg,transparent 0 62px,rgba(68,118,108,.022) 63px 64px)!important;background-size:72px 72px,110px 104px,132px 132px!important}
 @media(max-width:899px){.chat-center-main .chat-header{padding-right:90px}.chat-more{top:13px;right:50px}.chat-more-trigger{width:34px;height:34px}.chat-more-menu{position:fixed;top:76px;right:16px;width:min(270px,calc(100vw - 32px))}}
+
+@media (max-width: 640px) {
+  .kuds-shell .club-create-trigger { width: 100%; }
+  .kuds-shell .club-create-backdrop { align-items: end; padding: 0; }
+  .kuds-shell .club-create-dialog { width: 100%; max-height: 88dvh; padding: 22px 18px; border-radius: 20px 20px 0 0; }
+  .kuds-shell .club-create-form { grid-template-columns: 1fr; }
+  .kuds-shell .club-create-form label,
+  .kuds-shell .club-create-form label.is-wide,
+  .kuds-shell .club-create-form :is(.club-create-message, footer) { grid-column: 1; }
+  .kuds-shell .club-create-form footer { display: grid; grid-template-columns: 1fr 1fr; }
+}
