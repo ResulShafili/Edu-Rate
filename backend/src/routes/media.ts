@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { v2 as cloudinary } from "cloudinary";
@@ -11,7 +11,8 @@ import { authenticate } from "../middleware/authenticate.js";
 export const mediaRouter=Router();
 mediaRouter.use(authenticate,rateLimit({windowMs:15*60_000,limit:20,standardHeaders:true,legacyHeaders:false}));
 const kindSchema=z.enum(["avatar","club","announcement"]);
-const verifyResponseSignature=(cloudinary.utils as typeof cloudinary.utils & {verify_api_response_signature:(publicId:string,version:number,signature:string)=>boolean}).verify_api_response_signature;
+type CloudinarySignatureAlgorithm="sha1"|"sha256";
+const signCloudinaryRequest=cloudinary.utils.api_sign_request as unknown as (params:Record<string,string|number>,secret:string,algorithm:CloudinarySignatureAlgorithm,version:number)=>string;
 const signSchema=z.object({kind:kindSchema,ownerId:z.string().trim().min(1).max(120).optional()}).strict();
 const confirmSchema=z.object({kind:kindSchema,ownerId:z.string().trim().min(1).max(120).optional(),publicId:z.string().min(10).max(300),version:z.coerce.number().int().positive(),signature:z.string().regex(/^[a-f0-9]{40,64}$/i)}).strict();
 const configured=Boolean(env.CLOUDINARY_CLOUD_NAME&&env.CLOUDINARY_API_KEY&&env.CLOUDINARY_API_SECRET&&env.CLOUDINARY_UPLOAD_PRESET);
@@ -31,7 +32,7 @@ mediaRouter.post("/sign",async(request,response)=>{
 mediaRouter.post("/confirm",async(request,response)=>{
   const input=confirmSchema.parse(request.body);const ownerId=resolveWriteOwner(input.kind,input.ownerId,request.auth!);assertConfigured();const prefix=`edurate/${input.kind}/${ownerId}/`;
   if(!input.publicId.startsWith(prefix))throw new ApiError(403,"MEDIA_OWNER_MISMATCH","Şəkil bu hesaba və ya qeydə aid deyil.");
-  if(!verifyResponseSignature(input.publicId,input.version,input.signature))throw new ApiError(422,"INVALID_MEDIA_SIGNATURE","Şəkil cavabının imzası yanlışdır.");
+  if(!verifyCloudinaryResponseSignature(input.publicId,input.version,input.signature))throw new ApiError(422,"INVALID_MEDIA_SIGNATURE","Şəkil cavabının imzası yanlışdır.");
   const resource=await cloudinary.api.resource(input.publicId,{resource_type:"image"});const limits=policy(input.kind);
   const format=String(resource.format??"").toLowerCase();const bytes=Number(resource.bytes);const width=Number(resource.width);const height=Number(resource.height);
   if(!["jpg","jpeg","png","webp"].includes(format)||!Number.isFinite(bytes)||bytes<=0||bytes>limits.maxBytes||width<=0||height<=0||width>limits.maxDimension||height>limits.maxDimension)throw new ApiError(422,"UNSAFE_MEDIA","Şəkil təhlükəsizlik ölçülərinə uyğun deyil.");
@@ -45,4 +46,11 @@ mediaRouter.delete("/:kind/:ownerId",async(request,response)=>{const kind=kindSc
 function resolveWriteOwner(kind:MediaKind,requested:string|undefined,auth:{userId:string;role:string}){if(kind==="avatar")return auth.userId;if(auth.role!=="admin"&&auth.role!=="owner_admin"&&auth.role!=="assistant_admin")throw new ApiError(403,"ADMIN_REQUIRED","Klub və elan şəkillərini yalnız rəhbərlik idarə edə bilər.");if(!requested)throw new ApiError(422,"OWNER_REQUIRED","Şəklin aid olduğu qeyd tələb olunur.");return requested.replace(/[^a-zA-Z0-9_-]/g,"-");}
 function resolveDeleteOwner(kind:MediaKind,requested:string,auth:{userId:string;role:string}){if(kind!=="avatar")return resolveWriteOwner(kind,requested,auth);if(requested==="me"||requested===auth.userId)return auth.userId;if(auth.role==="admin"||auth.role==="owner_admin")return requested.replace(/[^a-zA-Z0-9_-]/g,"-");throw new ApiError(403,"MEDIA_OWNER_MISMATCH","Başqa istifadəçinin profil şəklini silmək icazən yoxdur.");}
 function policy(kind:MediaKind){return kind==="avatar"?{maxBytes:2*1024*1024,maxDimension:512,transformation:"c_limit,w_512,h_512,q_auto:good,f_webp,fl_strip_profile"}:{maxBytes:5*1024*1024,maxDimension:1600,transformation:"c_limit,w_1600,h_1600,q_auto:good,f_webp,fl_strip_profile"};}
+function verifyCloudinaryResponseSignature(publicId:string,version:number,signature:string){
+  // Response signatures may use SHA-1 even when request signatures use SHA-256.
+  const algorithm:CloudinarySignatureAlgorithm=signature.length===64?"sha256":"sha1";
+  const expected=signCloudinaryRequest({public_id:publicId,version},env.CLOUDINARY_API_SECRET!,algorithm,1);
+  const receivedBuffer=Buffer.from(signature,"hex");const expectedBuffer=Buffer.from(expected,"hex");
+  return receivedBuffer.length===expectedBuffer.length&&timingSafeEqual(receivedBuffer,expectedBuffer);
+}
 function assertConfigured(){if(!configured)throw new ApiError(503,"MEDIA_NOT_CONFIGURED","Şəkil yaddaşı hələ konfiqurasiya edilməyib.");}
