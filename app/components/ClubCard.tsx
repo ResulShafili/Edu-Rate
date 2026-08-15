@@ -86,7 +86,7 @@ export function ClubCard({ club, index }: ClubCardProps) {
         className="club-directory-link"
         aria-label={`${club.name} səhifəsinə keç`}
       >
-        <div className="club-card-visual" aria-hidden="true">
+        <div className={`club-card-visual${club.coverUrl ? " has-cover" : ""}`} style={club.coverUrl ? { "--club-cover-image": `url("${club.coverUrl}")` } as CSSProperties : undefined} aria-hidden="true">
           <motion.div
             className="club-card-art"
             style={{ x: artX, y: artY, rotate: artRotate }}

@@ -55,6 +55,7 @@ export type ClubHistoryMilestone = {
 };
 
 export type Club = {
+  id?: string;
   slug: string;
   name: string;
   shortName: string;
@@ -70,6 +71,7 @@ export type Club = {
   events: readonly ClubEvent[];
   members: readonly ClubMember[];
   history: readonly ClubHistoryMilestone[];
+  coverUrl?: string;
 };
 
 export type Community = {
@@ -618,15 +620,15 @@ export function getClubBySlug(slug: string) {
 }
 
 export type ClubApiRecord={
-  slug:string;name:string;shortName:string;category:string;coordinatorInitials:string;memberCount:number;eventCount:number;status:string;
+  id:string;slug:string;name:string;shortName:string;category:string;coordinatorInitials:string;memberCount:number;eventCount:number;status:string;coverUrl?:string;
   tagline:string;description:string;about:string[];tone:ClubTone;visualMark:string;meeting:ClubMeeting;focusTags:string[];
   events:ClubEvent[];members:ClubMember[];history:ClubHistoryMilestone[];
 };
 
 export function clubFromApi(record:ClubApiRecord):Club {
-  return {slug:record.slug,name:record.name,shortName:record.shortName,category:normalizeClubCategory(record.category),tagline:record.tagline,
+  return {id:record.id,slug:record.slug,name:record.name,shortName:record.shortName,category:normalizeClubCategory(record.category),tagline:record.tagline,
     description:record.description,about:record.about,stats:[{label:"Üzv",value:String(record.memberCount)},{label:"Tədbir",value:String(record.events.length)}],
-    tone:record.tone,visualMark:record.visualMark,meeting:record.meeting,focusTags:record.focusTags,events:record.events,members:record.members,history:record.history};
+    tone:record.tone,visualMark:record.visualMark,meeting:record.meeting,focusTags:record.focusTags,events:record.events,members:record.members,history:record.history,coverUrl:record.coverUrl};
 }
 
 function normalizeClubCategory(value:string):ClubCategory {if(value==="Texnologiya"||value==="Akademik"||value==="Yaradıcılıq"||value==="Sosial təsir"||value==="Mədəniyyət")return value;return "Akademik";}

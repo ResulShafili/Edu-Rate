@@ -49,8 +49,9 @@ describe("frontend security boundaries", () => {
     ]);
     assert.match(
       policy,
-      /connect-src 'self' https:\/\/edurate-api\.onrender\.com wss:\/\/edurate-api\.onrender\.com;/,
+      /connect-src 'self' https:\/\/api\.cloudinary\.com https:\/\/edurate-api\.onrender\.com wss:\/\/edurate-api\.onrender\.com;/,
     );
+    assert.match(policy, /img-src 'self' blob: data: https:\/\/res\.cloudinary\.com;/);
     assert.doesNotMatch(policy, /script-src \*/);
   });
 

@@ -26,6 +26,7 @@ import type {
   AdminUser,
   AdminUserCreateInput,
 } from "../data/admin";
+import { SecureImagePicker } from "./SecureImagePicker";
 
 export type AdminRecordSheetMode = "create" | "edit" | "delete";
 
@@ -308,6 +309,14 @@ function UserFields({
 function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
   return (
     <>
+      {record ? (
+        <div className="admin-record-field is-wide">
+          <span>Klubun örtük şəkli</span>
+          <SecureImagePicker kind="club" ownerId={record.id} currentUrl={record.coverUrl} compact />
+        </div>
+      ) : (
+        <p className="admin-permission-note is-wide">Örtük şəklini klubu yaratdıqdan sonra redaktə bölməsindən əlavə edə bilərsən.</p>
+      )}
       <Field label="Klubun adı" name="name" required>
         <input ref={firstFieldRef} name="name" defaultValue={record?.name} minLength={3} maxLength={100} required />
       </Field>

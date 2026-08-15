@@ -13,6 +13,7 @@ let app: Express;
 let reusableStudentId = "";
 let reusableStudentToken = "";
 let reusableAdminToken = "";
+let reusableMediaStudentToken = "";
 let reusableReviewId = "";
 
 before(async () => {
@@ -21,6 +22,8 @@ before(async () => {
   const [{createUser},{createAccessToken,hashPassword}]=await Promise.all([import("../src/db/database.js"),import("../src/lib/auth.js")]);
   const admin=await createUser({name:"Başlanğıc Administrator",email:"bootstrap.admin@example.az",passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Pedaqoji fakültə",program:"Riyaziyyat müəllimliyi",role:"admin",status:"Aktiv"});
   reusableAdminToken=createAccessToken(admin);
+  const mediaStudent=await createUser({name:"Şəkil Təhlükəsizlik Testi",email:"media.security@example.az",passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Mühəndislik fakültəsi",program:"Kompüter mühəndisliyi",role:"student",status:"Aktiv"});
+  reusableMediaStudentToken=createAccessToken(mediaStudent);
 });
 
 describe("EduRate API", () => {
@@ -59,6 +62,8 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/community/conversations/{id}/read"].patch);
     assert.ok(response.body.paths["/api/community/groups"].get);
     assert.ok(response.body.paths["/api/community/conversations/{id}/messages/{messageId}"].delete);
+    assert.ok(response.body.paths["/api/media/sign"].post);
+    assert.ok(response.body.paths["/api/media/confirm"].post);
   });
 
   it("CORS-u yalnız frontend allowlist-i ilə məhdudlaşdırır", async () => {
@@ -179,6 +184,32 @@ describe("EduRate API", () => {
     await request(app).get("/api/auth/session").set("Authorization", `Bearer ${signup.body.data.token}`).expect(401);
     await request(app).get("/api/auth/session").set("Authorization", `Bearer ${login.body.data.token}`).expect(200);
     reusableStudentToken = login.body.data.token;
+  });
+
+  it("şəkil yükləməsini autentifikasiya, rol və server konfiqurasiyası ilə qoruyur", async () => {
+    await request(app).post("/api/media/sign").send({ kind: "avatar" }).expect(401);
+    const authorization = `Bearer ${reusableMediaStudentToken}`;
+
+    const status = await request(app)
+      .get("/api/media/status")
+      .set("Authorization", authorization)
+      .expect(200);
+    assert.equal(status.body.data.enabled, false);
+    assert.deepEqual(status.body.data.formats, ["jpg", "jpeg", "png", "webp"]);
+
+    const unavailable = await request(app)
+      .post("/api/media/sign")
+      .set("Authorization", authorization)
+      .send({ kind: "avatar" })
+      .expect(503);
+    assert.equal(unavailable.body.error.code, "MEDIA_NOT_CONFIGURED");
+
+    const forbidden = await request(app)
+      .post("/api/media/sign")
+      .set("Authorization", authorization)
+      .send({ kind: "announcement", ownerId: "test-announcement" })
+      .expect(403);
+    assert.equal(forbidden.body.error.code, "ADMIN_REQUIRED");
   });
 
   it("rəsmi akademik kataloqu və fakültə-ixtisas uyğunluğunu qoruyur", async () => {

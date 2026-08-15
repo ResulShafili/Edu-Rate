@@ -2,6 +2,7 @@
 
 import { Check, FileText, Flag, Inbox, Megaphone, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { uploadSecureImage } from "../lib/media-upload";
 
 type Tab = "announcements" | "feed" | "support-tickets" | "reports";
 type Item = {
@@ -17,6 +18,7 @@ type Item = {
   details?: string;
   entityType?: string;
   status: string;
+  imageUrl?: string;
 };
 
 const tabs: Array<{ id: Tab; label: string; icon: typeof Megaphone }> = [
@@ -34,6 +36,7 @@ export function AdminOperationsPanel() {
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState({ title: "", summary: "", source: "", category: "official" });
+  const [announcementImage, setAnnouncementImage] = useState<File | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -116,8 +119,14 @@ export function AdminOperationsPanel() {
       });
       const payload=await response.json() as {data?:Item;error?:{message?:string}};
       if(!response.ok||!payload.data)throw new Error(payload.error?.message??"Elan yaradılmadı.");
-      setItems((current)=>[payload.data!,...current]);
+      let created=payload.data;
+      if(announcementImage){
+        try{const asset=await uploadSecureImage(announcementImage,"announcement",created.id);created={...created,imageUrl:asset.secureUrl};}
+        catch(uploadError){setError(`Elan yaradıldı, lakin şəkil əlavə edilmədi: ${uploadError instanceof Error?uploadError.message:"yükləmə xətası"}`);}
+      }
+      setItems((current)=>[created,...current]);
       setDraft({title:"",summary:"",source:"",category:"official"});
+      setAnnouncementImage(null);
       setCreating(false);
     } catch(caught) { setError(caught instanceof Error?caught.message:"Elan yaradılmadı."); }
     finally { setBusyId(""); }
@@ -152,6 +161,7 @@ export function AdminOperationsPanel() {
             <option value="official">Rəsmi</option><option value="faculties">Fakültələr</option><option value="clubs">Klublar</option><option value="scholarship">Təqaüd</option><option value="events">Tədbirlər</option>
           </select>
           <textarea value={draft.summary} onChange={(event)=>setDraft((current)=>({...current,summary:event.target.value}))} placeholder="Qısa və aydın elan mətni" minLength={10} maxLength={800} rows={3} required />
+          <label className="admin-announcement-image"><span>Elan şəkli (istəyə bağlı)</span><input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" onChange={(event)=>setAnnouncementImage(event.target.files?.[0]??null)} /><small>JPG, PNG və ya WebP · maksimum 5 MB</small></label>
           <footer><button type="button" onClick={()=>setCreating(false)}>Ləğv et</button><button type="submit" disabled={busyId==="new"}>Qaralama yarat</button></footer>
         </form>
       )}
@@ -165,6 +175,7 @@ export function AdminOperationsPanel() {
         <div className="admin-operations__list">
           {items.map((item) => (
             <article key={item.id}>
+              {item.imageUrl ? <span className="admin-operation-image" style={{backgroundImage:`url("${item.imageUrl}")`}} aria-hidden="true" /> : null}
               <div>
                 <small>{item.reference ?? item.source ?? item.name ?? item.entityType ?? "EduRate"}</small>
                 <h3>{item.title ?? item.topic ?? item.reason ?? "Müraciət"}</h3>

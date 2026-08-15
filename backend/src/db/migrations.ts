@@ -328,6 +328,27 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS content_reports_queue_idx ON content_reports(status,created_at DESC);
     `,
   },
+  {
+    version: 14,
+    name: "verified cloud media assets",
+    sql: `
+      CREATE TABLE IF NOT EXISTS media_assets (
+        id UUID PRIMARY KEY,
+        owner_type VARCHAR(24) NOT NULL CHECK(owner_type IN ('avatar','club','announcement')),
+        owner_id VARCHAR(120) NOT NULL,
+        public_id VARCHAR(300) NOT NULL UNIQUE,
+        secure_url VARCHAR(1000) NOT NULL,
+        format VARCHAR(12) NOT NULL CHECK(format IN ('jpg','jpeg','png','webp')),
+        bytes INTEGER NOT NULL CHECK(bytes > 0 AND bytes <= 5242880),
+        width INTEGER NOT NULL CHECK(width > 0 AND width <= 1600),
+        height INTEGER NOT NULL CHECK(height > 0 AND height <= 1600),
+        created_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(owner_type,owner_id)
+      );
+      CREATE INDEX IF NOT EXISTS media_assets_owner_idx ON media_assets(owner_type,owner_id);
+    `,
+  },
 ];
 
 export const latestMigrationVersion = Math.max(...migrations.map((migration) => migration.version));

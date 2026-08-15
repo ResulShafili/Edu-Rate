@@ -24,6 +24,7 @@ type NetworkItemBase = {
   publishedAt: string;
   timeLabel: string;
   tone: NetworkTone;
+  imageUrl?: string;
 };
 
 export type AnnouncementItem = NetworkItemBase & {

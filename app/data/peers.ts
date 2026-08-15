@@ -15,6 +15,7 @@ export type Peer = {
   tags: string[];
   openingMessage: string;
   reply: string;
+  avatarUrl?: string;
 };
 
 export const peers: Peer[] = [

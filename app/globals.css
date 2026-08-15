@@ -4492,6 +4492,38 @@ a { color: inherit; text-decoration: none; }
 .admin-announcement-form footer { display: flex; justify-content: flex-end; gap: 8px; }
 .admin-announcement-form footer button { min-height: 37px; padding: 0 13px; border: 1px solid #d5e2df; border-radius: 10px; background: #fff; color: #365f57; font-weight: 750; }
 .admin-announcement-form footer button[type="submit"] { border-color: #2f7467; background: #2f7467; color: #fff; }
+.admin-announcement-image { display: grid; grid-column: 1 / -1; gap: 6px; color: #315f57; font-size: 12px; font-weight: 750; }
+.admin-announcement-image input { width: 100%; }
+.admin-announcement-image small { color: #718782; font-weight: 500; }
+.admin-operation-image { width: 112px; min-height: 76px; border-radius: 12px; background-position: center; background-size: cover; }
+
+.secure-image-picker { display: grid; grid-template-columns: 86px minmax(0,1fr); gap: 14px; align-items: center; width: 100%; }
+.secure-image-preview,.secure-image-placeholder { display: grid; width: 86px; height: 86px; place-items: center; border: 1px solid #d4e2de; border-radius: 18px; background-color: #eef5f2; background-position: center; background-size: cover; }
+.secure-image-picker.is-compact { grid-template-columns: 72px minmax(0,1fr); }
+.secure-image-picker.is-compact :is(.secure-image-preview,.secure-image-placeholder) { width: 72px; height: 72px; }
+.secure-image-picker > div { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.secure-image-picker button { display: inline-flex; min-height: 36px; padding: 0 11px; align-items: center; gap: 6px; color: #fff; font: inherit; font-size: 12px; font-weight: 750; border: 0; border-radius: 10px; background: #2f7467; }
+.secure-image-picker button.is-danger { color: #9f4141; border: 1px solid #efd4d4; background: #fff7f7; }
+.secure-image-picker button:disabled { cursor: wait; opacity: .62; }
+.secure-image-picker small,.secure-image-picker p { flex-basis: 100%; margin: 0; color: #667e78; font-size: 10px; line-height: 1.45; }
+.secure-image-picker p { color: #285f55; font-weight: 650; }
+.profile-avatar.has-image,.peer-avatar.has-image { background-position: center !important; background-size: cover !important; }
+.profile-avatar.has-image > span,.peer-avatar.has-image > span { visibility: hidden; }
+.club-card-visual.has-cover,.club-detail-hero__visual.has-cover { background-position: center !important; background-size: cover !important; }
+.club-card-visual.has-cover .club-card-art { opacity: .22; }
+.announcement-card-image { min-height: 120px; margin: -4px -4px 2px; border-radius: 10px; background-position: center; background-size: cover; }
+.announcement-compact-image { width: 76px; height: 58px; border-radius: 9px; background-position: center; background-size: cover; }
+.announcement-compact:has(.announcement-compact-image) { grid-template-columns: 76px minmax(0,1fr) auto auto !important; }
+.admin-operations__list article:has(.admin-operation-image) { grid-template-columns: 112px minmax(0,1fr) auto; }
+@media (max-width: 720px) {
+  .secure-image-picker { grid-template-columns: 66px minmax(0,1fr); }
+  .secure-image-picker :is(.secure-image-preview,.secure-image-placeholder) { width: 66px; height: 66px; border-radius: 14px; }
+  .announcement-compact:has(.announcement-compact-image) { grid-template-columns: 64px minmax(0,1fr) !important; }
+  .announcement-compact-image { width: 64px; height: 52px; }
+  .admin-operations__list article:has(.admin-operation-image) { grid-template-columns: 84px minmax(0,1fr); }
+  .admin-operation-image { width: 84px; min-height: 64px; }
+  .admin-operations__list article:has(.admin-operation-image) footer { grid-column: 1 / -1; }
+}
 .admin-operations__empty { display: grid; min-height: 130px; place-items: center; align-content: center; gap: 8px; color: #6d8580; }
 .admin-operations__loading { display: grid; gap: 10px; }
 .admin-operations__loading i,

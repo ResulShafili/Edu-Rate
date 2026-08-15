@@ -1196,6 +1196,7 @@ body {
 .kuds-shell .peer-avatar,
 .kuds-shell .mentor-avatar,
 .kuds-shell .teacher-avatar { color: var(--ku-dark-green) !important; background: var(--ku-soft-green) !important; box-shadow: none !important; }
+.kuds-shell .peer-avatar.has-image { background-image: var(--avatar-image) !important; background-position: center !important; background-size: cover !important; }
 .kuds-shell .peer-avatar-orbit,
 .kuds-shell .mentor-avatar i { border-color: rgb(68 118 108 / 32%) !important; }
 .kuds-shell .peer-identity h3,
@@ -1374,6 +1375,7 @@ body {
 .kuds-shell .club-card-visual-index,
 .kuds-shell .club-card-visual-label { color: var(--ku-dark-green) !important; }
 .kuds-shell .club-card-visual { min-height: 130px !important; background: linear-gradient(135deg, var(--ku-soft-green), var(--ku-light-blue)) !important; }
+.kuds-shell .club-card-visual.has-cover { background-image: linear-gradient(180deg, rgb(11 30 26 / 8%), rgb(11 30 26 / 42%)), var(--club-cover-image) !important; background-position: center !important; background-size: cover !important; }
 .kuds-shell .magnetic-join-button { color: #fff !important; border-radius: 8px !important; background: var(--ku-green) !important; }
 
 /* Feed */
@@ -1584,6 +1586,7 @@ body {
 }
 .kuds-shell .profile-avatar-shell { width: 104px; height: 104px; }
 .kuds-shell .profile-avatar { width: 82px; height: 82px; color: #fff !important; background: var(--ku-dark-green) !important; box-shadow: 0 16px 36px rgb(22 66 60 / 18%) !important; }
+.kuds-shell .profile-avatar.has-image { background-image: var(--avatar-image) !important; background-position: center !important; background-size: cover !important; }
 .kuds-shell .profile-avatar-orbit { border-color: rgb(68 118 108 / 30%) !important; }
 .kuds-shell .profile-avatar-status { right: 5px; bottom: 10px; border-color: #fff; }
 .kuds-shell .profile-hero-copy :is(h1, p, span),

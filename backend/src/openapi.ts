@@ -25,6 +25,7 @@ export const openApiDocument = {
     { name: "Reviews", description: "Müəllimlərin meyar əsaslı rəqəmsal qiymətləndirilməsi" },
     { name: "Support", description: "Dəstək müraciətləri" },
     { name: "Community", description: "İstifadəçi kataloqu və əlaqələr" },
+    { name: "Media", description: "Təsdiqlənmiş profil və məzmun şəkilləri" },
     { name: "Messaging", description: "Qalıcı şəxsi mesajlaşma və realtime hadisələri" },
     {
       name: "Administration",
@@ -33,6 +34,18 @@ export const openApiDocument = {
     },
   ],
   paths: {
+    "/api/media/status": {
+      get: { tags: ["Media"], summary: "Şəkil yaddaşının vəziyyətini və limitləri qaytar", security: [{ bearerAuth: [] }], responses: { "200": { description: "Şəkil siyasəti" }, "401": { description: "Giriş tələb olunur" } } },
+    },
+    "/api/media/sign": {
+      post: { tags: ["Media"], summary: "Qısaömürlü imzalanmış yükləmə icazəsi yarat", security: [{ bearerAuth: [] }], responses: { "201": { description: "Yükləmə icazəsi yaradıldı" }, "403": { description: "Məzmun şəkli üçün rol kifayət deyil" }, "503": { description: "Şəkil yaddaşı konfiqurasiya edilməyib" } } },
+    },
+    "/api/media/confirm": {
+      post: { tags: ["Media"], summary: "Bulud imzasını və real şəkil metadata-sını yoxlayıb yadda saxla", security: [{ bearerAuth: [] }], responses: { "201": { description: "Şəkil təsdiqləndi" }, "422": { description: "Format, ölçü və ya imza təhlükəsizlik siyasətinə uyğun deyil" } } },
+    },
+    "/api/media/{kind}/{ownerId}": {
+      delete: { tags: ["Media"], summary: "Şəkli təhlükəsiz sil", security: [{ bearerAuth: [] }], parameters: [{ name: "kind", in: "path", required: true, schema: { type: "string", enum: ["avatar", "club", "announcement"] } }, { name: "ownerId", in: "path", required: true, schema: { type: "string" } }], responses: { "204": { description: "Şəkil silindi" }, "403": { description: "İcazə yoxdur" }, "404": { description: "Şəkil tapılmadı" } } },
+    },
     "/api/health": {
       get: {
         tags: ["System"],

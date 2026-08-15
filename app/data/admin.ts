@@ -64,6 +64,7 @@ export type AdminClub = AdminRecordBase<AdminClubStatus> & {
   memberCount: number;
   eventCount: number;
   createdAt: string;
+  coverUrl?: string;
 };
 
 export type AdminEvent = AdminRecordBase<AdminEventStatus> & {

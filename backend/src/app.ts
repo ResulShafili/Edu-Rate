@@ -10,6 +10,7 @@ import { adminRouter } from "./routes/admin.js";
 import { authRouter } from "./routes/auth.js";
 import { catalogRouter } from "./routes/catalog.js";
 import { clubsRouter } from "./routes/clubs.js";
+import { mediaRouter } from "./routes/media.js";
 import { eventsRouter } from "./routes/events.js";
 import { healthRouter } from "./routes/health.js";
 import { mentorshipRouter } from "./routes/mentorship.js";
@@ -77,6 +78,7 @@ export function createApp() {
   app.use("/api/support", supportRouter);
   app.use("/api/workspace", workspaceRouter);
   app.use("/api/community", communityRouter);
+  app.use("/api/media", mediaRouter);
   app.use("/api/realtime", realtimeRouter);
   app.use("/api", catalogRouter);
   app.use("/api/admin", adminRouter);

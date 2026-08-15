@@ -22,6 +22,10 @@ const envSchema = z
     EMAIL_FROM: z.string().default("EduRate <onboarding@resend.dev>"),
     PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
     SWAGGER_PUBLIC: booleanValue,
+    CLOUDINARY_CLOUD_NAME: z.string().optional().or(z.literal("")),
+    CLOUDINARY_API_KEY: z.string().optional().or(z.literal("")),
+    CLOUDINARY_API_SECRET: z.string().optional().or(z.literal("")),
+    CLOUDINARY_UPLOAD_PRESET: z.string().optional().or(z.literal("")),
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV === "production" && value.JWT_SECRET.length < 32) {
@@ -55,4 +59,8 @@ export const env = {
     .map((origin) => origin.trim())
     .filter(Boolean),
   RESEND_API_KEY: parsed.data.RESEND_API_KEY || undefined,
+  CLOUDINARY_CLOUD_NAME: parsed.data.CLOUDINARY_CLOUD_NAME || undefined,
+  CLOUDINARY_API_KEY: parsed.data.CLOUDINARY_API_KEY || undefined,
+  CLOUDINARY_API_SECRET: parsed.data.CLOUDINARY_API_SECRET || undefined,
+  CLOUDINARY_UPLOAD_PRESET: parsed.data.CLOUDINARY_UPLOAD_PRESET || undefined,
 };

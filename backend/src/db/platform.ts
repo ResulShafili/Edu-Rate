@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { ApiError } from "../lib/api-error.js";
 import { databasePool } from "./database.js";
 import { env } from "../config/env.js";
+import { getMedia } from "./media.js";
 
 export type ClubStatus = "Aktiv" | "Gözləmədə" | "Məhdudlaşdırılıb";
 
@@ -28,6 +29,7 @@ export type ClubRecord = {
   status: ClubStatus;
   createdAt: string;
   updatedAt: string;
+  coverUrl?: string;
 };
 
 export type ClubInput = Pick<ClubRecord, "slug" | "name" | "category" | "coordinatorInitials"> & Partial<Pick<ClubRecord,"shortName"|"tagline"|"description"|"about"|"tone"|"visualMark"|"meeting"|"focusTags">> & {
@@ -130,6 +132,7 @@ function mapClub(row: Record<string, unknown>): ClubRecord {
     status: row.status as ClubStatus,
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
+    coverUrl: row.cover_url ? String(row.cover_url) : undefined,
   };
 }
 
@@ -251,25 +254,26 @@ export async function initializePlatformDatabase() {
 }
 
 export async function listClubs(): Promise<ClubRecord[]> {
-  if (!databasePool) return [...memoryClubs.values()].map((club)=>({
+  if (!databasePool) return Promise.all([...memoryClubs.values()].map(async(club)=>({
     ...club,
     memberCount:[...memoryMemberships].filter((key)=>key.endsWith(`:${club.slug}`)).length,
     eventCount:club.events.length,
-  })).sort((a, b) => a.name.localeCompare(b.name, "az"));
-  const result = await databasePool.query(`SELECT clubs.*,
+    coverUrl:(await getMedia("club",club.id))?.secureUrl,
+  }))).then((items)=>items.sort((a, b) => a.name.localeCompare(b.name, "az")));
+  const result = await databasePool.query(`SELECT clubs.*, media_assets.secure_url AS cover_url,
     (SELECT COUNT(*)::int FROM club_memberships WHERE club_id=clubs.id) AS member_count
-    FROM clubs ORDER BY name ASC`);
+    FROM clubs LEFT JOIN media_assets ON media_assets.owner_type='club' AND media_assets.owner_id=clubs.id::text ORDER BY name ASC`);
   return result.rows.map(mapClub);
 }
 
 export async function findClub(idOrSlug: string): Promise<ClubRecord | null> {
   if (!databasePool) {
     const club=[...memoryClubs.values()].find((item) => item.id === idOrSlug || item.slug === idOrSlug);
-    return club ? {...club,memberCount:[...memoryMemberships].filter((key)=>key.endsWith(`:${club.slug}`)).length,eventCount:club.events.length} : null;
+    return club ? {...club,memberCount:[...memoryMemberships].filter((key)=>key.endsWith(`:${club.slug}`)).length,eventCount:club.events.length,coverUrl:(await getMedia("club",club.id))?.secureUrl} : null;
   }
-  const result = await databasePool.query(`SELECT clubs.*,
+  const result = await databasePool.query(`SELECT clubs.*, media_assets.secure_url AS cover_url,
     (SELECT COUNT(*)::int FROM club_memberships WHERE club_id=clubs.id) AS member_count
-    FROM clubs WHERE id::text = $1 OR slug = $1 LIMIT 1`, [idOrSlug]);
+    FROM clubs LEFT JOIN media_assets ON media_assets.owner_type='club' AND media_assets.owner_id=clubs.id::text WHERE clubs.id::text = $1 OR clubs.slug = $1 LIMIT 1`, [idOrSlug]);
   return result.rows[0] ? mapClub(result.rows[0]) : null;
 }
 
@@ -334,9 +338,10 @@ export async function listMyClubMemberships(userId: string): Promise<ClubRecord[
     return [...memoryClubs.values()].filter((club) => slugs.has(club.slug));
   }
   const result = await databasePool.query(
-    `SELECT clubs.*,
+    `SELECT clubs.*, media_assets.secure_url AS cover_url,
        (SELECT COUNT(*)::int FROM club_memberships all_members WHERE all_members.club_id=clubs.id) AS member_count
      FROM club_memberships JOIN clubs ON clubs.id = club_memberships.club_id
+     LEFT JOIN media_assets ON media_assets.owner_type='club' AND media_assets.owner_id=clubs.id::text
      WHERE club_memberships.user_id = $1 ORDER BY club_memberships.created_at DESC`,
     [userId],
   );

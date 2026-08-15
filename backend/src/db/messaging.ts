@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { ApiError } from "../lib/api-error.js";
 import { databasePool, listUsers } from "./database.js";
+import { getMedia } from "./media.js";
 
-export type CommunityUser = { id: string; name: string; role: string; faculty: string; program: string; city: string };
+export type CommunityUser = { id: string; name: string; role: string; faculty: string; program: string; city: string; avatarUrl?:string };
 export type Connection = { id: string; requesterId: string; recipientId: string; status: "pending" | "accepted" | "blocked"; createdAt: string };
 export type Conversation = { id: string; peer: CommunityUser; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
 export type ClubConversation = { id: string; kind: "club"; club: { id: string; slug: string; name: string }; memberCount: number; isAdmin: boolean; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
@@ -20,9 +21,9 @@ const iso = (value: unknown) => new Date(String(value)).toISOString();
 const initials = (name: string) => name.split(/\s+/).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase("az")).join("");
 
 export async function listCommunityUsers(currentUserId: string): Promise<CommunityUser[]> {
-  if (!databasePool) return (await listUsers(100)).filter((user) => user.id !== currentUserId && user.status === "Aktiv").map(toCommunityUser);
-  const result = await databasePool.query("SELECT id,name,role,faculty,program,city FROM users WHERE id<>$1 AND status='Aktiv' ORDER BY updated_at DESC LIMIT 100", [currentUserId]);
-  return result.rows.map((row) => ({ id: String(row.id), name: String(row.name), role: String(row.role), faculty: String(row.faculty), program: String(row.program), city: String(row.city) }));
+  if (!databasePool) return Promise.all((await listUsers(100)).filter((user) => user.id !== currentUserId && user.status === "Aktiv").map(async(user)=>({...toCommunityUser(user),avatarUrl:(await getMedia("avatar",user.id))?.secureUrl})));
+  const result = await databasePool.query("SELECT users.id,users.name,users.role,users.faculty,users.program,users.city,media_assets.secure_url avatar_url FROM users LEFT JOIN media_assets ON media_assets.owner_type='avatar' AND media_assets.owner_id=users.id::text WHERE users.id<>$1 AND users.status='Aktiv' ORDER BY users.updated_at DESC LIMIT 100", [currentUserId]);
+  return result.rows.map((row) => ({ id: String(row.id), name: String(row.name), role: String(row.role), faculty: String(row.faculty), program: String(row.program), city: String(row.city),avatarUrl:row.avatar_url?String(row.avatar_url):undefined }));
 }
 
 export async function listConnections(userId: string): Promise<Connection[]> {

@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import type { Peer } from "../data/peers";
 
 type Props = { canInteract: boolean; currentUserId?: string; onMessage: (peer: Peer) => void; onRequireAuth: () => void };
-type ApiUser = { id: string; name: string; role: string; faculty: string; program: string; city: string };
+type ApiUser = { id: string; name: string; role: string; faculty: string; program: string; city: string; avatarUrl?:string };
 type Connection = { id: string; requesterId: string; recipientId: string; status: "pending" | "accepted" | "blocked" };
 
 const colors = [
@@ -38,6 +38,7 @@ function toPeer(user: ApiUser, index: number): Peer {
     tags: [user.faculty, user.program].filter(Boolean).slice(0, 2),
     openingMessage: "",
     reply: "",
+    avatarUrl:user.avatarUrl,
   };
 }
 
@@ -143,7 +144,7 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
             return (
               <motion.article layout key={peer.id} className="peer-card" style={{ "--peer-accent": peer.accent, "--peer-glow": peer.glow } as CSSProperties} initial={reduceMotion ? false : { opacity: 0, y: 20, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.42, delay: index * 0.03 }}>
                 <div className="peer-card-topline"><span className="peer-status online"><i />onlayn</span><span>Real hesab</span></div>
-                <div className="peer-avatar" aria-hidden="true"><span>{peer.initials}</span><i className="peer-avatar-orbit" /></div>
+                <div className={`peer-avatar${peer.avatarUrl?" has-image":""}`} style={peer.avatarUrl?{"--avatar-image":`url("${peer.avatarUrl}")`} as CSSProperties:undefined} aria-hidden="true"><span>{peer.avatarUrl?null:peer.initials}</span><i className="peer-avatar-orbit" /></div>
                 <div className="peer-identity"><h3>{peer.name}</h3><p>{peer.role} · {peer.focus}</p></div>
                 <p className="peer-bio">{peer.bio}</p>
                 <div className="peer-tags">{peer.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>

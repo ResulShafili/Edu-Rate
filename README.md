@@ -57,6 +57,17 @@ SEED_DEMO_DATA=true
 
 Production-da bu dəyişən `false` qalmalıdır. E-poçt təsdiqi üçün `RESEND_API_KEY`, `EMAIL_FROM` və `PUBLIC_APP_URL` təyin edilməlidir. Swagger production-da standart olaraq bağlıdır; yalnız nəzarətli texniki mühitdə `SWAGGER_PUBLIC=true` istifadə edilə bilər.
 
+Profil, klub və elan şəkilləri tətbiq serverinin diskində saxlanmır. Cloudinary-də `edurate-secure` adlı **signed** upload preset yaradın; yalnız `jpg,jpeg,png,webp` formatlarını qəbul edin və maksimum ölçünü 5 MB edin. Sonra Render-də bunları əlavə edin:
+
+```env
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+CLOUDINARY_UPLOAD_PRESET=edurate-secure
+```
+
+API secret heç vaxt Vercel və ya brauzer dəyişəni kimi yazılmamalıdır. Profil şəkli üçün tətbiq əlavə olaraq 2 MB və 512×512, klub/elan şəkli üçün 5 MB və 1600×1600 limitini serverdə yenidən yoxlayır. SVG, GIF və aktiv məzmun qəbul edilmir; fayl adları server tərəfindən yaradılır və metadata təmizlənir.
+
 ## Yoxlama
 
 ```bash

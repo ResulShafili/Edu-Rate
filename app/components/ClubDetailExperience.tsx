@@ -64,8 +64,8 @@ export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
     <section className={`club-detail club-tone-${club.tone}`} aria-labelledby="club-detail-title">
       <header ref={heroRef} className="club-detail-hero">
         <motion.div
-          className="club-detail-hero__visual"
-          style={{ y: visualY, scale: visualScale }}
+          className={`club-detail-hero__visual${club.coverUrl ? " has-cover" : ""}`}
+          style={{ y: visualY, scale: visualScale, ...(club.coverUrl ? { backgroundImage: `linear-gradient(130deg, rgba(8,37,31,.2), rgba(8,37,31,.64)), url("${club.coverUrl}")` } : {}) }}
           aria-hidden="true"
         >
           <span className="club-detail-hero__orb club-detail-hero__orb--one" />

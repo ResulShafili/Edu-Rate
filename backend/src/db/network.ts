@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { databasePool } from "./database.js";
 import { env } from "../config/env.js";
+import { getMedia } from "./media.js";
 
 export type NetworkCategory = "official" | "faculties" | "clubs" | "scholarship" | "events";
 export type NetworkTone = "lime" | "lilac" | "blue" | "coral" | "mint" | "gold";
@@ -20,6 +21,7 @@ export type AnnouncementRecord = {
   startsAt: string;
   expiresAt: string;
   priority: boolean;
+  imageUrl?: string;
 };
 
 export type FeedRecord = Omit<AnnouncementRecord, "kind" | "dateLabel" | "startsAt" | "expiresAt" | "priority"> & {
@@ -83,12 +85,12 @@ export async function initializeNetworkDatabase() {
 }
 
 export async function listAnnouncements(category?: NetworkCategory): Promise<AnnouncementRecord[]> {
-  if (!databasePool) return [...memoryAnnouncements.values()].filter((item) => item.status === "published" && (!category || item.category === category));
+  if (!databasePool) return Promise.all([...memoryAnnouncements.values()].filter((item) => item.status === "published" && (!category || item.category === category)).map(async(item)=>({...item,imageUrl:(await getMedia("announcement",item.id))?.secureUrl})));
   const result = await databasePool.query(
-    `SELECT * FROM announcements WHERE status='published' ${category ? "AND category = $1" : ""} ORDER BY priority DESC, published_at DESC`,
+    `SELECT announcements.*,media_assets.secure_url image_url FROM announcements LEFT JOIN media_assets ON media_assets.owner_type='announcement' AND media_assets.owner_id=announcements.id WHERE status='published' ${category ? "AND category = $1" : ""} ORDER BY priority DESC, published_at DESC`,
     category ? [category] : [],
   );
-  return result.rows.map((row) => ({ id: String(row.id), kind: "announcement", category: row.category, title: String(row.title), summary: String(row.summary), source: String(row.source), sourceInitials: String(row.source_initials), publishedAt: new Date(row.published_at).toISOString(), timeLabel: formatTime(row.published_at), tone: row.tone, dateLabel: formatDate(row.starts_at), startsAt: new Date(row.starts_at).toISOString(), expiresAt: new Date(row.expires_at).toISOString(), priority: Boolean(row.priority) }));
+  return result.rows.map((row) => ({ id: String(row.id), kind: "announcement", category: row.category, title: String(row.title), summary: String(row.summary), source: String(row.source), sourceInitials: String(row.source_initials), publishedAt: new Date(row.published_at).toISOString(), timeLabel: formatTime(row.published_at), tone: row.tone, dateLabel: formatDate(row.starts_at), startsAt: new Date(row.starts_at).toISOString(), expiresAt: new Date(row.expires_at).toISOString(), priority: Boolean(row.priority),imageUrl:row.image_url?String(row.image_url):undefined }));
 }
 
 export async function listFeed(category?: NetworkCategory): Promise<FeedRecord[]> {
@@ -101,7 +103,7 @@ export async function listFeed(category?: NetworkCategory): Promise<FeedRecord[]
 }
 
 export type AnnouncementInput={category:NetworkCategory;title:string;summary:string;source:string;sourceInitials:string;tone:NetworkTone;startsAt:string;expiresAt:string;priority:boolean;status:"draft"|"published"};
-export async function listAdminAnnouncements(){if(!databasePool)return [...memoryAnnouncements.values()].sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));const result=await databasePool.query("SELECT *,status FROM announcements ORDER BY published_at DESC");return result.rows;}
+export async function listAdminAnnouncements(){if(!databasePool)return Promise.all([...memoryAnnouncements.values()].sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)).map(async(item)=>({...item,imageUrl:(await getMedia("announcement",item.id))?.secureUrl})));const result=await databasePool.query("SELECT announcements.*,media_assets.secure_url image_url FROM announcements LEFT JOIN media_assets ON media_assets.owner_type='announcement' AND media_assets.owner_id=announcements.id ORDER BY published_at DESC");return result.rows.map((row)=>({id:String(row.id),kind:"announcement",category:row.category,title:String(row.title),summary:String(row.summary),source:String(row.source),sourceInitials:String(row.source_initials),publishedAt:new Date(row.published_at).toISOString(),timeLabel:formatTime(row.published_at),tone:row.tone,dateLabel:formatDate(row.starts_at),startsAt:new Date(row.starts_at).toISOString(),expiresAt:new Date(row.expires_at).toISOString(),priority:Boolean(row.priority),status:row.status,imageUrl:row.image_url?String(row.image_url):undefined}));}
 export async function createAnnouncement(input:AnnouncementInput){const id=randomUUID();const publishedAt=new Date().toISOString();if(!databasePool){const item={id,kind:"announcement" as const,...input,publishedAt,timeLabel:formatTime(publishedAt),dateLabel:formatDate(input.startsAt)};memoryAnnouncements.set(id,item);return item;}const result=await databasePool.query(`INSERT INTO announcements(id,category,title,summary,source,source_initials,published_at,tone,starts_at,expires_at,priority,status) VALUES($1,$2,$3,$4,$5,$6,NOW(),$7,$8,$9,$10,$11) RETURNING *`,[id,input.category,input.title,input.summary,input.source,input.sourceInitials,input.tone,input.startsAt,input.expiresAt,input.priority,input.status]);return result.rows[0];}
 export async function updateAnnouncement(id:string,input:Partial<AnnouncementInput>){if(!databasePool){const current=memoryAnnouncements.get(id);if(!current)return null;const next={...current,...input};memoryAnnouncements.set(id,next);return next;}const result=await databasePool.query(`UPDATE announcements SET category=COALESCE($2,category),title=COALESCE($3,title),summary=COALESCE($4,summary),source=COALESCE($5,source),source_initials=COALESCE($6,source_initials),tone=COALESCE($7,tone),starts_at=COALESCE($8,starts_at),expires_at=COALESCE($9,expires_at),priority=COALESCE($10,priority),status=COALESCE($11,status) WHERE id=$1 RETURNING *`,[id,input.category,input.title,input.summary,input.source,input.sourceInitials,input.tone,input.startsAt,input.expiresAt,input.priority,input.status]);return result.rows[0]??null;}
 export async function deleteAnnouncement(id:string){if(!databasePool)return memoryAnnouncements.delete(id);const result=await databasePool.query("DELETE FROM announcements WHERE id=$1",[id]);return Boolean(result.rowCount);}

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import useSWR from "swr";
 import {
   canonicalUniversity,
@@ -35,6 +35,8 @@ import {
   useAuth,
 } from "./AuthProvider";
 import { SessionManager } from "./SessionManager";
+import { SecureImagePicker } from "./SecureImagePicker";
+import type { MediaAsset } from "../lib/media-upload";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 const enterTransition = { duration: 0.62, ease };
@@ -66,6 +68,8 @@ async function loadProfileWorkspace(): Promise<ProfileWorkspace> {
   if (!response.ok || !payload.data) throw new Error(payload.error?.message ?? "Profil göstəriciləri yüklənmədi.");
   return payload.data;
 }
+
+async function loadAvatar():Promise<MediaAsset|null>{const response=await fetch("/api/media/avatar/me",{cache:"no-store"});const payload=await response.json() as {data?:MediaAsset|null};return response.ok?payload.data??null:null;}
 
 async function loadProfileConnections(currentUserId: string): Promise<ProfileConnection[]> {
   const [usersResponse, connectionsResponse] = await Promise.all([
@@ -114,6 +118,7 @@ export function UserProfileDashboard() {
   const workspace = useSWR(user ? `profile-workspace-summary:${user.id}` : null, loadProfileWorkspace, {
     revalidateOnFocus: false,
   });
+  const avatar=useSWR(user?`profile-avatar:${user.id}`:null,loadAvatar,{revalidateOnFocus:false});
   const profileConnections = useSWR(
     user ? `profile-connections:${user.id}` : null,
     () => loadProfileConnections(user!.id),
@@ -235,7 +240,7 @@ export function UserProfileDashboard() {
         transition={enterTransition}
       >
         <div className="profile-avatar-shell" aria-hidden="true">
-          <span className="profile-avatar">{user.initials}</span>
+          <span className={`profile-avatar${avatar.data?.secureUrl?" has-image":""}`} style={avatar.data?.secureUrl?{"--avatar-image":`url("${avatar.data.secureUrl}")`} as CSSProperties:undefined}>{avatar.data?.secureUrl?null:user.initials}</span>
           <i className="profile-avatar-orbit" />
           <i className="profile-avatar-status" />
         </div>
@@ -305,6 +310,7 @@ export function UserProfileDashboard() {
             </div>
 
             <form className="profile-edit-form" onSubmit={handleProfileUpdate}>
+              <div className="profile-image-field"><span>Profil şəkli</span><SecureImagePicker kind="avatar" currentUrl={avatar.data?.secureUrl} onChange={(asset)=>void avatar.mutate(asset,false)}/></div>
               <ProfileEditField label="Ad və soyad" name="name" defaultValue={user.name} autoComplete="name" required />
               <label className="profile-edit-field">
                 <span>Universitet</span>
