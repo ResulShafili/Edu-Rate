@@ -72,7 +72,7 @@ export function AuthProvider({
     return () => {
       cancelled = true;
     };
-  }, [initialUser]);
+  }, []);
 
   const signIn = useCallback(async (input: SignInInput) => {
     setStatus("submitting");
