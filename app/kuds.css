@@ -2296,6 +2296,19 @@ body {
 .kuds-shell .ui-skeleton::after { display: block; width: 45%; height: 100%; content: ""; transform: translateX(-120%); animation: kuds-skeleton 1.5s ease-in-out infinite; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 75%), transparent); }
 @keyframes kuds-skeleton { to { transform: translateX(260%); } }
 
+.kuds-shell .global-route-state { color: var(--kuds-text); }
+.kuds-shell .global-route-state__header span,
+.kuds-shell .global-route-state__header i,
+.kuds-shell .global-route-state__grid i { background: #e8eef1; }
+.kuds-shell .global-route-state__header :is(span, i)::after,
+.kuds-shell .global-route-state__grid i::after { background: linear-gradient(105deg, transparent 30%, rgb(255 255 255 / 78%) 50%, transparent 70%); }
+.kuds-shell .global-route-state.is-error { color: var(--kuds-text); }
+.kuds-shell .global-route-state.is-error > svg,
+.kuds-shell .global-route-state.is-error > span { color: var(--kuds-primary); }
+.kuds-shell .global-route-state.is-error p { color: var(--kuds-muted); }
+.kuds-shell .global-route-state.is-error :is(button, a) { color: #fff; background: var(--kuds-primary); }
+.kuds-shell .global-route-state.is-error a { color: var(--kuds-text); border-color: var(--kuds-border); background: var(--kuds-surface); }
+
 /* Search and filter controls */
 .kuds-shell :is(.event-search-field, .event-date-field, .teacher-directory-filters label, .mentor-filters label) {
   display: flex;

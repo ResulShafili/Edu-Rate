@@ -1,15 +1,14 @@
+import { ArrowLeft, SearchX } from "lucide-react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <main id="main-content" className="route-page" tabIndex={-1}>
-      <section className="ui-state" aria-labelledby="not-found-title">
-        <span className="ui-eyebrow">404</span>
-        <h1 id="not-found-title">Bu səhifə tapılmadı.</h1>
-        <p>Keçid köhnəlmiş və ya ünvan səhv yazılmış ola bilər.</p>
-        <Link className="kuds-primary-button" href="/"><ArrowLeft size={15} aria-hidden="true" /> Ana səhifəyə qayıt</Link>
-      </section>
+    <main id="main-content" className="route-page global-route-state is-error" tabIndex={-1}>
+      <SearchX aria-hidden="true" />
+      <span>404 · Səhifə tapılmadı</span>
+      <h1>Bu ünvan mövcud deyil.</h1>
+      <p>Keçid dəyişmiş və ya səhifə silinmiş ola bilər.</p>
+      <div><Link href="/"><ArrowLeft size={16} /> Ana səhifəyə qayıt</Link></div>
     </main>
   );
 }

@@ -1,6 +1,6 @@
 # EduRate — Qarabağ Universiteti Tələbə Portalı
 
-EduRate Qarabağ Universitetinin tələbə həyatı üçün hazırlanmış Azərbaycan dilli MVP platformasıdır. Platforma tələbəyə tədbirlər, elanlar, klublar, mentorluq, müəllim qiymətləndirməsi və dəstək xidmətlərinə vahid, sadə giriş verir.
+EduRate Qarabağ Universitetinin tələbə həyatı üçün hazırlanmış Azərbaycan dilli rəqəmsal platformadır. Platforma tələbəyə tədbirlər, elanlar, klublar, mentorluq, müəllim qiymətləndirməsi, şəxsi mesajlaşma və dəstək xidmətlərinə vahid, sadə giriş verir.
 
 > Hazırkı vəziyyət: frontend Vercel-də, Express REST API isə Render-də işləyir. Qeydiyyat, giriş və profil məlumatları PostgreSQL-də saxlanır; frontend JWT-ni server tərəfli `HttpOnly` cookie vasitəsilə idarə edir.
 
@@ -90,6 +90,8 @@ EDURATE_API_BASE_URL=http://localhost:3001
 | `POST/DELETE` | `/api/clubs/:clubId/memberships` | Kluba qoşulma və üzvlükdən çıxma |
 | `GET/POST` | `/api/reviews` | Təsdiqlənmiş rəylər və yeni rəyin moderasiya növbəsinə göndərilməsi |
 | `GET` | `/api/network/announcements`, `/api/network/feed` | PostgreSQL əsaslı elanlar və tələbə lenti |
+| `GET/POST/PATCH/DELETE` | `/api/community/connections` | Əlaqə sorğusu, qəbul, rədd və əlaqədən çıxma |
+| `GET/POST/PATCH` | `/api/community/conversations` | Qalıcı şəxsi söhbətlər, mesajlar və oxundu vəziyyəti |
 | `POST` | `/api/support/tickets` | Dəstək müraciətinin bazada saxlanması |
 | `GET` | `/api/openapi.json` | OpenAPI 3.1 sənədi |
 | `POST` | `/api/reviews/validate` | Rəy mətninin ilkin moderasiyası |
@@ -114,11 +116,11 @@ npm run build
 
 - Qeydiyyat, profil, tədbirlər, klub üzvlükləri, mentorluq müraciətləri, müəllim rəyləri və dəstək sorğuları PostgreSQL-də qalıcı saxlanılır.
 - Admin istifadəçi, klub və tədbir CRUD-u JWT rol yoxlaması ilə qorunur.
-- Mentor, müəllim və elan məzmunlarının bir hissəsi idarə olunan kataloq məlumatıdır; istifadəçi əməliyyatları isə real API-yə bağlıdır.
+- Müəllim və mentor profilləri sabit UUID ilə istifadəçi hesablarına bağlanır; elan, tədbir, klub, rəy, əlaqə və mesaj məlumatlarının əsas mənbəyi PostgreSQL-dir.
 - Administrator rolu açıq qeydiyyatdan verilmir; ilkin admin yalnız idarə olunan PostgreSQL əməliyyatı ilə təyin olunur və frontend rol məlumatını qorunan backend sessiyasından alır.
 - Vercel-də `NEXT_PUBLIC_SITE_URL` və `EDURATE_APP_ORIGIN` real frontend domeninə bərabər olmalıdır.
 
 Ətraflı tətbiq təhlükəsizliyi nəticələri və production nəzarət siyahısı üçün
 [`docs/security_best_practices_report.md`](docs/security_best_practices_report.md) sənədinə baxın.
 
-Sonrakı təhlükəsizlik mərhələsinə e-poçt təsdiqi, şifrə bərpası, refresh-token rotasiyası və moderasiya audit tarixçəsi daxildir. Xarici backend ünvanı `EDURATE_API_BASE_URL` ilə dəyişdirilə bilər.
+Production genişləndirilməsi üçün e-poçt təsdiqi, şifrə bərpası və refresh-token rotasiyası növbəti hardening mərhələsinə saxlanılıb. Xarici backend ünvanı `EDURATE_API_BASE_URL` ilə dəyişdirilə bilər.

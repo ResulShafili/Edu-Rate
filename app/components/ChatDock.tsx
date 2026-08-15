@@ -1,25 +1,184 @@
 "use client";
 /* eslint-disable react-hooks/set-state-in-effect -- loading state is intentionally synchronized with opening the remote dialog */
 
-import { AnimatePresence,motion,useReducedMotion } from "framer-motion";
-import { Check,MessageCircle,MoreHorizontal,Send,X } from "lucide-react";
-import { useEffect,useRef,useState,type CSSProperties,type FormEvent,type KeyboardEvent } from "react";
-import { io,type Socket } from "socket.io-client";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Check, MessageCircle, Send, X } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent } from "react";
+import { io, type Socket } from "socket.io-client";
 import type { Peer } from "../data/peers";
 import { useAuth } from "./AuthProvider";
 
-type ApiMessage={id:string;conversationId:string;senderId:string;body:string;createdAt:string};
-type Props={peer:Peer;open:boolean;onOpenChange:(open:boolean)=>void};
+type ApiMessage = { id: string; conversationId: string; senderId: string; body: string; createdAt: string };
+type Props = { peer: Peer; open: boolean; onOpenChange: (open: boolean) => void };
 
-export function ChatDock({peer,open,onOpenChange}:Props){
-  const {user}=useAuth();const [conversationId,setConversationId]=useState("");const [messages,setMessages]=useState<ApiMessage[]>([]);const [draft,setDraft]=useState("");const [typing,setTyping]=useState(false);const [loading,setLoading]=useState(false);const [error,setError]=useState("");const [settings,setSettings]=useState(false);const listRef=useRef<HTMLDivElement>(null);const socketRef=useRef<Socket|null>(null);const typingTimer=useRef<number|null>(null);const reduceMotion=useReducedMotion();
+export function ChatDock({ peer, open, onOpenChange }: Props) {
+  const { user } = useAuth();
+  const [conversationId, setConversationId] = useState("");
+  const [messages, setMessages] = useState<ApiMessage[]>([]);
+  const [draft, setDraft] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const listRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const typingTimer = useRef<number | null>(null);
+  const reduceMotion = useReducedMotion();
 
-  useEffect(()=>{if(!open||!user)return;let cancelled=false;setLoading(true);setError("");void (async()=>{try{const conversationResponse=await fetch("/api/community/conversations",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({peerId:peer.id})});const conversationPayload=await conversationResponse.json() as {data?:{id:string};error?:{message?:string}};if(!conversationResponse.ok||!conversationPayload.data)throw new Error(conversationPayload.error?.message??"Söhbət açılmadı.");const id=conversationPayload.data.id;const [messageResponse,ticketResponse]=await Promise.all([fetch(`/api/community/conversations/${id}/messages`,{cache:"no-store"}),fetch("/api/realtime/ticket",{method:"POST"})]);const messagePayload=await messageResponse.json() as {data?:ApiMessage[];error?:{message?:string}};const ticketPayload=await ticketResponse.json() as {data?:{ticket:string;socketUrl:string};error?:{message?:string}};if(!messageResponse.ok)throw new Error(messagePayload.error?.message??"Mesajlar yüklənmədi.");if(cancelled)return;setConversationId(id);setMessages(messagePayload.data??[]);void fetch(`/api/community/conversations/${id}/read`,{method:"PATCH"});if(ticketResponse.ok&&ticketPayload.data){const socket=io(ticketPayload.data.socketUrl,{path:"/socket.io",auth:{ticket:ticketPayload.data.ticket},transports:["websocket","polling"]});socketRef.current=socket;socket.emit("conversation:join",id);socket.on("message:new",(message:ApiMessage)=>{if(message.conversationId===id)setMessages((current)=>current.some((item)=>item.id===message.id)?current:[...current,message]);});socket.on("typing",(payload:{conversationId:string;userId:string;active:boolean})=>{if(payload.conversationId===id&&payload.userId!==user.id)setTyping(payload.active);});}}catch(value){if(!cancelled)setError(value instanceof Error?value.message:"Söhbət açılmadı.");}finally{if(!cancelled)setLoading(false);}})();return()=>{cancelled=true;socketRef.current?.disconnect();socketRef.current=null;if(typingTimer.current)window.clearTimeout(typingTimer.current);};},[open,peer.id,user]);
+  useEffect(() => {
+    if (!open || !user) return;
+    let cancelled = false;
+    setLoading(true);
+    setError("");
 
-  useEffect(()=>{if(!open)return;requestAnimationFrame(()=>listRef.current?.scrollTo({top:listRef.current.scrollHeight,behavior:reduceMotion?"auto":"smooth"}));},[messages,typing,open,reduceMotion]);
-  async function send(event?:FormEvent){event?.preventDefault();const body=draft.trim();if(!body||!conversationId)return;setDraft("");socketRef.current?.emit("typing",{conversationId,active:false});const response=await fetch(`/api/community/conversations/${conversationId}/messages`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({body})});const payload=await response.json() as {data?:ApiMessage;error?:{message?:string}};if(!response.ok||!payload.data){setDraft(body);setError(payload.error?.message??"Mesaj göndərilmədi.");return;}setMessages((current)=>current.some((item)=>item.id===payload.data!.id)?current:[...current,payload.data!]);}
-  function changeDraft(value:string){setDraft(value);if(!conversationId)return;socketRef.current?.emit("typing",{conversationId,active:Boolean(value.trim())});if(typingTimer.current)window.clearTimeout(typingTimer.current);typingTimer.current=window.setTimeout(()=>socketRef.current?.emit("typing",{conversationId,active:false}),1200);}
-  function keyDown(event:KeyboardEvent<HTMLTextAreaElement>){if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();void send();}}
+    void (async () => {
+      try {
+        const conversationResponse = await fetch("/api/community/conversations", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ peerId: peer.id }),
+        });
+        const conversationPayload = await conversationResponse.json() as { data?: { id: string }; error?: { message?: string } };
+        if (!conversationResponse.ok || !conversationPayload.data) {
+          throw new Error(conversationPayload.error?.message ?? "Söhbət açılmadı.");
+        }
 
-  return <div className="chat-dock" style={{"--peer-accent":peer.accent,"--peer-glow":peer.glow} as CSSProperties}><AnimatePresence>{!open?<motion.button id="chat-launcher" type="button" className="chat-launcher" aria-label={`${peer.name} ilə söhbəti aç`} onClick={()=>onOpenChange(true)} initial={reduceMotion?false:{opacity:0,scale:.85,y:14}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:.85}}><span className="launcher-pulse"/><MessageCircle size={21}/></motion.button>:null}</AnimatePresence><AnimatePresence>{open?<motion.section id="edurate-chat-panel" className="chat-panel" role="dialog" aria-label={`${peer.name} ilə söhbət`} initial={reduceMotion?false:{opacity:0,y:24,scale:.94}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:18,scale:.95}} transition={{type:"spring",stiffness:260,damping:25}}><div className="chat-panel-glow" aria-hidden="true"/><header className="chat-header"><div className="chat-person"><span className="chat-person-avatar">{peer.initials}<i className="online"/></span><div><h2>{peer.name}</h2><p>Real söhbət</p></div></div><div className="chat-header-actions"><button type="button" onClick={()=>setSettings((value)=>!value)} aria-label="Söhbət tənzimləmələri"><MoreHorizontal size={19}/></button><button type="button" onClick={()=>onOpenChange(false)} aria-label="Söhbəti bağla"><X size={18}/></button>{settings?<div className="chat-settings" role="group"><span>Söhbət</span><p>Əlavə seçimlər növbəti versiyada aktiv olacaq.</p></div>:null}</div></header><div className="chat-context"><span>İxtisas</span><strong>{peer.focus}</strong></div><div ref={listRef} className="message-list" role="log" aria-live="polite"><div className="message-day"><span>Mesajlar</span></div>{loading?<p className="chat-state">Yüklənir…</p>:null}{error?<p className="form-error" role="alert">{error}</p>:null}{!loading&&!error&&messages.length===0?<p className="chat-state">İlk mesajı sən yaz.</p>:null}<AnimatePresence initial={false}>{messages.map((message)=>{const own=message.senderId===user?.id;return <motion.div key={message.id} className={`message-row ${own?"message-own":"message-peer"}`} initial={reduceMotion?false:{opacity:0,y:10,x:own?10:-10}} animate={{opacity:1,y:0,x:0}}>{!own?<span className="message-avatar">{peer.initials}</span>:null}<div><p>{message.body}</p><span>{new Intl.DateTimeFormat("az-AZ",{hour:"2-digit",minute:"2-digit"}).format(new Date(message.createdAt))}{own?<Check size={11} aria-label="Göndərilib"/>:null}</span></div></motion.div>})}{typing?<motion.div className="typing-row" initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}><span className="message-avatar">{peer.initials}</span><div className="typing-bubble"><i/><i/><i/></div></motion.div>:null}</AnimatePresence></div><form className="chat-composer" onSubmit={(event)=>void send(event)}><label className="sr-only" htmlFor="chat-message">Mesaj</label><textarea id="chat-message" value={draft} onChange={(event)=>changeDraft(event.target.value)} onKeyDown={keyDown} rows={1} maxLength={2000} placeholder="Mesajını yaz…"/><button type="submit" disabled={!draft.trim()||!conversationId}><Send size={17}/></button><span className="composer-hint">Enter ilə göndər · Shift + Enter ilə yeni sətir</span></form></motion.section>:null}</AnimatePresence></div>;
+        const id = conversationPayload.data.id;
+        const [messageResponse, ticketResponse] = await Promise.all([
+          fetch(`/api/community/conversations/${id}/messages`, { cache: "no-store" }),
+          fetch("/api/realtime/ticket", { method: "POST" }),
+        ]);
+        const messagePayload = await messageResponse.json() as { data?: ApiMessage[]; error?: { message?: string } };
+        const ticketPayload = await ticketResponse.json() as { data?: { ticket: string; socketUrl: string }; error?: { message?: string } };
+        if (!messageResponse.ok) throw new Error(messagePayload.error?.message ?? "Mesajlar yüklənmədi.");
+        if (cancelled) return;
+
+        setConversationId(id);
+        setMessages(messagePayload.data ?? []);
+        void fetch(`/api/community/conversations/${id}/read`, { method: "PATCH" });
+
+        if (ticketResponse.ok && ticketPayload.data) {
+          const socket = io(ticketPayload.data.socketUrl, {
+            path: "/socket.io",
+            auth: { ticket: ticketPayload.data.ticket },
+            transports: ["websocket", "polling"],
+          });
+          socketRef.current = socket;
+          socket.emit("conversation:join", id);
+          socket.on("message:new", (message: ApiMessage) => {
+            if (message.conversationId === id) {
+              setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
+            }
+          });
+          socket.on("typing", (payload: { conversationId: string; userId: string; active: boolean }) => {
+            if (payload.conversationId === id && payload.userId !== user.id) setTyping(payload.active);
+          });
+        }
+      } catch (value) {
+        if (!cancelled) setError(value instanceof Error ? value.message : "Söhbət açılmadı.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      socketRef.current?.disconnect();
+      socketRef.current = null;
+      if (typingTimer.current) window.clearTimeout(typingTimer.current);
+    };
+  }, [open, peer.id, user]);
+
+  useEffect(() => {
+    if (!open) return;
+    requestAnimationFrame(() => listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: reduceMotion ? "auto" : "smooth" }));
+  }, [messages, typing, open, reduceMotion]);
+
+  async function send(event?: FormEvent) {
+    event?.preventDefault();
+    const body = draft.trim();
+    if (!body || !conversationId) return;
+    setDraft("");
+    socketRef.current?.emit("typing", { conversationId, active: false });
+    const response = await fetch(`/api/community/conversations/${conversationId}/messages`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ body }),
+    });
+    const payload = await response.json() as { data?: ApiMessage; error?: { message?: string } };
+    if (!response.ok || !payload.data) {
+      setDraft(body);
+      setError(payload.error?.message ?? "Mesaj göndərilmədi.");
+      return;
+    }
+    setMessages((current) => current.some((item) => item.id === payload.data!.id) ? current : [...current, payload.data!]);
+  }
+
+  function changeDraft(value: string) {
+    setDraft(value);
+    if (!conversationId) return;
+    socketRef.current?.emit("typing", { conversationId, active: Boolean(value.trim()) });
+    if (typingTimer.current) window.clearTimeout(typingTimer.current);
+    typingTimer.current = window.setTimeout(() => socketRef.current?.emit("typing", { conversationId, active: false }), 1200);
+  }
+
+  function keyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+      event.preventDefault();
+      void send();
+    }
+  }
+
+  return (
+    <div className="chat-dock" style={{ "--peer-accent": peer.accent, "--peer-glow": peer.glow } as CSSProperties}>
+      <AnimatePresence>
+        {!open ? (
+          <motion.button id="chat-launcher" type="button" className="chat-launcher" aria-label={`${peer.name} ilə söhbəti aç`} onClick={() => onOpenChange(true)} initial={reduceMotion ? false : { opacity: 0, scale: 0.85, y: 14 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.85 }}>
+            <span className="launcher-pulse" />
+            <MessageCircle size={21} />
+          </motion.button>
+        ) : null}
+      </AnimatePresence>
+      <AnimatePresence>
+        {open ? (
+          <motion.section id="edurate-chat-panel" className="chat-panel" role="dialog" aria-label={`${peer.name} ilə söhbət`} initial={reduceMotion ? false : { opacity: 0, y: 24, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 18, scale: 0.95 }} transition={{ type: "spring", stiffness: 260, damping: 25 }}>
+            <div className="chat-panel-glow" aria-hidden="true" />
+            <header className="chat-header">
+              <div className="chat-person">
+                <span className="chat-person-avatar">{peer.initials}<i className="online" /></span>
+                <div><h2>{peer.name}</h2><p>Real söhbət</p></div>
+              </div>
+              <div className="chat-header-actions">
+                <button type="button" onClick={() => onOpenChange(false)} aria-label="Söhbəti bağla"><X size={18} /></button>
+              </div>
+            </header>
+            <div className="chat-context"><span>İxtisas</span><strong>{peer.focus}</strong></div>
+            <div ref={listRef} className="message-list" role="log" aria-live="polite">
+              <div className="message-day"><span>Mesajlar</span></div>
+              {loading ? <p className="chat-state">Yüklənir…</p> : null}
+              {error ? <p className="form-error" role="alert">{error}</p> : null}
+              {!loading && !error && messages.length === 0 ? <p className="chat-state">İlk mesajı sən yaz.</p> : null}
+              <AnimatePresence initial={false}>
+                {messages.map((message) => {
+                  const own = message.senderId === user?.id;
+                  return (
+                    <motion.div key={message.id} className={`message-row ${own ? "message-own" : "message-peer"}`} initial={reduceMotion ? false : { opacity: 0, y: 10, x: own ? 10 : -10 }} animate={{ opacity: 1, y: 0, x: 0 }}>
+                      {!own ? <span className="message-avatar">{peer.initials}</span> : null}
+                      <div><p>{message.body}</p><span>{new Intl.DateTimeFormat("az-AZ", { hour: "2-digit", minute: "2-digit" }).format(new Date(message.createdAt))}{own ? <Check size={11} aria-label="Göndərilib" /> : null}</span></div>
+                    </motion.div>
+                  );
+                })}
+                {typing ? <motion.div className="typing-row" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}><span className="message-avatar">{peer.initials}</span><div className="typing-bubble"><i /><i /><i /></div></motion.div> : null}
+              </AnimatePresence>
+            </div>
+            <form className="chat-composer" onSubmit={(event) => void send(event)}>
+              <label className="sr-only" htmlFor="chat-message">Mesaj</label>
+              <textarea id="chat-message" value={draft} onChange={(event) => changeDraft(event.target.value)} onKeyDown={keyDown} rows={1} maxLength={2000} placeholder="Mesajını yaz…" />
+              <button type="submit" disabled={!draft.trim() || !conversationId}><Send size={17} /></button>
+              <span className="composer-hint">Enter ilə göndər · Shift + Enter ilə yeni sətir</span>
+            </form>
+          </motion.section>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
 }

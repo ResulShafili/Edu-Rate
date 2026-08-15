@@ -101,8 +101,8 @@ export function TechnicalPresentation() {
           <span className="technical-kicker"><Database size={14} /> REST API hazırlığı</span>
           <h2>Backend qoşulması üçün hazır müqavilə.</h2>
           <p>
-            Frontend-də vahid API client, service layer və SWR əsaslı hook-lar var. Real Node.js + Express servisi
-            qoşulanda admin və platforma məlumatları demo datanı əvəz edəcək.
+            Frontend-də vahid API client, service layer və SWR əsaslı hook-lar var. Node.js + Express servisi
+            canlı işləyir; əsas istifadəçi əməliyyatları və idarəetmə məlumatları PostgreSQL-də qalıcı saxlanılır.
           </p>
           <ul className="technical-api-list">
             {plannedApiContracts.map((contract) => <li key={contract}>{contract}</li>)}

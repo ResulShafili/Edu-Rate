@@ -46,7 +46,7 @@ Render build mərhələsində TypeScript və tip paketlərini quraşdırmaq üç
 - `POST /api/support/tickets` — dəstək müraciətini saxla
 - `GET /api/admin/overview` və admin CRUD endpoint-ləri — canlı idarəetmə məlumatları
 
-## Sprint 3 əlavələri
+## Sprint 3–4 əlavələri
 
 - `GET /api/network/announcements` — verilənlər bazasından elanları siyahıla
 - `GET /api/network/feed` — tələbə lentini siyahıla
@@ -55,6 +55,11 @@ Render build mərhələsində TypeScript və tip paketlərini quraşdırmaq üç
 - `PATCH /api/admin/reviews/:id` — rəyi təsdiqlə və ya rədd et
 - `GET /api/workspace` — tələbə, müəllim, mentor və rəhbərlik üçün rol əsaslı panel məlumatları
 - `PATCH /api/workspace/mentorship/:id` — mentorun ona ünvanlanan müraciəti qəbul və ya rədd etməsi
+- `GET/POST/PATCH/DELETE /api/community/connections` — əlaqə sorğusu, qəbul, rədd və geri çəkmə
+- `GET/POST /api/community/conversations` — qalıcı 1–1 söhbətlərin idarəsi
+- `GET/POST /api/community/conversations/:id/messages` — cursor əsaslı mesaj tarixçəsi və mesaj göndərilməsi
+- `PATCH /api/community/conversations/:id/read` — mesajların oxundu vəziyyəti
+- `POST /api/realtime/ticket` — Socket.IO üçün qısaömürlü birdəfəlik giriş bileti
 
 Frontend Elanlar səhifəsi artıq bu API-lərlə işləyir; yüklənmə, boş və xəta vəziyyətləri mövcuddur. Admin panelində rəy moderasiyası ayrıca qorunan bölmə kimi təqdim edilir.
 

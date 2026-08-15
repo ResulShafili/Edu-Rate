@@ -37,6 +37,8 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/mentorship/requests"]);
     assert.ok(response.body.paths["/api/clubs/{clubId}/memberships"]);
     assert.ok(response.body.paths["/api/clubs/{clubId}"]);
+    assert.ok(response.body.paths["/api/clubs/{clubId}"].patch);
+    assert.ok(response.body.paths["/api/clubs/{clubId}"].delete);
     assert.ok(response.body.paths["/api/reviews"]);
     assert.ok(response.body.paths["/api/network/announcements"]);
     assert.ok(response.body.paths["/api/network/feed"]);
@@ -48,6 +50,12 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/workspace/mentorship/{id}"]);
     assert.ok(response.body.paths["/api/support/tickets"]);
     assert.ok(response.body.paths["/api/academic-catalog"]);
+    assert.ok(response.body.paths["/api/network/feed"].post);
+    assert.ok(response.body.paths["/api/support/tickets"].get);
+    assert.ok(response.body.paths["/api/support/tickets/{id}"].patch);
+    assert.ok(response.body.paths["/api/community/connections/{id}"].patch);
+    assert.ok(response.body.paths["/api/community/connections/{id}"].delete);
+    assert.ok(response.body.paths["/api/community/conversations/{id}/read"].patch);
   });
 
   it("CORS-u yalnız frontend allowlist-i ilə məhdudlaşdırır", async () => {

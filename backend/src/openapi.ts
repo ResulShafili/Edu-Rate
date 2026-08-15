@@ -42,13 +42,14 @@ export const openApiDocument = {
             description: "Server işləyir",
             content: { "application/json": { schema: { $ref: "#/components/schemas/HealthResponse" } } },
           },
+          "503": { description: "PostgreSQL bağlantısı hazır deyil" },
         },
       },
     },
     "/api/auth/signup": {
       post: {
         tags: ["Authentication"],
-        summary: "Yeni tələbə hesabı yarat",
+        summary: "Yeni tələbə hesabı və ya müəllim təsdiq müraciəti yarat",
         requestBody: {
           required: true,
           content: {
@@ -163,7 +164,7 @@ export const openApiDocument = {
       get: { tags: ["Events"], summary: "Tədbir təfərrüatını göstər", responses: { "200": { description: "Tədbir" }, "404": { description: "Tədbir tapılmadı" } } },
       patch: {
         tags: ["Events"], summary: "Yaratdığın tədbiri yenilə", security: [{ bearerAuth: [] }],
-        requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/EventInput" } } } },
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object", minProperties: 1, description: "EventInput sahələrinin dəyişdiriləcək alt çoxluğu. Göndərilməyən sahələr qorunur." } } } },
         responses: { "200": { description: "Tədbir yeniləndi" }, "403": { description: "İcazə yoxdur" }, "404": { description: "Tədbir tapılmadı" }, "409": { description: "Tutum mövcud qeydiyyat sayından azdır" }, "422": { description: "Validasiya xətası" } },
       },
       delete: { tags: ["Events"], summary: "Yaratdığın tədbiri sil", security: [{ bearerAuth: [] }], responses: { "204": { description: "Tədbir silindi" }, "403": { description: "İcazə yoxdur" }, "404": { description: "Tədbir tapılmadı" } } },
@@ -190,6 +191,8 @@ export const openApiDocument = {
     "/api/clubs/{clubId}": {
       parameters: [{ name: "clubId", in: "path", required: true, schema: { type: "string" } }],
       get: { tags: ["Clubs"], summary: "Klubun database əsaslı profilini göstər", responses: { "200": { description: "Klub profili, real üzv sayı və görüş məlumatı" }, "404": { description: "Aktiv klub tapılmadı" } } },
+      patch: { tags: ["Clubs"], summary: "Klub məlumatlarını qismən yenilə (rəhbərlik)", security: [{ bearerAuth: [] }], responses: { "200": { description: "Klub yeniləndi" }, "403": { description: "Rəhbərlik icazəsi tələb olunur" }, "404": { description: "Klub tapılmadı" } } },
+      delete: { tags: ["Clubs"], summary: "Klubu sil (rəhbərlik)", security: [{ bearerAuth: [] }], responses: { "204": { description: "Klub silindi" }, "403": { description: "Rəhbərlik icazəsi tələb olunur" }, "404": { description: "Klub tapılmadı" } } },
     },
     "/api/clubs/{clubId}/memberships": {
       parameters: [{ name: "clubId", in: "path", required: true, schema: { type: "string" } }],
@@ -263,29 +266,51 @@ export const openApiDocument = {
         parameters: [{ name: "category", in: "query", schema: { type: "string", enum: ["official", "faculties", "clubs", "scholarship", "events"] } }],
         responses: { "200": { description: "Lent paylaşımları" }, "422": { description: "Validasiya xətası" } },
       },
+      post: {
+        tags: ["Catalog"], summary: "Moderasiya üçün lent paylaşımı yarat", security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: { "application/json": { schema: { type: "object", additionalProperties: false, required: ["title", "summary"], properties: { title: { type: "string", minLength: 3, maxLength: 180 }, summary: { type: "string", minLength: 10, maxLength: 800 }, tags: { type: "array", maxItems: 5, items: { type: "string", minLength: 1, maxLength: 32 } } } } } } },
+        responses: { "202": { description: "Paylaşım moderasiya növbəsinə əlavə edildi" }, "401": { description: "Daxil olmaq tələb olunur" }, "422": { description: "Validasiya xətası" } },
+      },
     },
     "/api/support/tickets": {
+      get: {
+        tags: ["Support"], summary: "Bütün dəstək müraciətlərini göstər (rəhbərlik)", security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Dəstək müraciətləri" }, "403": { description: "Rəhbərlik icazəsi tələb olunur" } },
+      },
       post: {
-        tags: ["Support"], summary: "Dəstək müraciəti yarat",
+        tags: ["Support"], summary: "Dəstək müraciəti yarat", security: [{ bearerAuth: [] }],
         requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/SupportTicketInput" } } } },
         responses: { "201": { description: "Müraciət saxlanıldı" }, "422": { description: "Validasiya xətası" } },
       },
+    },
+    "/api/support/tickets/{id}": {
+      parameters:[{name:"id",in:"path",required:true,schema:{type:"string",format:"uuid"}}],
+      patch:{tags:["Support"],summary:"Dəstək müraciətinin vəziyyətini yenilə (rəhbərlik)",security:[{bearerAuth:[]}],responses:{"200":{description:"Müraciət yeniləndi"},"403":{description:"Rəhbərlik icazəsi tələb olunur"},"404":{description:"Müraciət tapılmadı"}}},
     },
     "/api/support/tickets/me": { get:{tags:["Support"],summary:"Cari istifadəçinin dəstək müraciətlərini göstər",security:[{bearerAuth:[]}],responses:{"200":{description:"Müraciətlər"}}} },
     "/api/teachers": { get:{tags:["Catalog"],summary:"Təsdiqlənmiş müəllim profillərini siyahıla",responses:{"200":{description:"Müəllimlər"}}} },
     "/api/community/users": { get:{tags:["Community"],summary:"Aktiv istifadəçi kataloqu",security:[{bearerAuth:[]}],responses:{"200":{description:"İstifadəçilər"}}} },
     "/api/community/connections": {
       get:{tags:["Community"],summary:"Əlaqələri siyahıla",security:[{bearerAuth:[]}],responses:{"200":{description:"Əlaqələr"}}},
-      post:{tags:["Community"],summary:"Əlaqə sorğusu göndər",security:[{bearerAuth:[]}],responses:{"201":{description:"Sorğu yaradıldı"}}},
+      post:{tags:["Community"],summary:"Əlaqə sorğusu göndər",security:[{bearerAuth:[]}],requestBody:{required:true,content:{"application/json":{schema:{type:"object",additionalProperties:false,required:["userId"],properties:{userId:{type:"string",format:"uuid"}}}}}},responses:{"201":{description:"Sorğu yaradıldı"},"409":{description:"Sorğu və ya əlaqə artıq mövcuddur"}}},
+    },
+    "/api/community/connections/{id}": {
+      parameters:[{name:"id",in:"path",required:true,schema:{type:"string",format:"uuid"}}],
+      patch:{tags:["Community"],summary:"Gələn əlaqə sorğusunu qəbul et",security:[{bearerAuth:[]}],responses:{"200":{description:"Əlaqə qəbul edildi"},"403":{description:"Bu sorğunu idarə etmək olmaz"},"404":{description:"Sorğu tapılmadı"}}},
+      delete:{tags:["Community"],summary:"Sorğunu geri çək, rədd et və ya əlaqəni sil",security:[{bearerAuth:[]}],responses:{"204":{description:"Əlaqə silindi"},"404":{description:"Əlaqə tapılmadı"}}},
     },
     "/api/community/conversations": {
       get:{tags:["Messaging"],summary:"Söhbətləri siyahıla",security:[{bearerAuth:[]}],responses:{"200":{description:"Söhbətlər"}}},
-      post:{tags:["Messaging"],summary:"Şəxsi söhbət yarat",security:[{bearerAuth:[]}],responses:{"201":{description:"Söhbət yaradıldı"}}},
+      post:{tags:["Messaging"],summary:"Şəxsi söhbət yarat",security:[{bearerAuth:[]}],requestBody:{required:true,content:{"application/json":{schema:{type:"object",additionalProperties:false,required:["peerId"],properties:{peerId:{type:"string",format:"uuid"}}}}}},responses:{"201":{description:"Söhbət yaradıldı"},"403":{description:"Qəbul edilmiş əlaqə tələb olunur"}}},
     },
     "/api/community/conversations/{id}/messages": {
       parameters:[{name:"id",in:"path",required:true,schema:{type:"string",format:"uuid"}}],
       get:{tags:["Messaging"],summary:"Cursor əsaslı mesaj tarixçəsi",security:[{bearerAuth:[]}],responses:{"200":{description:"Mesajlar"}}},
-      post:{tags:["Messaging"],summary:"Mesaj göndər",security:[{bearerAuth:[]}],responses:{"201":{description:"Mesaj saxlanıldı"}}},
+      post:{tags:["Messaging"],summary:"Mesaj göndər",security:[{bearerAuth:[]}],requestBody:{required:true,content:{"application/json":{schema:{type:"object",additionalProperties:false,required:["body"],properties:{body:{type:"string",minLength:1,maxLength:2000}}}}}},responses:{"201":{description:"Mesaj saxlanıldı"},"429":{description:"Mesaj limiti aşıldı"}}},
+    },
+    "/api/community/conversations/{id}/read": {
+      parameters:[{name:"id",in:"path",required:true,schema:{type:"string",format:"uuid"}}],
+      patch:{tags:["Messaging"],summary:"Söhbətin mesajlarını oxunmuş kimi işarələ",security:[{bearerAuth:[]}],responses:{"200":{description:"Oxunma vəziyyəti yeniləndi"},"403":{description:"Söhbətə giriş yoxdur"},"404":{description:"Söhbət tapılmadı"}}},
     },
     "/api/realtime/ticket": { post:{tags:["Messaging"],summary:"Birdəfəlik realtime bileti al",security:[{bearerAuth:[]}],responses:{"201":{description:"60 saniyəlik bilet"}}} },
     "/api/admin/overview": {

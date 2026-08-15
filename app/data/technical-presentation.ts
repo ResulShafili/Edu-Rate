@@ -1,8 +1,8 @@
 export const presentationQuestions = [
   "EduRate hansı problemi həll edir?",
   "Sistem hansı texnologiyalarla qurulub?",
-  "Hazırda nə işləyir, nə demo mərhələsindədir?",
-  "Növbəti backend və təhlükəsizlik addımları nədir?",
+  "Hazırda hansı əsas istifadəçi axınları canlı işləyir?",
+  "Sistem necə qorunur və necə yoxlanılır?",
 ] as const;
 
 export const presentationModules = [
@@ -51,6 +51,8 @@ export const plannedApiContracts = [
   "POST, DELETE /api/clubs/:clubId/memberships",
   "GET, POST, PATCH, DELETE /api/events və /api/events/:eventId",
   "GET, POST, PATCH, DELETE /api/mentorship/requests",
+  "GET, POST, PATCH, DELETE /api/community/connections",
+  "GET, POST /api/community/conversations və /messages",
   "POST /api/reviews və /api/support/tickets",
   "GET /api/openapi.json",
 ] as const;
@@ -70,8 +72,8 @@ export const readinessNotes = [
   },
   {
     label: "Backend",
-    status: "MVP hazır",
-    detail: "Giriş, sessiya, profil, tədbir, klub, mentorluq, rəy, dəstək və idarəetmə endpoint-ləri Render-də işləyir.",
+    status: "Canlı",
+    detail: "Giriş, sessiya, profil, tədbir, klub, mentorluq, rəy, dəstək, icma, mesajlaşma və idarəetmə endpoint-ləri Render-də işləyir.",
   },
   {
     label: "Database",
@@ -80,8 +82,8 @@ export const readinessNotes = [
   },
   {
     label: "Təhlükəsizlik",
-    status: "MVP hazır",
-    detail: "Sessiya HttpOnly cookie ilə qorunur, server rəy moderasiyası aparır və admin endpoint-ləri rol ilə məhdudlaşdırılır.",
+    status: "Tətbiq edilib",
+    detail: "HttpOnly sessiya, server validasiyası, rəy moderasiyası, sorğu limiti və rol əsaslı icazələr tətbiq edilib.",
   },
 ] as const;
 
@@ -95,4 +97,4 @@ export const presentationChecklist = [
 ] as const;
 
 export const leadershipScript =
-  "EduRate Qarabağ Universiteti üçün tələbə təcrübəsini birləşdirən rəqəmsal platformadır. Frontend React, Next.js və TypeScript, backend Node.js və Express, qalıcı məlumat qatı isə PostgreSQL ilə hazırlanıb. Tədbir qeydiyyatı, klub üzvlüyü, mentorluq, müəllim rəyi, dəstək müraciəti və admin idarəetməsi canlı API-yə bağlıdır. Sistem HttpOnly sessiya, server validasiyası, moderasiya və rol əsaslı admin qoruması ilə Sprint 2-nin əsas uçdan-uca axınlarını tamamlayır.";
+  "EduRate Qarabağ Universiteti üçün tələbə təcrübəsini birləşdirən rəqəmsal platformadır. Frontend React, Next.js və TypeScript, backend Node.js və Express, qalıcı məlumat qatı isə PostgreSQL ilə hazırlanıb. Qeydiyyat, tədbir iştirakı, klub üzvlüyü, mentorluq, müəllim rəyi, dəstək, şəxsi mesajlaşma və rol əsaslı idarəetmə canlı API-yə bağlıdır. Sistem HttpOnly sessiya, server validasiyası, moderasiya, audit tarixçəsi və səlahiyyət nəzarəti ilə Sprint 4 çərçivəsində yekunlaşdırılıb.";
