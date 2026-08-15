@@ -5,10 +5,9 @@ import {
 } from "../../data/user";
 import { ApiHttpError } from "../api/http";
 import { readCookieValue } from "./cookies";
+import { authSessionCookieSecurity, authSessionMaxAgeSeconds } from "./session-policy";
 
 const defaultApiBaseUrl = "https://edurate-api.onrender.com";
-const tokenMaxAgeSeconds = 60 * 60 * 8;
-
 export const remoteCredentialCookieName = "edurate_api_token";
 
 export type RemoteApiUser = {
@@ -33,10 +32,9 @@ type RemoteErrorEnvelope = {
 export const remoteCredentialCookie = {
   name: remoteCredentialCookieName,
   options: {
-    httpOnly: true,
-    sameSite: "lax" as const,
+    ...authSessionCookieSecurity,
     path: "/",
-    maxAge: tokenMaxAgeSeconds,
+    maxAge: authSessionMaxAgeSeconds,
     priority: "high" as const,
   },
 };

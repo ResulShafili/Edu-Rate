@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 import type { Express } from "express";
+import jwt from "jsonwebtoken";
 import request from "supertest";
 
 process.env.NODE_ENV = "test";
@@ -111,6 +112,9 @@ describe("EduRate API", () => {
 
     assert.equal(signup.body.data.user.email, email);
     assert.ok(signup.body.data.token);
+    const tokenPayload = jwt.decode(signup.body.data.token) as { iat?: number; exp?: number } | null;
+    assert.ok(tokenPayload?.iat && tokenPayload.exp);
+    assert.ok(tokenPayload.exp - tokenPayload.iat >= 60 * 60 * 24 * 29);
     assert.equal(signup.body.data.user.passwordHash, undefined);
     reusableStudentId = signup.body.data.user.id;
     reusableStudentToken = signup.body.data.token;

@@ -63,7 +63,6 @@ export function AuthProvider({
     : null;
 
   useEffect(() => {
-    if (!initialUser) return;
     let cancelled = false;
 
     void getCredentialSession().then((sessionUser) => {

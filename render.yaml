@@ -19,7 +19,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
-        value: 8h
+        value: 30d
       - key: FRONTEND_URL
         value: https://edu-rate-nu.vercel.app
       - key: TRUST_PROXY

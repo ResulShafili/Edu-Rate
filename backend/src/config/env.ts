@@ -12,7 +12,7 @@ const envSchema = z
     PORT: z.coerce.number().int().positive().default(3001),
     DATABASE_URL: z.string().url().optional().or(z.literal("")),
     JWT_SECRET: z.string().min(16).default("edurate-local-development-secret"),
-    JWT_EXPIRES_IN: z.string().default("8h"),
+    JWT_EXPIRES_IN: z.string().default("30d"),
     FRONTEND_URL: z
       .string()
       .default("http://localhost:3000,https://edu-rate-nu.vercel.app"),

@@ -6,6 +6,7 @@ import {
   isAssignableUserRole,
 } from "../app/lib/auth/admin-role.ts";
 import { buildContentSecurityPolicy } from "../app/lib/security/content-security-policy.ts";
+import { authSessionCookieSecurity, authSessionMaxAgeSeconds } from "../app/lib/auth/session-policy.ts";
 import { isTrustedMutationRequest } from "../app/lib/security/request-origin.ts";
 
 describe("frontend security boundaries", () => {
@@ -51,6 +52,12 @@ describe("frontend security boundaries", () => {
       /connect-src 'self' https:\/\/edurate-api\.onrender\.com wss:\/\/edurate-api\.onrender\.com;/,
     );
     assert.doesNotMatch(policy, /script-src \*/);
+  });
+
+  it("giriş sessiyasını 30 günlük qalıcı HttpOnly cookie ilə saxlayır", () => {
+    assert.equal(authSessionMaxAgeSeconds, 60 * 60 * 24 * 30);
+    assert.equal(authSessionCookieSecurity.httpOnly, true);
+    assert.equal(authSessionCookieSecurity.sameSite, "lax");
   });
 
   it("admin köməkçisinin istifadəçi səlahiyyətlərini aşağı rollarla məhdudlaşdırır", () => {
