@@ -2,16 +2,17 @@
 /* eslint-disable react-hooks/set-state-in-effect -- loading state is intentionally synchronized with opening the remote dialog */
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Check, MessageCircle, Send, X } from "lucide-react";
+import { Check, Crown, MessageCircle, Send, UsersRound, X } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { Peer } from "../data/peers";
 import { useAuth } from "./AuthProvider";
+import type { ClubChatTarget } from "./PlatformProvider";
 
-type ApiMessage = { id: string; conversationId: string; senderId: string; body: string; createdAt: string };
-type Props = { peer: Peer; open: boolean; onOpenChange: (open: boolean) => void };
+type ApiMessage = { id: string; conversationId: string; senderId: string; senderName?: string; senderInitials?: string; body: string; createdAt: string };
+type Props = { peer: Peer; group?: ClubChatTarget | null; open: boolean; onOpenChange: (open: boolean) => void };
 
-export function ChatDock({ peer, open, onOpenChange }: Props) {
+export function ChatDock({ peer, group, open, onOpenChange }: Props) {
   const { user } = useAuth();
   const [conversationId, setConversationId] = useState("");
   const [messages, setMessages] = useState<ApiMessage[]>([]);
@@ -32,17 +33,17 @@ export function ChatDock({ peer, open, onOpenChange }: Props) {
 
     void (async () => {
       try {
-        const conversationResponse = await fetch("/api/community/conversations", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ peerId: peer.id }),
-        });
-        const conversationPayload = await conversationResponse.json() as { data?: { id: string }; error?: { message?: string } };
-        if (!conversationResponse.ok || !conversationPayload.data) {
-          throw new Error(conversationPayload.error?.message ?? "Söhbət açılmadı.");
+        let id = group?.conversationId ?? "";
+        if (!id) {
+          const conversationResponse = await fetch("/api/community/conversations", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ peerId: peer.id }),
+          });
+          const conversationPayload = await conversationResponse.json() as { data?: { id: string }; error?: { message?: string } };
+          if (!conversationResponse.ok || !conversationPayload.data) throw new Error(conversationPayload.error?.message ?? "Söhbət açılmadı.");
+          id = conversationPayload.data.id;
         }
-
-        const id = conversationPayload.data.id;
         const [messageResponse, ticketResponse] = await Promise.all([
           fetch(`/api/community/conversations/${id}/messages`, { cache: "no-store" }),
           fetch("/api/realtime/ticket", { method: "POST" }),
@@ -90,7 +91,7 @@ export function ChatDock({ peer, open, onOpenChange }: Props) {
       socketRef.current = null;
       if (typingTimer.current) window.clearTimeout(typingTimer.current);
     };
-  }, [open, peer.id, user]);
+  }, [group?.conversationId, open, peer.id, user]);
 
   useEffect(() => {
     if (!open) return;
@@ -136,7 +137,7 @@ export function ChatDock({ peer, open, onOpenChange }: Props) {
     <div className="chat-dock" style={{ "--peer-accent": peer.accent, "--peer-glow": peer.glow } as CSSProperties}>
       <AnimatePresence>
         {!open ? (
-          <motion.button id="chat-launcher" type="button" className="chat-launcher" aria-label={`${peer.name} ilə söhbəti aç`} onClick={() => onOpenChange(true)} initial={reduceMotion ? false : { opacity: 0, scale: 0.85, y: 14 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.85 }}>
+          <motion.button id="chat-launcher" type="button" className="chat-launcher" aria-label={`${peer.name} söhbətini aç`} onClick={() => onOpenChange(true)} initial={reduceMotion ? false : { opacity: 0, scale: 0.85, y: 14 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.85 }}>
             <span className="launcher-pulse" />
             <MessageCircle size={21} />
           </motion.button>
@@ -144,18 +145,18 @@ export function ChatDock({ peer, open, onOpenChange }: Props) {
       </AnimatePresence>
       <AnimatePresence>
         {open ? (
-          <motion.section id="edurate-chat-panel" className="chat-panel" role="dialog" aria-label={`${peer.name} ilə söhbət`} initial={reduceMotion ? false : { opacity: 0, y: 24, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 18, scale: 0.95 }} transition={{ type: "spring", stiffness: 260, damping: 25 }}>
+          <motion.section id="edurate-chat-panel" className={`chat-panel${group ? " is-group-chat" : ""}`} role="dialog" aria-label={`${peer.name} söhbəti`} initial={reduceMotion ? false : { opacity: 0, y: 24, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 18, scale: 0.95 }} transition={{ type: "spring", stiffness: 260, damping: 25 }}>
             <div className="chat-panel-glow" aria-hidden="true" />
             <header className="chat-header">
               <div className="chat-person">
-                <span className="chat-person-avatar">{peer.initials}<i className="online" /></span>
-                <div><h2>{peer.name}</h2><p>Real söhbət</p></div>
+                <span className="chat-person-avatar">{group ? <UsersRound size={17} /> : peer.initials}<i className="online" /></span>
+                <div><h2>{peer.name}</h2><p>{group ? `${group.memberCount} üzv · klub qrupu` : "Şəxsi söhbət"}</p></div>
               </div>
               <div className="chat-header-actions">
                 <button type="button" onClick={() => onOpenChange(false)} aria-label="Söhbəti bağla"><X size={18} /></button>
               </div>
             </header>
-            <div className="chat-context"><span>İxtisas</span><strong>{peer.focus}</strong></div>
+            <div className="chat-context"><span>{group ? "Səlahiyyət" : "İxtisas"}</span><strong>{group ? group.isAdmin ? <><Crown size={12} /> Qrup admini</> : "Klub üzvü" : peer.focus}</strong></div>
             <div ref={listRef} className="message-list" role="log" aria-live="polite">
               <div className="message-day"><span>Mesajlar</span></div>
               {loading ? <p className="chat-state">Yüklənir…</p> : null}
@@ -166,12 +167,12 @@ export function ChatDock({ peer, open, onOpenChange }: Props) {
                   const own = message.senderId === user?.id;
                   return (
                     <motion.div key={message.id} className={`message-row ${own ? "message-own" : "message-peer"}`} initial={reduceMotion ? false : { opacity: 0, y: 10, x: own ? 10 : -10 }} animate={{ opacity: 1, y: 0, x: 0 }}>
-                      {!own ? <span className="message-avatar">{peer.initials}</span> : null}
-                      <div><p>{message.body}</p><span>{new Intl.DateTimeFormat("az-AZ", { hour: "2-digit", minute: "2-digit" }).format(new Date(message.createdAt))}{own ? <Check size={11} aria-label="Göndərilib" /> : null}</span></div>
+                      {!own ? <span className="message-avatar">{group ? message.senderInitials || "Ü" : peer.initials}</span> : null}
+                      <div>{group && !own ? <strong className="message-sender-name">{message.senderName || "Klub üzvü"}</strong> : null}<p>{message.body}</p><span>{new Intl.DateTimeFormat("az-AZ", { hour: "2-digit", minute: "2-digit" }).format(new Date(message.createdAt))}{own ? <Check size={11} aria-label="Göndərilib" /> : null}</span></div>
                     </motion.div>
                   );
                 })}
-                {typing ? <motion.div className="typing-row" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}><span className="message-avatar">{peer.initials}</span><div className="typing-bubble"><i /><i /><i /></div></motion.div> : null}
+                {typing ? <motion.div className="typing-row" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}><span className="message-avatar">{group ? "Ü" : peer.initials}</span><div className="typing-bubble"><i /><i /><i /></div></motion.div> : null}
               </AnimatePresence>
             </div>
             <form className="chat-composer" onSubmit={(event) => void send(event)}>

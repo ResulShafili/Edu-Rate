@@ -41,6 +41,7 @@ import {
 import { listAudit, writeAudit } from "../db/audit.js";
 import { createAnnouncement, deleteAnnouncement, deleteFeedPost, listAdminAnnouncements, listAdminFeed, updateAnnouncement, updateFeedPostStatus } from "../db/network.js";
 import { decideMentorApplication, listMentorApplications } from "../db/mentor-applications.js";
+import { ensureClubConversation } from "../db/messaging.js";
 
 export const adminRouter = Router();
 adminRouter.use(authenticate, requireAdmin);
@@ -187,7 +188,9 @@ adminRouter.get("/clubs", async (request, response) => {
 });
 
 adminRouter.post("/clubs", async (request, response) => {
-  response.status(201).json({ data: toAdminClub(await createClub(clubSchema.parse(request.body))) });
+  const club = await createClub(clubSchema.parse(request.body), request.auth!.userId);
+  await ensureClubConversation(club);
+  response.status(201).json({ data: toAdminClub(club) });
 });
 
 adminRouter.patch("/clubs/:id", async (request, response) => {

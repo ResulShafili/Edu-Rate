@@ -1173,13 +1173,17 @@ body {
 .kuds-shell .directory-meta { color: var(--kuds-muted) !important; }
 .kuds-shell .community-chat-hub { border-color: var(--kuds-border); background: var(--kuds-surface); box-shadow: var(--kuds-shadow-xs); }
 .kuds-shell .community-chat-hub > header > span { color: var(--ku-dark-green); background: var(--ku-soft-green); }
-.kuds-shell .community-chat-hub h2 { color: var(--kuds-text); }
+.kuds-shell .community-chat-hub h2 { color: var(--kuds-text) !important; }
 .kuds-shell .community-chat-hub header p,
 .kuds-shell .community-chat-copy small,
-.kuds-shell .community-chat-empty { color: var(--kuds-muted); }
-.kuds-shell .community-chat-list button { color: var(--kuds-text); border-color: var(--kuds-border); background: var(--kuds-bg); }
+.kuds-shell .community-chat-empty { color: var(--kuds-muted) !important; }
+.kuds-shell .community-chat-category > h3 { color: var(--ku-dark-green) !important; }
+.kuds-shell .community-chat-list button { color: var(--kuds-text) !important; border-color: var(--kuds-border); background: #fff; }
+.kuds-shell .community-chat-copy strong { color: #142a26 !important; }
+.kuds-shell .community-chat-copy small { color: #5f716d !important; }
 .kuds-shell .community-chat-list button:hover { border-color: var(--ku-green); background: #edf5e8; }
 .kuds-shell .community-chat-avatar { color: #fff; background: var(--ku-green); }
+.kuds-shell .community-chat-avatar.is-group { color: #fff; background: var(--ku-dark-green); }
 .kuds-shell .community-chat-list button > b { color: #fff; background: var(--ku-green); }
 .kuds-shell .community-chat-list button > svg { color: var(--ku-green); }
 .kuds-shell .community-chat-empty { border-color: var(--kuds-border); }

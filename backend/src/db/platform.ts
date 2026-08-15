@@ -23,6 +23,7 @@ export type ClubRecord = {
   history: Array<{ year: string; title: string; description: string }>;
   memberCount: number;
   eventCount: number;
+  createdBy: string | null;
   status: ClubStatus;
   createdAt: string;
   updatedAt: string;
@@ -83,6 +84,7 @@ const clubSeeds: Omit<ClubRecord, "id" | "createdAt" | "updatedAt">[] = rawClubS
   visualMark:`K${String(index+1).padStart(2,"0")}`,
   meeting:{cadence:"Həftəlik",day:"Cədvəl üzrə",time:"18:00",place:"Universitet kampusu"},
   focusTags:[club.category,"Komanda işi","Tələbə təşəbbüsü"],
+  createdBy:null,
   events:[],
   members:[{id:`${club.slug}-coordinator`,initials:club.coordinatorInitials,role:"Klub koordinatoru",focus:"Proqram və üzvlər"}],
   history:[],
@@ -92,7 +94,7 @@ const now = () => new Date().toISOString();
 const memoryClubs = new Map<string, ClubRecord>(
   clubSeeds.map((club) => {
     const createdAt = "2026-08-01T00:00:00.000Z";
-    return [club.slug, { ...club, id: randomUUID(), createdAt, updatedAt: createdAt }];
+    return [club.slug, { ...club, id: randomUUID(), createdBy: null, createdAt, updatedAt: createdAt }];
   }),
 );
 const memoryMemberships = new Set<string>();
@@ -123,6 +125,7 @@ function mapClub(row: Record<string, unknown>): ClubRecord {
     history:Array.isArray(row.history) ? row.history as ClubRecord["history"] : [],
     memberCount: Number(row.member_count),
     eventCount: Array.isArray(row.events) ? row.events.length : 0,
+    createdBy: row.created_by ? String(row.created_by) : null,
     status: row.status as ClubStatus,
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
@@ -269,7 +272,7 @@ export async function findClub(idOrSlug: string): Promise<ClubRecord | null> {
   return result.rows[0] ? mapClub(result.rows[0]) : null;
 }
 
-export async function createClub(input: ClubInput): Promise<ClubRecord> {
+export async function createClub(input: ClubInput, createdBy: string | null = null): Promise<ClubRecord> {
   const club: ClubRecord = { id: randomUUID(), ...input,
     shortName:input.shortName??input.name,tagline:input.tagline??"Birlikdə öyrən, yarat və kampusla paylaş.",
     description:input.description??`${input.category} istiqamətində tələbələri bir araya gətirən açıq universitet klubudur.`,
@@ -278,17 +281,17 @@ export async function createClub(input: ClubInput): Promise<ClubRecord> {
     meeting:input.meeting??{cadence:"Yenilənir",day:"Cədvəl üzrə",time:"18:00",place:"Universitet kampusu"},
     focusTags:input.focusTags??[input.category],memberCount: 0, eventCount: 0,
     events:[],members:[{id:`${input.slug}-coordinator`,initials:input.coordinatorInitials,role:"Klub koordinatoru",focus:"Proqram və üzvlər"}],history:[],
-    status: input.status ?? "Gözləmədə", createdAt: now(), updatedAt: now() };
+    status: input.status ?? "Gözləmədə", createdBy, createdAt: now(), updatedAt: now() };
   if (!databasePool) {
     if (memoryClubs.has(club.slug)) throw new ApiError(409, "CLUB_EXISTS", "Bu qısa adla klub artıq mövcuddur.");
     memoryClubs.set(club.slug, club);
     return club;
   }
   const result = await databasePool.query(
-    `INSERT INTO clubs (id,slug,name,category,coordinator_initials,status,short_name,tagline,description,about,tone,visual_mark,meeting,focus_tags,members)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+    `INSERT INTO clubs (id,slug,name,category,coordinator_initials,status,short_name,tagline,description,about,tone,visual_mark,meeting,focus_tags,members,created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
     [club.id,club.slug,club.name,club.category,club.coordinatorInitials,club.status,club.shortName,club.tagline,club.description,
-      JSON.stringify(club.about),club.tone,club.visualMark,JSON.stringify(club.meeting),club.focusTags,JSON.stringify(club.members)],
+      JSON.stringify(club.about),club.tone,club.visualMark,JSON.stringify(club.meeting),club.focusTags,JSON.stringify(club.members),createdBy],
   );
   return mapClub(result.rows[0]);
 }

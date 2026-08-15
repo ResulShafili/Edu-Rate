@@ -10,7 +10,17 @@ type PlatformContextValue = {
   activePeer: Peer | null;
   chatOpen: boolean;
   openConversation: (peer: Peer) => void;
+  openClubConversation: (group: ClubChatTarget) => void;
   setChatOpen: (open: boolean) => void;
+};
+
+export type ClubChatTarget = {
+  conversationId: string;
+  clubId: string;
+  name: string;
+  initials: string;
+  memberCount: number;
+  isAdmin: boolean;
 };
 
 const PlatformContext = createContext<PlatformContextValue | null>(null);
@@ -22,6 +32,7 @@ type PlatformProviderProps = {
 export function PlatformProvider({ children }: PlatformProviderProps) {
   const { user } = useAuth();
   const [activePeer, setActivePeer] = useState<Peer | null>(null);
+  const [activeGroup, setActiveGroup] = useState<ClubChatTarget | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
 
   const value = useMemo<PlatformContextValue>(() => ({
@@ -29,6 +40,12 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
     chatOpen,
     openConversation(peer) {
       setActivePeer(peer);
+      setActiveGroup(null);
+      setChatOpen(true);
+    },
+    openClubConversation(group) {
+      setActiveGroup(group);
+      setActivePeer({ id: group.clubId, name: group.name, initials: group.initials, role: "Klub qrupu", focus: `${group.memberCount} üzv`, bio: "", city: "", status: "online", accent: "#44766c", glow: "rgba(68,118,108,.28)", mutuals: 0, tags: [], openingMessage: "", reply: "" });
       setChatOpen(true);
     },
     setChatOpen,
@@ -39,7 +56,7 @@ export function PlatformProvider({ children }: PlatformProviderProps) {
       <PlatformContext.Provider value={value}>
         {children}
         {user && activePeer ? (
-          <ChatDock peer={activePeer} open={chatOpen} onOpenChange={setChatOpen} />
+          <ChatDock peer={activePeer} group={activeGroup} open={chatOpen} onOpenChange={setChatOpen} />
         ) : null}
       </PlatformContext.Provider>
     </MotionConfig>

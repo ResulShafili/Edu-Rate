@@ -2,14 +2,17 @@
 /* eslint-disable react-hooks/set-state-in-effect -- the authenticated directory refresh is effect-driven */
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Check, MapPin, MessageCircle, RefreshCw, UserPlus } from "lucide-react";
+import { Check, Crown, MapPin, MessageCircle, RefreshCw, UserPlus, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { Peer } from "../data/peers";
 
-type Props = { canInteract: boolean; currentUserId?: string; onMessage: (peer: Peer) => void; onRequireAuth: () => void };
+import type { ClubChatTarget } from "./PlatformProvider";
+
+type Props = { canInteract: boolean; currentUserId?: string; onMessage: (peer: Peer) => void; onGroupMessage: (group: ClubChatTarget) => void; onRequireAuth: () => void };
 type ApiUser = { id: string; name: string; role: string; faculty: string; program: string; city: string };
 type Connection = { id: string; requesterId: string; recipientId: string; status: "pending" | "accepted" | "blocked" };
 type ApiConversation = { id: string; peer: ApiUser; lastMessage: string; updatedAt: string; unreadCount: number };
+type ApiGroup = { id: string; kind: "club"; club: { id: string; slug: string; name: string }; memberCount: number; isAdmin: boolean; lastMessage: string; updatedAt: string; unreadCount: number };
 
 const colors = [
   ["#b9a7ff", "rgba(185,167,255,.34)"],
@@ -42,11 +45,12 @@ function toPeer(user: ApiUser, index: number): Peer {
   };
 }
 
-export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequireAuth }: Props) {
+export function PeerDirectory({ canInteract, currentUserId, onMessage, onGroupMessage, onRequireAuth }: Props) {
   const [loading, setLoading] = useState(true);
   const [directory, setDirectory] = useState<Peer[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [conversations, setConversations] = useState<ApiConversation[]>([]);
+  const [groups, setGroups] = useState<ApiGroup[]>([]);
   const [error, setError] = useState("");
   const [actionPeerId, setActionPeerId] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
@@ -59,22 +63,26 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
         setDirectory([]);
         setConnections([]);
         setConversations([]);
+        setGroups([]);
         return;
       }
-      const [usersResponse, connectionsResponse, conversationsResponse] = await Promise.all([
+      const [usersResponse, connectionsResponse, conversationsResponse, groupsResponse] = await Promise.all([
         fetch("/api/community/users", { cache: "no-store" }),
         fetch("/api/community/connections", { cache: "no-store" }),
         fetch("/api/community/conversations", { cache: "no-store" }),
+        fetch("/api/community/groups", { cache: "no-store" }),
       ]);
       const users = await usersResponse.json() as { data?: ApiUser[]; error?: { message?: string } };
       const links = await connectionsResponse.json() as { data?: Connection[]; error?: { message?: string } };
       const chats = await conversationsResponse.json() as { data?: ApiConversation[]; error?: { message?: string } };
-      if (!usersResponse.ok || !connectionsResponse.ok || !conversationsResponse.ok) {
-        throw new Error(users.error?.message || links.error?.message || chats.error?.message || "İcma yüklənmədi.");
+      const clubGroups = await groupsResponse.json() as { data?: ApiGroup[]; error?: { message?: string } };
+      if (!usersResponse.ok || !connectionsResponse.ok || !conversationsResponse.ok || !groupsResponse.ok) {
+        throw new Error(users.error?.message || links.error?.message || chats.error?.message || clubGroups.error?.message || "İcma yüklənmədi.");
       }
       setDirectory((users.data ?? []).map(toPeer));
       setConnections(links.data ?? []);
       setConversations(chats.data ?? []);
+      setGroups(clubGroups.data ?? []);
     } catch (value) {
       setError(value instanceof Error ? value.message : "İcma yüklənmədi.");
     } finally {
@@ -134,9 +142,19 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
           <header><span><MessageCircle size={18} aria-hidden="true" /></span><div><h2 id="community-chat-title">Mesajlar</h2><p>Əlaqədə olduğun insanlarla söhbətlər</p></div></header>
           {loading ? (
             <div className="community-chat-skeleton" aria-label="Söhbətlər yüklənir"><i /><i /><i /></div>
-          ) : acceptedPeers.length ? (
-            <div className="community-chat-list">
-              {acceptedPeers.map((peer) => {
+          ) : groups.length || acceptedPeers.length ? (
+            <div className="community-chat-sections">
+              {groups.length ? <div className="community-chat-category"><h3><UsersRound size={14} /> Klub qrupları</h3><div className="community-chat-list">
+                {groups.map((group) => (
+                  <button key={group.id} type="button" onClick={() => onGroupMessage({ conversationId: group.id, clubId: group.club.id, name: group.club.name, initials: group.club.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join(""), memberCount: group.memberCount, isAdmin: group.isAdmin })}>
+                    <span className="community-chat-avatar is-group"><UsersRound size={17} /></span>
+                    <span className="community-chat-copy"><strong>{group.club.name}</strong><small>{group.lastMessage || `${group.memberCount} üzv · Qrup söhbəti`}</small></span>
+                    {group.isAdmin ? <Crown className="community-group-admin" size={15} aria-label="Qrup admini" /> : group.unreadCount ? <b aria-label={`${group.unreadCount} oxunmamış mesaj`}>{group.unreadCount}</b> : <MessageCircle size={16} aria-hidden="true" />}
+                  </button>
+                ))}
+              </div></div> : null}
+              {acceptedPeers.length ? <div className="community-chat-category"><h3><MessageCircle size={14} /> Şəxsi söhbətlər</h3><div className="community-chat-list">
+                {acceptedPeers.map((peer) => {
                 const conversation = conversationsByPeer.get(peer.id);
                 return (
                   <button key={peer.id} type="button" onClick={() => onMessage(peer)}>
@@ -145,7 +163,8 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
                     {conversation?.unreadCount ? <b aria-label={`${conversation.unreadCount} oxunmamış mesaj`}>{conversation.unreadCount}</b> : <MessageCircle size={16} aria-hidden="true" />}
                   </button>
                 );
-              })}
+                })}
+              </div></div> : null}
             </div>
           ) : (
             <p className="community-chat-empty">Əlaqə sorğusu qəbul edildikdə söhbətlər burada görünəcək.</p>

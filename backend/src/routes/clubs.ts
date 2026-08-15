@@ -11,6 +11,7 @@ import {
   updateClub,
 } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
+import { addClubConversationMember, ensureClubConversation, removeClubConversationMember } from "../db/messaging.js";
 import { authenticate, requireAdmin } from "../middleware/authenticate.js";
 
 export const clubsRouter = Router();
@@ -47,7 +48,9 @@ clubsRouter.get("/:clubId", async (request, response) => {
 });
 
 clubsRouter.post("/", authenticate, requireAdmin, async (request, response) => {
-  response.status(201).json({ data: await createClub(clubSchema.parse(request.body)) });
+  const club = await createClub(clubSchema.parse(request.body), request.auth!.userId);
+  await ensureClubConversation(club);
+  response.status(201).json({ data: club });
 });
 
 clubsRouter.patch("/:clubId", authenticate, requireAdmin, async (request, response) => {
@@ -65,10 +68,12 @@ clubsRouter.delete("/:clubId", authenticate, requireAdmin, async (request, respo
 
 clubsRouter.post("/:clubId/memberships", authenticate, async (request, response) => {
   const club = await joinClub(z.string().parse(request.params.clubId), request.auth!.userId);
+  await addClubConversationMember(club, request.auth!.userId);
   response.status(201).json({ data: { joined: true, club } });
 });
 
 clubsRouter.delete("/:clubId/memberships", authenticate, async (request, response) => {
   const club = await leaveClub(z.string().parse(request.params.clubId), request.auth!.userId);
+  await removeClubConversationMember(club.id, request.auth!.userId);
   response.json({ data: { joined: false, club } });
 });

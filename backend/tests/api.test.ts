@@ -57,6 +57,7 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/community/connections/{id}"].patch);
     assert.ok(response.body.paths["/api/community/connections/{id}"].delete);
     assert.ok(response.body.paths["/api/community/conversations/{id}/read"].patch);
+    assert.ok(response.body.paths["/api/community/groups"].get);
   });
 
   it("CORS-u yalnız frontend allowlist-i ilə məhdudlaşdırır", async () => {
@@ -884,6 +885,34 @@ describe("EduRate API", () => {
     const history=await request(app).get(`/api/community/conversations/${id}/messages`).set("Authorization",peerAuthorization).expect(200);
     assert.equal(history.body.data[0].id,sent.body.data.id);
     await request(app).patch(`/api/community/conversations/${id}/read`).set("Authorization",peerAuthorization).send({}).expect(200);
+  });
+
+  it("hər klub üçün üzvlərə açıq qrup yaradır və yaradıcını qrup admini edir", async () => {
+    const adminAuthorization = `Bearer ${reusableAdminToken}`;
+    const suffix = Date.now();
+    const club = await request(app).post("/api/admin/clubs").set("Authorization", adminAuthorization).send({
+      name: "Qrup Sınaq Klubu", slug: `qrup-sinaq-${suffix}`, category: "Texnologiya", coordinatorInitials: "QS", status: "Aktiv",
+    }).expect(201);
+    const [{ createUser }, { createAccessToken, hashPassword }] = await Promise.all([import("../src/db/database.js"), import("../src/lib/auth.js")]);
+    const member = await createUser({ name: "Qrup Üzvü", email: `group.member.${suffix}@example.az`, passwordHash: await hashPassword("EduRate2026"), university: "Qarabağ Universiteti", faculty: "Mühəndislik fakültəsi", program: "Kompüter mühəndisliyi" });
+    const outsider = await createUser({ name: "Kənar İstifadəçi", email: `group.outsider.${suffix}@example.az`, passwordHash: await hashPassword("EduRate2026"), university: "Qarabağ Universiteti", faculty: "Mühəndislik fakültəsi", program: "Data analitikası" });
+    const memberAuthorization = `Bearer ${createAccessToken(member)}`;
+    const outsiderAuthorization = `Bearer ${createAccessToken(outsider)}`;
+
+    await request(app).post(`/api/clubs/${club.body.data.id}/memberships`).set("Authorization", memberAuthorization).expect(201);
+    const memberGroups = await request(app).get("/api/community/groups").set("Authorization", memberAuthorization).expect(200);
+    const group = memberGroups.body.data.find((item: { club: { id: string } }) => item.club.id === club.body.data.id);
+    assert.ok(group);
+    assert.equal(group.isAdmin, false);
+    const adminGroups = await request(app).get("/api/community/groups").set("Authorization", adminAuthorization).expect(200);
+    assert.equal(adminGroups.body.data.find((item: { id: string }) => item.id === group.id).isAdmin, true);
+
+    const sent = await request(app).post(`/api/community/conversations/${group.id}/messages`).set("Authorization", memberAuthorization).send({ body: "Klub qrupuna salam!" }).expect(201);
+    assert.equal(sent.body.data.senderName, "Qrup Üzvü");
+    await request(app).get(`/api/community/conversations/${group.id}/messages`).set("Authorization", outsiderAuthorization).expect(403);
+
+    await request(app).delete(`/api/clubs/${club.body.data.id}/memberships`).set("Authorization", memberAuthorization).expect(200);
+    await request(app).get(`/api/community/conversations/${group.id}/messages`).set("Authorization", memberAuthorization).expect(403);
   });
 
   it("elan, lent moderasiyası və dəstək statusunu admin axınında tamamlayır",async()=>{

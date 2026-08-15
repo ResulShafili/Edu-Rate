@@ -8,7 +8,7 @@ import { usePlatform } from "./PlatformProvider";
 export function ConnectionsExperience() {
   const router = useRouter();
   const { user } = useAuth();
-  const { openConversation } = usePlatform();
+  const { openClubConversation, openConversation } = usePlatform();
 
   const requireAuth = () => router.push("/auth?returnTo=/community");
 
@@ -17,6 +17,7 @@ export function ConnectionsExperience() {
       canInteract={Boolean(user)}
       currentUserId={user?.id}
       onMessage={user ? openConversation : requireAuth}
+      onGroupMessage={user ? openClubConversation : requireAuth}
       onRequireAuth={requireAuth}
     />
   );

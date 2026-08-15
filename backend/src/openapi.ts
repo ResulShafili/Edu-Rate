@@ -303,6 +303,9 @@ export const openApiDocument = {
       get:{tags:["Messaging"],summary:"Söhbətləri siyahıla",security:[{bearerAuth:[]}],responses:{"200":{description:"Söhbətlər"}}},
       post:{tags:["Messaging"],summary:"Şəxsi söhbət yarat",security:[{bearerAuth:[]}],requestBody:{required:true,content:{"application/json":{schema:{type:"object",additionalProperties:false,required:["peerId"],properties:{peerId:{type:"string",format:"uuid"}}}}}},responses:{"201":{description:"Söhbət yaradıldı"},"403":{description:"Qəbul edilmiş əlaqə tələb olunur"}}},
     },
+    "/api/community/groups": {
+      get:{tags:["Messaging"],summary:"Üzv olduğun klub qruplarını siyahıla",security:[{bearerAuth:[]}],responses:{"200":{description:"Klub qrupları"},"401":{description:"Giriş tələb olunur"}}},
+    },
     "/api/community/conversations/{id}/messages": {
       parameters:[{name:"id",in:"path",required:true,schema:{type:"string",format:"uuid"}}],
       get:{tags:["Messaging"],summary:"Cursor əsaslı mesaj tarixçəsi",security:[{bearerAuth:[]}],responses:{"200":{description:"Mesajlar"}}},

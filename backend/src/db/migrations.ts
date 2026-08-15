@@ -169,6 +169,39 @@ const migrations: Migration[] = [
       UPDATE clubs SET focus_tags = ARRAY[category] WHERE cardinality(focus_tags) = 0;
     `,
   },
+  {
+    version: 9,
+    name: "club group conversations and ownership",
+    sql: `
+      ALTER TABLE clubs ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL;
+      ALTER TABLE conversations ADD COLUMN IF NOT EXISTS kind VARCHAR(16) NOT NULL DEFAULT 'direct';
+      ALTER TABLE conversations ADD COLUMN IF NOT EXISTS club_id UUID REFERENCES clubs(id) ON DELETE CASCADE;
+      ALTER TABLE conversations ADD COLUMN IF NOT EXISTS title VARCHAR(140);
+      ALTER TABLE conversations ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL;
+      ALTER TABLE conversation_participants ADD COLUMN IF NOT EXISTS role VARCHAR(16) NOT NULL DEFAULT 'member';
+      CREATE UNIQUE INDEX IF NOT EXISTS conversations_club_unique ON conversations (club_id) WHERE club_id IS NOT NULL;
+
+      INSERT INTO conversations (id, kind, club_id, title, created_by)
+      SELECT gen_random_uuid(), 'club', clubs.id, clubs.name, clubs.created_by
+      FROM clubs
+      WHERE NOT EXISTS (SELECT 1 FROM conversations WHERE conversations.club_id = clubs.id);
+
+      INSERT INTO conversation_participants (conversation_id, user_id, role)
+      SELECT conversations.id, club_memberships.user_id,
+        CASE WHEN club_memberships.user_id = clubs.created_by THEN 'admin' ELSE 'member' END
+      FROM conversations
+      JOIN clubs ON clubs.id = conversations.club_id
+      JOIN club_memberships ON club_memberships.club_id = clubs.id
+      WHERE conversations.kind = 'club'
+      ON CONFLICT (conversation_id, user_id) DO UPDATE SET role = EXCLUDED.role;
+
+      INSERT INTO conversation_participants (conversation_id, user_id, role)
+      SELECT conversations.id, clubs.created_by, 'admin'
+      FROM conversations JOIN clubs ON clubs.id = conversations.club_id
+      WHERE conversations.kind = 'club' AND clubs.created_by IS NOT NULL
+      ON CONFLICT (conversation_id, user_id) DO UPDATE SET role = 'admin';
+    `,
+  },
 ];
 
 export async function runMigrations() {
