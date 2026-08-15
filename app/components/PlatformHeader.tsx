@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { useSyncExternalStore } from "react";
 import { getPlatformRouteContext } from "../data/platform-shell";
+import { useCurrentAvatar } from "../lib/current-avatar";
+import type { CSSProperties } from "react";
 
 type PlatformHeaderProps = {
   searchOpen: boolean;
@@ -17,6 +19,7 @@ type PlatformHeaderProps = {
 export function PlatformHeader({ searchOpen, updatesOpen, onSearchToggle, onUpdatesToggle }: PlatformHeaderProps) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const avatar = useCurrentAvatar(user?.id);
   const context = getPlatformRouteContext(pathname);
   const shortcutLabel = useSyncExternalStore(
     () => () => undefined,
@@ -63,7 +66,20 @@ export function PlatformHeader({ searchOpen, updatesOpen, onSearchToggle, onUpda
           className="platform-header-account"
           aria-label={user ? "Profilim" : "Hesaba daxil ol"}
         >
-          {user ? <span>{user.initials}</span> : <LogIn size={18} aria-hidden="true" />}
+          {user ? (
+            <span
+              className={avatar.data?.secureUrl ? "has-image" : undefined}
+              style={
+                avatar.data?.secureUrl
+                  ? ({ "--avatar-image": `url("${avatar.data.secureUrl}")` } as CSSProperties)
+                  : undefined
+              }
+            >
+              {avatar.data?.secureUrl ? null : user.initials}
+            </span>
+          ) : (
+            <LogIn size={18} aria-hidden="true" />
+          )}
           <small>{user ? user.name : "Daxil ol"}</small>
         </Link>
       </div>
