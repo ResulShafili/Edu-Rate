@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps -- remote chat hydration and external target synchronization are intentionally effect-driven */
 
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from "framer-motion";
-import { Ban, BellOff, Check, Crown, Flag, MessageCircle, MessagesSquare, MoreVertical, Send, Trash2, UsersRound, Volume2, X } from "lucide-react";
+import { Ban, BellOff, Check, Crown, Flag, MessageCircle, MessagesSquare, MoreVertical, Plus, Send, Trash2, UsersRound, Volume2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { Peer } from "../data/peers";
@@ -12,6 +12,8 @@ import type { ClubChatTarget } from "./PlatformProvider";
 type ApiMessage = { id: string; conversationId: string; senderId: string; senderName?: string; senderInitials?: string; senderAvatarUrl?:string; body: string; createdAt: string; deleted?:boolean };
 type ApiConversation = { id: string; peer: { id: string; name: string; role: string; faculty: string; program: string; city: string; avatarUrl?:string }; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
 type ApiGroup = { id: string; kind: "club"; club: { id: string; slug: string; name: string }; memberCount: number; isAdmin: boolean; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
+type ApiContact = ApiConversation["peer"];
+type ApiConnection = {id:string;requesterId:string;recipientId:string;status:"pending"|"accepted"|"blocked"};
 type ActiveChat = { kind: "direct"; conversationId?: string; peer: Peer; muted:boolean } | { kind: "group"; conversationId: string; peer: Peer; group: ClubChatTarget; muted:boolean };
 type Props = { peer?: Peer | null; group?: ClubChatTarget | null; open: boolean; onOpenChange: (open: boolean) => void };
 
@@ -28,6 +30,9 @@ export function ChatDock({ peer, group, open, onOpenChange }: Props) {
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [contactsOpen,setContactsOpen]=useState(false);
+  const [contacts,setContacts]=useState<ApiContact[]>([]);
+  const [contactsLoading,setContactsLoading]=useState(false);
   const [canDrag, setCanDrag] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -164,6 +169,27 @@ export function ChatDock({ peer, group, open, onOpenChange }: Props) {
   async function mute(){if(!active?.conversationId)return;setMenuOpen(false);setError("");const muted=!active.muted;const response=await fetch(`/api/community/conversations/${active.conversationId}/mute`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({muted})});if(!response.ok){setError("Bildiriş seçimi dəyişdirilmədi.");return;}setActive((current)=>current?{...current,muted}:current);setConversations((items)=>items.map((item)=>item.id===active.conversationId?{...item,muted}:item));setGroups((items)=>items.map((item)=>item.id===active.conversationId?{...item,muted}:item));setFeedback(muted?"Söhbətin bildirişləri səssizə alındı.":"Söhbətin bildirişləri yenidən aktiv edildi.");}
   async function block(){if(!active||active.kind!=="direct")return;setMenuOpen(false);setError("");const blockedConversationId=active.conversationId;const response=await fetch("/api/community/blocks",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({userId:active.peer.id})});if(!response.ok){setError("İstifadəçi bloklanmadı.");return;}if(blockedConversationId)setConversations((items)=>items.filter((item)=>item.id!==blockedConversationId));setActive(null);setMessages([]);setFeedback("İstifadəçi bloklandı və söhbət siyahıdan çıxarıldı.");void refreshDirectory();}
 
+  async function openContacts(){
+    setContactsOpen(true);setContactsLoading(true);setError("");
+    try{
+      const [usersResponse,connectionsResponse]=await Promise.all([fetch("/api/community/users",{cache:"no-store"}),fetch("/api/community/connections",{cache:"no-store"})]);
+      const usersPayload=await usersResponse.json() as {data?:ApiContact[];error?:{message?:string}};
+      const connectionsPayload=await connectionsResponse.json() as {data?:ApiConnection[];error?:{message?:string}};
+      if(!usersResponse.ok||!connectionsResponse.ok)throw new Error(usersPayload.error?.message??connectionsPayload.error?.message??"Əlaqələr yüklənmədi.");
+      const accepted=new Set((connectionsPayload.data??[]).filter((item)=>item.status==="accepted").map((item)=>item.requesterId===user?.id?item.recipientId:item.requesterId));
+      setContacts((usersPayload.data??[]).filter((item)=>accepted.has(item.id)));
+    }catch(value){setError(value instanceof Error?value.message:"Əlaqələr yüklənmədi.");setContacts([]);}finally{setContactsLoading(false);}
+  }
+
+  async function startContactChat(contact:ApiContact){
+    setError("");
+    const response=await fetch("/api/community/conversations",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({peerId:contact.id})});
+    const payload=await response.json() as {data?:{id:string};error?:{message?:string}};
+    if(!response.ok||!payload.data){setError(payload.error?.message??"Söhbət açıla bilmədi.");return;}
+    setContactsOpen(false);setTab("direct");setActive({kind:"direct",conversationId:payload.data.id,peer:apiPeer(contact),muted:false});
+    await refreshDirectory();
+  }
+
   function changeDraft(value: string) {
     setDraft(value);
     if (!active?.conversationId) return;
@@ -186,7 +212,8 @@ export function ChatDock({ peer, group, open, onOpenChange }: Props) {
       <AnimatePresence>{open ? (
         <motion.section className="chat-panel chat-center" role="dialog" aria-label="Mesaj mərkəzi" drag={canDrag} dragControls={dragControls} dragListener={false} dragMomentum={false} initial={reduceMotion ? false : { opacity: 0, y: 24, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 18, scale: .96 }}>
           <aside className="chat-center-sidebar">
-            <header onPointerDown={(event) => canDrag && dragControls.start(event)}><span><MessagesSquare size={18} /></span><div><strong>Mesajlar</strong><small>{conversations.length + groups.length} söhbət</small></div></header>
+            <header onPointerDown={(event) => canDrag && dragControls.start(event)}><span><MessagesSquare size={18} /></span><div><strong>Mesajlar</strong><small>{conversations.length + groups.length} söhbət</small></div><button type="button" className="chat-new-trigger" aria-label="Yeni söhbət başlat" aria-expanded={contactsOpen} onPointerDown={(event)=>event.stopPropagation()} onClick={()=>contactsOpen?setContactsOpen(false):void openContacts()}><Plus size={18}/></button></header>
+            <AnimatePresence>{contactsOpen?<motion.div className="chat-contact-picker" initial={reduceMotion?false:{opacity:0,x:-8}} animate={{opacity:1,x:0}} exit={{opacity:0,x:-8}}><header><div><strong>Yeni söhbət</strong><small>Əlaqələrindən birini seç</small></div><button type="button" onClick={()=>setContactsOpen(false)} aria-label="Əlaqə siyahısını bağla"><X size={16}/></button></header><div>{contactsLoading?<p>Əlaqələr yüklənir…</p>:contacts.length?contacts.map((contact)=><button type="button" key={contact.id} onClick={()=>void startContactChat(contact)}><span className={`chat-list-avatar${contact.avatarUrl?" has-image":""}`} style={avatarStyle(contact.avatarUrl)}>{contact.avatarUrl?null:initials(contact.name)}</span><span><strong>{contact.name}</strong><small>{contact.program||contact.role}</small></span><MessageCircle size={15}/></button>):<p>Mesaj yaza biləcəyin qəbul edilmiş əlaqə yoxdur.</p>}</div></motion.div>:null}</AnimatePresence>
             <div className="chat-center-tabs"><button type="button" className={tab === "direct" ? "active" : ""} onClick={() => setTab("direct")}>Söhbətlər</button><button type="button" className={tab === "group" ? "active" : ""} onClick={() => setTab("group")}>Klub qrupları</button></div>
             <div className="chat-center-list">
               {tab === "direct" ? conversations.map((conversation) => <button type="button" key={conversation.id} className={active?.conversationId === conversation.id ? "active" : ""} onClick={() => setActive({ kind: "direct", conversationId: conversation.id, peer: apiPeer(conversation.peer), muted:conversation.muted })}><span className={`chat-list-avatar${conversation.peer.avatarUrl?" has-image":""}`} style={avatarStyle(conversation.peer.avatarUrl)}>{conversation.peer.avatarUrl?null:initials(conversation.peer.name)}</span><span><strong>{conversation.peer.name}</strong><small>{conversation.lastMessage || conversation.peer.program}</small></span>{conversation.muted?<BellOff className="chat-list-muted" size={13}/>:conversation.unreadCount ? <b>{conversation.unreadCount}</b> : null}</button>) : groups.map((item) => <button type="button" key={item.id} className={active?.conversationId === item.id ? "active" : ""} onClick={() => setActive({ kind: "group", conversationId: item.id, peer: groupPeer(item), group: groupTarget(item), muted:item.muted })}><span className="chat-list-avatar is-group"><UsersRound size={16} /></span><span><strong>{item.club.name}</strong><small>{item.lastMessage || `${item.memberCount} üzv`}</small></span>{item.muted?<BellOff className="chat-list-muted" size={13}/>:item.isAdmin ? <Crown size={14} /> : item.unreadCount ? <b>{item.unreadCount}</b> : null}</button>)}
