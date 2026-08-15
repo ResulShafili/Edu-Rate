@@ -820,8 +820,10 @@ describe("EduRate API", () => {
     const workspaceAfterEnding = await request(app).get("/api/workspace")
       .set("Authorization", `Bearer ${studentSignup.body.data.token}`).expect(200);
     const endedItem = workspaceAfterEnding.body.data.items.find((item: { id: string }) => item.id === mentorship.body.data.id);
-    assert.equal(endedItem.status, "cancelled");
-    assert.equal(endedItem.chatPeer, undefined);
+    assert.equal(endedItem, undefined);
+    const mentorWorkspaceAfterEnding = await request(app).get("/api/workspace")
+      .set("Authorization", teacherAuthorization).expect(200);
+    assert.equal(mentorWorkspaceAfterEnding.body.data.mentorItems.some((item: { id: string }) => item.id === mentorship.body.data.id), false);
 
     await request(app).post("/api/mentorship/requests")
       .set("Authorization", `Bearer ${studentSignup.body.data.token}`)

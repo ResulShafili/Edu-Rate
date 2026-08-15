@@ -26,7 +26,8 @@ workspaceRouter.get("/", async (request, response) => {
     const mentorRequests = mentorProfile?.status === "approved"
       ? await listMentorRequests(mentorProfile.slug, mentorProfile.id)
       : [];
-    const mentorItems = await Promise.all(mentorRequests.slice(0, 12).map(async (item) => {
+    const visibleMentorRequests = mentorRequests.filter((item) => item.status !== "cancelled");
+    const mentorItems = await Promise.all(visibleMentorRequests.slice(0, 12).map(async (item) => {
       const requester = await findUserById(item.userId);
       return { ...item, userId: undefined, title: requester?.name ?? "Tələbə müraciəti", course: requester?.program ?? "Mentorluq",
         chatPeer: item.status === "accepted" && requester ? toChatPeer(requester) : undefined };
@@ -47,7 +48,8 @@ workspaceRouter.get("/", async (request, response) => {
   if (user.role === "mentor") {
     const profile = await ensureProfessionalProfileForUser(user);
     const requests = await listMentorRequests(profile?.slug ?? normalizeRoleId(user.name), profile?.id);
-    const items = await Promise.all(requests.slice(0, 12).map(async (item) => {
+    const visibleRequests = requests.filter((item) => item.status !== "cancelled");
+    const items = await Promise.all(visibleRequests.slice(0, 12).map(async (item) => {
       const requester = await findUserById(item.userId);
       return {
         ...item,
@@ -58,9 +60,9 @@ workspaceRouter.get("/", async (request, response) => {
       };
     }));
     response.json({ data: { role: user.role, title: "Mentor paneli", focus: user.program, metrics: [
-      { label: "Yeni müraciət", value: requests.filter((item) => item.status === "pending").length },
-      { label: "Qəbul edilib", value: requests.filter((item) => item.status === "accepted").length },
-      { label: "Ümumi müraciət", value: requests.length },
+      { label: "Yeni müraciət", value: visibleRequests.filter((item) => item.status === "pending").length },
+      { label: "Qəbul edilib", value: visibleRequests.filter((item) => item.status === "accepted").length },
+      { label: "Ümumi müraciət", value: visibleRequests.length },
     ], items } });
     return;
   }
@@ -78,7 +80,8 @@ workspaceRouter.get("/", async (request, response) => {
   const [events, clubs, mentorships, tickets] = await Promise.all([
     listMyEventRegistrations(user.id), listMyClubMemberships(user.id), listMentorshipRequests(user.id), listSupportTickets(user.id),
   ]);
-  const mentorshipItems = await Promise.all(mentorships.slice(0, 4).map(async (item) => {
+  const visibleMentorships = mentorships.filter((item) => item.status !== "cancelled");
+  const mentorshipItems = await Promise.all(visibleMentorships.slice(0, 4).map(async (item) => {
     const mentorProfile = await findProfessionalProfile(item.mentorProfileId ?? item.mentorId, "mentor");
     const mentorUser = mentorProfile?.userId ? await findUserById(mentorProfile.userId) : null;
     return {
@@ -93,7 +96,7 @@ workspaceRouter.get("/", async (request, response) => {
   response.json({ data: { role: user.role, title: "Tələbə paneli", focus: user.program, metrics: [
     { label: "Tədbir qeydiyyatı", value: events.length },
     { label: "Klub üzvlüyü", value: clubs.length },
-    { label: "Mentorluq müraciəti", value: mentorships.length },
+    { label: "Mentorluq müraciəti", value: visibleMentorships.length },
     { label: "Dəstək bileti", value: tickets.length },
   ], items: [
     ...events.slice(0, 4).map((item) => ({ id: item.id, title: item.title, status: "Qeydiyyat aktivdir", type: "Tədbir" })),
