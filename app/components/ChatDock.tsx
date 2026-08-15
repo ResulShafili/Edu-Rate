@@ -54,7 +54,11 @@ export function ChatDock({ peer, open, onOpenChange }: Props) {
 
         setConversationId(id);
         setMessages(messagePayload.data ?? []);
-        void fetch(`/api/community/conversations/${id}/read`, { method: "PATCH" });
+        void fetch(`/api/community/conversations/${id}/read`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({}),
+        });
 
         if (ticketResponse.ok && ticketPayload.data) {
           const socket = io(ticketPayload.data.socketUrl, {

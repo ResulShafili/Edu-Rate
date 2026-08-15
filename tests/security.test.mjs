@@ -40,6 +40,19 @@ describe("frontend security boundaries", () => {
     assert.match(policy, /object-src 'none'/);
   });
 
+  it("realtime API mənbələrini connect-src daxilində məhdudlaşdırır", () => {
+    const policy = buildContentSecurityPolicy("test-nonce", false, [
+      "https://edurate-api.onrender.com",
+      "wss://edurate-api.onrender.com",
+      "https://edurate-api.onrender.com; script-src *",
+    ]);
+    assert.match(
+      policy,
+      /connect-src 'self' https:\/\/edurate-api\.onrender\.com wss:\/\/edurate-api\.onrender\.com;/,
+    );
+    assert.doesNotMatch(policy, /script-src \*/);
+  });
+
   it("admin köməkçisinin istifadəçi səlahiyyətlərini aşağı rollarla məhdudlaşdırır", () => {
     const capabilities = getAdminCapabilities("assistant_admin");
     assert.equal(capabilities.canAccessPanel, true);
