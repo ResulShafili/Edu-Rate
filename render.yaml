@@ -24,6 +24,14 @@ services:
         value: https://edu-rate-nu.vercel.app
       - key: TRUST_PROXY
         value: "true"
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_UPLOAD_PRESET
+        value: edurate-secure
 
 databases:
   - name: edurate-db
