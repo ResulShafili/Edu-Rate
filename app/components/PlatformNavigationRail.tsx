@@ -15,7 +15,6 @@ import {
   Settings,
   ShieldCheck,
   UserPlus,
-  UserRound,
   UsersRound,
   X,
   type LucideIcon,
@@ -32,8 +31,6 @@ type PlatformNavigationRailProps = {
   authenticated: boolean;
   isAdmin: boolean;
   accountRole?: "student" | "mentor" | "teacher" | "admin" | "assistant_admin";
-  accountInitials?: string;
-  accountAvatarUrl?: string;
   signOutHref: string | null;
   onCredentialSignOut: () => Promise<void>;
   mobileOpen: boolean;
@@ -77,7 +74,6 @@ export function PlatformNavigationRail(props: PlatformNavigationRailProps) {
   const account = props.authenticated ? (
     <>
       {!props.isAdmin && <AccountLink href="/workspace" label={props.accountRole === "teacher" ? "Müəllim paneli" : props.accountRole === "mentor" ? "Mentor paneli" : "Şəxsi panel"} icon={LayoutDashboard} pathname={props.pathname} />}
-      <AccountLink href="/profile" label="Profil" icon={UserRound} pathname={props.pathname} initials={props.accountInitials} avatarUrl={props.accountAvatarUrl} />
       <AccountLink href="/settings" label="Parametrlər" icon={Settings} pathname={props.pathname} />
       {props.signOutHref ? (
         <a href={props.signOutHref} className="platform-rail-account"><LogOut size={17} aria-hidden="true" /><span>Çıxış</span></a>
@@ -141,7 +137,7 @@ function NavigationLink({ href, label, pathname, icon: Icon, reducedMotion }: { 
   );
 }
 
-function AccountLink({ href, label, icon: Icon, pathname, initials, avatarUrl }: { href: string; label: string; icon: LucideIcon; pathname: string; initials?: string; avatarUrl?:string }) {
+function AccountLink({ href, label, icon: Icon, pathname }: { href: string; label: string; icon: LucideIcon; pathname: string }) {
   const current = isPlatformRouteCurrent(pathname, href.split("?")[0]);
-  return <Link href={href} className={`platform-rail-account${current ? " is-active" : ""}`} aria-current={current ? "page" : undefined}>{avatarUrl?<i className="has-image" aria-hidden="true" style={{backgroundImage:`url("${avatarUrl}")`}}/>:initials ? <i aria-hidden="true">{initials}</i> : <Icon size={17} aria-hidden="true" />}<span>{label}</span></Link>;
+  return <Link href={href} className={`platform-rail-account${current ? " is-active" : ""}`} aria-current={current ? "page" : undefined}><Icon size={17} aria-hidden="true" /><span>{label}</span></Link>;
 }

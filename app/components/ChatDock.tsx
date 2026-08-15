@@ -8,7 +8,6 @@ import { io, type Socket } from "socket.io-client";
 import type { Peer } from "../data/peers";
 import { useAuth } from "./AuthProvider";
 import type { ClubChatTarget } from "./PlatformProvider";
-import { useCurrentAvatar } from "../lib/current-avatar";
 
 type ApiMessage = { id: string; conversationId: string; senderId: string; senderName?: string; senderInitials?: string; senderAvatarUrl?:string; body: string; createdAt: string; deleted?:boolean };
 type ApiConversation = { id: string; peer: { id: string; name: string; role: string; faculty: string; program: string; city: string; avatarUrl?:string }; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
@@ -18,7 +17,6 @@ type Props = { peer?: Peer | null; group?: ClubChatTarget | null; open: boolean;
 
 export function ChatDock({ peer, group, open, onOpenChange }: Props) {
   const { user } = useAuth();
-  const currentAvatar=useCurrentAvatar(user?.id);
   const [conversations, setConversations] = useState<ApiConversation[]>([]);
   const [groups, setGroups] = useState<ApiGroup[]>([]);
   const [tab, setTab] = useState<"direct" | "group">("direct");
@@ -184,7 +182,7 @@ export function ChatDock({ peer, group, open, onOpenChange }: Props) {
 
   return (
     <div className="chat-dock" style={{ "--peer-accent": accent, "--peer-glow": glow } as CSSProperties}>
-      <AnimatePresence>{!open ? <motion.button id="chat-launcher" type="button" className={`chat-launcher${currentAvatar.data?.secureUrl?" has-avatar":""}`} style={currentAvatar.data?.secureUrl?{...avatarStyle(currentAvatar.data.secureUrl),"--peer-accent":accent,"--peer-glow":glow} as CSSProperties:undefined} aria-label="Mesajları aç" onClick={() => onOpenChange(true)} initial={reduceMotion ? false : { opacity: 0, scale: .85, y: 14 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .85 }}><span className="launcher-pulse" />{currentAvatar.data?.secureUrl?<span className="launcher-message-mark"><MessageCircle size={12}/></span>:<MessageCircle size={21} />}{unreadCount ? <i>{Math.min(unreadCount, 9)}</i> : null}</motion.button> : null}</AnimatePresence>
+      <AnimatePresence>{!open ? <motion.button id="chat-launcher" type="button" className="chat-launcher" aria-label="Mesajları aç" onClick={() => onOpenChange(true)} initial={reduceMotion ? false : { opacity: 0, scale: .85, y: 14 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .85 }}><span className="launcher-pulse" /><MessageCircle size={21} />{unreadCount ? <i>{Math.min(unreadCount, 9)}</i> : null}</motion.button> : null}</AnimatePresence>
       <AnimatePresence>{open ? (
         <motion.section className="chat-panel chat-center" role="dialog" aria-label="Mesaj mərkəzi" drag={canDrag} dragControls={dragControls} dragListener={false} dragMomentum={false} initial={reduceMotion ? false : { opacity: 0, y: 24, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 18, scale: .96 }}>
           <aside className="chat-center-sidebar">

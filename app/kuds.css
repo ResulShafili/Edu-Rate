@@ -225,13 +225,6 @@ body {
   font-style: normal;
   font-weight: 800;
 }
-.kuds-shell .platform-rail-account i.has-image {
-  color: transparent;
-  background-color: var(--ku-soft-green);
-  background-position: center;
-  background-size: cover;
-  box-shadow: inset 0 0 0 1px rgb(68 118 108 / 18%);
-}
 
 .platform-workspace {
   min-width: 0;
@@ -1965,27 +1958,6 @@ body {
   border-color: rgb(255 255 255 / 48%) !important;
   background: var(--ku-green) !important;
   box-shadow: 0 10px 26px rgb(22 66 60 / 22%) !important;
-}
-.kuds-shell .chat-launcher.has-avatar,
-.chat-launcher.has-avatar {
-  background-color: var(--ku-soft-green) !important;
-  background-image: var(--avatar-image) !important;
-  background-position: center !important;
-  background-size: cover !important;
-}
-.chat-launcher .launcher-message-mark {
-  position: absolute;
-  z-index: 3;
-  right: -2px;
-  bottom: -2px;
-  display: grid;
-  width: 22px;
-  height: 22px;
-  color: #fff;
-  place-items: center;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  background: var(--ku-dark-green);
 }
 .chat-list-avatar.has-image,
 .chat-person-avatar.has-image,
