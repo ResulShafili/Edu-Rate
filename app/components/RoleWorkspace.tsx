@@ -1,12 +1,15 @@
 "use client";
 
-import { Check, HeartHandshake, RefreshCw, Send, X } from "lucide-react";
+import { Check, HeartHandshake, MessageCircle, RefreshCw, Send, X } from "lucide-react";
 import { useCallback, useState, type FormEvent } from "react";
 import useSWR from "swr";
 import { createApiClient } from "../lib/api/client";
+import type { Peer } from "../data/peers";
+import { usePlatform } from "./PlatformProvider";
 
 type WorkspaceMetric = { label: string; value: string | number };
-type WorkspaceItem = { id: string; title?: string; text?: string; note?: string; course?: string; status: string; type?: string; rating?: number };
+type WorkspaceChatPeer = { id: string; name: string; role: string; focus: string; city: string };
+type WorkspaceItem = { id: string; title?: string; text?: string; note?: string; course?: string; status: string; type?: string; rating?: number; chatPeer?: WorkspaceChatPeer };
 type MentorApplication = {
   id: string;
   specialty: string;
@@ -30,6 +33,7 @@ type WorkspaceData = {
 const api = createApiClient({ baseUrl: "/api" });
 
 export function RoleWorkspace() {
+  const { openConversation } = usePlatform();
   const loader = useCallback(() => api.get<WorkspaceData>("/workspace"), []);
   const { data, error, isLoading, isValidating, mutate } = useSWR("role-workspace", loader, { revalidateOnFocus: false });
   const [actionId, setActionId] = useState<string | null>(null);
@@ -78,13 +82,35 @@ export function RoleWorkspace() {
   if (error || !data) return <section className="role-workspace"><div className="workspace-state" role="alert"><h1>Panel açılmadı</h1><p>Bağlantını yoxlayıb yenidən cəhd et.</p><button type="button" onClick={() => void mutate()}><RefreshCw size={15} /> Yenidən yoxla</button></div></section>;
 
   const mentorApplication = data.mentorApplication;
-  const canApplyForMentorship = data.role === "teacher" && !data.mentorEnabled && mentorApplication?.status !== "pending";
+  const canApplyForMentorship = data.role === "teacher"
+    && !data.mentorEnabled
+    && (!mentorApplication || mentorApplication.status === "rejected");
 
   function openMentorApplication() {
     setApplicationOpen(true);
     window.requestAnimationFrame(() => {
       document.getElementById("mentor-path-title")?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
+  }
+
+  function openMentorshipChat(chatPeer: WorkspaceChatPeer) {
+    const initials = chatPeer.name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase("az")).join("");
+    openConversation({
+      id: chatPeer.id,
+      name: chatPeer.name,
+      initials,
+      role: chatPeer.role,
+      focus: chatPeer.focus,
+      bio: "Aktiv mentorluq söhbəti",
+      city: chatPeer.city,
+      status: "online",
+      accent: "#8fc15f",
+      glow: "rgba(143, 193, 95, 0.28)",
+      mutuals: 0,
+      tags: ["Mentorluq"],
+      openingMessage: "",
+      reply: "",
+    } satisfies Peer);
   }
 
   return (
@@ -132,24 +158,25 @@ export function RoleWorkspace() {
       )}
 
       {actionError && <p className="workspace-action-error" role="alert">{actionError}</p>}
-      <WorkspaceQueue title={queueTitle(data.role)} items={data.items} allowActions={data.role === "mentor"} actionId={actionId} onDecide={decide} />
+      <WorkspaceQueue title={queueTitle(data.role)} items={data.items} allowActions={data.role === "mentor"} actionId={actionId} onDecide={decide} onMessage={openMentorshipChat} />
       {data.role === "teacher" && data.mentorEnabled && (
-        <WorkspaceQueue title="Mentorluq müraciətləri" items={data.mentorItems ?? []} allowActions actionId={actionId} onDecide={decide} />
+        <WorkspaceQueue title="Mentorluq müraciətləri" items={data.mentorItems ?? []} allowActions actionId={actionId} onDecide={decide} onMessage={openMentorshipChat} />
       )}
     </section>
   );
 }
 
-function WorkspaceQueue({ title, items, allowActions, actionId, onDecide }: {
+function WorkspaceQueue({ title, items, allowActions, actionId, onDecide, onMessage }: {
   title: string;
   items: WorkspaceItem[];
   allowActions: boolean;
   actionId: string | null;
   onDecide: (id: string, status: "accepted" | "rejected") => Promise<void>;
+  onMessage: (peer: WorkspaceChatPeer) => void;
 }) {
   return (
     <section className="workspace-queue" aria-label={title}><header><span>Canlı məlumat</span><h2>{title}</h2></header>
-      {!items.length ? <div className="workspace-state"><h3>Hazırda yeni məlumat yoxdur</h3><p>Yeni əməliyyatlar olduqda burada görünəcək.</p></div> : <div className="workspace-items">{items.map((item) => <article key={item.id}><div><span>{item.course ?? item.type ?? "Müraciət"}</span>{item.rating !== undefined && <strong>{item.rating.toFixed(1)} / 5</strong>}</div><h3>{item.title ?? item.note ?? "Mentorluq müraciəti"}</h3>{item.text && <p>{item.text}</p>}<footer><small>{statusLabel(item.status)}</small>{allowActions && item.status === "pending" && <div><button type="button" onClick={() => void onDecide(item.id, "rejected")} disabled={actionId === item.id}><X size={14} /> Rədd et</button><button type="button" onClick={() => void onDecide(item.id, "accepted")} disabled={actionId === item.id}><Check size={14} /> Qəbul et</button></div>}</footer></article>)}</div>}
+      {!items.length ? <div className="workspace-state"><h3>Hazırda yeni məlumat yoxdur</h3><p>Yeni əməliyyatlar olduqda burada görünəcək.</p></div> : <div className="workspace-items">{items.map((item) => <article key={item.id}><div><span>{item.course ?? item.type ?? "Müraciət"}</span>{item.rating !== undefined && <strong>{item.rating.toFixed(1)} / 5</strong>}</div><h3>{item.title ?? item.note ?? "Mentorluq müraciəti"}</h3>{item.text && <p>{item.text}</p>}<footer><small>{statusLabel(item.status)}</small>{allowActions && item.status === "pending" ? <div><button type="button" onClick={() => void onDecide(item.id, "rejected")} disabled={actionId === item.id}><X size={14} /> Rədd et</button><button type="button" onClick={() => void onDecide(item.id, "accepted")} disabled={actionId === item.id}><Check size={14} /> Qəbul et</button></div> : item.status === "accepted" && item.chatPeer ? <div><button type="button" className="workspace-message-button" onClick={() => onMessage(item.chatPeer!)}><MessageCircle size={14} /> Mesaj yaz</button></div> : null}</footer></article>)}</div>}
     </section>
   );
 }

@@ -5,8 +5,9 @@ import { findUserById, listUsers } from "../db/database.js";
 import { getPlatformCounts, listMyClubMemberships, listSupportTickets, listTeacherReviews } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
 import { authenticate } from "../middleware/authenticate.js";
-import { ensureProfessionalProfileForUser, findProfessionalByUser } from "../db/professionals.js";
+import { ensureProfessionalProfileForUser, findProfessionalByUser, findProfessionalProfile } from "../db/professionals.js";
 import { createMentorApplication, getMentorApplication } from "../db/mentor-applications.js";
+import { ensureMentorshipConversation } from "../db/messaging.js";
 
 export const workspaceRouter = Router();
 workspaceRouter.use(authenticate);
@@ -27,7 +28,8 @@ workspaceRouter.get("/", async (request, response) => {
       : [];
     const mentorItems = await Promise.all(mentorRequests.slice(0, 12).map(async (item) => {
       const requester = await findUserById(item.userId);
-      return { ...item, userId: undefined, title: requester?.name ?? "Tələbə müraciəti", course: requester?.program ?? "Mentorluq" };
+      return { ...item, userId: undefined, title: requester?.name ?? "Tələbə müraciəti", course: requester?.program ?? "Mentorluq",
+        chatPeer: item.status === "accepted" && requester ? toChatPeer(requester) : undefined };
     }));
     const approved = reviews.filter((review) => review.status === "approved");
     const average = approved.length ? approved.reduce((sum, review) => sum + review.rating, 0) / approved.length : 0;
@@ -52,6 +54,7 @@ workspaceRouter.get("/", async (request, response) => {
         userId: undefined,
         title: requester?.name ?? "Tələbə müraciəti",
         course: requester?.program ?? "Mentorluq",
+        chatPeer: item.status === "accepted" && requester ? toChatPeer(requester) : undefined,
       };
     }));
     response.json({ data: { role: user.role, title: "Mentor paneli", focus: user.program, metrics: [
@@ -75,6 +78,18 @@ workspaceRouter.get("/", async (request, response) => {
   const [events, clubs, mentorships, tickets] = await Promise.all([
     listMyEventRegistrations(user.id), listMyClubMemberships(user.id), listMentorshipRequests(user.id), listSupportTickets(user.id),
   ]);
+  const mentorshipItems = await Promise.all(mentorships.slice(0, 4).map(async (item) => {
+    const mentorProfile = await findProfessionalProfile(item.mentorProfileId ?? item.mentorId, "mentor");
+    const mentorUser = mentorProfile?.userId ? await findUserById(mentorProfile.userId) : null;
+    return {
+      id: item.id,
+      title: mentorProfile?.name ?? "Mentorluq müraciəti",
+      text: item.note,
+      status: item.status,
+      type: "Mentor",
+      chatPeer: item.status === "accepted" && mentorUser ? toChatPeer(mentorUser) : undefined,
+    };
+  }));
   response.json({ data: { role: user.role, title: "Tələbə paneli", focus: user.program, metrics: [
     { label: "Tədbir qeydiyyatı", value: events.length },
     { label: "Klub üzvlüyü", value: clubs.length },
@@ -83,7 +98,7 @@ workspaceRouter.get("/", async (request, response) => {
   ], items: [
     ...events.slice(0, 4).map((item) => ({ id: item.id, title: item.title, status: "Qeydiyyat aktivdir", type: "Tədbir" })),
     ...clubs.slice(0, 4).map((item) => ({ id: item.id, title: item.name, status: "Klub üzvü", type: "Klub" })),
-    ...mentorships.slice(0, 4).map((item) => ({ id: item.id, title: "Mentorluq müraciəti", text: item.note, status: item.status, type: "Mentor" })),
+    ...mentorshipItems,
     ...tickets.slice(0, 4).map((item) => ({ id: item.id, title: item.topic, text: item.reference, status: item.status, type: "Dəstək" })),
   ] } });
 });
@@ -103,7 +118,10 @@ workspaceRouter.patch("/mentorship/:id", async (request, response) => {
   const { status } = z.object({ status: z.enum(["accepted", "rejected"]) }).strict().parse(request.body);
   const result = await decideMentorshipRequest(id, mentorProfile.slug, status, mentorProfile.id);
   if (!result) throw new ApiError(404, "MENTORSHIP_REQUEST_NOT_FOUND", "Gözləyən mentorluq müraciəti tapılmadı.");
-  response.json({ data: result });
+  const conversation = status === "accepted"
+    ? await ensureMentorshipConversation(result.userId, user.id)
+    : null;
+  response.json({ data: { ...result, conversationId: conversation?.id } });
 });
 
 workspaceRouter.post("/mentor-application", async (request, response) => {
@@ -121,4 +139,14 @@ workspaceRouter.post("/mentor-application", async (request, response) => {
 
 function normalizeRoleId(value: string) {
   return value.toLocaleLowerCase("az").replace(/[ə]/g, "e").replace(/[ı]/g, "i").replace(/[ş]/g, "s").replace(/[ç]/g, "c").replace(/[ö]/g, "o").replace(/[ü]/g, "u").replace(/[ğ]/g, "g").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function toChatPeer(user: { id: string; name: string; role: string; program: string; city: string }) {
+  return {
+    id: user.id,
+    name: user.name,
+    role: user.role === "teacher" ? "Müəllim / Mentor" : user.role === "mentor" ? "Mentor" : "Tələbə",
+    focus: user.program,
+    city: user.city,
+  };
 }

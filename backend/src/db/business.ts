@@ -36,6 +36,7 @@ export type MentorshipRequestRecord = {
   id: string;
   userId: string;
   mentorId: string;
+  mentorProfileId?: string;
   note: string;
   status: "pending" | "accepted" | "rejected" | "cancelled";
   createdAt: string;
@@ -92,6 +93,7 @@ function mapMentorshipRequest(row: Record<string, unknown>): MentorshipRequestRe
     id: String(row.id),
     userId: String(row.user_id),
     mentorId: String(row.mentor_id),
+    mentorProfileId: row.mentor_profile_id ? String(row.mentor_profile_id) : undefined,
     note: String(row.note ?? ""),
     status: row.status as MentorshipRequestRecord["status"],
     createdAt: iso(row.created_at),
@@ -401,15 +403,21 @@ export async function listMyEventRegistrations(userId: string): Promise<EventRec
 
 export async function createMentorshipRequest(userId: string, mentorId: string, note: string, mentorProfileId?: string): Promise<MentorshipRequestRecord> {
   if (!databasePool) {
-    const duplicate = [...memoryMentorshipRequests.values()].find((item) => item.userId === userId && item.mentorId === mentorId && item.status === "pending");
-    if (duplicate) throw new ApiError(409, "REQUEST_EXISTS", "Bu mentor üçün gözləyən müraciətin artıq var.");
+    const duplicate = [...memoryMentorshipRequests.values()].find((item) => item.userId === userId
+      && (mentorProfileId ? item.mentorProfileId === mentorProfileId : item.mentorId === mentorId)
+      && (item.status === "pending" || item.status === "accepted"));
+    if (duplicate) throw new ApiError(409, "REQUEST_EXISTS", duplicate.status === "accepted"
+      ? "Bu mentorla aktiv mentorluğun artıq var."
+      : "Bu mentor üçün gözləyən müraciətin artıq var.");
     const timestamp = now();
-    const record: MentorshipRequestRecord = { id: randomUUID(), userId, mentorId, note, status: "pending", createdAt: timestamp, updatedAt: timestamp };
+    const record: MentorshipRequestRecord = { id: randomUUID(), userId, mentorId, mentorProfileId, note, status: "pending", createdAt: timestamp, updatedAt: timestamp };
     memoryMentorshipRequests.set(record.id, record);
     return record;
   }
-  const duplicate = await databasePool.query("SELECT 1 FROM mentorship_requests WHERE user_id=$1 AND (mentor_profile_id=$2 OR mentor_id=$3) AND status='pending'", [userId, mentorProfileId ?? null, mentorId]);
-  if (duplicate.rows[0]) throw new ApiError(409, "REQUEST_EXISTS", "Bu mentor üçün gözləyən müraciətin artıq var.");
+  const duplicate = await databasePool.query("SELECT status FROM mentorship_requests WHERE user_id=$1 AND (mentor_profile_id=$2 OR mentor_id=$3) AND status IN ('pending','accepted') LIMIT 1", [userId, mentorProfileId ?? null, mentorId]);
+  if (duplicate.rows[0]) throw new ApiError(409, "REQUEST_EXISTS", duplicate.rows[0].status === "accepted"
+    ? "Bu mentorla aktiv mentorluğun artıq var."
+    : "Bu mentor üçün gözləyən müraciətin artıq var.");
   const result = await databasePool.query(
     "INSERT INTO mentorship_requests (id,user_id,mentor_id,mentor_profile_id,note) VALUES ($1,$2,$3,$4,$5) RETURNING *",
     [randomUUID(), userId, mentorId, mentorProfileId ?? null, note],

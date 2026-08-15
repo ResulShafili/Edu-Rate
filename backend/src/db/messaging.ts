@@ -57,6 +57,34 @@ export async function acceptConnection(id: string, userId: string): Promise<Conn
   return result.rows[0] ? mapConnection(result.rows[0]) : null;
 }
 
+export async function ensureMentorshipConversation(studentId: string, mentorId: string): Promise<{ id: string }> {
+  if (studentId === mentorId) throw new ApiError(422, "SELF_MENTORSHIP", "Öz hesabınla mentorluq söhbəti yaratmaq olmaz.");
+  if (!databasePool) {
+    const existing = [...connections.values()].find((connection) => pairMatches(connection, studentId, mentorId));
+    if (existing) {
+      existing.status = "accepted";
+    } else {
+      const connection: Connection = { id: randomUUID(), requesterId: studentId, recipientId: mentorId, status: "accepted", createdAt: now() };
+      connections.set(connection.id, connection);
+    }
+    return createConversation(studentId, mentorId);
+  }
+
+  const existing = await databasePool.query(
+    "SELECT * FROM connections WHERE (requester_id=$1 AND recipient_id=$2) OR (requester_id=$2 AND recipient_id=$1) LIMIT 1",
+    [studentId, mentorId],
+  );
+  if (existing.rows[0]) {
+    await databasePool.query("UPDATE connections SET status='accepted',updated_at=NOW() WHERE id=$1", [existing.rows[0].id]);
+  } else {
+    await databasePool.query(
+      "INSERT INTO connections(id,requester_id,recipient_id,status) VALUES($1,$2,$3,'accepted') ON CONFLICT DO NOTHING",
+      [randomUUID(), studentId, mentorId],
+    );
+  }
+  return createConversation(studentId, mentorId);
+}
+
 export async function deleteConnection(id: string, userId: string): Promise<boolean> {
   if (!databasePool) {
     const connection = connections.get(id);

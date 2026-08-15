@@ -32,7 +32,7 @@ export function MentorshipDashboard() {
   const [loadError, setLoadError] = useState("");
   const [catalogMentors,setCatalogMentors]=useState<Mentor[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [requestedIds, setRequestedIds] = useState<Set<string>>(() => new Set());
+  const [requestStatuses, setRequestStatuses] = useState<Map<string, "pending" | "accepted">>(() => new Map());
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [requestError, setRequestError] = useState("");
   const [query, setQuery] = useState("");
@@ -68,14 +68,16 @@ export function MentorshipDashboard() {
 
   useEffect(() => {
     if (!user) {
-      const timer = window.setTimeout(() => setRequestedIds(new Set()), 0);
+      const timer = window.setTimeout(() => setRequestStatuses(new Map()), 0);
       return () => window.clearTimeout(timer);
     }
     void fetch("/api/mentorship/requests", { cache: "no-store" })
       .then(async (response) => {
-        const payload = await response.json() as { data?: Array<{ mentorId: string; status: string }> };
+        const payload = await response.json() as { data?: Array<{ mentorId: string; mentorProfileId?: string; status: string }> };
         if (response.ok && Array.isArray(payload.data)) {
-          setRequestedIds(new Set(payload.data.filter((item) => item.status === "pending").map((item) => item.mentorId)));
+          setRequestStatuses(new Map(payload.data
+            .filter((item) => item.status === "pending" || item.status === "accepted")
+            .map((item) => [item.mentorProfileId ?? item.mentorId, item.status as "pending" | "accepted"])));
         }
       })
       .catch(() => undefined);
@@ -105,7 +107,7 @@ export function MentorshipDashboard() {
       });
       const payload = await response.json() as { error?: { message?: string } };
       if (!response.ok) throw new Error(payload.error?.message ?? "Müraciət göndərilmədi.");
-      setRequestedIds((current) => new Set(current).add(mentorId));
+      setRequestStatuses((current) => new Map(current).set(mentorId, "pending"));
     } catch (error) {
       setRequestError(error instanceof Error ? error.message : "Müraciət göndərilmədi.");
     } finally {
@@ -151,7 +153,8 @@ export function MentorshipDashboard() {
       <motion.div layout className="mentor-grid" aria-label="Mentor siyahısı">
         {filteredMentors.map((mentor, index) => {
           const expanded = expandedId === mentor.id;
-          const requested = requestedIds.has(mentor.id);
+          const requestStatus = requestStatuses.get(mentor.id);
+          const requested = Boolean(requestStatus);
           const detailsId = `mentor-details-${mentor.id}`;
           const triggerId = `mentor-trigger-${mentor.id}`;
 
@@ -261,7 +264,7 @@ export function MentorshipDashboard() {
                               transition={{ duration: 0.2 }}
                             >
                               {requested ? <Check size={16} strokeWidth={2.4} /> : <Sparkles size={15} />}
-                              {requested ? "Müraciət göndərildi" : requestingId === mentor.id ? "Göndərilir…" : "Mentorluq üçün müraciət et"}
+                              {requestStatus === "accepted" ? "Mentorluq aktivdir" : requested ? "Müraciət göndərildi" : requestingId === mentor.id ? "Göndərilir…" : "Mentorluq üçün müraciət et"}
                             </motion.span>
                           </AnimatePresence>
                           {requested && !reduceMotion && (

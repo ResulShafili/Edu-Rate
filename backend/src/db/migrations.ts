@@ -202,6 +202,51 @@ const migrations: Migration[] = [
       ON CONFLICT (conversation_id, user_id) DO UPDATE SET role = 'admin';
     `,
   },
+  {
+    version: 10,
+    name: "accepted mentorship conversations",
+    sql: `
+      UPDATE connections c SET status='accepted', updated_at=NOW()
+      FROM mentorship_requests mr
+      JOIN professional_profiles pp ON pp.id=mr.mentor_profile_id
+      WHERE mr.status='accepted' AND pp.user_id IS NOT NULL AND c.status='pending'
+        AND ((c.requester_id=mr.user_id AND c.recipient_id=pp.user_id)
+          OR (c.requester_id=pp.user_id AND c.recipient_id=mr.user_id));
+
+      INSERT INTO connections (id,requester_id,recipient_id,status)
+      SELECT gen_random_uuid(), mr.user_id, pp.user_id, 'accepted'
+      FROM mentorship_requests mr
+      JOIN professional_profiles pp ON pp.id=mr.mentor_profile_id
+      WHERE mr.status='accepted' AND pp.user_id IS NOT NULL AND mr.user_id<>pp.user_id
+        AND NOT EXISTS (
+          SELECT 1 FROM connections c
+          WHERE (c.requester_id=mr.user_id AND c.recipient_id=pp.user_id)
+             OR (c.requester_id=pp.user_id AND c.recipient_id=mr.user_id)
+        )
+      ON CONFLICT DO NOTHING;
+
+      INSERT INTO conversations (id,direct_key,kind)
+      SELECT gen_random_uuid(),
+        LEAST(c.requester_id::text,c.recipient_id::text)||':'||GREATEST(c.requester_id::text,c.recipient_id::text),
+        'direct'
+      FROM connections c
+      JOIN mentorship_requests mr ON mr.status='accepted'
+        AND ((c.requester_id=mr.user_id) OR (c.recipient_id=mr.user_id))
+      JOIN professional_profiles pp ON pp.id=mr.mentor_profile_id
+        AND (c.requester_id=pp.user_id OR c.recipient_id=pp.user_id)
+      WHERE c.status='accepted'
+      ON CONFLICT (direct_key) DO NOTHING;
+
+      INSERT INTO conversation_participants (conversation_id,user_id)
+      SELECT c.id, split_part(c.direct_key,':',1)::uuid FROM conversations c
+      WHERE c.kind='direct' AND c.direct_key IS NOT NULL
+      ON CONFLICT DO NOTHING;
+      INSERT INTO conversation_participants (conversation_id,user_id)
+      SELECT c.id, split_part(c.direct_key,':',2)::uuid FROM conversations c
+      WHERE c.kind='direct' AND c.direct_key IS NOT NULL
+      ON CONFLICT DO NOTHING;
+    `,
+  },
 ];
 
 export async function runMigrations() {

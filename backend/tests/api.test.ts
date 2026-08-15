@@ -758,6 +758,13 @@ describe("EduRate API", () => {
     await request(app).patch(`/api/admin/mentor-applications/${application.body.data.id}`)
       .set("Authorization", adminAuthorization).send({ status: "approved" }).expect(200);
 
+    const repeatedApprovedApplication = await request(app).post("/api/workspace/mentor-application")
+      .set("Authorization", teacherAuthorization).send({
+        specialty: "Riyaziyyat mentorluğu", biography: "Təsdiqlənmiş profili təkrar yaratmaq mümkün olmamalıdır.",
+        availability: "Həftəiçi", meetingMode: "Onlayn", languages: ["Azərbaycan dili"],
+      }).expect(409);
+    assert.equal(repeatedApprovedApplication.body.error.code, "MENTOR_APPLICATION_EXISTS");
+
     const dualWorkspace = await request(app).get("/api/workspace").set("Authorization", teacherAuthorization).expect(200);
     assert.equal(dualWorkspace.body.data.role, "teacher");
     assert.equal(dualWorkspace.body.data.mentorEnabled, true);
@@ -776,6 +783,33 @@ describe("EduRate API", () => {
     const accepted = await request(app).patch(`/api/workspace/mentorship/${mentorship.body.data.id}`)
       .set("Authorization", teacherAuthorization).send({ status: "accepted" }).expect(200);
     assert.equal(accepted.body.data.status, "accepted");
+    assert.ok(accepted.body.data.conversationId);
+
+    const repeatedMentorship = await request(app).post("/api/mentorship/requests")
+      .set("Authorization", `Bearer ${studentSignup.body.data.token}`)
+      .send({ mentorId: `mentor-${teacherSignup.body.data.user.id}`, note: "Eyni mentorluğa yenidən müraciət." })
+      .expect(409);
+    assert.equal(repeatedMentorship.body.error.code, "REQUEST_EXISTS");
+
+    const [studentWorkspace, acceptedMentorWorkspace] = await Promise.all([
+      request(app).get("/api/workspace").set("Authorization", `Bearer ${studentSignup.body.data.token}`).expect(200),
+      request(app).get("/api/workspace").set("Authorization", teacherAuthorization).expect(200),
+    ]);
+    const studentMentorship = studentWorkspace.body.data.items.find((item: { id: string }) => item.id === mentorship.body.data.id);
+    const teacherMentorship = acceptedMentorWorkspace.body.data.mentorItems.find((item: { id: string }) => item.id === mentorship.body.data.id);
+    assert.equal(studentMentorship.chatPeer.id, teacherSignup.body.data.user.id);
+    assert.equal(teacherMentorship.chatPeer.id, studentSignup.body.data.user.id);
+
+    await request(app).post(`/api/community/conversations/${accepted.body.data.conversationId}/messages`)
+      .set("Authorization", `Bearer ${studentSignup.body.data.token}`)
+      .send({ body: "Salam müəllim, mentorluq söhbətimiz aktivdir." }).expect(201);
+    await request(app).post(`/api/community/conversations/${accepted.body.data.conversationId}/messages`)
+      .set("Authorization", teacherAuthorization)
+      .send({ body: "Salam, başlaya bilərik." }).expect(201);
+    const mentorshipMessages = await request(app)
+      .get(`/api/community/conversations/${accepted.body.data.conversationId}/messages`)
+      .set("Authorization", `Bearer ${studentSignup.body.data.token}`).expect(200);
+    assert.equal(mentorshipMessages.body.data.length, 2);
 
     await request(app).patch(`/api/admin/users/${teacherSignup.body.data.user.id}`)
       .set("Authorization", adminAuthorization).send({ status: "Məhdudlaşdırılıb" }).expect(200);
