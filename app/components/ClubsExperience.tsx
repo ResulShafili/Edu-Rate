@@ -21,6 +21,7 @@ export function ClubsExperience({ clubs, failed=false }: ClubsExperienceProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [createDraft,setCreateDraft]=useState({name:"",category:"",description:""});
   const canCreate = Boolean(user?.accessRole && ["teacher", "mentor", "assistant_admin", "admin"].includes(user.accessRole));
 
   async function createClub(event: FormEvent<HTMLFormElement>) {
@@ -44,6 +45,7 @@ export function ClubsExperience({ clubs, failed=false }: ClubsExperienceProps) {
       const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null;
       if (!response.ok) throw new Error(payload?.error?.message || "Klub müraciəti göndərilmədi.");
       form.reset();
+      setCreateDraft({name:"",category:"",description:""});
       setSuccess("Klub müraciəti təsdiq üçün göndərildi.");
       router.refresh();
     } catch (submissionError) {
@@ -116,10 +118,11 @@ export function ClubsExperience({ clubs, failed=false }: ClubsExperienceProps) {
                 <button type="button" onClick={() => setCreateOpen(false)} aria-label="Pəncərəni bağla"><X size={19} /></button>
               </header>
               <p className="club-create-intro">Əsas məlumatları yaz. Klub yoxlanıldıqdan sonra kataloqda görünəcək.</p>
+              <div className="club-create-preview" aria-label="Klub kartının canlı önizləməsi"><div><span>Örtük şəkli təsdiqdən sonra burada olacaq</span></div><small>{createDraft.category||"KATEQORİYA"}</small><h3>{createDraft.name||"Klubun adı burada görünəcək"}</h3><p>{createDraft.description||"Klub haqqında qısa təsvir burada yerləşəcək."}</p></div>
               <form onSubmit={createClub} className="club-create-form">
-                <label><span>Klubun adı</span><input name="name" minLength={3} maxLength={100} required autoFocus placeholder="Məsələn, Proqramlaşdırma klubu" /></label>
-                <label><span>Kateqoriya</span><select name="category" required defaultValue=""><option value="" disabled>Kateqoriya seç</option><option>Texnologiya</option><option>Akademik</option><option>Yaradıcılıq</option><option>Sosial təsir</option><option>Mədəniyyət</option><option>İdman</option></select></label>
-                <label className="is-wide"><span>Qısa təsvir</span><textarea name="description" minLength={10} maxLength={500} rows={4} required placeholder="Klubun məqsədini qısa və aydın yaz" /></label>
+                <label><span>Klubun adı</span><input name="name" value={createDraft.name} onChange={(e)=>setCreateDraft({...createDraft,name:e.target.value})} minLength={3} maxLength={100} required autoFocus placeholder="Məsələn, Proqramlaşdırma klubu" /></label>
+                <label><span>Kateqoriya</span><select name="category" required value={createDraft.category} onChange={(e)=>setCreateDraft({...createDraft,category:e.target.value})}><option value="" disabled>Kateqoriya seç</option><option>Texnologiya</option><option>Akademik</option><option>Yaradıcılıq</option><option>Sosial təsir</option><option>Mədəniyyət</option><option>İdman</option></select></label>
+                <label className="is-wide"><span>Qısa təsvir</span><textarea name="description" value={createDraft.description} onChange={(e)=>setCreateDraft({...createDraft,description:e.target.value})} minLength={10} maxLength={500} rows={4} required placeholder="Klubun məqsədini qısa və aydın yaz" /></label>
                 {error ? <p className="club-create-message is-error" role="alert">{error}</p> : null}
                 {success ? <p className="club-create-message is-success" role="status">{success}</p> : null}
                 <footer><button type="button" onClick={() => setCreateOpen(false)}>Ləğv et</button><button type="submit" disabled={pending}>{pending ? "Göndərilir…" : "Təsdiqə göndər"}</button></footer>

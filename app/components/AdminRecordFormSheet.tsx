@@ -343,9 +343,7 @@ function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
       <Field label="Kateqoriya" name="category" required>
         <input name="category" defaultValue={record?.category} minLength={2} maxLength={60} required />
       </Field>
-      <Field label="Koordinator inisialları" name="coordinatorInitials" required>
-        <input name="coordinatorInitials" defaultValue={record?.coordinatorInitials} minLength={2} maxLength={4} required />
-      </Field>
+      <input type="hidden" name="coordinatorInitials" value={record.coordinatorInitials} />
       <Field label="Qısa ad" name="shortName" required>
         <input name="shortName" defaultValue={record?.shortName} minLength={2} maxLength={100} required />
       </Field>
@@ -363,7 +361,7 @@ function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
           <option value="lime">Yaşıl</option><option value="violet">Bənövşəyi</option><option value="cyan">Mavi</option><option value="coral">Mərcan</option><option value="amber">Kəhrəba</option><option value="mint">Nanə</option>
         </select>
       </Field>
-      <Field label="Vizual işarə" name="visualMark" required><input name="visualMark" defaultValue={record?.visualMark} minLength={1} maxLength={12} required /></Field>
+      <input type="hidden" name="visualMark" value={record.visualMark ?? "club"} />
       <Field label="Görüş tezliyi" name="meetingCadence" required><input name="meetingCadence" defaultValue={record?.meeting?.cadence} minLength={2} maxLength={80} required /></Field>
       <Field label="Görüş günü" name="meetingDay" required><input name="meetingDay" defaultValue={record?.meeting?.day} minLength={1} maxLength={80} required /></Field>
       <Field label="Görüş saatı" name="meetingTime" required><input name="meetingTime" defaultValue={record?.meeting?.time} minLength={1} maxLength={40} required /></Field>

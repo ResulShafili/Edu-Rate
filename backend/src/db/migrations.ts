@@ -349,6 +349,27 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS media_assets_owner_idx ON media_assets(owner_type,owner_id);
     `,
   },
+  {
+    version: 15,
+    name: "announcement unique views and emoji reactions",
+    sql: `
+      CREATE TABLE IF NOT EXISTS announcement_views (
+        announcement_id VARCHAR(120) NOT NULL REFERENCES announcements(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (announcement_id, user_id)
+      );
+      CREATE TABLE IF NOT EXISTS announcement_reactions (
+        announcement_id VARCHAR(120) NOT NULL REFERENCES announcements(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        emoji VARCHAR(12) NOT NULL CHECK (emoji IN ('👍','❤️','😂','😮','😢','👏','🎉','🤔','👎','🙏')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (announcement_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS announcement_reactions_item_idx ON announcement_reactions(announcement_id, emoji);
+    `,
+  },
 ];
 
 export const latestMigrationVersion = Math.max(...migrations.map((migration) => migration.version));

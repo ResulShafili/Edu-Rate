@@ -91,9 +91,16 @@ clubsRouter.post("/", authenticate, async (request, response) => {
   response.status(201).json({ data: club });
 });
 
-clubsRouter.patch("/:clubId", authenticate, requireAdmin, async (request, response) => {
+clubsRouter.patch("/:clubId", authenticate, async (request, response) => {
   const clubId = z.string().parse(request.params.clubId);
-  const club = await updateClub(clubId, clubSchema.partial().parse(request.body));
+  const current = await findClub(clubId);
+  if (!current) throw new ApiError(404, "CLUB_NOT_FOUND", "Klub tapılmadı.");
+  const isLeadership = request.auth!.role === "admin" || request.auth!.role === "assistant_admin";
+  if (!isLeadership && current.createdBy !== request.auth!.userId) {
+    throw new ApiError(403, "CLUB_OWNER_REQUIRED", "Yalnız klubun yaradıcısı və ya rəhbərlik məlumatları dəyişə bilər.");
+  }
+  const input = clubSchema.partial().omit({ slug: true, coordinatorInitials: true, status: true }).parse(request.body);
+  const club = await updateClub(clubId, input);
   if (!club) throw new ApiError(404, "CLUB_NOT_FOUND", "Klub tapılmadı.");
   response.json({ data: club });
 });

@@ -26,7 +26,7 @@ import {
 import { authenticate } from "../middleware/authenticate.js";
 import { synchronizeProfessionalProfilesForUser } from "../db/professionals.js";
 import { consumeActionToken, createActionToken, listSessions, registerSessionToken, revokeAllSessions, revokeSession } from "../db/auth-security.js";
-import { accountActionUrl, sendAccountEmail } from "../lib/email.js";
+import { accountActionUrl, EmailDeliveryError, sendAccountEmail } from "../lib/email.js";
 import { env } from "../config/env.js";
 
 export const authRouter = Router();
@@ -240,7 +240,7 @@ authRouter.post("/logout", authenticate, async (request, response) => {
 
 authRouter.post("/verify-email/request",signupLimiter,async(request,response)=>{const {email}=emailSchema.parse(request.body);const user=await findUserByEmail(email);if(user&&!user.emailVerifiedAt)await sendVerification(user);response.status(202).json({data:{accepted:true}});});
 authRouter.post("/verify-email/confirm",async(request,response)=>{const {token}=tokenSchema.parse(request.body);const userId=await consumeActionToken(token,"verify_email");if(!userId)throw new ApiError(422,"TOKEN_INVALID","Təsdiq keçidi etibarsızdır və ya vaxtı bitib.");const user=await markEmailVerified(userId);if(!user)throw new ApiError(404,"USER_NOT_FOUND","İstifadəçi tapılmadı.");response.json({data:{verified:true}});});
-authRouter.post("/password/forgot",loginLimiter,async(request,response)=>{const {email}=emailSchema.parse(request.body);const user=await findUserByEmail(email);if(user){const token=await createActionToken(user.id,"reset_password",30*60*1000);const url=accountActionUrl("/auth/recovery",token);await sendAccountEmail({to:user.email,subject:"EduRate şifrə bərpası",html:`<p>Şifrəni yeniləmək üçün <a href="${url}">təhlükəsiz keçidi aç</a>.</p><p>Keçid 30 dəqiqə qüvvədədir.</p>`});}response.status(202).json({data:{accepted:true}});});
+authRouter.post("/password/forgot",loginLimiter,async(request,response)=>{const {email}=emailSchema.parse(request.body);const user=await findUserByEmail(email);if(user){const token=await createActionToken(user.id,"reset_password",30*60*1000);const url=accountActionUrl("/auth/recovery",token);try{await sendAccountEmail({to:user.email,subject:"EduRate şifrə bərpası",html:`<p>Şifrəni yeniləmək üçün <a href="${url}">təhlükəsiz keçidi aç</a>.</p><p>Keçid 30 dəqiqə qüvvədədir.</p>`});}catch(error){if(error instanceof EmailDeliveryError)throw new ApiError(503,"EMAIL_DELIVERY_UNAVAILABLE",error.message);throw error;}}response.status(202).json({data:{accepted:true}});});
 authRouter.post("/password/reset",loginLimiter,async(request,response)=>{const {token,password}=resetSchema.parse(request.body);const userId=await consumeActionToken(token,"reset_password");if(!userId)throw new ApiError(422,"TOKEN_INVALID","Şifrə bərpası keçidi etibarsızdır və ya vaxtı bitib.");await updatePassword(userId,await hashPassword(password));await revokeAllSessions(userId);response.json({data:{reset:true}});});
 authRouter.get("/sessions",authenticate,async(request,response)=>response.json({data:await listSessions(request.auth!.userId,request.auth!.sessionId)}));
 authRouter.delete("/sessions/:id",authenticate,async(request,response)=>{const id=z.string().uuid().parse(request.params.id);if(!await revokeSession(request.auth!.userId,id))throw new ApiError(404,"SESSION_NOT_FOUND","Sessiya tapılmadı.");response.status(204).send();});

@@ -56,6 +56,7 @@ export type ClubHistoryMilestone = {
 
 export type Club = {
   id?: string;
+  createdBy?: string | null;
   slug: string;
   name: string;
   shortName: string;
@@ -620,13 +621,13 @@ export function getClubBySlug(slug: string) {
 }
 
 export type ClubApiRecord={
-  id:string;slug:string;name:string;shortName:string;category:string;coordinatorInitials:string;memberCount:number;eventCount:number;status:string;coverUrl?:string;
+  id:string;slug:string;name:string;shortName:string;category:string;coordinatorInitials:string;memberCount:number;eventCount:number;status:string;coverUrl?:string;createdBy?:string|null;
   tagline:string;description:string;about:string[];tone:ClubTone;visualMark:string;meeting:ClubMeeting;focusTags:string[];
   events:ClubEvent[];members:ClubMember[];history:ClubHistoryMilestone[];
 };
 
 export function clubFromApi(record:ClubApiRecord):Club {
-  return {id:record.id,slug:record.slug,name:record.name,shortName:record.shortName,category:normalizeClubCategory(record.category),tagline:record.tagline,
+  return {id:record.id,createdBy:record.createdBy,slug:record.slug,name:record.name,shortName:record.shortName,category:normalizeClubCategory(record.category),tagline:record.tagline,
     description:record.description,about:record.about,stats:[{label:"Üzv",value:String(record.memberCount)},{label:"Tədbir",value:String(record.events.length)}],
     tone:record.tone,visualMark:record.visualMark,meeting:record.meeting,focusTags:record.focusTags,events:record.events,members:record.members,history:record.history,coverUrl:record.coverUrl};
 }

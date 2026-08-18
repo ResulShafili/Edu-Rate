@@ -95,7 +95,7 @@ export function ClubCard({ club, index }: ClubCardProps) {
             <span className="club-card-art-orbit club-card-art-orbit-primary" />
             <span className="club-card-art-orbit club-card-art-orbit-secondary" />
             <span className="club-card-art-glow" />
-            <span className="club-card-visual-mark">{club.visualMark}</span>
+            <span className="club-card-visual-mark"><UsersRound size={34} strokeWidth={1.35} /></span>
           </motion.div>
           <span className="club-card-visual-label">Açıq tələbə məkanı</span>
         </div>

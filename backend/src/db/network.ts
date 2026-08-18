@@ -22,6 +22,9 @@ export type AnnouncementRecord = {
   expiresAt: string;
   priority: boolean;
   imageUrl?: string;
+  viewCount?: number;
+  reactions?: Record<string, number>;
+  myReaction?: string | null;
 };
 
 export type FeedRecord = Omit<AnnouncementRecord, "kind" | "dateLabel" | "startsAt" | "expiresAt" | "priority"> & {
@@ -51,6 +54,8 @@ const memoryAnnouncements = new Map<string, AnnouncementRecord & { status: "draf
 const memoryFeed = new Map<string, AdminFeedRecord>(
   feed.map((item) => [item.id, { ...item, status: "published", userId: null }]),
 );
+const memoryAnnouncementViews = new Map<string, Set<string>>();
+const memoryAnnouncementReactions = new Map<string, Map<string, string>>();
 
 export async function initializeNetworkDatabase() {
   if (!databasePool) return;
@@ -84,14 +89,21 @@ export async function initializeNetworkDatabase() {
   }
 }
 
-export async function listAnnouncements(category?: NetworkCategory): Promise<AnnouncementRecord[]> {
-  if (!databasePool) return Promise.all([...memoryAnnouncements.values()].filter((item) => item.status === "published" && (!category || item.category === category)).map(async(item)=>({...item,imageUrl:(await getMedia("announcement",item.id))?.secureUrl})));
+export async function listAnnouncements(category?: NetworkCategory,userId?:string): Promise<AnnouncementRecord[]> {
+  if (!databasePool) return Promise.all([...memoryAnnouncements.values()].filter((item) => item.status === "published" && (!category || item.category === category)).map(async(item)=>{const reactionMap=memoryAnnouncementReactions.get(item.id)??new Map();const reactions:Record<string,number>={};for(const emoji of reactionMap.values())reactions[emoji]=(reactions[emoji]??0)+1;return {...item,imageUrl:(await getMedia("announcement",item.id))?.secureUrl,viewCount:memoryAnnouncementViews.get(item.id)?.size??0,reactions,myReaction:userId?reactionMap.get(userId)??null:null};}));
   const result = await databasePool.query(
-    `SELECT announcements.*,media_assets.secure_url image_url FROM announcements LEFT JOIN media_assets ON media_assets.owner_type='announcement' AND media_assets.owner_id=announcements.id WHERE status='published' ${category ? "AND category = $1" : ""} ORDER BY priority DESC, published_at DESC`,
-    category ? [category] : [],
+    `SELECT announcements.*,media_assets.secure_url image_url,
+      (SELECT COUNT(*)::int FROM announcement_views WHERE announcement_id=announcements.id) view_count,
+      COALESCE((SELECT jsonb_object_agg(emoji,total) FROM (SELECT emoji,COUNT(*)::int total FROM announcement_reactions WHERE announcement_id=announcements.id GROUP BY emoji) r),'{}'::jsonb) reactions,
+      (SELECT emoji FROM announcement_reactions WHERE announcement_id=announcements.id AND user_id=$1) my_reaction
+     FROM announcements LEFT JOIN media_assets ON media_assets.owner_type='announcement' AND media_assets.owner_id=announcements.id WHERE status='published' ${category ? "AND category = $2" : ""} ORDER BY priority DESC, published_at DESC`,
+    category ? [userId??null,category] : [userId??null],
   );
-  return result.rows.map((row) => ({ id: String(row.id), kind: "announcement", category: row.category, title: String(row.title), summary: String(row.summary), source: String(row.source), sourceInitials: String(row.source_initials), publishedAt: new Date(row.published_at).toISOString(), timeLabel: formatTime(row.published_at), tone: row.tone, dateLabel: formatDate(row.starts_at), startsAt: new Date(row.starts_at).toISOString(), expiresAt: new Date(row.expires_at).toISOString(), priority: Boolean(row.priority),imageUrl:row.image_url?String(row.image_url):undefined }));
+  return result.rows.map((row) => ({ id: String(row.id), kind: "announcement", category: row.category, title: String(row.title), summary: String(row.summary), source: String(row.source), sourceInitials: String(row.source_initials), publishedAt: new Date(row.published_at).toISOString(), timeLabel: formatTime(row.published_at), tone: row.tone, dateLabel: formatDate(row.starts_at), startsAt: new Date(row.starts_at).toISOString(), expiresAt: new Date(row.expires_at).toISOString(), priority: Boolean(row.priority),imageUrl:row.image_url?String(row.image_url):undefined,viewCount:Number(row.view_count??0),reactions:row.reactions&&typeof row.reactions==="object"?row.reactions:{},myReaction:row.my_reaction?String(row.my_reaction):null }));
 }
+
+export async function recordAnnouncementView(announcementId:string,userId:string){if(!databasePool){const views=memoryAnnouncementViews.get(announcementId)??new Set<string>();views.add(userId);memoryAnnouncementViews.set(announcementId,views);return views.size;}const result=await databasePool.query("INSERT INTO announcement_views(announcement_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING",[announcementId,userId]);if(!result.rowCount){const count=await databasePool.query("SELECT COUNT(*)::int count FROM announcement_views WHERE announcement_id=$1",[announcementId]);return Number(count.rows[0]?.count??0);}const count=await databasePool.query("SELECT COUNT(*)::int count FROM announcement_views WHERE announcement_id=$1",[announcementId]);return Number(count.rows[0]?.count??0);}
+export async function setAnnouncementReaction(announcementId:string,userId:string,emoji:string|null){if(!databasePool){const values=memoryAnnouncementReactions.get(announcementId)??new Map<string,string>();if(emoji)values.set(userId,emoji);else values.delete(userId);memoryAnnouncementReactions.set(announcementId,values);return;}if(!emoji){await databasePool.query("DELETE FROM announcement_reactions WHERE announcement_id=$1 AND user_id=$2",[announcementId,userId]);return;}await databasePool.query("INSERT INTO announcement_reactions(announcement_id,user_id,emoji) VALUES($1,$2,$3) ON CONFLICT(announcement_id,user_id) DO UPDATE SET emoji=EXCLUDED.emoji,updated_at=NOW()",[announcementId,userId,emoji]);}
 
 export async function listFeed(category?: NetworkCategory): Promise<FeedRecord[]> {
   if (!databasePool) return [...memoryFeed.values()].filter((item) => item.status === "published" && (!category || item.category === category));

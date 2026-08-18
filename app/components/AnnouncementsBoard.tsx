@@ -5,14 +5,16 @@ import {
   Bookmark,
   CalendarDays,
   Check,
+  Eye,
   Megaphone,
   SlidersHorizontal,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AnnouncementItem, NetworkFilter, NetworkTone } from "../data/network";
 import { networkFilterLabels, networkFilters } from "../data/network";
 import { formatAzDate, isExpired } from "../lib/date";
 import { EmptyState } from "./ui/Primitives";
+import { useAuth } from "./AuthProvider";
 
 type AnnouncementsBoardProps = {
   items: readonly AnnouncementItem[];
@@ -83,11 +85,19 @@ export function AnnouncementsBoard({ items, activeFilter, onFilterChange, reduce
 
 function AnnouncementCard({ item, index, reducedMotion, read, bookmarked, onRead, onBookmark }: { item: AnnouncementItem; index: number; reducedMotion: boolean; read: boolean; bookmarked: boolean; onRead: () => void; onBookmark: () => void }) {
   const tone = tones[item.tone];
-  return <motion.article layout className={`announcement-card${read ? " is-read" : ""}`} initial={reducedMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}><i className={tone.marker} aria-hidden="true" />{item.imageUrl ? <div className="announcement-card-image" style={{ backgroundImage: `url("${item.imageUrl}")` }} role="img" aria-label={`${item.title} üçün elan şəkli`} /> : null}<div className="announcement-card-meta"><span className={tone.date}><CalendarDays size={12} aria-hidden="true" />{formatAzDate(item.startsAt)}</span>{!read && <b>Yeni</b>}</div><h3>{item.title}</h3><p>{item.summary}</p><footer><span className={tone.initials}>{item.sourceInitials}</span><span>{item.source}</span><AnnouncementActions read={read} bookmarked={bookmarked} onRead={onRead} onBookmark={onBookmark} /></footer></motion.article>;
+  return <motion.article layout className={`announcement-card${read ? " is-read" : ""}`} initial={reducedMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}><i className={tone.marker} aria-hidden="true" />{item.imageUrl ? <div className="announcement-card-image" style={{ backgroundImage: `url("${item.imageUrl}")` }} role="img" aria-label={`${item.title} üçün elan şəkli`} /> : null}<div className="announcement-card-meta"><span className={tone.date}><CalendarDays size={12} aria-hidden="true" />{formatAzDate(item.startsAt)}</span>{!read && <b>Yeni</b>}</div><h3>{item.title}</h3><p>{item.summary}</p><AnnouncementEngagement item={item}/><footer><span className={tone.initials}>{item.sourceInitials}</span><span>{item.source}</span><AnnouncementActions read={read} bookmarked={bookmarked} onRead={onRead} onBookmark={onBookmark} /></footer></motion.article>;
 }
 
 function AnnouncementCompact({ item, archived = false, read, bookmarked, onRead, onBookmark }: { item: AnnouncementItem; archived?: boolean; read: boolean; bookmarked: boolean; onRead: () => void; onBookmark: () => void }) {
-  return <article className={`announcement-compact${archived || read ? " is-muted" : ""}`}>{item.imageUrl ? <span className="announcement-compact-image" style={{ backgroundImage: `url("${item.imageUrl}")` }} aria-hidden="true" /> : null}<div><span>{networkFilterLabels[item.category]}</span>{archived && <b>Arxivdə</b>}<h4>{item.title}</h4><p>{item.summary}</p></div><time dateTime={item.startsAt}>{formatAzDate(item.startsAt)}</time>{!archived && <AnnouncementActions read={read} bookmarked={bookmarked} onRead={onRead} onBookmark={onBookmark} />}</article>;
+  return <article className={`announcement-compact${archived || read ? " is-muted" : ""}`}>{item.imageUrl ? <span className="announcement-compact-image" style={{ backgroundImage: `url("${item.imageUrl}")` }} aria-hidden="true" /> : null}<div><span>{networkFilterLabels[item.category]}</span>{archived && <b>Arxivdə</b>}<h4>{item.title}</h4><p>{item.summary}</p><AnnouncementEngagement item={item}/></div><time dateTime={item.startsAt}>{formatAzDate(item.startsAt)}</time>{!archived && <AnnouncementActions read={read} bookmarked={bookmarked} onRead={onRead} onBookmark={onBookmark} />}</article>;
+}
+
+const reactionOptions=["👍","❤️","😂","😮","😢","👏","🎉","🤔","👎","🙏"] as const;
+function AnnouncementEngagement({item}:{item:AnnouncementItem}){
+  const {user}=useAuth();const [views,setViews]=useState(item.viewCount??0);const [selected,setSelected]=useState(item.myReaction??null);const [counts,setCounts]=useState<Record<string,number>>(item.reactions??{});const [open,setOpen]=useState(false);
+  useEffect(()=>{if(!user)return;void fetch(`/api/network/announcements/${encodeURIComponent(item.id)}/view`,{method:"POST"}).then(async(response)=>{if(response.ok){const payload=await response.json() as {data:{viewCount:number}};setViews(payload.data.viewCount);}});},[item.id,user]);
+  async function react(emoji:string){if(!user)return;const next=selected===emoji?null:emoji;const previous=selected;setSelected(next);setCounts((current)=>{const value={...current};if(previous)value[previous]=Math.max(0,(value[previous]??1)-1);if(next)value[next]=(value[next]??0)+1;return value});setOpen(false);const response=await fetch(`/api/network/announcements/${encodeURIComponent(item.id)}/reaction`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({emoji:next})});if(!response.ok){setSelected(previous);}}
+  return <div className="announcement-engagement"><span><Eye size={13}/>{views} baxış</span><div className="announcement-reaction-summary">{Object.entries(counts).filter(([,count])=>count>0).slice(0,4).map(([emoji,count])=><button key={emoji} type="button" className={selected===emoji?"is-selected":""} onClick={()=>void react(emoji)} disabled={!user}>{emoji} <b>{count}</b></button>)}</div><div className="announcement-reaction-picker"><button type="button" onClick={()=>setOpen((value)=>!value)} disabled={!user} title={user?"Reaksiya bildir":"Reaksiya üçün daxil ol"}>☺+</button>{open?<div>{reactionOptions.map((emoji)=><button key={emoji} type="button" onClick={()=>void react(emoji)} aria-label={`${emoji} reaksiyası`}>{emoji}</button>)}</div>:null}</div></div>;
 }
 
 function AnnouncementActions({ read, bookmarked, onRead, onBookmark }: { read: boolean; bookmarked: boolean; onRead: () => void; onBookmark: () => void }) {

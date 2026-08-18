@@ -281,6 +281,8 @@ export const openApiDocument = {
         responses: { "200": { description: "Elanlar" }, "422": { description: "Validasiya xətası" } },
       },
     },
+    "/api/network/announcements/{id}/view": { post:{tags:["Catalog"],summary:"Elanın unikal baxışını qeydə al",security:[{bearerAuth:[]}],parameters:[{name:"id",in:"path",required:true,schema:{type:"string"}}],responses:{"200":{description:"Baxış sayı"},"401":{description:"Giriş tələb olunur"}}} },
+    "/api/network/announcements/{id}/reaction": { patch:{tags:["Catalog"],summary:"Elana emoji reaksiyası əlavə et və ya geri götür",security:[{bearerAuth:[]}],parameters:[{name:"id",in:"path",required:true,schema:{type:"string"}}],responses:{"200":{description:"Reaksiya yeniləndi"},"401":{description:"Giriş tələb olunur"}}} },
     "/api/network/feed": {
       get: {
         tags: ["Catalog"], summary: "Tələbə lentini siyahıla",

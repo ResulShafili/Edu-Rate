@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
-import { createFeedPost, listAnnouncements, listFeed } from "../db/network.js";
-import { authenticate } from "../middleware/authenticate.js";
+import { createFeedPost, listAnnouncements, listFeed, recordAnnouncementView, setAnnouncementReaction } from "../db/network.js";
+import { authenticate, optionalAuthenticate } from "../middleware/authenticate.js";
 import { findUserById } from "../db/database.js";
 import { ApiError } from "../lib/api-error.js";
 
@@ -11,10 +11,14 @@ const querySchema = z.object({
   category: z.enum(["official", "faculties", "clubs", "scholarship", "events"]).optional(),
 });
 
-networkRouter.get("/announcements", async (request, response) => {
+networkRouter.get("/announcements", optionalAuthenticate, async (request, response) => {
   const { category } = querySchema.parse(request.query);
-  response.json({ data: await listAnnouncements(category) });
+  response.json({ data: await listAnnouncements(category,request.auth?.userId) });
 });
+
+const reactionSchema=z.enum(["👍","❤️","😂","😮","😢","👏","🎉","🤔","👎","🙏"]);
+networkRouter.post("/announcements/:id/view",authenticate,async(request,response)=>response.json({data:{viewCount:await recordAnnouncementView(z.string().parse(request.params.id),request.auth!.userId)}}));
+networkRouter.patch("/announcements/:id/reaction",authenticate,async(request,response)=>{const {emoji}=z.object({emoji:reactionSchema.nullable()}).parse(request.body);await setAnnouncementReaction(z.string().parse(request.params.id),request.auth!.userId,emoji);response.json({data:{emoji}});});
 
 networkRouter.get("/feed", async (request, response) => {
   const { category } = querySchema.parse(request.query);

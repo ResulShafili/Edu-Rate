@@ -33,6 +33,9 @@ export type AnnouncementItem = NetworkItemBase & {
   startsAt: string;
   expiresAt: string;
   priority: boolean;
+  viewCount?: number;
+  reactions?: Record<string, number>;
+  myReaction?: string | null;
 };
 
 export type StudentFeedItem = NetworkItemBase & {
