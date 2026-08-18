@@ -37,7 +37,15 @@ const clubSchema = z.object({
 const clubApplicationSchema = z.object({
   name: z.string().trim().min(3).max(100),
   category: z.string().trim().min(2).max(60),
+  tagline: z.string().trim().min(5).max(220),
   description: z.string().trim().min(10).max(500),
+  about: z.array(z.string().trim().min(10).max(1200)).min(1).max(4),
+  meeting: z.object({
+    cadence: z.string().trim().min(2).max(80),
+    day: z.string().trim().min(1).max(80),
+    time: z.string().trim().min(1).max(40),
+    place: z.string().trim().min(2).max(180),
+  }),
 });
 
 clubsRouter.get("/", async (_request, response) => {
@@ -83,7 +91,6 @@ clubsRouter.post("/", authenticate, async (request, response) => {
     slug,
     coordinatorInitials: initials,
     shortName: input.name,
-    about: [input.description],
     focusTags: [input.category],
     status: "Gözləmədə",
   }, request.auth!.userId);

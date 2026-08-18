@@ -13,6 +13,7 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
   type FormEvent,
   type KeyboardEvent,
 } from "react";
@@ -32,7 +33,7 @@ export type AdminRecordSheetMode = "create" | "edit" | "delete";
 
 export type AdminRecordSubmission =
   | { kind: "users"; input: AdminUserCreateInput }
-  | { kind: "clubs"; input: AdminClubCreateInput }
+  | { kind: "clubs"; input: AdminClubCreateInput; coverFile?: File }
   | { kind: "events"; input: AdminEventCreateInput };
 
 type AdminRecordFormSheetProps = {
@@ -307,66 +308,70 @@ function UserFields({
 }
 
 function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
-  if (!record) {
-    return (
-      <>
-        <Field label="Klubun adı" name="name" required>
-          <input ref={firstFieldRef} name="name" minLength={3} maxLength={100} required />
-        </Field>
-        <Field label="Kateqoriya" name="category" required>
-          <select name="category" defaultValue="" required>
-            <option value="" disabled>Kateqoriya seç</option>
-            <option>Texnologiya</option><option>Akademik</option><option>Yaradıcılıq</option>
-            <option>Sosial təsir</option><option>Mədəniyyət</option><option>İdman</option>
-          </select>
-        </Field>
-        <Field label="Qısa təsvir" name="description" required>
-          <textarea name="description" minLength={10} maxLength={500} rows={4} required />
-        </Field>
-        <p className="admin-permission-note">Texniki məlumatlar avtomatik hazırlanacaq. Örtük şəkli və əlavə detallar klub yaradıldıqdan sonra redaktə edilə bilər.</p>
-      </>
-    );
+  const [draft, setDraft] = useState({
+    name: record?.name ?? "",
+    category: record?.category ?? "",
+    tagline: record?.tagline ?? "",
+    description: record?.description ?? "",
+    about: record?.about?.join("\n") ?? "",
+    meetingDay: record?.meeting?.day ?? "",
+    meetingTime: record?.meeting?.time ?? "",
+    meetingPlace: record?.meeting?.place ?? "",
+  });
+  const [coverPreview, setCoverPreview] = useState(record?.coverUrl ?? "");
+  const localPreviewRef = useRef("");
+
+  useEffect(() => () => {
+    if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+  }, []);
+
+  function selectCover(file?: File) {
+    if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
+    localPreviewRef.current = file ? URL.createObjectURL(file) : "";
+    setCoverPreview(localPreviewRef.current || record?.coverUrl || "");
   }
 
   return (
     <>
+      <div className={`admin-club-live-preview is-wide${coverPreview ? " has-cover" : ""}`} style={coverPreview ? { backgroundImage: `linear-gradient(135deg, rgba(8,37,31,.16), rgba(8,37,31,.76)), url("${coverPreview}")` } : undefined}>
+        <span>{draft.category || "KATEQORİYA"}</span>
+        <h3>{draft.name || "Klubun adı"}</h3>
+        <p>{draft.tagline || draft.description || "Klubun qısa şüarı və məqsədi burada görünəcək."}</p>
+      </div>
       <div className="admin-record-field is-wide">
         <span>Klubun örtük şəkli</span>
-        <SecureImagePicker kind="club" ownerId={record.id} currentUrl={record.coverUrl} compact />
+        {record ? (
+          <SecureImagePicker kind="club" ownerId={record.id} currentUrl={record.coverUrl} compact onChange={(asset) => setCoverPreview(asset?.secureUrl ?? "")} />
+        ) : (
+          <label className="admin-club-file-picker">
+            <span>Şəkil seç</span>
+            <input name="coverFile" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectCover(event.target.files?.[0])} />
+            <small>JPG, PNG və ya WebP · maksimum 5 MB</small>
+          </label>
+        )}
       </div>
       <Field label="Klubun adı" name="name" required>
-        <input ref={firstFieldRef} name="name" defaultValue={record?.name} minLength={3} maxLength={100} required />
-      </Field>
-      <Field label="URL qısa adı" name="slug" hint="Məsələn: mehsul-ux-icmasi" required>
-        <input name="slug" defaultValue={record?.slug} pattern="[a-z0-9-]+" minLength={3} maxLength={80} aria-describedby="slug-hint" required />
+        <input ref={firstFieldRef} name="name" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} minLength={3} maxLength={100} required />
       </Field>
       <Field label="Kateqoriya" name="category" required>
-        <input name="category" defaultValue={record?.category} minLength={2} maxLength={60} required />
-      </Field>
-      <input type="hidden" name="coordinatorInitials" value={record.coordinatorInitials} />
-      <Field label="Qısa ad" name="shortName" required>
-        <input name="shortName" defaultValue={record?.shortName} minLength={2} maxLength={100} required />
-      </Field>
-      <Field label="Şüar" name="tagline" required>
-        <input name="tagline" defaultValue={record?.tagline} minLength={5} maxLength={220} required />
-      </Field>
-      <Field label="Qısa təsvir" name="description" required>
-        <textarea name="description" defaultValue={record?.description} minLength={10} maxLength={800} rows={3} required />
-      </Field>
-      <Field label="Haqqında" name="about" hint="Hər abzası yeni sətirdən yaz" required>
-        <textarea name="about" defaultValue={record?.about?.join("\n")} minLength={10} maxLength={3000} rows={4} required />
-      </Field>
-      <Field label="Vurğu rəngi" name="tone" required>
-        <select name="tone" defaultValue={record?.tone ?? "lime"} required>
-          <option value="lime">Yaşıl</option><option value="violet">Bənövşəyi</option><option value="cyan">Mavi</option><option value="coral">Mərcan</option><option value="amber">Kəhrəba</option><option value="mint">Nanə</option>
+        <select name="category" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })} required>
+          <option value="" disabled>Kateqoriya seç</option>
+          <option>Texnologiya</option><option>Akademik</option><option>Yaradıcılıq</option><option>Sosial təsir</option><option>Mədəniyyət</option><option>İdman</option>
         </select>
       </Field>
-      <input type="hidden" name="visualMark" value={record.visualMark ?? "club"} />
-      <Field label="Görüş tezliyi" name="meetingCadence" required><input name="meetingCadence" defaultValue={record?.meeting?.cadence} minLength={2} maxLength={80} required /></Field>
-      <Field label="Görüş günü" name="meetingDay" required><input name="meetingDay" defaultValue={record?.meeting?.day} minLength={1} maxLength={80} required /></Field>
-      <Field label="Görüş saatı" name="meetingTime" required><input name="meetingTime" defaultValue={record?.meeting?.time} minLength={1} maxLength={40} required /></Field>
-      <Field label="Görüş yeri" name="meetingPlace" required><input name="meetingPlace" defaultValue={record?.meeting?.place} minLength={2} maxLength={180} required /></Field>
-      <Field label="Mövzular" name="focusTags" hint="Vergüllə ayır" required><input name="focusTags" defaultValue={record?.focusTags?.join(", ")} minLength={2} maxLength={300} required /></Field>
+      <Field label="Şüar" name="tagline" required>
+        <input name="tagline" value={draft.tagline} onChange={(event) => setDraft({ ...draft, tagline: event.target.value })} minLength={5} maxLength={220} required />
+      </Field>
+      <Field label="Qısa təsvir" name="description" required>
+        <textarea name="description" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} minLength={10} maxLength={800} rows={3} required />
+      </Field>
+      <Field label="Haqqında" name="about" hint="Hər abzası yeni sətirdən yaz" required>
+        <textarea name="about" value={draft.about} onChange={(event) => setDraft({ ...draft, about: event.target.value })} minLength={10} maxLength={3000} rows={4} required />
+      </Field>
+      <Field label="Görüş günü" name="meetingDay" required><input name="meetingDay" value={draft.meetingDay} onChange={(event) => setDraft({ ...draft, meetingDay: event.target.value })} minLength={1} maxLength={80} required /></Field>
+      <Field label="Görüş saatı" name="meetingTime" required><input name="meetingTime" value={draft.meetingTime} onChange={(event) => setDraft({ ...draft, meetingTime: event.target.value })} minLength={1} maxLength={40} required /></Field>
+      <Field label="Görüş yeri" name="meetingPlace" required><input name="meetingPlace" value={draft.meetingPlace} onChange={(event) => setDraft({ ...draft, meetingPlace: event.target.value })} minLength={2} maxLength={180} required /></Field>
+      {record ? <><input type="hidden" name="slug" value={record.slug} /><input type="hidden" name="coordinatorInitials" value={record.coordinatorInitials} /><input type="hidden" name="shortName" value={record.shortName} /><input type="hidden" name="tone" value={record.tone} /><input type="hidden" name="visualMark" value={record.visualMark ?? "club"} /><input type="hidden" name="meetingCadence" value={record.meeting?.cadence ?? "Həftəlik"} /><input type="hidden" name="focusTags" value={(record.focusTags ?? [record.category]).join(", ")} /></> : null}
       <Field label="Vəziyyət" name="status" required>
         <select name="status" defaultValue={record?.status ?? "Gözləmədə"} required>
           <option value="Aktiv">Aktiv</option>
@@ -482,6 +487,9 @@ function createSubmission(
     const generatedSlug = normalizeClubSlug(name);
     return {
       kind,
+      coverFile: formData.get("coverFile") instanceof File && (formData.get("coverFile") as File).size > 0
+        ? formData.get("coverFile") as File
+        : undefined,
       input: {
         name,
         slug: fieldValue(formData, "slug").toLocaleLowerCase("az") || generatedSlug,

@@ -1414,7 +1414,7 @@ body {
   cursor: pointer;
 }
 .kuds-shell .club-create-intro { margin: 12px 0 22px; color: var(--kuds-muted); font-size: 14px; line-height: 1.6; }
-.kuds-shell .club-create-preview{display:grid;gap:7px;margin-bottom:20px;padding:14px;border:1px dashed rgb(68 118 108 / 35%);border-radius:13px;background:var(--kuds-soft)}.kuds-shell .club-create-preview>div{display:grid;min-height:120px;place-items:center;margin-bottom:5px;color:var(--kuds-muted);border-radius:9px;background:linear-gradient(135deg,#dcebe5,#caeaf1);font-size:11px}.kuds-shell .club-create-preview small{color:var(--ku-green);font-size:9px;font-weight:800;letter-spacing:.12em}.kuds-shell .club-create-preview h3{margin:0;color:var(--kuds-text);font-size:21px}.kuds-shell .club-create-preview p{margin:0;color:var(--kuds-muted);font-size:12px;line-height:1.5}
+.kuds-shell .club-create-preview{display:grid;gap:7px;margin-bottom:20px;padding:14px;border:1px dashed rgb(68 118 108 / 35%);border-radius:13px;background:var(--kuds-soft)}.kuds-shell .club-create-preview>div{display:grid;min-height:160px;place-items:center;margin-bottom:5px;color:var(--kuds-muted);border-radius:9px;background:linear-gradient(135deg,#dcebe5,#caeaf1);background-position:center;background-size:cover;font-size:11px}.kuds-shell .club-create-preview.has-cover>div span{padding:6px 10px;color:#fff;border-radius:999px;background:rgb(8 37 31/66%);backdrop-filter:blur(8px)}.kuds-shell .club-create-preview small{color:var(--ku-green);font-size:9px;font-weight:800;letter-spacing:.12em}.kuds-shell .club-create-preview h3{margin:0;color:var(--kuds-text);font-size:21px}.kuds-shell .club-create-preview p{margin:0;color:var(--kuds-muted);font-size:12px;line-height:1.5}
 .kuds-shell .club-create-form { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .kuds-shell .club-create-form label { display: grid; gap: 8px; color: var(--kuds-text); font-size: 13px; font-weight: 700; }
 .kuds-shell .club-create-form label.is-wide,
@@ -1432,6 +1432,7 @@ body {
 .kuds-shell .club-create-form :is(input, select) { min-height: 48px; padding: 0 14px; }
 .kuds-shell .club-create-form textarea { min-height: 112px; padding: 13px 14px; resize: vertical; }
 .kuds-shell .club-create-form :is(input, select, textarea):focus { border-color: var(--ku-green); box-shadow: 0 0 0 3px rgb(68 118 108 / 12%); }
+.kuds-shell .club-create-cover-picker small{color:var(--kuds-muted);font-size:11px;font-weight:500}.kuds-shell .club-create-cover-action{display:inline-flex;width:max-content;min-height:44px;padding:0 15px;align-items:center;gap:8px;color:#fff;border-radius:10px;background:var(--ku-green);cursor:pointer}.kuds-shell .club-create-cover-action input{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%)}
 .kuds-shell .club-create-message { margin: 0; padding: 11px 13px; border-radius: 9px; font-size: 13px; }
 .kuds-shell .club-create-message.is-error { color: #8d302a; background: #fff0ee; }
 .kuds-shell .club-create-message.is-success { color: var(--ku-green); background: var(--ku-soft-green); }

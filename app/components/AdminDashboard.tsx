@@ -39,6 +39,7 @@ import {
   isAssignableUserRole,
   type AdminAccessRole,
 } from "../lib/auth/admin-role";
+import { uploadSecureImage } from "../lib/media-upload";
 import { AdminCharts } from "./AdminCharts";
 import {
   AdminDataTable,
@@ -236,6 +237,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
   async function submitRecord(submission: AdminRecordSubmission) {
     if (!editor || editor.mode === "delete") return;
     setFormError(null);
+    let completionNote = "";
 
     try {
       if (submission.kind === "users") {
@@ -259,7 +261,20 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
         if (editor.mode === "edit" && editor.record?.kind === "clubs") {
           await clubMutations.update(editor.record.id, submission.input);
         } else {
-          await clubMutations.create(submission.input);
+          if (submission.coverFile && !["image/jpeg", "image/png", "image/webp"].includes(submission.coverFile.type)) {
+            throw new Error("Yalnız JPG, PNG və WebP şəkilləri qəbul olunur.");
+          }
+          if (submission.coverFile && submission.coverFile.size > 5 * 1024 * 1024) {
+            throw new Error("Klub şəkli 5 MB-dan böyük ola bilməz.");
+          }
+          const club = await clubMutations.create(submission.input);
+          if (submission.coverFile) {
+            try {
+              await uploadSecureImage(submission.coverFile, "club", club.id);
+            } catch {
+              completionNote = " Klub yaradıldı, lakin şəkil yüklənmədi; onu redaktə ekranından yenidən seçə bilərsiniz.";
+            }
+          }
         }
       } else if (editor.mode === "edit" && editor.record?.kind === "events") {
         await eventMutations.update(editor.record.id, submission.input);
@@ -270,7 +285,7 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
       const action = editor.mode === "create" ? "yaradıldı" : "yeniləndi";
       const name = submission.input.name || editor.record?.name || "Qeyd";
       setEditor(null);
-      setFeedback({ id: Date.now(), message: `${name} uğurla ${action}.` });
+      setFeedback({ id: Date.now(), message: `${name} uğurla ${action}.${completionNote}` });
     } catch (error) {
       setFormError(getMutationErrorMessage(error));
     }
