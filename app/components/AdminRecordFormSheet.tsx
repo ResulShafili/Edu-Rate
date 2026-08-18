@@ -362,9 +362,9 @@ function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
       <Field label="Şüar" name="tagline" required>
         <input name="tagline" value={draft.tagline} onChange={(event) => setDraft({ ...draft, tagline: event.target.value })} minLength={5} maxLength={220} required />
       </Field>
-      <Field label="Qısa təsvir" name="description" required>
+      {record ? <Field label="Qısa təsvir" name="description" required>
         <textarea name="description" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} minLength={10} maxLength={800} rows={3} required />
-      </Field>
+      </Field> : null}
       <Field label="Haqqında" name="about" hint="Hər abzası yeni sətirdən yaz" required>
         <textarea name="about" value={draft.about} onChange={(event) => setDraft({ ...draft, about: event.target.value })} minLength={10} maxLength={3000} rows={4} required />
       </Field>
@@ -482,7 +482,8 @@ function createSubmission(
   if (kind === "clubs") {
     const name = fieldValue(formData, "name");
     const category = fieldValue(formData, "category");
-    const description = fieldValue(formData, "description");
+    const aboutText = fieldValue(formData, "about");
+    const description = fieldValue(formData, "description") || aboutText.split(/\r?\n/).map((value)=>value.trim()).find(Boolean)?.slice(0, 500) || "Klub haqqında məlumat";
     const coordinatorInitials = fieldValue(formData, "coordinatorInitials") || createInitials(name) || "ER";
     const generatedSlug = normalizeClubSlug(name);
     return {
@@ -498,8 +499,8 @@ function createSubmission(
         shortName: fieldValue(formData, "shortName") || name,
         tagline: fieldValue(formData, "tagline") || "Birlikdə öyrən, yarat və paylaş.",
         description,
-        about: fieldValue(formData, "about").split(/\r?\n/).map((value)=>value.trim()).filter(Boolean).length
-          ? fieldValue(formData, "about").split(/\r?\n/).map((value)=>value.trim()).filter(Boolean)
+        about: aboutText.split(/\r?\n/).map((value)=>value.trim()).filter(Boolean).length
+          ? aboutText.split(/\r?\n/).map((value)=>value.trim()).filter(Boolean)
           : [description],
         tone: (fieldValue(formData, "tone") || "lime") as NonNullable<AdminClub["tone"]>,
         visualMark: fieldValue(formData, "visualMark") || coordinatorInitials,

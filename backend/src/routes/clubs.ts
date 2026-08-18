@@ -38,7 +38,6 @@ const clubApplicationSchema = z.object({
   name: z.string().trim().min(3).max(100),
   category: z.string().trim().min(2).max(60),
   tagline: z.string().trim().min(5).max(220),
-  description: z.string().trim().min(10).max(500),
   about: z.array(z.string().trim().min(10).max(1200)).min(1).max(4),
   meeting: z.object({
     cadence: z.string().trim().min(2).max(80),
@@ -91,6 +90,7 @@ clubsRouter.post("/", authenticate, async (request, response) => {
     slug,
     coordinatorInitials: initials,
     shortName: input.name,
+    description: input.about[0]!.slice(0, 500),
     focusTags: [input.category],
     status: "Gözləmədə",
   }, request.auth!.userId);
