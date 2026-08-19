@@ -1465,7 +1465,9 @@ body {
 .kuds-shell .club-card-visual-index,
 .kuds-shell .club-card-visual-label { color: var(--ku-dark-green) !important; }
 .kuds-shell .club-card-visual { min-height: 130px !important; background: linear-gradient(135deg, var(--ku-soft-green), var(--ku-light-blue)) !important; }
-.kuds-shell .club-card-visual.has-cover { background-image: linear-gradient(180deg, rgb(11 30 26 / 8%), rgb(11 30 26 / 42%)), var(--club-cover-image) !important; background-position: center !important; background-size: cover !important; }
+.kuds-shell .club-card-visual.has-cover { background-image: var(--club-cover-image) !important; background-position: center !important; background-size: cover !important; }
+.kuds-shell .club-card-visual.has-cover::after { display: none; }
+.kuds-shell .club-card-visual.has-cover :is(.club-card-art,.club-card-visual-label) { display: none; }
 .kuds-shell .magnetic-join-button { color: #fff !important; border-radius: 8px !important; background: var(--ku-green) !important; }
 
 /* Feed */
@@ -2786,6 +2788,8 @@ body {
     var(--kuds-surface);
 }
 .kuds-shell .club-detail-hero__visual { top: 7%; right: -8%; width: min(50vw, 620px); opacity: .46; }
+.kuds-shell .club-detail-hero__visual.has-cover { opacity: 1; border-radius: 28px; box-shadow: 0 24px 70px rgb(22 66 60 / 18%); }
+.kuds-shell .club-detail-hero__visual.has-cover :is(.club-detail-hero__mesh,.club-detail-hero__orb,.club-detail-hero__mark) { display: none; }
 .kuds-shell .club-detail-hero__mark { color: #fff; background: var(--ku-dark-green); box-shadow: 0 18px 55px rgb(22 66 60 / 20%); }
 .kuds-shell .club-detail-hero__content { width: min(72%, 900px); max-width: 900px; }
 .kuds-shell .club-detail-back-link {
@@ -2931,6 +2935,8 @@ body {
   .kuds-shell .club-detail-hero { min-height: 0; padding: 20px 18px 30px; gap: 44px; border-radius: 14px 14px 0 0; }
   .kuds-shell .club-detail-hero__content { width: 100%; }
   .kuds-shell .club-detail-hero__visual { top: 10%; right: -54%; width: 125vw; opacity: .2; }
+  .kuds-shell .club-detail-hero:has(.club-detail-hero__visual.has-cover) { padding-top: 244px; }
+  .kuds-shell .club-detail-hero__visual.has-cover { top: 14px; right: 14px; width: calc(100% - 28px); height: 210px; opacity: 1; border-radius: 14px; }
   .kuds-shell .club-detail-hero__footer { margin-top: 26px; }
   .kuds-shell .club-detail-body { padding: 18px 0 34px; }
   .kuds-shell .club-detail-tabs { width: 100%; margin-bottom: 20px; }

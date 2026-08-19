@@ -89,7 +89,7 @@ export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
       <header ref={heroRef} className="club-detail-hero">
         <motion.div
           className={`club-detail-hero__visual${editable.coverUrl ? " has-cover" : ""}`}
-          style={{ y: visualY, scale: visualScale, ...(editable.coverUrl ? { backgroundImage: `linear-gradient(130deg, rgba(8,37,31,.2), rgba(8,37,31,.64)), url("${editable.coverUrl}")` } : {}) }}
+          style={{ y: visualY, scale: visualScale, ...(editable.coverUrl ? { backgroundImage: `url("${editable.coverUrl}")` } : {}) }}
           aria-hidden="true"
         >
           <span className="club-detail-hero__orb club-detail-hero__orb--one" />
