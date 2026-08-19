@@ -4,11 +4,12 @@ import { ArrowLeft, CheckCircle2, KeyRound, LockKeyhole, Mail, ShieldCheck } fro
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 
-type RecoveryStage = "request" | "reset" | "success";
+type RecoveryStage = "request" | "code" | "password" | "success";
 
 export default function RecoveryPage() {
   const [stage, setStage] = useState<RecoveryStage>("request");
   const [email, setEmail] = useState("");
+  const [resetToken, setResetToken] = useState("");
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -26,11 +27,35 @@ export default function RecoveryPage() {
       });
       const payload = await response.json() as { error?: { message?: string } };
       if (!response.ok) throw new Error(payload.error?.message || "Kod göndərilmədi.");
-      setStage("reset");
+      setStage("code");
       setMessage("Hesab mövcuddursa, 6 rəqəmli kod e-poçt ünvanına göndərildi.");
     } catch (error) {
       setIsError(true);
       setMessage(error instanceof Error ? error.message : "Kod göndərilmədi.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function verifyCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setBusy(true);
+    setMessage("");
+    setIsError(false);
+    try {
+      const response = await fetch("/api/auth/actions/password/verify-code", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, code: String(form.get("code") ?? "").replace(/\D/g, "") }),
+      });
+      const payload = await response.json() as { data?: { resetToken?: string }; error?: { message?: string } };
+      if (!response.ok || !payload.data?.resetToken) throw new Error(payload.error?.message || "Kod təsdiqlənmədi.");
+      setResetToken(payload.data.resetToken);
+      setStage("password");
+    } catch (error) {
+      setIsError(true);
+      setMessage(error instanceof Error ? error.message : "Kod təsdiqlənmədi.");
     } finally {
       setBusy(false);
     }
@@ -53,7 +78,7 @@ export default function RecoveryPage() {
       const response = await fetch("/api/auth/actions/password/reset", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, code: String(form.get("code") ?? "").replace(/\D/g, ""), password, passwordConfirm }),
+        body: JSON.stringify({ resetToken, password, passwordConfirm }),
       });
       const payload = await response.json() as { error?: { message?: string } };
       if (!response.ok) throw new Error(payload.error?.message || "Şifrə yenilənmədi.");
@@ -87,18 +112,27 @@ export default function RecoveryPage() {
                 <button type="submit" disabled={busy}>{busy ? "Göndərilir…" : "Bərpa kodunu göndər"}</button>
               </form>
             </>
-          ) : stage === "reset" ? (
+          ) : stage === "code" ? (
             <>
-              <span className="recovery-step">02 / YENİ ŞİFRƏ</span><div className="recovery-icon"><KeyRound size={22} /></div>
+              <span className="recovery-step">02 / KOD TƏSDİQİ</span><div className="recovery-icon"><KeyRound size={22} /></div>
               <h1 id="recovery-title">Kodu daxil edin</h1>
-              <p><strong>{email}</strong> ünvanına göndərilən kodu və yeni şifrənizi yazın.</p>
-              <form className="account-recovery-form" onSubmit={resetPassword}>
+              <p><strong>{email}</strong> ünvanına göndərilən 6 rəqəmli kodu yazın. Kod doğru olduqda yeni şifrə bölməsi açılacaq.</p>
+              <form className="account-recovery-form" onSubmit={verifyCode}>
                 <label className="recovery-code-field"><span>6 rəqəmli kod</span><input name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} placeholder="000000" required autoFocus /></label>
+                <button type="submit" disabled={busy}>{busy ? "Yoxlanılır…" : "Kodu təsdiqlə"}</button>
+              </form>
+              <div className="recovery-secondary-actions"><button type="button" onClick={() => void requestCode()} disabled={busy}>Kodu yenidən göndər</button><button type="button" onClick={() => { setStage("request"); setMessage(""); }}>E-poçtu dəyiş</button></div>
+            </>
+          ) : stage === "password" ? (
+            <>
+              <span className="recovery-step">03 / YENİ ŞİFRƏ</span><div className="recovery-icon"><LockKeyhole size={22} /></div>
+              <h1 id="recovery-title">Yeni şifrə yaradın</h1>
+              <p>Kod təsdiqləndi. Təhlükəsiz yeni şifrənizi iki dəfə daxil edin.</p>
+              <form className="account-recovery-form" onSubmit={resetPassword}>
                 <label><span>Yeni şifrə</span><span className="recovery-input-with-icon"><LockKeyhole size={17} /><input name="password" type="password" minLength={8} maxLength={72} autoComplete="new-password" required /></span></label>
                 <label><span>Yeni şifrəni təkrar et</span><span className="recovery-input-with-icon"><LockKeyhole size={17} /><input name="passwordConfirm" type="password" minLength={8} maxLength={72} autoComplete="new-password" required /></span></label>
                 <button type="submit" disabled={busy}>{busy ? "Yenilənir…" : "Şifrəni yenilə"}</button>
               </form>
-              <div className="recovery-secondary-actions"><button type="button" onClick={() => void requestCode()} disabled={busy}>Kodu yenidən göndər</button><button type="button" onClick={() => { setStage("request"); setMessage(""); }}>E-poçtu dəyiş</button></div>
             </>
           ) : (
             <div className="recovery-success"><CheckCircle2 size={52} /><span className="recovery-step">TAMAMLANDI</span><h1 id="recovery-title">Şifrəniz yeniləndi</h1><p>Yeni şifrənizlə EduRate hesabınıza daxil ola bilərsiniz.</p><Link href="/auth">Daxil ol</Link></div>

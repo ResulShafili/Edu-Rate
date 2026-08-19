@@ -69,9 +69,12 @@ const loginSchema = z.object({
 });
 const emailSchema=z.object({email:z.email().transform((value)=>value.toLowerCase())}).strict();
 const tokenSchema=z.object({token:z.string().min(32).max(256)}).strict();
-const resetSchema=z.object({
+const resetCodeSchema=z.object({
   email:z.email().transform((value)=>value.toLowerCase()),
   code:z.string().regex(/^\d{6}$/,"Bərpa kodu 6 rəqəmdən ibarət olmalıdır."),
+}).strict();
+const resetSchema=z.object({
+  resetToken:z.string().min(32).max(256),
   password:z.string().min(8,"Şifrə ən az 8 simvol olmalıdır.").max(72).regex(/[a-zA-ZƏəÖöÜüĞğŞşÇçİı]/,"Şifrədə hərf olmalıdır.").regex(/\d/,"Şifrədə rəqəm olmalıdır."),
   passwordConfirm:z.string().min(8).max(72),
 }).strict().refine((input)=>input.password===input.passwordConfirm,{path:["passwordConfirm"],message:"Şifrələr eyni deyil."});
@@ -259,12 +262,19 @@ authRouter.post("/password/forgot",loginLimiter,async(request,response)=>{
   }
   response.status(202).json({data:{accepted:true}});
 });
-authRouter.post("/password/reset",loginLimiter,async(request,response)=>{
-  const input=resetSchema.parse(request.body);
+authRouter.post("/password/verify-code",loginLimiter,async(request,response)=>{
+  const input=resetCodeSchema.parse(request.body);
   const user=await findUserByEmail(input.email);
   if(!user||!await consumeActionCode(user.id,input.code,"reset_password"))throw new ApiError(422,"CODE_INVALID","Bərpa kodu yanlışdır və ya vaxtı bitib.");
-  await updatePassword(user.id,await hashPassword(input.password));
-  await revokeAllSessions(user.id);
+  const resetToken=await createActionToken(user.id,"reset_password",10*60*1000);
+  response.json({data:{verified:true,resetToken}});
+});
+authRouter.post("/password/reset",loginLimiter,async(request,response)=>{
+  const input=resetSchema.parse(request.body);
+  const userId=await consumeActionToken(input.resetToken,"reset_password");
+  if(!userId)throw new ApiError(422,"RESET_EXPIRED","Şifrə yeniləmə icazəsinin vaxtı bitib. Yeni kod istəyin.");
+  await updatePassword(userId,await hashPassword(input.password));
+  await revokeAllSessions(userId);
   response.json({data:{reset:true}});
 });
 authRouter.get("/sessions",authenticate,async(request,response)=>response.json({data:await listSessions(request.auth!.userId,request.auth!.sessionId)}));
