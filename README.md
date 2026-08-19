@@ -55,7 +55,7 @@ Backend üçün əsas production dəyişənləri `backend/.env.example` faylınd
 SEED_DEMO_DATA=true
 ```
 
-Production-da bu dəyişən `false` qalmalıdır. E-poçt təsdiqi üçün `RESEND_API_KEY`, `EMAIL_FROM` və `PUBLIC_APP_URL` təyin edilməlidir. Swagger production-da standart olaraq bağlıdır; yalnız nəzarətli texniki mühitdə `SWAGGER_PUBLIC=true` istifadə edilə bilər.
+Production-da bu dəyişən `false` qalmalıdır. E-poçt təsdiqi üçün `BREVO_API_KEY` (və ya `RESEND_API_KEY`), `EMAIL_FROM` və `PUBLIC_APP_URL` təyin edilməlidir. Domen olmayan pilot mühitində Brevo-da ayrıca təsdiqlənmiş sender ünvanı istifadə oluna bilər. Swagger production-da standart olaraq bağlıdır; yalnız nəzarətli texniki mühitdə `SWAGGER_PUBLIC=true` istifadə edilə bilər.
 
 Profil, klub və elan şəkilləri tətbiq serverinin diskində saxlanmır. Cloudinary-də `edurate-secure` adlı **signed** upload preset yaradın; yalnız `jpg,jpeg,png,webp` formatlarını qəbul edin və maksimum ölçünü 5 MB edin. Sonra Render-də bunları əlavə edin:
 

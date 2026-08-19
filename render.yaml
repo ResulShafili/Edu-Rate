@@ -24,6 +24,12 @@ services:
         value: https://edu-rate-nu.vercel.app
       - key: TRUST_PROXY
         value: "true"
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: PUBLIC_APP_URL
+        value: https://edu-rate-nu.vercel.app
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY

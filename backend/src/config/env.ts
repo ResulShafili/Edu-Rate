@@ -19,6 +19,7 @@ const envSchema = z
     TRUST_PROXY: booleanValue,
     SEED_DEMO_DATA: booleanValue,
     RESEND_API_KEY: z.string().optional().or(z.literal("")),
+    BREVO_API_KEY: z.string().optional().or(z.literal("")),
     EMAIL_FROM: z.string().default("EduRate <onboarding@resend.dev>"),
     PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
     SWAGGER_PUBLIC: booleanValue,
@@ -59,6 +60,7 @@ export const env = {
     .map((origin) => origin.trim())
     .filter(Boolean),
   RESEND_API_KEY: parsed.data.RESEND_API_KEY || undefined,
+  BREVO_API_KEY: parsed.data.BREVO_API_KEY || undefined,
   CLOUDINARY_CLOUD_NAME: parsed.data.CLOUDINARY_CLOUD_NAME || undefined,
   CLOUDINARY_API_KEY: parsed.data.CLOUDINARY_API_KEY || undefined,
   CLOUDINARY_API_SECRET: parsed.data.CLOUDINARY_API_SECRET || undefined,

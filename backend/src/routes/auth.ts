@@ -152,7 +152,7 @@ authRouter.post("/signup", signupLimiter, async (request, response) => {
     role: input.accountType,
     status: isPrivilegedRegistration ? "Gözləmədə" : "Aktiv",
     passwordHash: await hashPassword(input.password),
-    emailVerifiedAt: env.RESEND_API_KEY ? null : new Date().toISOString(),
+    emailVerifiedAt: env.RESEND_API_KEY || env.BREVO_API_KEY ? null : new Date().toISOString(),
     termsVersion: "2026-08-15",
     privacyVersion: "2026-08-15",
   });
