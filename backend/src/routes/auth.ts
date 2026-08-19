@@ -25,7 +25,7 @@ import {
 } from "../lib/auth.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { synchronizeProfessionalProfilesForUser } from "../db/professionals.js";
-import { consumeActionToken, createActionToken, listSessions, registerSessionToken, revokeAllSessions, revokeSession } from "../db/auth-security.js";
+import { consumeActionCode, consumeActionToken, createActionCode, createActionToken, listSessions, registerSessionToken, revokeAllSessions, revokeSession } from "../db/auth-security.js";
 import { accountActionUrl, EmailDeliveryError, sendAccountEmail } from "../lib/email.js";
 import { env } from "../config/env.js";
 
@@ -69,7 +69,12 @@ const loginSchema = z.object({
 });
 const emailSchema=z.object({email:z.email().transform((value)=>value.toLowerCase())}).strict();
 const tokenSchema=z.object({token:z.string().min(32).max(256)}).strict();
-const resetSchema=z.object({token:z.string().min(32).max(256),password:z.string().min(8).max(72).regex(/[a-zA-ZƏəÖöÜüĞğŞşÇçİı]/).regex(/\d/)}).strict();
+const resetSchema=z.object({
+  email:z.email().transform((value)=>value.toLowerCase()),
+  code:z.string().regex(/^\d{6}$/,"Bərpa kodu 6 rəqəmdən ibarət olmalıdır."),
+  password:z.string().min(8,"Şifrə ən az 8 simvol olmalıdır.").max(72).regex(/[a-zA-ZƏəÖöÜüĞğŞşÇçİı]/,"Şifrədə hərf olmalıdır.").regex(/\d/,"Şifrədə rəqəm olmalıdır."),
+  passwordConfirm:z.string().min(8).max(72),
+}).strict().refine((input)=>input.password===input.passwordConfirm,{path:["passwordConfirm"],message:"Şifrələr eyni deyil."});
 
 async function issueSession(user:UserRecord,request:{get(name:string):string|undefined;ip?:string}){
   const sessionId=randomUUID();const token=createAccessToken(user,sessionId);
@@ -84,6 +89,10 @@ async function sendVerification(user:{id:string;email:string;name:string}){
 }
 
 function escapeHtml(value:string){return value.replace(/[&<>"']/g,(character)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]!));}
+
+function passwordResetEmailHtml(name:string,code:string){
+  return `<!doctype html><html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>EduRate bərpa kodu</title></head><body style="margin:0;padding:0;background:#eef4f1;font-family:Arial,Helvetica,sans-serif;color:#17332d"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eef4f1;padding:32px 12px"><tr><td align="center"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;overflow:hidden;border:1px solid #d8e5df;border-radius:24px;background:#ffffff;box-shadow:0 18px 55px rgba(24,73,62,.12)"><tr><td style="padding:30px 34px;background:linear-gradient(135deg,#123c33,#2d7968);color:#ffffff"><div style="font-size:12px;font-weight:800;letter-spacing:3px">EDURATE</div><h1 style="margin:34px 0 8px;font-size:32px;line-height:1.08">Şifrənizi təhlükəsiz yeniləyin.</h1><p style="margin:0;color:#d9eee7;font-size:14px;line-height:1.6">Hesabınıza qayıtmaq üçün birdəfəlik kodunuz hazırdır.</p></td></tr><tr><td style="padding:34px"><p style="margin:0 0 12px;font-size:16px">Salam, <strong>${escapeHtml(name)}</strong></p><p style="margin:0 0 26px;color:#5c716b;font-size:14px;line-height:1.7">Aşağıdakı 6 rəqəmli kodu EduRate şifrə bərpası səhifəsinə daxil edin.</p><div style="padding:22px 14px;text-align:center;border:1px solid #dce9e4;border-radius:16px;background:#f4f8f6"><div style="margin-bottom:8px;color:#668078;font-size:10px;font-weight:800;letter-spacing:2px">BƏRPA KODU</div><div style="color:#1f6657;font-size:38px;font-weight:800;letter-spacing:10px">${code}</div></div><p style="margin:22px 0 0;color:#5c716b;font-size:13px;line-height:1.65">Kod <strong>10 dəqiqə</strong> qüvvədədir və yalnız bir dəfə istifadə oluna bilər.</p><p style="margin:14px 0 0;color:#879a94;font-size:12px;line-height:1.6">Bu sorğunu siz etməmisinizsə, məktubu nəzərə almayın və kodu heç kimlə paylaşmayın.</p></td></tr><tr><td style="padding:18px 34px;border-top:1px solid #e5ede9;color:#8a9b96;font-size:11px">EduRate · Müstəqil tələbə pilot platforması</td></tr></table></td></tr></table></body></html>`;
+}
 
 const profileSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -240,8 +249,24 @@ authRouter.post("/logout", authenticate, async (request, response) => {
 
 authRouter.post("/verify-email/request",signupLimiter,async(request,response)=>{const {email}=emailSchema.parse(request.body);const user=await findUserByEmail(email);if(user&&!user.emailVerifiedAt)await sendVerification(user);response.status(202).json({data:{accepted:true}});});
 authRouter.post("/verify-email/confirm",async(request,response)=>{const {token}=tokenSchema.parse(request.body);const userId=await consumeActionToken(token,"verify_email");if(!userId)throw new ApiError(422,"TOKEN_INVALID","Təsdiq keçidi etibarsızdır və ya vaxtı bitib.");const user=await markEmailVerified(userId);if(!user)throw new ApiError(404,"USER_NOT_FOUND","İstifadəçi tapılmadı.");response.json({data:{verified:true}});});
-authRouter.post("/password/forgot",loginLimiter,async(request,response)=>{const {email}=emailSchema.parse(request.body);const user=await findUserByEmail(email);if(user){const token=await createActionToken(user.id,"reset_password",30*60*1000);const url=accountActionUrl("/auth/recovery",token);try{await sendAccountEmail({to:user.email,subject:"EduRate şifrə bərpası",html:`<p>Şifrəni yeniləmək üçün <a href="${url}">təhlükəsiz keçidi aç</a>.</p><p>Keçid 30 dəqiqə qüvvədədir.</p>`});}catch(error){if(error instanceof EmailDeliveryError)throw new ApiError(503,"EMAIL_DELIVERY_UNAVAILABLE",error.message);throw error;}}response.status(202).json({data:{accepted:true}});});
-authRouter.post("/password/reset",loginLimiter,async(request,response)=>{const {token,password}=resetSchema.parse(request.body);const userId=await consumeActionToken(token,"reset_password");if(!userId)throw new ApiError(422,"TOKEN_INVALID","Şifrə bərpası keçidi etibarsızdır və ya vaxtı bitib.");await updatePassword(userId,await hashPassword(password));await revokeAllSessions(userId);response.json({data:{reset:true}});});
+authRouter.post("/password/forgot",loginLimiter,async(request,response)=>{
+  const {email}=emailSchema.parse(request.body);
+  const user=await findUserByEmail(email);
+  if(user){
+    const code=await createActionCode(user.id,"reset_password",10*60*1000);
+    try{await sendAccountEmail({to:user.email,subject:"EduRate • Şifrə bərpa kodunuz",html:passwordResetEmailHtml(user.name,code)});}
+    catch(error){if(error instanceof EmailDeliveryError)throw new ApiError(503,"EMAIL_DELIVERY_UNAVAILABLE",error.message);throw error;}
+  }
+  response.status(202).json({data:{accepted:true}});
+});
+authRouter.post("/password/reset",loginLimiter,async(request,response)=>{
+  const input=resetSchema.parse(request.body);
+  const user=await findUserByEmail(input.email);
+  if(!user||!await consumeActionCode(user.id,input.code,"reset_password"))throw new ApiError(422,"CODE_INVALID","Bərpa kodu yanlışdır və ya vaxtı bitib.");
+  await updatePassword(user.id,await hashPassword(input.password));
+  await revokeAllSessions(user.id);
+  response.json({data:{reset:true}});
+});
 authRouter.get("/sessions",authenticate,async(request,response)=>response.json({data:await listSessions(request.auth!.userId,request.auth!.sessionId)}));
 authRouter.delete("/sessions/:id",authenticate,async(request,response)=>{const id=z.string().uuid().parse(request.params.id);if(!await revokeSession(request.auth!.userId,id))throw new ApiError(404,"SESSION_NOT_FOUND","Sessiya tapılmadı.");response.status(204).send();});
 authRouter.delete("/sessions",authenticate,async(request,response)=>{await revokeAllSessions(request.auth!.userId,request.auth!.sessionId);response.status(204).send();});

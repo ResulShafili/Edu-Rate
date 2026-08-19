@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomInt, randomUUID } from "node:crypto";
 import { databasePool } from "./database.js";
 
 export type AuthPurpose = "verify_email" | "reset_password" | "activate_account";
@@ -42,6 +42,27 @@ export async function revokeAllSessions(userId:string,exceptId?:string){if(!data
 
 export async function createActionToken(userId:string,purpose:AuthPurpose,ttlMs:number){const token=opaqueToken();const hash=digest(token);const expiresAt=new Date(Date.now()+ttlMs);if(!databasePool){memoryActions.set(hash,{userId,purpose,hash,expiresAt:expiresAt.getTime(),used:false});return token;}await databasePool.query("UPDATE auth_action_tokens SET used_at=NOW() WHERE user_id=$1 AND purpose=$2 AND used_at IS NULL",[userId,purpose]);await databasePool.query("INSERT INTO auth_action_tokens(id,user_id,purpose,token_hash,expires_at) VALUES($1,$2,$3,$4,$5)",[randomUUID(),userId,purpose,hash,expiresAt]);return token;}
 export async function consumeActionToken(token:string,purpose:AuthPurpose){const hash=digest(token);if(!databasePool){const item=memoryActions.get(hash);if(!item||item.used||item.purpose!==purpose||item.expiresAt<=Date.now())return null;item.used=true;return item.userId;}const r=await databasePool.query("UPDATE auth_action_tokens SET used_at=NOW() WHERE token_hash=$1 AND purpose=$2 AND used_at IS NULL AND expires_at>NOW() RETURNING user_id",[hash,purpose]);return r.rows[0]?String(r.rows[0].user_id):null;}
+
+export async function createActionCode(userId:string,purpose:AuthPurpose,ttlMs:number){
+  const code=String(randomInt(0,1_000_000)).padStart(6,"0");
+  const hash=digest(`${userId}:${purpose}:${code}`);
+  const expiresAt=new Date(Date.now()+ttlMs);
+  if(!databasePool){
+    for(const item of memoryActions.values())if(item.userId===userId&&item.purpose===purpose&&!item.used)item.used=true;
+    memoryActions.set(hash,{userId,purpose,hash,expiresAt:expiresAt.getTime(),used:false});
+    return code;
+  }
+  await databasePool.query("UPDATE auth_action_tokens SET used_at=NOW() WHERE user_id=$1 AND purpose=$2 AND used_at IS NULL",[userId,purpose]);
+  await databasePool.query("INSERT INTO auth_action_tokens(id,user_id,purpose,token_hash,expires_at) VALUES($1,$2,$3,$4,$5)",[randomUUID(),userId,purpose,hash,expiresAt]);
+  return code;
+}
+
+export async function consumeActionCode(userId:string,code:string,purpose:AuthPurpose){
+  const hash=digest(`${userId}:${purpose}:${code}`);
+  if(!databasePool){const item=memoryActions.get(hash);if(!item||item.userId!==userId||item.used||item.purpose!==purpose||item.expiresAt<=Date.now())return false;item.used=true;return true;}
+  const result=await databasePool.query("UPDATE auth_action_tokens SET used_at=NOW() WHERE user_id=$1 AND token_hash=$2 AND purpose=$3 AND used_at IS NULL AND expires_at>NOW() RETURNING id",[userId,hash,purpose]);
+  return Boolean(result.rowCount);
+}
 
 export async function cleanupExpiredSecurityData(){
   if(!databasePool){
