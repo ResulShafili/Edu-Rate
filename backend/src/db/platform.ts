@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { ApiError } from "../lib/api-error.js";
-import { databasePool } from "./database.js";
+import { databasePool, findUserById } from "./database.js";
 import { env } from "../config/env.js";
 import { getMedia } from "./media.js";
 
@@ -34,6 +34,14 @@ export type ClubRecord = {
 
 export type ClubInput = Pick<ClubRecord, "slug" | "name" | "category" | "coordinatorInitials"> & Partial<Pick<ClubRecord,"shortName"|"tagline"|"description"|"about"|"tone"|"visualMark"|"meeting"|"focusTags">> & {
   status?: ClubStatus;
+};
+
+export type ClubMemberRecord = {
+  id: string;
+  name: string;
+  role: "leader" | "member";
+  isCreator: boolean;
+  avatarUrl?: string;
 };
 
 export type TeacherReviewRecord = {
@@ -101,6 +109,7 @@ const memoryClubs = new Map<string, ClubRecord>(
   }),
 );
 const memoryMemberships = new Set<string>();
+const memoryClubLeaders = new Set<string>();
 const memoryReviews = new Map<string, TeacherReviewRecord>();
 const memoryTickets = new Map<string, SupportTicketRecord>();
 
@@ -231,6 +240,7 @@ export async function initializePlatformDatabase() {
     ALTER TABLE clubs ADD COLUMN IF NOT EXISTS events JSONB NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE clubs ADD COLUMN IF NOT EXISTS members JSONB NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE clubs ADD COLUMN IF NOT EXISTS history JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE club_memberships ADD COLUMN IF NOT EXISTS role VARCHAR(16) NOT NULL DEFAULT 'member';
   `);
 
   if (env.SEED_DEMO_DATA) for (const club of clubSeeds) {
@@ -290,15 +300,34 @@ export async function createClub(input: ClubInput, createdBy: string | null = nu
   if (!databasePool) {
     if (memoryClubs.has(club.slug)) throw new ApiError(409, "CLUB_EXISTS", "Bu qısa adla klub artıq mövcuddur.");
     memoryClubs.set(club.slug, club);
+    if (createdBy) {
+      memoryMemberships.add(`${createdBy}:${club.slug}`);
+      memoryClubLeaders.add(`${createdBy}:${club.slug}`);
+      club.memberCount = 1;
+    }
     return club;
   }
-  const result = await databasePool.query(
-    `INSERT INTO clubs (id,slug,name,category,coordinator_initials,status,short_name,tagline,description,about,tone,visual_mark,meeting,focus_tags,members,created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
-    [club.id,club.slug,club.name,club.category,club.coordinatorInitials,club.status,club.shortName,club.tagline,club.description,
-      JSON.stringify(club.about),club.tone,club.visualMark,JSON.stringify(club.meeting),club.focusTags,JSON.stringify(club.members),createdBy],
-  );
-  return mapClub(result.rows[0]);
+  const client = await databasePool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await client.query(
+      `INSERT INTO clubs (id,slug,name,category,coordinator_initials,status,short_name,tagline,description,about,tone,visual_mark,meeting,focus_tags,members,created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+      [club.id,club.slug,club.name,club.category,club.coordinatorInitials,club.status,club.shortName,club.tagline,club.description,
+        JSON.stringify(club.about),club.tone,club.visualMark,JSON.stringify(club.meeting),club.focusTags,JSON.stringify(club.members),createdBy],
+    );
+    if (createdBy) {
+      await client.query("INSERT INTO club_memberships(club_id,user_id,role) VALUES($1,$2,'leader') ON CONFLICT(club_id,user_id) DO UPDATE SET role='leader'", [club.id, createdBy]);
+      result.rows[0].member_count = 1;
+    }
+    await client.query("COMMIT");
+    return mapClub(result.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function updateClub(id: string, input: Partial<ClubInput>): Promise<ClubRecord | null> {
@@ -326,10 +355,55 @@ export async function updateClub(id: string, input: Partial<ClubInput>): Promise
 export async function deleteClub(id: string): Promise<boolean> {
   if (!databasePool) {
     const club = await findClub(id);
-    return club ? memoryClubs.delete(club.slug) : false;
+    if (!club) return false;
+    for (const key of [...memoryMemberships]) if (key.endsWith(`:${club.slug}`)) memoryMemberships.delete(key);
+    for (const key of [...memoryClubLeaders]) if (key.endsWith(`:${club.slug}`)) memoryClubLeaders.delete(key);
+    return memoryClubs.delete(club.slug);
   }
   const result = await databasePool.query("DELETE FROM clubs WHERE id::text = $1 OR slug = $1", [id]);
   return (result.rowCount ?? 0) > 0;
+}
+
+export async function isClubLeader(clubId: string, userId: string): Promise<boolean> {
+  const club = await findClub(clubId);
+  if (!club) return false;
+  if (club.createdBy === userId) return true;
+  if (!databasePool) return memoryClubLeaders.has(`${userId}:${club.slug}`);
+  const result = await databasePool.query("SELECT 1 FROM club_memberships WHERE club_id=$1 AND user_id=$2 AND role='leader'", [club.id, userId]);
+  return Boolean(result.rowCount);
+}
+
+export async function listClubMembers(clubId: string): Promise<ClubMemberRecord[]> {
+  const club = await findClub(clubId);
+  if (!club) throw new ApiError(404, "CLUB_NOT_FOUND", "Klub tapılmadı.");
+  if (!databasePool) {
+    const users = await Promise.all([...memoryMemberships].filter((key) => key.endsWith(`:${club.slug}`)).map((key) => findUserById(key.slice(0, key.indexOf(":")))));
+    return users.filter(Boolean).map((user) => ({ id:user!.id,name:user!.name,role:memoryClubLeaders.has(`${user!.id}:${club.slug}`)||club.createdBy===user!.id?"leader":"member",isCreator:club.createdBy===user!.id }));
+  }
+  const result = await databasePool.query(`SELECT users.id,users.name,club_memberships.role,clubs.created_by,media_assets.secure_url avatar_url
+    FROM club_memberships JOIN clubs ON clubs.id=club_memberships.club_id JOIN users ON users.id=club_memberships.user_id
+    LEFT JOIN media_assets ON media_assets.owner_type='avatar' AND media_assets.owner_id=users.id::text
+    WHERE club_memberships.club_id=$1 ORDER BY (club_memberships.role='leader') DESC,club_memberships.created_at ASC`, [club.id]);
+  return result.rows.map((row) => ({ id:String(row.id),name:String(row.name),role:row.role as "leader"|"member",isCreator:String(row.created_by)===String(row.id),avatarUrl:row.avatar_url?String(row.avatar_url):undefined }));
+}
+
+export async function setClubLeader(clubId: string, userId: string, leader: boolean): Promise<ClubMemberRecord> {
+  const club = await findClub(clubId);
+  if (!club) throw new ApiError(404, "CLUB_NOT_FOUND", "Klub tapılmadı.");
+  if (!leader && club.createdBy === userId) throw new ApiError(409, "CREATOR_LEADER_REQUIRED", "Klubu yaradan şəxs lider olaraq qalmalıdır.");
+  if (!databasePool) {
+    const key=`${userId}:${club.slug}`;
+    if (!memoryMemberships.has(key)) throw new ApiError(404,"CLUB_MEMBER_NOT_FOUND","İstifadəçi klubun üzvü deyil.");
+    if (leader) memoryClubLeaders.add(key); else memoryClubLeaders.delete(key);
+    const user=await findUserById(userId);if(!user)throw new ApiError(404,"USER_NOT_FOUND","İstifadəçi tapılmadı.");
+    return {id:user.id,name:user.name,role:leader?"leader":"member",isCreator:club.createdBy===user.id};
+  }
+  const result=await databasePool.query(`UPDATE club_memberships SET role=$3 WHERE club_id=$1 AND user_id=$2 RETURNING user_id`,[club.id,userId,leader?"leader":"member"]);
+  if(!result.rowCount)throw new ApiError(404,"CLUB_MEMBER_NOT_FOUND","İstifadəçi klubun üzvü deyil.");
+  await databasePool.query(`UPDATE conversation_participants SET role=$3 FROM conversations
+    WHERE conversation_participants.conversation_id=conversations.id AND conversations.club_id=$1 AND conversation_participants.user_id=$2`,[club.id,userId,leader?"admin":"member"]);
+  const user=await findUserById(userId);if(!user)throw new ApiError(404,"USER_NOT_FOUND","İstifadəçi tapılmadı.");
+  return {id:user.id,name:user.name,role:leader?"leader":"member",isCreator:club.createdBy===user.id,avatarUrl:(await getMedia("avatar",user.id))?.secureUrl};
 }
 
 export async function listMyClubMemberships(userId: string): Promise<ClubRecord[]> {
@@ -383,6 +457,7 @@ export async function leaveClub(id: string, userId: string): Promise<ClubRecord>
   const club = await findClub(id);
   if (!club) throw new ApiError(404, "CLUB_NOT_FOUND", "Klub tapılmadı.");
   if (!databasePool) {
+    if (club.createdBy === userId || memoryClubLeaders.has(`${userId}:${club.slug}`)) throw new ApiError(409,"CLUB_LEADER_CANNOT_LEAVE","Klubdan çıxmaq üçün əvvəlcə liderlik səlahiyyətini ötür.");
     const deleted = memoryMemberships.delete(`${userId}:${club.slug}`);
     if (!deleted) throw new ApiError(404, "MEMBERSHIP_NOT_FOUND", "Klub üzvlüyü tapılmadı.");
     club.memberCount = Math.max(0, club.memberCount - 1);
@@ -392,6 +467,8 @@ export async function leaveClub(id: string, userId: string): Promise<ClubRecord>
   const client = await databasePool.connect();
   try {
     await client.query("BEGIN");
+    const membership=await client.query("SELECT role FROM club_memberships WHERE club_id=$1 AND user_id=$2",[club.id,userId]);
+    if(membership.rows[0]?.role==="leader")throw new ApiError(409,"CLUB_LEADER_CANNOT_LEAVE","Klubdan çıxmaq üçün əvvəlcə liderlik səlahiyyətini ötür.");
     const deleted = await client.query("DELETE FROM club_memberships WHERE club_id = $1 AND user_id = $2", [club.id, userId]);
     if (!deleted.rowCount) throw new ApiError(404, "MEMBERSHIP_NOT_FOUND", "Klub üzvlüyü tapılmadı.");
     const result = await client.query(`UPDATE clubs SET

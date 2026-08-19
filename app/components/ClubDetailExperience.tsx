@@ -1,9 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { ArrowLeft, CalendarDays, Clock3, MapPin, Save, Settings2, Sparkles, UsersRound, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock3, Crown, MapPin, Save, Settings2, Sparkles, Trash2, UserPlus, UsersRound, X } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { Club, ClubTabId } from "../data/clubs";
 import { clubTabIds, clubTabLabels } from "../data/clubs";
 import { MagneticJoinButton } from "./MagneticJoinButton";
@@ -16,6 +16,9 @@ type ClubDetailExperienceProps = {
   club: Club;
 };
 
+type ManagedMember={id:string;name:string;role:"leader"|"member";isCreator:boolean;avatarUrl?:string};
+type ClubManagement={members:ManagedMember[];canManage:boolean;canDelete:boolean};
+
 export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<ClubTabId>("about");
@@ -23,7 +26,12 @@ export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
-  const canManage = Boolean(user && (user.id === club.createdBy || user.accessRole === "admin" || user.accessRole === "assistant_admin"));
+  const [management,setManagement]=useState<ClubManagement|null>(null);
+  const [memberBusy,setMemberBusy]=useState("");
+  const [deleteConfirm,setDeleteConfirm]=useState(false);
+  const [deleting,setDeleting]=useState(false);
+  const initialManage = Boolean(user && (user.id === club.createdBy || user.accessRole === "admin" || user.accessRole === "assistant_admin"));
+  const canManage=management?.canManage??initialManage;
   const reduceMotion = Boolean(useReducedMotion());
   const heroRef = useRef<HTMLElement>(null);
   const tabRefs = useRef<Record<ClubTabId, HTMLButtonElement | null>>({
@@ -39,6 +47,31 @@ export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
   const visualY = useTransform(scrollYProgress, [0, 1], [0, reduceMotion ? 0 : 124]);
   const visualScale = useTransform(scrollYProgress, [0, 1], [1, reduceMotion ? 1 : 1.08]);
   const copyY = useTransform(scrollYProgress, [0, 1], [0, reduceMotion ? 0 : 42]);
+
+  useEffect(()=>{
+    if(!user||!club.id)return;
+    const controller=new AbortController();
+    fetch(`/api/clubs/${encodeURIComponent(club.id)}/members`,{cache:"no-store",signal:controller.signal}).then(async(response)=>{
+      const payload=await response.json() as {data?:ClubManagement};if(response.ok&&payload.data)setManagement(payload.data);
+    }).catch(()=>undefined);
+    return()=>controller.abort();
+  },[club.id,user]);
+
+  async function changeLeader(member:ManagedMember){
+    if(!club.id)return;setMemberBusy(member.id);setSaveMessage("");
+    try{const response=await fetch(`/api/clubs/${encodeURIComponent(club.id)}/leaders/${encodeURIComponent(member.id)}`,{method:member.role==="leader"?"DELETE":"PATCH"});
+      const payload=await response.json().catch(()=>null) as {data?:ManagedMember;error?:{message?:string}}|null;if(!response.ok||!payload?.data)throw new Error(payload?.error?.message||"Liderlik dəyişdirilmədi.");
+      setManagement((current)=>current?{...current,members:current.members.map((item)=>item.id===member.id?payload.data!:item)}:current);
+      setSaveMessage(member.role==="leader"?"Liderlik səlahiyyəti götürüldü.":"Yeni lider təyin edildi.");
+    }catch(error){setSaveMessage(error instanceof Error?error.message:"Liderlik dəyişdirilmədi.");}finally{setMemberBusy("");}
+  }
+
+  async function removeClub(){
+    if(!club.id)return;setDeleting(true);setSaveMessage("");
+    try{const response=await fetch(`/api/clubs/${encodeURIComponent(club.id)}`,{method:"DELETE"});if(!response.ok){const payload=await response.json().catch(()=>null) as {error?:{message?:string}}|null;throw new Error(payload?.error?.message||"Klub silinmədi.");}
+      window.location.assign("/clubs");
+    }catch(error){setSaveMessage(error instanceof Error?error.message:"Klub silinmədi.");setDeleting(false);setDeleteConfirm(false);}
+  }
 
   async function saveClub(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -141,6 +174,8 @@ export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
               <label><span>Görüş saatı</span><input value={editable.meeting.time} onChange={(e)=>setEditable({...editable,meeting:{...editable.meeting,time:e.target.value}})} required/></label>
               <label className="is-wide"><span>Görüş yeri</span><input value={editable.meeting.place} onChange={(e)=>setEditable({...editable,meeting:{...editable.meeting,place:e.target.value}})} required/></label>
             </div>
+            {management?.canManage?<section className="club-leader-manager"><header><div><small>KLUB RƏHBƏRLİYİ</small><h3>Liderləri idarə et</h3><p>Klubu yaradan şəxs daimi liderdir. Üzvlər arasından əlavə liderlər təyin edə bilərsən.</p></div><Crown size={22}/></header><div>{management.members.map((member)=><article key={member.id}><span className={`club-leader-avatar${member.avatarUrl?" has-image":""}`} style={member.avatarUrl?{backgroundImage:`url("${member.avatarUrl}")`}:undefined}>{member.avatarUrl?null:member.name.split(/\s+/).slice(0,2).map((part)=>part[0]).join("")}</span><div><strong>{member.name}</strong><small>{member.isCreator?"Klubun yaradıcısı · Lider":member.role==="leader"?"Lider":"Üzv"}</small></div>{management.canDelete&&!member.isCreator?<button type="button" disabled={memberBusy===member.id} onClick={()=>void changeLeader(member)}>{member.role==="leader"?<><Trash2 size={14}/>Liderlikdən çıxar</>:<><UserPlus size={14}/>Lider et</>}</button>:member.role==="leader"?<Crown size={17} aria-label="Lider"/>:null}</article>)}</div></section>:null}
+            {management?.canDelete?<section className="club-danger-zone"><div><strong>Klubu sil</strong><p>Klub, üzvlüklər və klub söhbəti birdəfəlik silinəcək.</p></div>{deleteConfirm?<div className="club-delete-confirm"><span>Bu əməliyyat geri qaytarılmır.</span><button type="button" onClick={()=>setDeleteConfirm(false)}>İmtina et</button><button type="button" disabled={deleting} onClick={()=>void removeClub()}><Trash2 size={14}/>{deleting?"Silinir…":"Bəli, klubu sil"}</button></div>:<button type="button" onClick={()=>setDeleteConfirm(true)}><Trash2 size={15}/>Klubu sil</button>}</section>:null}
             <footer>{saveMessage?<p role="status">{saveMessage}</p>:<span/>}<button type="submit" disabled={saving}><Save size={15}/>{saving?"Saxlanılır…":"Dəyişiklikləri saxla"}</button></footer>
           </motion.form>:null}
         </AnimatePresence>

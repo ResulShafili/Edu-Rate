@@ -17,3 +17,16 @@ export async function PATCH(request: Request, context: Context) {
     return apiError(error);
   }
 }
+
+export async function DELETE(request: Request, context: Context) {
+  try {
+    assertTrustedMutation(request);
+    const token = readRemoteCredentialToken(request);
+    if (!token) throw new ApiHttpError(401, "UNAUTHENTICATED", "Klubu silmək üçün daxil ol.");
+    const { clubId } = await context.params;
+    await requestRemoteApi(`/api/clubs/${encodeURIComponent(clubId)}`, { method: "DELETE", token });
+    return new Response(null, { status: 204 });
+  } catch (error) {
+    return apiError(error);
+  }
+}

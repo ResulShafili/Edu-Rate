@@ -50,7 +50,7 @@ export function createApp() {
 
       callback(null, {
         origin: isAllowed,
-        methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization", "X-Request-Id"],
         credentials: false,
         maxAge: 86_400,

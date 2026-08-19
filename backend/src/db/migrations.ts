@@ -381,6 +381,24 @@ const migrations: Migration[] = [
         CHECK(owner_type IN ('avatar','club','announcement','event'));
     `,
   },
+  {
+    version: 17,
+    name: "club leaders and creator membership",
+    sql: `
+      ALTER TABLE club_memberships ADD COLUMN IF NOT EXISTS role VARCHAR(16) NOT NULL DEFAULT 'member';
+      ALTER TABLE club_memberships DROP CONSTRAINT IF EXISTS club_memberships_role_check;
+      ALTER TABLE club_memberships ADD CONSTRAINT club_memberships_role_check CHECK(role IN ('member','leader'));
+      INSERT INTO club_memberships(club_id,user_id,role)
+      SELECT id,created_by,'leader' FROM clubs WHERE created_by IS NOT NULL
+      ON CONFLICT(club_id,user_id) DO UPDATE SET role='leader';
+      UPDATE conversation_participants SET role='admin'
+      FROM conversations,clubs
+      WHERE conversation_participants.conversation_id=conversations.id
+        AND conversations.club_id=clubs.id
+        AND conversation_participants.user_id=clubs.created_by;
+      CREATE INDEX IF NOT EXISTS club_memberships_leaders_idx ON club_memberships(club_id,role);
+    `,
+  },
 ];
 
 export const latestMigrationVersion = Math.max(...migrations.map((migration) => migration.version));

@@ -221,6 +221,14 @@ export const openApiDocument = {
       post: { tags: ["Clubs"], summary: "Kluba qoşul", security: [{ bearerAuth: [] }], responses: { "201": { description: "Üzvlük yaradıldı" }, "409": { description: "Artıq üzvdür" } } },
       delete: { tags: ["Clubs"], summary: "Klub üzvlüyündən çıx", security: [{ bearerAuth: [] }], responses: { "200": { description: "Üzvlük silindi" }, "404": { description: "Üzvlük tapılmadı" } } },
     },
+    "/api/clubs/{clubId}/members": {
+      get: { tags: ["Clubs"], summary: "Klub üzvlərini və liderlik icazələrini göstər", security: [{ bearerAuth: [] }], parameters: [{ name: "clubId", in: "path", required: true, schema: { type: "string" } }], responses: { "200": { description: "Üzvlər və idarəetmə icazələri" }, "404": { description: "Klub tapılmadı" } } },
+    },
+    "/api/clubs/{clubId}/leaders/{userId}": {
+      parameters: [{ name: "clubId", in: "path", required: true, schema: { type: "string" } }, { name: "userId", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+      patch: { tags: ["Clubs"], summary: "Klub üzvünü əlavə lider təyin et", security: [{ bearerAuth: [] }], responses: { "200": { description: "Lider təyin edildi" }, "403": { description: "Yaradıcı və ya əsas admin icazəsi tələb olunur" }, "404": { description: "Klub və ya üzv tapılmadı" } } },
+      delete: { tags: ["Clubs"], summary: "Əlavə liderin səlahiyyətini götür", security: [{ bearerAuth: [] }], responses: { "200": { description: "Liderlik götürüldü" }, "409": { description: "Klub yaradıcısının liderliyi götürülə bilməz" } } },
+    },
     "/api/mentors": {
       get: {
         tags: ["Catalog"],

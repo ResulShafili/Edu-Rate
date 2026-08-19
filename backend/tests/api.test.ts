@@ -43,6 +43,8 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/clubs/{clubId}"]);
     assert.ok(response.body.paths["/api/clubs/{clubId}"].patch);
     assert.ok(response.body.paths["/api/clubs/{clubId}"].delete);
+    assert.ok(response.body.paths["/api/clubs/{clubId}/members"].get);
+    assert.ok(response.body.paths["/api/clubs/{clubId}/leaders/{userId}"].patch);
     assert.ok(response.body.paths["/api/reviews"]);
     assert.ok(response.body.paths["/api/network/announcements"]);
     assert.ok(response.body.paths["/api/network/feed"]);
@@ -633,7 +635,7 @@ describe("EduRate API", () => {
     const clubId = createdClub.body.data.id as string;
     const publicClub=await request(app).get(`/api/clubs/${clubSlug}`).expect(200);
     assert.equal(publicClub.body.data.tagline,"Tələbə ideyalarını birlikdə işlək layihəyə çevir.");
-    assert.equal(publicClub.body.data.memberCount,0);
+    assert.equal(publicClub.body.data.memberCount,1);
     assert.deepEqual(publicClub.body.data.focusTags,["Texnologiya","Komanda işi"]);
     await request(app)
       .patch(`/api/admin/clubs/${clubId}`)
@@ -1042,6 +1044,28 @@ describe("EduRate API", () => {
 
     await request(app).delete(`/api/clubs/${club.body.data.id}/memberships`).set("Authorization", memberAuthorization).expect(200);
     await request(app).get(`/api/community/conversations/${group.id}/messages`).set("Authorization", memberAuthorization).expect(403);
+  });
+
+  it("klub yaradıcısını daimi lider edir, əlavə liderləri idarə edir və klubu silməyə icazə verir",async()=>{
+    const suffix=Date.now();
+    const [{createUser},{createAccessToken,hashPassword}]=await Promise.all([import("../src/db/database.js"),import("../src/lib/auth.js")]);
+    const creator=await createUser({name:"Klub Yaradıcısı",email:`club.creator.${suffix}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Mühəndislik fakültəsi",program:"Kompüter mühəndisliyi",role:"teacher"});
+    const member=await createUser({name:"Lider Namizədi",email:`club.leader.${suffix}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"İqtisadiyyat fakültəsi",program:"Menecment"});
+    const creatorAuthorization=`Bearer ${createAccessToken(creator)}`;const memberAuthorization=`Bearer ${createAccessToken(member)}`;
+    const created=await request(app).post("/api/clubs").set("Authorization",creatorAuthorization).send({name:"Liderlik Sınaq Klubu",category:"Akademik",tagline:"Birlikdə düzgün klub idarəetməsi qururuq.",about:["Klub liderlik və üzvlük ssenarilərini etibarlı şəkildə yoxlamaq üçün yaradılıb."],meeting:{cadence:"Həftəlik",day:"Cümə",time:"18:00",place:"Kampus"}}).expect(201);
+    const clubId=created.body.data.id as string;
+    await request(app).patch(`/api/admin/clubs/${clubId}`).set("Authorization",`Bearer ${reusableAdminToken}`).send({status:"Aktiv"}).expect(200);
+    await request(app).post(`/api/clubs/${clubId}/memberships`).set("Authorization",memberAuthorization).expect(201);
+    let management=await request(app).get(`/api/clubs/${clubId}/members`).set("Authorization",creatorAuthorization).expect(200);
+    assert.equal(management.body.data.canDelete,true);
+    assert.equal(management.body.data.members.find((item:{id:string})=>item.id===creator.id).role,"leader");
+    await request(app).patch(`/api/clubs/${clubId}/leaders/${member.id}`).set("Authorization",creatorAuthorization).expect(200);
+    management=await request(app).get(`/api/clubs/${clubId}/members`).set("Authorization",memberAuthorization).expect(200);
+    assert.equal(management.body.data.canManage,true);assert.equal(management.body.data.canDelete,false);
+    await request(app).delete(`/api/clubs/${clubId}/leaders/${creator.id}`).set("Authorization",creatorAuthorization).expect(409);
+    await request(app).delete(`/api/clubs/${clubId}`).set("Authorization",memberAuthorization).expect(403);
+    await request(app).delete(`/api/clubs/${clubId}/leaders/${member.id}`).set("Authorization",creatorAuthorization).expect(200);
+    await request(app).delete(`/api/clubs/${clubId}`).set("Authorization",creatorAuthorization).expect(204);
   });
 
   it("elan, lent moderasiyası və dəstək statusunu admin axınında tamamlayır",async()=>{
