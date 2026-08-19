@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { databasePool } from "./database.js";
+import { databasePool, findUserById } from "./database.js";
 import { env } from "../config/env.js";
 import { getMedia } from "./media.js";
 
@@ -25,6 +25,14 @@ export type AnnouncementRecord = {
   viewCount?: number;
   reactions?: Record<string, number>;
   myReaction?: string | null;
+};
+
+export type AnnouncementReactionRecord = {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+  emoji: string;
+  reactedAt: string;
 };
 
 export type FeedRecord = Omit<AnnouncementRecord, "kind" | "dateLabel" | "startsAt" | "expiresAt" | "priority"> & {
@@ -104,6 +112,31 @@ export async function listAnnouncements(category?: NetworkCategory,userId?:strin
 
 export async function recordAnnouncementView(announcementId:string,userId:string){if(!databasePool){const views=memoryAnnouncementViews.get(announcementId)??new Set<string>();views.add(userId);memoryAnnouncementViews.set(announcementId,views);return views.size;}const result=await databasePool.query("INSERT INTO announcement_views(announcement_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING",[announcementId,userId]);if(!result.rowCount){const count=await databasePool.query("SELECT COUNT(*)::int count FROM announcement_views WHERE announcement_id=$1",[announcementId]);return Number(count.rows[0]?.count??0);}const count=await databasePool.query("SELECT COUNT(*)::int count FROM announcement_views WHERE announcement_id=$1",[announcementId]);return Number(count.rows[0]?.count??0);}
 export async function setAnnouncementReaction(announcementId:string,userId:string,emoji:string|null){if(!databasePool){const values=memoryAnnouncementReactions.get(announcementId)??new Map<string,string>();if(emoji)values.set(userId,emoji);else values.delete(userId);memoryAnnouncementReactions.set(announcementId,values);return;}if(!emoji){await databasePool.query("DELETE FROM announcement_reactions WHERE announcement_id=$1 AND user_id=$2",[announcementId,userId]);return;}await databasePool.query("INSERT INTO announcement_reactions(announcement_id,user_id,emoji) VALUES($1,$2,$3) ON CONFLICT(announcement_id,user_id) DO UPDATE SET emoji=EXCLUDED.emoji,updated_at=NOW()",[announcementId,userId,emoji]);}
+
+export async function listAnnouncementReactions(announcementId:string):Promise<AnnouncementReactionRecord[]>{
+  if(!databasePool){
+    const values=memoryAnnouncementReactions.get(announcementId)??new Map<string,string>();
+    return Promise.all([...values.entries()].map(async([userId,emoji])=>{
+      const user=await findUserById(userId);
+      const avatar=await getMedia("avatar",userId);
+      return {userId,name:user?.name??"İstifadəçi",avatarUrl:avatar?.secureUrl??null,emoji,reactedAt:new Date(0).toISOString()};
+    }));
+  }
+  const result=await databasePool.query(`SELECT reactions.user_id,reactions.emoji,reactions.updated_at,users.name,media_assets.secure_url avatar_url
+    FROM announcement_reactions reactions
+    JOIN users ON users.id=reactions.user_id
+    LEFT JOIN media_assets ON media_assets.owner_type='avatar' AND media_assets.owner_id=users.id::text
+    WHERE reactions.announcement_id=$1
+    ORDER BY reactions.updated_at DESC,users.name ASC`,[announcementId]);
+  return result.rows.map((row)=>({userId:String(row.user_id),name:String(row.name),avatarUrl:row.avatar_url?String(row.avatar_url):null,emoji:String(row.emoji),reactedAt:new Date(row.updated_at).toISOString()}));
+}
+
+export async function getAnnouncementReactionState(announcementId:string,userId?:string){
+  const people=await listAnnouncementReactions(announcementId);
+  const reactions:Record<string,number>={};
+  for(const person of people)reactions[person.emoji]=(reactions[person.emoji]??0)+1;
+  return {reactions,myReaction:userId?people.find((person)=>person.userId===userId)?.emoji??null:null,people};
+}
 
 export async function listFeed(category?: NetworkCategory): Promise<FeedRecord[]> {
   if (!databasePool) return [...memoryFeed.values()].filter((item) => item.status === "published" && (!category || item.category === category));

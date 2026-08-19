@@ -1049,6 +1049,16 @@ describe("EduRate API", () => {
     await request(app).patch(`/api/admin/announcements/${announcement.body.data.id}`).set("Authorization",adminAuthorization).send({status:"published"}).expect(200);
     publicAnnouncements=await request(app).get("/api/network/announcements").expect(200);
     assert.equal(publicAnnouncements.body.data.some((item:{id:string})=>item.id===announcement.body.data.id),true);
+    const reaction=await request(app).patch(`/api/network/announcements/${announcement.body.data.id}/reaction`).set("Authorization",studentAuthorization).send({emoji:"❤️"}).expect(200);
+    assert.equal(reaction.body.data.reactions["❤️"],1);
+    assert.equal(reaction.body.data.myReaction,"❤️");
+    const reactionPeople=await request(app).get(`/api/network/announcements/${announcement.body.data.id}/reactions`).set("Authorization",studentAuthorization).expect(200);
+    assert.equal(reactionPeople.body.data.people.length,1);
+    assert.equal(reactionPeople.body.data.people[0].name,"Məzmun Testi");
+    publicAnnouncements=await request(app).get("/api/network/announcements").set("Authorization",studentAuthorization).expect(200);
+    const reactedAnnouncement=publicAnnouncements.body.data.find((item:{id:string})=>item.id===announcement.body.data.id);
+    assert.equal(reactedAnnouncement.reactions["❤️"],1);
+    assert.equal(reactedAnnouncement.myReaction,"❤️");
 
     const post=await request(app).post("/api/network/feed").set("Authorization",studentAuthorization).send({title:"Layihə komandası",summary:"Yeni tələbə layihəsi üçün iki komanda yoldaşı axtarılır.",tags:["Komanda"]}).expect(202);
     let publicFeed=await request(app).get("/api/network/feed").expect(200);

@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ImagePlus, Plus, Sparkles, X } from "lucide-react";
+import { ImagePlus, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Club } from "../data/clubs";
@@ -26,6 +26,7 @@ export function ClubsExperience({ clubs, failed=false }: ClubsExperienceProps) {
   const [coverFile,setCoverFile]=useState<File|null>(null);
   const [coverPreview,setCoverPreview]=useState("");
   const coverPreviewRef=useRef("");
+  const coverInputRef=useRef<HTMLInputElement>(null);
   const canCreate = Boolean(user?.accessRole && ["teacher", "mentor", "assistant_admin", "admin"].includes(user.accessRole));
 
   useEffect(()=>()=>{if(coverPreviewRef.current)URL.revokeObjectURL(coverPreviewRef.current);},[]);
@@ -36,6 +37,7 @@ export function ClubsExperience({ clubs, failed=false }: ClubsExperienceProps) {
     coverPreviewRef.current="";
     setCoverFile(null);
     setCoverPreview("");
+    if(!file&&coverInputRef.current)coverInputRef.current.value="";
     if(!file)return;
     if(!["image/jpeg","image/png","image/webp"].includes(file.type)){setError("Yalnız JPG, PNG və WebP şəkilləri qəbul olunur.");return;}
     if(file.size>5*1024*1024){setError("Klub şəkli 5 MB-dan böyük ola bilməz.");return;}
@@ -152,7 +154,7 @@ export function ClubsExperience({ clubs, failed=false }: ClubsExperienceProps) {
               <p className="club-create-intro">Əsas məlumatları yaz. Klub yoxlanıldıqdan sonra kataloqda görünəcək.</p>
               <div className={`club-create-preview${coverPreview?" has-cover":""}`} aria-label="Klub kartının canlı önizləməsi"><div style={coverPreview?{backgroundImage:`linear-gradient(135deg,rgba(8,37,31,.12),rgba(8,37,31,.62)),url("${coverPreview}")`}:undefined}><span>{coverPreview?"Seçilmiş örtük şəkli":"Örtük şəkli burada görünəcək"}</span></div><small>{createDraft.category||"KATEQORİYA"}</small><h3>{createDraft.name||"Klubun adı burada görünəcək"}</h3><p>{createDraft.tagline||createDraft.about||"Klub haqqında məlumat burada yerləşəcək."}</p></div>
               <form onSubmit={createClub} className="club-create-form">
-                <label className="is-wide club-create-cover-picker"><span>Örtük şəkli</span><span className="club-create-cover-action"><ImagePlus size={17}/>Şəkil seç<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event)=>selectCover(event.target.files?.[0])}/></span><small>JPG, PNG və ya WebP · maksimum 5 MB</small></label>
+                <label className="is-wide club-create-cover-picker"><span>Örtük şəkli</span><span className="club-create-cover-actions"><span className="club-create-cover-action"><ImagePlus size={17}/>{coverPreview?"Şəkli dəyiş":"Şəkil seç"}<input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event)=>selectCover(event.target.files?.[0])}/></span>{coverPreview?<button type="button" className="club-create-cover-remove" onClick={()=>selectCover()}><Trash2 size={16}/>Şəkli sil</button>:null}</span><small>JPG, PNG və ya WebP · maksimum 5 MB</small></label>
                 <label><span>Klubun adı</span><input name="name" value={createDraft.name} onChange={(e)=>setCreateDraft({...createDraft,name:e.target.value})} minLength={3} maxLength={100} required autoFocus placeholder="Məsələn, Proqramlaşdırma klubu" /></label>
                 <label><span>Kateqoriya</span><select name="category" required value={createDraft.category} onChange={(e)=>setCreateDraft({...createDraft,category:e.target.value})}><option value="" disabled>Kateqoriya seç</option><option>Texnologiya</option><option>Akademik</option><option>Yaradıcılıq</option><option>Sosial təsir</option><option>Mədəniyyət</option><option>İdman</option></select></label>
                 <label className="is-wide"><span>Qısa şüar</span><input name="tagline" value={createDraft.tagline} onChange={(e)=>setCreateDraft({...createDraft,tagline:e.target.value})} minLength={5} maxLength={220} required placeholder="Klubun əsas fikrini bir cümlə ilə yaz" /></label>

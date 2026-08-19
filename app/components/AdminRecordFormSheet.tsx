@@ -320,6 +320,7 @@ function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
   });
   const [coverPreview, setCoverPreview] = useState(record?.coverUrl ?? "");
   const localPreviewRef = useRef("");
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => () => {
     if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
@@ -329,6 +330,7 @@ function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
     if (localPreviewRef.current) URL.revokeObjectURL(localPreviewRef.current);
     localPreviewRef.current = file ? URL.createObjectURL(file) : "";
     setCoverPreview(localPreviewRef.current || record?.coverUrl || "");
+    if (!file && coverInputRef.current) coverInputRef.current.value = "";
   }
 
   return (
@@ -343,11 +345,13 @@ function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
         {record ? (
           <SecureImagePicker kind="club" ownerId={record.id} currentUrl={record.coverUrl} compact onChange={(asset) => setCoverPreview(asset?.secureUrl ?? "")} />
         ) : (
-          <label className="admin-club-file-picker">
-            <span>Şəkil seç</span>
-            <input name="coverFile" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectCover(event.target.files?.[0])} />
+          <div className="admin-club-file-picker">
+            <div className="admin-club-file-actions">
+              <label><span>{coverPreview ? "Şəkli dəyiş" : "Şəkil seç"}</span><input ref={coverInputRef} name="coverFile" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectCover(event.target.files?.[0])} /></label>
+              {coverPreview ? <button type="button" onClick={() => selectCover()}><Trash2 size={14} /> Şəkli sil</button> : null}
+            </div>
             <small>JPG, PNG və ya WebP · maksimum 5 MB</small>
-          </label>
+          </div>
         )}
       </div>
       <Field label="Klubun adı" name="name" required>
