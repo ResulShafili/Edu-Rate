@@ -74,10 +74,11 @@ export function EventCard({ event, index, onSelect }: EventCardProps) {
         aria-label={`${event.title} tədbirinin təfərrüatlarına bax`}
       >
         <div
-          className="event-art"
+          className={`event-art${event.imageUrl ? " has-image" : ""}`}
           style={{
             "--event-accent": event.accent,
             "--event-glow": event.glow,
+            ...(event.imageUrl ? { "--event-image": `url("${event.imageUrl}")` } : {}),
           } as CSSProperties}
         >
           <div className="event-art-orbit event-art-orbit-one" />

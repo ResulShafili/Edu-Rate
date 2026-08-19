@@ -185,7 +185,8 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
             </div>
 
             <div
-              className="drawer-visual"
+              className={`drawer-visual${event.imageUrl ? " has-image" : ""}`}
+              style={event.imageUrl?{backgroundImage:`linear-gradient(135deg,rgba(8,37,31,.08),rgba(8,37,31,.5)),url("${event.imageUrl}")`}:undefined}
               aria-hidden="true"
             >
               <motion.div

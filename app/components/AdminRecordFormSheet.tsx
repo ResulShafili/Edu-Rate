@@ -28,13 +28,14 @@ import type {
   AdminUserCreateInput,
 } from "../data/admin";
 import { SecureImagePicker } from "./SecureImagePicker";
+import { ImageDraftPicker } from "./ImageDraftPicker";
 
 export type AdminRecordSheetMode = "create" | "edit" | "delete";
 
 export type AdminRecordSubmission =
   | { kind: "users"; input: AdminUserCreateInput }
   | { kind: "clubs"; input: AdminClubCreateInput; coverFile?: File }
-  | { kind: "events"; input: AdminEventCreateInput };
+  | { kind: "events"; input: AdminEventCreateInput; imageFile?: File };
 
 type AdminRecordFormSheetProps = {
   canAssignElevatedRoles: boolean;
@@ -388,8 +389,10 @@ function ClubFields({ firstFieldRef, record }: FieldProps<AdminClub>) {
 }
 
 function EventFields({ firstFieldRef, record }: FieldProps<AdminEvent>) {
+  const [imageFile,setImageFile]=useState<File|null>(null);
   return (
     <>
+      <div className="admin-record-field is-wide"><span>Tədbir şəkli</span>{record?<SecureImagePicker kind="event" ownerId={record.id} currentUrl={record.imageUrl} compact/>:<ImageDraftPicker file={imageFile} onChange={setImageFile} label="Tədbir şəkli (istəyə bağlı)" compact inputName="eventImageFile"/>}</div>
       <Field label="Tədbirin adı" name="name" required>
         <input ref={firstFieldRef} name="name" defaultValue={record?.name} minLength={3} maxLength={120} required />
       </Field>
@@ -533,6 +536,7 @@ function createSubmission(
       place: fieldValue(formData, "place"),
       status: fieldValue(formData, "status") as AdminEvent["status"],
     },
+    imageFile: formData.get("eventImageFile") instanceof File && (formData.get("eventImageFile") as File).size > 0 ? formData.get("eventImageFile") as File : undefined,
   };
 }
 

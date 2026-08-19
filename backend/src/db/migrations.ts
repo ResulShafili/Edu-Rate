@@ -370,6 +370,17 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS announcement_reactions_item_idx ON announcement_reactions(announcement_id, emoji);
     `,
   },
+  {
+    version: 16,
+    name: "event media and user announcement ownership",
+    sql: `
+      ALTER TABLE announcements ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL;
+      CREATE INDEX IF NOT EXISTS announcements_created_by_idx ON announcements(created_by, status);
+      ALTER TABLE media_assets DROP CONSTRAINT IF EXISTS media_assets_owner_type_check;
+      ALTER TABLE media_assets ADD CONSTRAINT media_assets_owner_type_check
+        CHECK(owner_type IN ('avatar','club','announcement','event'));
+    `,
+  },
 ];
 
 export const latestMigrationVersion = Math.max(...migrations.map((migration) => migration.version));

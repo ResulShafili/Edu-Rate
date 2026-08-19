@@ -1,4 +1,4 @@
-export type MediaKind="avatar"|"club"|"announcement";
+export type MediaKind="avatar"|"club"|"announcement"|"event";
 export type MediaAsset={id:string;kind:MediaKind;ownerId:string;secureUrl:string;width:number;height:number;bytes:number};
 const allowed=new Set(["image/jpeg","image/png","image/webp"]);
 

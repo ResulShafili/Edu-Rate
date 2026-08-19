@@ -209,7 +209,7 @@ describe("EduRate API", () => {
       .set("Authorization", authorization)
       .send({ kind: "announcement", ownerId: "test-announcement" })
       .expect(403);
-    assert.equal(forbidden.body.error.code, "ADMIN_REQUIRED");
+    assert.equal(forbidden.body.error.code, "MEDIA_OWNER_MISMATCH");
   });
 
   it("rəsmi akademik kataloqu və fakültə-ixtisas uyğunluğunu qoruyur", async () => {
@@ -757,6 +757,17 @@ describe("EduRate API", () => {
       .set("Authorization", teacherAuthorization).expect(200);
     assert.equal(teacherWorkspace.body.data.role, "teacher");
     assert.equal(teacherWorkspace.body.data.focus, "Riyaziyyat");
+    const teacherEvent=await request(app).post("/api/events").set("Authorization",teacherAuthorization).send({
+      title:"Müəllim seminarı",category:"Technology",description:"Tələbələr üçün praktik texnologiya seminarı.",
+      longDescription:"Müəllimin təqdim etdiyi seminar praktiki nümunələr, açıq müzakirə və sual-cavab hissəsindən ibarətdir.",
+      location:"Tədris zalı",city:"Xankəndi",organizer:"Səma Həsənli",startAt:"2027-06-10T14:00:00+04:00",
+      endAt:"2027-06-10T16:00:00+04:00",registrationDeadline:"2027-06-09T18:00:00+04:00",speakers:["Səma Həsənli"],capacity:60,
+    }).expect(201);
+    assert.equal(teacherEvent.body.data.adminStatus,"Qaralama");
+    const publicEventsAfterTeacher=await request(app).get("/api/events").expect(200);
+    assert.equal(publicEventsAfterTeacher.body.data.some((item:{id:string})=>item.id===teacherEvent.body.data.id),false);
+    const adminEventsAfterTeacher=await request(app).get("/api/admin/events").set("Authorization",adminAuthorization).expect(200);
+    assert.equal(adminEventsAfterTeacher.body.data.items.some((item:{id:string;status:string})=>item.id===teacherEvent.body.data.id&&item.status==="Qaralama"),true);
 
     const teacherCatalog = await request(app).get("/api/teachers").expect(200);
     const teacherProfile = teacherCatalog.body.data.find((item: { userId: string }) => item.userId === teacherSignup.body.data.user.id);
@@ -1040,6 +1051,14 @@ describe("EduRate API", () => {
       faculty:"Mühəndislik fakültəsi",program:"Kompüter mühəndisliyi",accountType:"student",
     }).expect(201);
     const studentAuthorization=`Bearer ${signup.body.data.token}`;
+    const submittedAnnouncement=await request(app).post("/api/network/announcements").set("Authorization",studentAuthorization).send({
+      category:"clubs",title:"Açıq klub görüşü",summary:"Yeni üzvlər üçün klub fəaliyyəti barədə məlumat görüşü keçiriləcək.",
+      startsAt:"2027-03-01T10:00:00+04:00",expiresAt:"2027-03-20T18:00:00+04:00",
+    }).expect(202);
+    const submittedQueue=await request(app).get("/api/admin/announcements").set("Authorization",adminAuthorization).expect(200);
+    const queuedAnnouncement=submittedQueue.body.data.find((item:{id:string})=>item.id===submittedAnnouncement.body.data.id);
+    assert.equal(queuedAnnouncement.status,"draft");
+    assert.equal(queuedAnnouncement.source,"Məzmun Testi");
     const announcement=await request(app).post("/api/admin/announcements").set("Authorization",adminAuthorization).send({
       category:"official",title:"Sprint təqdimatı",summary:"Sprint təqdimatı üçün zal və proqram məlumatları yenilənib.",source:"Tələbə İşləri",sourceInitials:"Tİ",tone:"lime",
       startsAt:"2027-03-10T10:00:00+04:00",expiresAt:"2027-03-10T18:00:00+04:00",priority:true,status:"draft",

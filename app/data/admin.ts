@@ -75,6 +75,7 @@ export type AdminEvent = AdminRecordBase<AdminEventStatus> & {
   attendeeCount: number;
   capacity: number;
   place: string;
+  imageUrl?: string;
 };
 
 export type AdminCollectionRecord = AdminUser | AdminClub | AdminEvent;

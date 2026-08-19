@@ -44,7 +44,7 @@ export const openApiDocument = {
       post: { tags: ["Media"], summary: "Bulud imzasını və real şəkil metadata-sını yoxlayıb yadda saxla", security: [{ bearerAuth: [] }], responses: { "201": { description: "Şəkil təsdiqləndi" }, "422": { description: "Format, ölçü və ya imza təhlükəsizlik siyasətinə uyğun deyil" } } },
     },
     "/api/media/{kind}/{ownerId}": {
-      delete: { tags: ["Media"], summary: "Şəkli təhlükəsiz sil", security: [{ bearerAuth: [] }], parameters: [{ name: "kind", in: "path", required: true, schema: { type: "string", enum: ["avatar", "club", "announcement"] } }, { name: "ownerId", in: "path", required: true, schema: { type: "string" } }], responses: { "204": { description: "Şəkil silindi" }, "403": { description: "İcazə yoxdur" }, "404": { description: "Şəkil tapılmadı" } } },
+      delete: { tags: ["Media"], summary: "Şəkli təhlükəsiz sil", security: [{ bearerAuth: [] }], parameters: [{ name: "kind", in: "path", required: true, schema: { type: "string", enum: ["avatar", "club", "announcement", "event"] } }, { name: "ownerId", in: "path", required: true, schema: { type: "string" } }], responses: { "204": { description: "Şəkil silindi" }, "403": { description: "İcazə yoxdur" }, "404": { description: "Şəkil tapılmadı" } } },
     },
     "/api/health": {
       get: {
@@ -281,6 +281,7 @@ export const openApiDocument = {
         parameters: [{ name: "category", in: "query", schema: { type: "string", enum: ["official", "faculties", "clubs", "scholarship", "events"] } }],
         responses: { "200": { description: "Elanlar" }, "422": { description: "Validasiya xətası" } },
       },
+      post: { tags:["Catalog"],summary:"Yoxlanış üçün elan göndər",security:[{bearerAuth:[]}],responses:{"202":{description:"Elan admin yoxlanışına göndərildi"},"401":{description:"Giriş tələb olunur"},"422":{description:"Validasiya xətası"}} },
     },
     "/api/network/announcements/{id}/view": { post:{tags:["Catalog"],summary:"Elanın unikal baxışını qeydə al",security:[{bearerAuth:[]}],parameters:[{name:"id",in:"path",required:true,schema:{type:"string"}}],responses:{"200":{description:"Baxış sayı"},"401":{description:"Giriş tələb olunur"}}} },
     "/api/network/announcements/{id}/reaction": { patch:{tags:["Catalog"],summary:"Elana emoji reaksiyası əlavə et və ya geri götür",security:[{bearerAuth:[]}],parameters:[{name:"id",in:"path",required:true,schema:{type:"string"}}],responses:{"200":{description:"Reaksiya yeniləndi"},"401":{description:"Giriş tələb olunur"}}} },

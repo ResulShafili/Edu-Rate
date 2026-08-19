@@ -21,6 +21,7 @@ export type Event = {
   registrationDeadline: string;
   organizer: string;
   availableSpots: number;
+  imageUrl?: string;
 };
 
 export const categories = [
@@ -88,6 +89,7 @@ export type ApiEvent = {
   availableSpots: number;
   accent: string;
   glow: string;
+  imageUrl?: string;
 };
 
 const monthCodes: EventMonth[] = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];

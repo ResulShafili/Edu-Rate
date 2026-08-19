@@ -251,7 +251,7 @@ adminRouter.delete("/events/:id", async (request, response) => {
 });
 
 adminRouter.get("/announcements",async(_request,response)=>response.json({data:await listAdminAnnouncements()}));
-adminRouter.post("/announcements",async(request,response)=>{const item=await createAnnouncement(announcementSchema.parse(request.body));await writeAudit(request.auth!.userId,"Elan yaradıldı","announcement",String(item.id));response.status(201).json({data:item});});
+adminRouter.post("/announcements",async(request,response)=>{const item=await createAnnouncement(announcementSchema.parse(request.body),request.auth!.userId);await writeAudit(request.auth!.userId,"Elan yaradıldı","announcement",String(item.id));response.status(201).json({data:item});});
 adminRouter.patch("/announcements/:id",async(request,response)=>{const id=z.string().parse(request.params.id);const item=await updateAnnouncement(id,announcementSchema.partial().parse(request.body));if(!item)throw new ApiError(404,"ANNOUNCEMENT_NOT_FOUND","Elan tapılmadı.");await writeAudit(request.auth!.userId,"Elan yeniləndi","announcement",id);response.json({data:item});});
 adminRouter.delete("/announcements/:id",async(request,response)=>{const id=z.string().parse(request.params.id);if(!await deleteAnnouncement(id))throw new ApiError(404,"ANNOUNCEMENT_NOT_FOUND","Elan tapılmadı.");await writeAudit(request.auth!.userId,"Elan silindi","announcement",id);response.status(204).send();});
 
@@ -361,6 +361,7 @@ function toAdminEvent(event: EventRecord, status?: "Açıq" | "Qaralama" | "Tama
   return {
     kind: "events", id: event.id, name: event.title, category: event.category, organizer: event.organizer,
     startAt: event.startAt, attendeeCount, capacity: event.capacity, place: event.location,
+    imageUrl: event.imageUrl,
     detail: `${event.category} · ${event.organizer}`, status: status ?? eventStatus(event),
     metric: `${attendeeCount}/${event.capacity} iştirakçı`, updatedAt: event.updatedAt,
   };

@@ -8,6 +8,7 @@ import {
   Eye,
   Megaphone,
   SlidersHorizontal,
+  Plus,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -17,6 +18,7 @@ import { networkFilterLabels, networkFilters } from "../data/network";
 import { formatAzDate, isExpired } from "../lib/date";
 import { EmptyState } from "./ui/Primitives";
 import { useAuth } from "./AuthProvider";
+import { AnnouncementSubmissionDialog } from "./AnnouncementSubmissionDialog";
 
 type AnnouncementsBoardProps = {
   items: readonly AnnouncementItem[];
@@ -35,9 +37,11 @@ const tones: Record<NetworkTone, { marker: string; date: string; initials: strin
 };
 
 export function AnnouncementsBoard({ items, activeFilter, onFilterChange, reducedMotion }: AnnouncementsBoardProps) {
+  const {user}=useAuth();
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => new Set());
   const [compactLimit, setCompactLimit] = useState(4);
+  const [submissionOpen,setSubmissionOpen]=useState(false);
   const filtered = items.filter((item) => activeFilter === "all" || item.category === activeFilter);
   const active = filtered.filter((item) => !isExpired(item.expiresAt));
   const archived = filtered.filter((item) => isExpired(item.expiresAt));
@@ -56,6 +60,7 @@ export function AnnouncementsBoard({ items, activeFilter, onFilterChange, reduce
     <section className="announcements-board" aria-labelledby="announcements-title">
       <header className="announcements-board-heading">
         <div><span><Megaphone size={14} aria-hidden="true" /> Universitet şəbəkəsi</span><h2 id="announcements-title">Vacib elanlar</h2></div>
+        {user?<button type="button" className="announcement-submit-trigger" onClick={()=>setSubmissionOpen(true)}><Plus size={16}/>Elan göndər</button>:null}
       </header>
 
       <div className="announcement-filter-bar">
@@ -81,6 +86,7 @@ export function AnnouncementsBoard({ items, activeFilter, onFilterChange, reduce
       )}
 
       {archived.length > 0 && <details className="announcement-archive"><summary>Arxiv <span>{archived.length}</span></summary><div>{archived.map((item) => <AnnouncementCompact key={item.id} item={item} archived read bookmarked={false} onRead={() => undefined} onBookmark={() => undefined} />)}</div></details>}
+      <AnnouncementSubmissionDialog open={submissionOpen} onClose={()=>setSubmissionOpen(false)}/>
     </section>
   );
 }

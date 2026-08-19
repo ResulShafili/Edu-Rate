@@ -3,6 +3,7 @@ import { events as seedEvents } from "../data/catalog.js";
 import { ApiError } from "../lib/api-error.js";
 import { databasePool } from "./database.js";
 import { env } from "../config/env.js";
+import { getMedia } from "./media.js";
 
 export type EventCategory = "Design" | "Technology" | "Culture" | "Wellness";
 
@@ -27,6 +28,7 @@ export type EventRecord = {
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+  imageUrl?: string;
 };
 
 export type EventInput = Omit<EventRecord, "id" | "availableSpots" | "createdBy" | "createdAt" | "updatedAt"> & {
@@ -86,6 +88,7 @@ function mapEvent(row: Record<string, unknown>): EventRecord {
     createdBy: row.created_by ? String(row.created_by) : null,
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
+    imageUrl: row.image_url ? String(row.image_url) : undefined,
   };
 }
 
@@ -191,19 +194,22 @@ export async function initializeBusinessDatabase() {
 
 export async function listEvents(publicOnly = true): Promise<EventRecord[]> {
   if (!databasePool) {
-    return [...memoryEvents.values()]
+    return Promise.all([...memoryEvents.values()]
       .filter((event) => !publicOnly || event.adminStatus === "Açıq")
-      .sort((a, b) => a.startAt.localeCompare(b.startAt));
+      .sort((a, b) => a.startAt.localeCompare(b.startAt))
+      .map(async(event)=>({...event,imageUrl:(await getMedia("event",event.id))?.secureUrl})));
   }
   const result = await databasePool.query(
-    `SELECT * FROM events ${publicOnly ? "WHERE admin_status = 'Açıq'" : ""} ORDER BY start_at ASC`,
+    `SELECT events.*,media_assets.secure_url image_url FROM events
+     LEFT JOIN media_assets ON media_assets.owner_type='event' AND media_assets.owner_id=events.id
+     ${publicOnly ? "WHERE admin_status = 'Açıq'" : ""} ORDER BY start_at ASC`,
   );
   return result.rows.map(mapEvent);
 }
 
 export async function findEventById(id: string): Promise<EventRecord | null> {
-  if (!databasePool) return memoryEvents.get(id) ?? null;
-  const result = await databasePool.query("SELECT * FROM events WHERE id = $1 LIMIT 1", [id]);
+  if (!databasePool) {const event=memoryEvents.get(id);return event?{...event,imageUrl:(await getMedia("event",id))?.secureUrl}:null;}
+  const result = await databasePool.query("SELECT events.*,media_assets.secure_url image_url FROM events LEFT JOIN media_assets ON media_assets.owner_type='event' AND media_assets.owner_id=events.id WHERE events.id = $1 LIMIT 1", [id]);
   return result.rows[0] ? mapEvent(result.rows[0]) : null;
 }
 

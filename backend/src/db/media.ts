@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { databasePool } from "./database.js";
 
-export type MediaKind="avatar"|"club"|"announcement";
+export type MediaKind="avatar"|"club"|"announcement"|"event";
 export type MediaAsset={id:string;kind:MediaKind;ownerId:string;publicId:string;secureUrl:string;format:string;bytes:number;width:number;height:number;createdBy:string;createdAt:string};
 const memory=new Map<string,MediaAsset>();
 const key=(kind:MediaKind,ownerId:string)=>`${kind}:${ownerId}`;

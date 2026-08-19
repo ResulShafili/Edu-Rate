@@ -279,7 +279,10 @@ export function AdminDashboard({ administrator, demoMode }: AdminDashboardProps)
       } else if (editor.mode === "edit" && editor.record?.kind === "events") {
         await eventMutations.update(editor.record.id, submission.input);
       } else {
-        await eventMutations.create(submission.input);
+        if(submission.imageFile&&!["image/jpeg","image/png","image/webp"].includes(submission.imageFile.type))throw new Error("Yalnız JPG, PNG və WebP şəkilləri qəbul olunur.");
+        if(submission.imageFile&&submission.imageFile.size>5*1024*1024)throw new Error("Tədbir şəkli 5 MB-dan böyük ola bilməz.");
+        const created=await eventMutations.create(submission.input);
+        if(submission.imageFile){try{await uploadSecureImage(submission.imageFile,"event",created.id);}catch{completionNote=" Tədbir yaradıldı, lakin şəkil yüklənmədi; redaktə ekranından yenidən seçə bilərsiniz.";}}
       }
 
       const action = editor.mode === "create" ? "yaradıldı" : "yeniləndi";

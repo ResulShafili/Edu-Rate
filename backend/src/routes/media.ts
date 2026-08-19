@@ -6,12 +6,14 @@ import { z } from "zod";
 import { env } from "../config/env.js";
 import { getMedia, removeMedia, saveMedia, type MediaKind } from "../db/media.js";
 import { findClub } from "../db/platform.js";
+import { findEventById } from "../db/business.js";
+import { findAnnouncementById } from "../db/network.js";
 import { ApiError } from "../lib/api-error.js";
 import { authenticate } from "../middleware/authenticate.js";
 
 export const mediaRouter=Router();
 mediaRouter.use(authenticate,rateLimit({windowMs:15*60_000,limit:20,standardHeaders:true,legacyHeaders:false}));
-const kindSchema=z.enum(["avatar","club","announcement"]);
+const kindSchema=z.enum(["avatar","club","announcement","event"]);
 type CloudinarySignatureAlgorithm="sha1"|"sha256";
 const signCloudinaryRequest=cloudinary.utils.api_sign_request as unknown as (params:Record<string,string|number>,secret:string,algorithm:CloudinarySignatureAlgorithm,version:number)=>string;
 const signSchema=z.object({kind:kindSchema,ownerId:z.string().trim().min(1).max(120).optional()}).strict();
@@ -44,7 +46,7 @@ mediaRouter.post("/confirm",async(request,response)=>{
 
 mediaRouter.delete("/:kind/:ownerId",async(request,response)=>{const kind=kindSchema.parse(request.params.kind);const requested=z.string().min(1).max(120).parse(request.params.ownerId);const ownerId=await resolveDeleteOwner(kind,requested,request.auth!);assertConfigured();const removed=await removeMedia(kind,ownerId);if(!removed)throw new ApiError(404,"MEDIA_NOT_FOUND","Silinə bilən şəkil tapılmadı.");await cloudinary.uploader.destroy(removed.publicId,{resource_type:"image",invalidate:true});response.status(204).send();});
 
-async function resolveWriteOwner(kind:MediaKind,requested:string|undefined,auth:{userId:string;role:string}){if(kind==="avatar")return auth.userId;if(!requested)throw new ApiError(422,"OWNER_REQUIRED","Şəklin aid olduğu qeyd tələb olunur.");const ownerId=requested.replace(/[^a-zA-Z0-9_-]/g,"-");if(auth.role==="admin"||auth.role==="owner_admin"||auth.role==="assistant_admin")return ownerId;if(kind==="announcement")throw new ApiError(403,"ADMIN_REQUIRED","Elan şəkillərini yalnız rəhbərlik idarə edə bilər.");if(kind==="club"){const club=await findClub(ownerId);if(club?.createdBy===auth.userId)return club.id;}throw new ApiError(403,"MEDIA_OWNER_MISMATCH","Bu şəkli dəyişmək üçün klub sahibi və ya rəhbərlik olmalısan.");}
+async function resolveWriteOwner(kind:MediaKind,requested:string|undefined,auth:{userId:string;role:string}){if(kind==="avatar")return auth.userId;if(!requested)throw new ApiError(422,"OWNER_REQUIRED","Şəklin aid olduğu qeyd tələb olunur.");const ownerId=requested.replace(/[^a-zA-Z0-9_-]/g,"-");if(auth.role==="admin"||auth.role==="owner_admin"||auth.role==="assistant_admin")return ownerId;if(kind==="announcement"){const item=await findAnnouncementById(ownerId);if(item?.createdBy===auth.userId&&item.status==="draft")return ownerId;}if(kind==="event"){const event=await findEventById(ownerId);if(event?.createdBy===auth.userId&&event.adminStatus==="Qaralama")return ownerId;}if(kind==="club"){const club=await findClub(ownerId);if(club?.createdBy===auth.userId)return club.id;}throw new ApiError(403,"MEDIA_OWNER_MISMATCH","Bu şəkli dəyişmək üçün qeydin sahibi və ya rəhbərlik olmalısan.");}
 async function resolveDeleteOwner(kind:MediaKind,requested:string,auth:{userId:string;role:string}){if(kind!=="avatar")return resolveWriteOwner(kind,requested,auth);if(requested==="me"||requested===auth.userId)return auth.userId;if(auth.role==="admin"||auth.role==="owner_admin")return requested.replace(/[^a-zA-Z0-9_-]/g,"-");throw new ApiError(403,"MEDIA_OWNER_MISMATCH","Başqa istifadəçinin profil şəklini silmək icazən yoxdur.");}
 function policy(kind:MediaKind){return kind==="avatar"?{maxBytes:2*1024*1024,maxDimension:512,transformation:"c_limit,w_512,h_512,q_auto:good,f_webp,fl_strip_profile"}:{maxBytes:5*1024*1024,maxDimension:1600,transformation:"c_limit,w_1600,h_1600,q_auto:good,f_webp,fl_strip_profile"};}
 function verifyCloudinaryResponseSignature(publicId:string,version:number,signature:string){

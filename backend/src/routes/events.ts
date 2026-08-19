@@ -64,11 +64,12 @@ eventsRouter.get("/:eventId", async (request, response) => {
 });
 
 eventsRouter.post("/", authenticate, async (request, response) => {
-  if (!["admin", "assistant_admin"].includes(request.auth!.role)) {
-    throw new ApiError(403, "EVENT_CREATE_FORBIDDEN", "Tədbiri yalnız rəhbərlik yarada bilər.");
+  if (!["teacher", "admin", "assistant_admin"].includes(request.auth!.role)) {
+    throw new ApiError(403, "EVENT_CREATE_FORBIDDEN", "Tədbiri yalnız müəllim və ya rəhbərlik yarada bilər.");
   }
   const input = eventSchema.parse(request.body);
-  response.status(201).json({ data: await createEvent(input, request.auth!.userId) });
+  const adminStatus=request.auth!.role==="teacher"?"Qaralama":"Açıq";
+  response.status(201).json({ data: await createEvent({...input,adminStatus}, request.auth!.userId) });
 });
 
 eventsRouter.patch("/:eventId", authenticate, async (request, response) => {

@@ -3,6 +3,7 @@
 import { Check, FileText, Flag, Inbox, Megaphone, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { uploadSecureImage } from "../lib/media-upload";
+import { ImageDraftPicker } from "./ImageDraftPicker";
 
 type Tab = "announcements" | "feed" | "support-tickets" | "reports";
 type Item = {
@@ -161,7 +162,7 @@ export function AdminOperationsPanel() {
             <option value="official">Rəsmi</option><option value="faculties">Fakültələr</option><option value="clubs">Klublar</option><option value="scholarship">Təqaüd</option><option value="events">Tədbirlər</option>
           </select>
           <textarea value={draft.summary} onChange={(event)=>setDraft((current)=>({...current,summary:event.target.value}))} placeholder="Qısa və aydın elan mətni" minLength={10} maxLength={800} rows={3} required />
-          <label className="admin-announcement-image"><span>Elan şəkli (istəyə bağlı)</span><input type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" onChange={(event)=>setAnnouncementImage(event.target.files?.[0]??null)} /><small>JPG, PNG və ya WebP · maksimum 5 MB</small></label>
+          <ImageDraftPicker file={announcementImage} onChange={setAnnouncementImage} label="Elan şəkli (istəyə bağlı)" compact/>
           <footer><button type="button" onClick={()=>setCreating(false)}>Ləğv et</button><button type="submit" disabled={busyId==="new"}>Qaralama yarat</button></footer>
         </form>
       )}

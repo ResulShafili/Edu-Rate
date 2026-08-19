@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   categories,
@@ -15,10 +15,13 @@ import { getTemporalStatus, sortByStartAt } from "../lib/date";
 import { EventCard } from "./EventCard";
 import { EventDrawer } from "./EventDrawer";
 import { EmptyState, ErrorState, Skeleton } from "./ui/Primitives";
+import { useAuth } from "./AuthProvider";
+import { EventSubmissionDialog } from "./EventSubmissionDialog";
 
 type EventPeriod = "upcoming" | "past";
 
 export function EventsExperience() {
+  const {user}=useAuth();
   const [eventItems, setEventItems] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -27,6 +30,9 @@ export function EventsExperience() {
   const [query, setQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [createOpen,setCreateOpen]=useState(false);
+  const canCreate=Boolean(user?.accessRole&&["teacher","admin","assistant_admin"].includes(user.accessRole));
+  const publishesDirectly=Boolean(user?.accessRole&&["admin","assistant_admin"].includes(user.accessRole));
   const reduceMotion = useReducedMotion();
   const visibleEvents = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("az");
@@ -75,6 +81,7 @@ export function EventsExperience() {
             <span className="section-kicker">Kampus təqvimi</span>
             <h1 id="events-title" className="module-page-title">Tədbirlər</h1>
           </div>
+          {canCreate?<button type="button" className="event-create-trigger" onClick={()=>setCreateOpen(true)}><Plus size={17}/>Tədbir yarat</button>:null}
         </motion.div>
 
         <motion.div
@@ -129,6 +136,7 @@ export function EventsExperience() {
         )}
       </section>
       <EventDrawer event={selectedEvent} onClose={closeDrawer} />
+      <EventSubmissionDialog open={createOpen} onClose={()=>setCreateOpen(false)} onCreated={()=>void loadEvents()} organizerName={user?.name??""} publishesDirectly={publishesDirectly}/>
     </>
   );
 }
