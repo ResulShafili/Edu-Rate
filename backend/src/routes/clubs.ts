@@ -65,7 +65,7 @@ clubsRouter.get("/:clubId", async (request, response) => {
 });
 
 clubsRouter.post("/", authenticate, async (request, response) => {
-  const allowedRoles = new Set(["teacher", "mentor", "assistant_admin", "admin"]);
+  const allowedRoles = new Set(["teacher", "mentor", "assistant_admin", "admin", "owner_admin"]);
   if (!allowedRoles.has(request.auth!.role)) {
     throw new ApiError(403, "CLUB_CREATOR_REQUIRED", "Klub yaratmaq müəllim, mentor və rəhbərlik hesabları üçün açıqdır.");
   }
@@ -105,7 +105,7 @@ clubsRouter.patch("/:clubId", authenticate, async (request, response) => {
   const clubId = z.string().parse(request.params.clubId);
   const current = await findClub(clubId);
   if (!current) throw new ApiError(404, "CLUB_NOT_FOUND", "Klub tapılmadı.");
-  const isLeadership = request.auth!.role === "admin" || request.auth!.role === "assistant_admin";
+  const isLeadership = ["owner_admin", "admin", "assistant_admin"].includes(request.auth!.role);
   const isLeader = await isClubLeader(clubId, request.auth!.userId);
   if (!isLeadership && !isLeader) {
     throw new ApiError(403, "CLUB_LEADER_REQUIRED", "Yalnız klub lideri və ya rəhbərlik məlumatları dəyişə bilər.");

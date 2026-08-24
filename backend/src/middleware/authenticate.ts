@@ -41,7 +41,7 @@ export async function optionalAuthenticate(request:Request,_response:Response,ne
 }
 
 export function requireAdmin(request: Request, _response: Response, next: NextFunction) {
-  if (request.auth?.role !== "admin" && request.auth?.role !== "assistant_admin") {
+  if (!request.auth || !["owner_admin", "admin", "assistant_admin"].includes(request.auth.role)) {
     return next(new ApiError(403, "ADMIN_REQUIRED", "Bu əməliyyat üçün admin icazəsi lazımdır."));
   }
 
@@ -49,7 +49,7 @@ export function requireAdmin(request: Request, _response: Response, next: NextFu
 }
 
 export function requirePrimaryAdmin(request: Request, _response: Response, next: NextFunction) {
-  if (request.auth?.role !== "admin") {
+  if (request.auth?.role !== "admin" && request.auth?.role !== "owner_admin") {
     return next(
       new ApiError(
         403,
@@ -59,5 +59,12 @@ export function requirePrimaryAdmin(request: Request, _response: Response, next:
     );
   }
 
+  next();
+}
+
+export function requireOwnerAdmin(request: Request, _response: Response, next: NextFunction) {
+  if (request.auth?.role !== "owner_admin") {
+    return next(new ApiError(403, "OWNER_ADMIN_REQUIRED", "Bu əməliyyat yalnız platforma sahibi üçün əlçatandır."));
+  }
   next();
 }

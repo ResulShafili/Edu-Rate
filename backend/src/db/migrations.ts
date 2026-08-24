@@ -1,9 +1,17 @@
 import type { PoolClient } from "pg";
-import { databasePool } from "./database.js";
+import { BASE_USER_SCHEMA_SQL, databasePool } from "./database.js";
+import { BASE_BUSINESS_SCHEMA_SQL } from "./business.js";
+import { BASE_PLATFORM_SCHEMA_SQL } from "./platform.js";
+import { BASE_NETWORK_SCHEMA_SQL } from "./network.js";
 
 type Migration = { version: number; name: string; sql: string };
 
 const migrations: Migration[] = [
+  {
+    version: 0,
+    name: "base application schema",
+    sql: [BASE_USER_SCHEMA_SQL, BASE_BUSINESS_SCHEMA_SQL, BASE_PLATFORM_SCHEMA_SQL, BASE_NETWORK_SCHEMA_SQL].join("\n"),
+  },
   {
     version: 1,
     name: "professional profiles and stable relations",
@@ -397,6 +405,45 @@ const migrations: Migration[] = [
         AND conversations.club_id=clubs.id
         AND conversation_participants.user_id=clubs.created_by;
       CREATE INDEX IF NOT EXISTS club_memberships_leaders_idx ON club_memberships(club_id,role);
+    `,
+  },
+  {
+    version: 18,
+    name: "owner administration and privacy-safe account deletion",
+    sql: `
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS anonymized_at TIMESTAMPTZ;
+      CREATE INDEX IF NOT EXISTS users_active_email_idx ON users(email) WHERE deleted_at IS NULL;
+
+      ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+      ALTER TABLE users ADD CONSTRAINT users_role_check
+        CHECK(role IN ('student','mentor','teacher','assistant_admin','admin','owner_admin'));
+
+      UPDATE users SET role='owner_admin',updated_at=NOW()
+      WHERE id=(
+        SELECT id FROM users
+        WHERE role='admin' AND deleted_at IS NULL
+        ORDER BY created_at ASC,id ASC
+        LIMIT 1
+      ) AND NOT EXISTS(
+        SELECT 1 FROM users WHERE role='owner_admin' AND deleted_at IS NULL
+      );
+    `,
+  },
+  {
+    version: 19,
+    name: "persistent announcement reading state",
+    sql: `
+      CREATE TABLE IF NOT EXISTS announcement_user_state (
+        announcement_id VARCHAR(120) NOT NULL REFERENCES announcements(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        is_read BOOLEAN NOT NULL DEFAULT FALSE,
+        is_bookmarked BOOLEAN NOT NULL DEFAULT FALSE,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY(announcement_id,user_id)
+      );
+      CREATE INDEX IF NOT EXISTS announcement_user_state_user_idx
+        ON announcement_user_state(user_id,is_bookmarked,updated_at DESC);
     `,
   },
 ];

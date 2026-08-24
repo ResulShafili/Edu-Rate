@@ -26,6 +26,8 @@ export type AnnouncementRecord = {
   reactions?: Record<string, number>;
   myReaction?: string | null;
   createdBy?: string | null;
+  read?: boolean;
+  bookmarked?: boolean;
 };
 
 export type AnnouncementReactionRecord = {
@@ -65,10 +67,9 @@ const memoryFeed = new Map<string, AdminFeedRecord>(
 );
 const memoryAnnouncementViews = new Map<string, Set<string>>();
 const memoryAnnouncementReactions = new Map<string, Map<string, string>>();
+const memoryAnnouncementState = new Map<string, {read:boolean;bookmarked:boolean}>();
 
-export async function initializeNetworkDatabase() {
-  if (!databasePool) return;
-  await databasePool.query(`
+export const BASE_NETWORK_SCHEMA_SQL = `
     CREATE TABLE IF NOT EXISTS announcements (
       id VARCHAR(120) PRIMARY KEY, category VARCHAR(24) NOT NULL, title VARCHAR(180) NOT NULL,
       summary VARCHAR(800) NOT NULL, source VARCHAR(140) NOT NULL, source_initials VARCHAR(8) NOT NULL,
@@ -83,7 +84,11 @@ export async function initializeNetworkDatabase() {
       tags TEXT[] NOT NULL DEFAULT '{}'
     );
     CREATE INDEX IF NOT EXISTS feed_posts_published_at_idx ON feed_posts (published_at DESC);
-  `);
+  `;
+
+export async function initializeNetworkDatabase() {
+  if (!databasePool) return;
+  await databasePool.query(BASE_NETWORK_SCHEMA_SQL);
   if (env.SEED_DEMO_DATA) for (const item of announcements) {
     await databasePool.query(`INSERT INTO announcements
       (id, category, title, summary, source, source_initials, published_at, tone, starts_at, expires_at, priority)
@@ -99,16 +104,27 @@ export async function initializeNetworkDatabase() {
 }
 
 export async function listAnnouncements(category?: NetworkCategory,userId?:string): Promise<AnnouncementRecord[]> {
-  if (!databasePool) return Promise.all([...memoryAnnouncements.values()].filter((item) => item.status === "published" && (!category || item.category === category)).map(async(item)=>{const reactionMap=memoryAnnouncementReactions.get(item.id)??new Map();const reactions:Record<string,number>={};for(const emoji of reactionMap.values())reactions[emoji]=(reactions[emoji]??0)+1;return {...item,imageUrl:(await getMedia("announcement",item.id))?.secureUrl,viewCount:memoryAnnouncementViews.get(item.id)?.size??0,reactions,myReaction:userId?reactionMap.get(userId)??null:null};}));
+  if (!databasePool) return Promise.all([...memoryAnnouncements.values()].filter((item) => item.status === "published" && (!category || item.category === category)).map(async(item)=>{const reactionMap=memoryAnnouncementReactions.get(item.id)??new Map();const reactions:Record<string,number>={};for(const emoji of reactionMap.values())reactions[emoji]=(reactions[emoji]??0)+1;const state=userId?memoryAnnouncementState.get(`${item.id}:${userId}`):undefined;return {...item,imageUrl:(await getMedia("announcement",item.id))?.secureUrl,viewCount:memoryAnnouncementViews.get(item.id)?.size??0,reactions,myReaction:userId?reactionMap.get(userId)??null:null,read:state?.read??false,bookmarked:state?.bookmarked??false};}));
   const result = await databasePool.query(
     `SELECT announcements.*,media_assets.secure_url image_url,
       (SELECT COUNT(*)::int FROM announcement_views WHERE announcement_id=announcements.id) view_count,
       COALESCE((SELECT jsonb_object_agg(emoji,total) FROM (SELECT emoji,COUNT(*)::int total FROM announcement_reactions WHERE announcement_id=announcements.id GROUP BY emoji) r),'{}'::jsonb) reactions,
       (SELECT emoji FROM announcement_reactions WHERE announcement_id=announcements.id AND user_id=$1) my_reaction
+      ,COALESCE((SELECT is_read FROM announcement_user_state WHERE announcement_id=announcements.id AND user_id=$1),FALSE) is_read
+      ,COALESCE((SELECT is_bookmarked FROM announcement_user_state WHERE announcement_id=announcements.id AND user_id=$1),FALSE) is_bookmarked
      FROM announcements LEFT JOIN media_assets ON media_assets.owner_type='announcement' AND media_assets.owner_id=announcements.id WHERE status='published' ${category ? "AND category = $2" : ""} ORDER BY priority DESC, published_at DESC`,
     category ? [userId??null,category] : [userId??null],
   );
-  return result.rows.map((row) => ({ id: String(row.id), kind: "announcement", category: row.category, title: String(row.title), summary: String(row.summary), source: String(row.source), sourceInitials: String(row.source_initials), publishedAt: new Date(row.published_at).toISOString(), timeLabel: formatTime(row.published_at), tone: row.tone, dateLabel: formatDate(row.starts_at), startsAt: new Date(row.starts_at).toISOString(), expiresAt: new Date(row.expires_at).toISOString(), priority: Boolean(row.priority),imageUrl:row.image_url?String(row.image_url):undefined,viewCount:Number(row.view_count??0),reactions:row.reactions&&typeof row.reactions==="object"?row.reactions:{},myReaction:row.my_reaction?String(row.my_reaction):null,createdBy:row.created_by?String(row.created_by):null }));
+  return result.rows.map((row) => ({ id: String(row.id), kind: "announcement", category: row.category, title: String(row.title), summary: String(row.summary), source: String(row.source), sourceInitials: String(row.source_initials), publishedAt: new Date(row.published_at).toISOString(), timeLabel: formatTime(row.published_at), tone: row.tone, dateLabel: formatDate(row.starts_at), startsAt: new Date(row.starts_at).toISOString(), expiresAt: new Date(row.expires_at).toISOString(), priority: Boolean(row.priority),imageUrl:row.image_url?String(row.image_url):undefined,viewCount:Number(row.view_count??0),reactions:row.reactions&&typeof row.reactions==="object"?row.reactions:{},myReaction:row.my_reaction?String(row.my_reaction):null,createdBy:row.created_by?String(row.created_by):null,read:Boolean(row.is_read),bookmarked:Boolean(row.is_bookmarked) }));
+}
+
+export async function setAnnouncementUserState(announcementId:string,userId:string,input:{read?:boolean;bookmarked?:boolean}){
+  if(!databasePool){const key=`${announcementId}:${userId}`;const current=memoryAnnouncementState.get(key)??{read:false,bookmarked:false};const next={read:input.read??current.read,bookmarked:input.bookmarked??current.bookmarked};memoryAnnouncementState.set(key,next);return next;}
+  const result=await databasePool.query(`INSERT INTO announcement_user_state(announcement_id,user_id,is_read,is_bookmarked)
+    VALUES($1,$2,COALESCE($3,FALSE),COALESCE($4,FALSE)) ON CONFLICT(announcement_id,user_id) DO UPDATE SET
+    is_read=COALESCE($3,announcement_user_state.is_read),is_bookmarked=COALESCE($4,announcement_user_state.is_bookmarked),updated_at=NOW()
+    RETURNING is_read,is_bookmarked`,[announcementId,userId,input.read??null,input.bookmarked??null]);
+  return {read:Boolean(result.rows[0]?.is_read),bookmarked:Boolean(result.rows[0]?.is_bookmarked)};
 }
 
 export async function recordAnnouncementView(announcementId:string,userId:string){if(!databasePool){const views=memoryAnnouncementViews.get(announcementId)??new Set<string>();views.add(userId);memoryAnnouncementViews.set(announcementId,views);return views.size;}const result=await databasePool.query("INSERT INTO announcement_views(announcement_id,user_id) VALUES($1,$2) ON CONFLICT DO NOTHING",[announcementId,userId]);if(!result.rowCount){const count=await databasePool.query("SELECT COUNT(*)::int count FROM announcement_views WHERE announcement_id=$1",[announcementId]);return Number(count.rows[0]?.count??0);}const count=await databasePool.query("SELECT COUNT(*)::int count FROM announcement_views WHERE announcement_id=$1",[announcementId]);return Number(count.rows[0]?.count??0);}

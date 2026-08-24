@@ -2,14 +2,16 @@
 
 import { ArrowLeft, CheckCircle2, KeyRound, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 type RecoveryStage = "request" | "code" | "password" | "success";
 
 export default function RecoveryPage() {
-  const [stage, setStage] = useState<RecoveryStage>("request");
+  const invitationToken = useSearchParams().get("token") ?? "";
+  const [stage, setStage] = useState<RecoveryStage>(invitationToken ? "password" : "request");
   const [email, setEmail] = useState("");
-  const [resetToken, setResetToken] = useState("");
+  const [resetToken, setResetToken] = useState(invitationToken);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [busy, setBusy] = useState(false);

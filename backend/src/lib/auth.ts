@@ -59,7 +59,8 @@ export function verifyAccessToken(token: string) {
       role !== "mentor" &&
       role !== "teacher" &&
       role !== "assistant_admin" &&
-      role !== "admin"
+      role !== "admin" &&
+      role !== "owner_admin"
     ) {
       throw new Error("Token rolu yanlışdır.");
     }

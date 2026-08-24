@@ -8,6 +8,7 @@ import {
   Check,
   Clock3,
   MapPin,
+  SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
@@ -32,6 +33,7 @@ export function MentorshipDashboard() {
   const [loadError, setLoadError] = useState("");
   const [catalogMentors,setCatalogMentors]=useState<Mentor[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [requestStatuses, setRequestStatuses] = useState<Map<string, "pending" | "accepted">>(() => new Map());
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [requestError, setRequestError] = useState("");
@@ -136,7 +138,18 @@ export function MentorshipDashboard() {
         </div>
       </motion.div>
 
-      <div className="mentor-filters" aria-label="Mentor filtrləri">
+      <button
+        type="button"
+        className="directory-filter-toggle"
+        aria-expanded={filtersOpen}
+        aria-controls="mentor-directory-filters"
+        onClick={() => setFiltersOpen((current) => !current)}
+      >
+        <SlidersHorizontal size={16} aria-hidden="true" />
+        <span>Filtrlər</span>
+        <small>{filteredMentors.length} nəticə</small>
+      </button>
+      <div id="mentor-directory-filters" className={`mentor-filters${filtersOpen ? " is-open" : ""}`} aria-label="Mentor filtrləri">
         <label><span>Ad və ya ixtisas</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Məsələn, məhsul strategiyası" /></label>
         <label><span>Görüş formatı</span><select value={mode} onChange={(event) => setMode(event.target.value)}><option value="all">Bütün formatlar</option><option value="Onlayn">Onlayn</option><option value="Əyani">Əyani</option><option value="Hibrid">Hibrid</option></select></label>
         <label><span>Dil</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option value="all">Bütün dillər</option><option value="Azərbaycan dili">Azərbaycan dili</option><option value="İngilis dili">İngilis dili</option></select></label>

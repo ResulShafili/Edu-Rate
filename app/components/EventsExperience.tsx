@@ -31,8 +31,8 @@ export function EventsExperience() {
   const [dateFilter, setDateFilter] = useState("");
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [createOpen,setCreateOpen]=useState(false);
-  const canCreate=Boolean(user?.accessRole&&["teacher","admin","assistant_admin"].includes(user.accessRole));
-  const publishesDirectly=Boolean(user?.accessRole&&["admin","assistant_admin"].includes(user.accessRole));
+  const canCreate=Boolean(user?.accessRole&&["teacher","admin","assistant_admin","owner_admin"].includes(user.accessRole));
+  const publishesDirectly=Boolean(user?.accessRole&&["admin","assistant_admin","owner_admin"].includes(user.accessRole));
   const reduceMotion = useReducedMotion();
   const visibleEvents = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("az");

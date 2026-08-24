@@ -165,10 +165,7 @@ function mapReview(row: Record<string, unknown>): TeacherReviewRecord {
   };
 }
 
-export async function initializePlatformDatabase() {
-  if (!databasePool) return;
-
-  await databasePool.query(`
+export const BASE_PLATFORM_SCHEMA_SQL = `
     CREATE TABLE IF NOT EXISTS clubs (
       id UUID PRIMARY KEY,
       slug VARCHAR(90) NOT NULL UNIQUE,
@@ -241,7 +238,12 @@ export async function initializePlatformDatabase() {
     ALTER TABLE clubs ADD COLUMN IF NOT EXISTS members JSONB NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE clubs ADD COLUMN IF NOT EXISTS history JSONB NOT NULL DEFAULT '[]'::jsonb;
     ALTER TABLE club_memberships ADD COLUMN IF NOT EXISTS role VARCHAR(16) NOT NULL DEFAULT 'member';
-  `);
+  `;
+
+export async function initializePlatformDatabase() {
+  if (!databasePool) return;
+
+  await databasePool.query(BASE_PLATFORM_SCHEMA_SQL);
 
   if (env.SEED_DEMO_DATA) for (const club of clubSeeds) {
     await databasePool.query(

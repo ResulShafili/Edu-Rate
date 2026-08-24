@@ -14,6 +14,7 @@ import {
   assistantUpdateUserRole,
   adminUpdateUser,
   createUser,
+  countOwnerAdmins,
   deleteUser,
   findUserById,
   listUsers,
@@ -33,7 +34,7 @@ import {
 } from "../db/platform.js";
 import { ApiError } from "../lib/api-error.js";
 import { hashPassword } from "../lib/auth.js";
-import { authenticate, requireAdmin, requirePrimaryAdmin } from "../middleware/authenticate.js";
+import { authenticate, requireAdmin, requireOwnerAdmin } from "../middleware/authenticate.js";
 import {
   deactivateProfessionalProfilesForUser,
   synchronizeProfessionalProfilesForUser,
@@ -42,12 +43,14 @@ import { listAudit, writeAudit } from "../db/audit.js";
 import { createAnnouncement, deleteAnnouncement, deleteFeedPost, listAdminAnnouncements, listAdminFeed, updateAnnouncement, updateFeedPostStatus } from "../db/network.js";
 import { decideMentorApplication, listMentorApplications } from "../db/mentor-applications.js";
 import { ensureClubConversation, listContentReports, updateContentReport } from "../db/messaging.js";
+import { createActionToken } from "../db/auth-security.js";
+import { accountActionUrl, EmailDeliveryError, sendAccountEmail } from "../lib/email.js";
 
 export const adminRouter = Router();
 adminRouter.use(authenticate, requireAdmin);
 
 const userStatus = z.enum(["Aktiv", "Gözləmədə", "Məhdudlaşdırılıb"]);
-const userRole = z.enum(["student", "mentor", "teacher", "assistant_admin", "admin"]);
+const userRole = z.enum(["student", "mentor", "teacher", "assistant_admin", "admin", "owner_admin"]);
 const userSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.email().transform((value) => value.toLowerCase()),
@@ -112,11 +115,25 @@ adminRouter.get("/users", async (request, response) => {
   response.json({ data: paginate(filterRows(users, request.query), request.query) });
 });
 
-adminRouter.post("/users", requirePrimaryAdmin, async (request, response) => {
+adminRouter.post("/users", requireOwnerAdmin, async (request, response) => {
   const input = userSchema.parse(request.body);
-  const user = await createUser({ ...input, passwordHash: await hashPassword(randomBytes(24).toString("base64url")) });
+  const user = await createUser({ ...input, emailVerifiedAt: null, passwordHash: await hashPassword(randomBytes(24).toString("base64url")) });
   await synchronizeProfessionalProfilesForUser(user);
-  response.status(201).json({ data: toAdminUser(user) });
+  const activationToken = await createActionToken(user.id, "reset_password", 24 * 60 * 60 * 1000);
+  let invitationDelivered = true;
+  try {
+    const activationUrl = accountActionUrl("/auth/recovery", activationToken);
+    await sendAccountEmail({
+      to: user.email,
+      subject: "EduRate hesabınızı aktivləşdirin",
+      html: `<p>EduRate hesabınız yaradılıb.</p><p><a href="${activationUrl}">Şifrənizi yaradaraq hesabı aktivləşdirin</a></p><p>Keçid 24 saat qüvvədədir.</p>`,
+    });
+  } catch (error) {
+    if (error instanceof EmailDeliveryError) invitationDelivered = false;
+    else throw error;
+  }
+  await writeAudit(request.auth!.userId,"İstifadəçi dəvəti yaradıldı","user",user.id,{role:user.role,invitationDelivered});
+  response.status(201).json({ data: { ...toAdminUser(user), invitationDelivered } });
 });
 
 adminRouter.patch("/users/:id", async (request, response) => {
@@ -124,7 +141,7 @@ adminRouter.patch("/users/:id", async (request, response) => {
 
   if (request.auth!.role === "assistant_admin") {
     const input = z.object({ role: userRole }).strict().parse(request.body);
-    if (input.role === "admin" || input.role === "assistant_admin") {
+    if (input.role === "admin" || input.role === "assistant_admin" || input.role === "owner_admin") {
       throw new ApiError(
         403,
         "ROLE_ESCALATION_FORBIDDEN",
@@ -133,7 +150,7 @@ adminRouter.patch("/users/:id", async (request, response) => {
     }
     const target = await findUserById(id);
     if (!target) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
-    if (target.role === "admin" || target.role === "assistant_admin") {
+    if (target.role === "admin" || target.role === "assistant_admin" || target.role === "owner_admin") {
       throw new ApiError(
         403,
         "PRIVILEGED_USER_MODIFICATION_FORBIDDEN",
@@ -155,9 +172,14 @@ adminRouter.patch("/users/:id", async (request, response) => {
   }
 
   const patch = userSchema.partial().parse(request.body);
+  const target = await findUserById(id);
+  if (!target) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
+  if (request.auth!.role !== "owner_admin" && (target.role === "owner_admin" || patch.role === "owner_admin")) {
+    throw new ApiError(403, "OWNER_MODIFICATION_FORBIDDEN", "Platforma sahibinin hesabını yalnız başqa platforma sahibi dəyişə bilər.");
+  }
   if (
     id === request.auth!.userId &&
-    ((patch.role !== undefined && patch.role !== "admin") ||
+    ((patch.role !== undefined && patch.role !== request.auth!.role) ||
       (patch.status !== undefined && patch.status !== "Aktiv"))
   ) {
     throw new ApiError(
@@ -166,6 +188,11 @@ adminRouter.patch("/users/:id", async (request, response) => {
       "Aktiv admin öz rolunu və ya statusunu məhdudlaşdıra bilməz.",
     );
   }
+  if (target.role === "owner_admin" && ((patch.role && patch.role !== "owner_admin") || (patch.status && patch.status !== "Aktiv"))) {
+    if ((await countOwnerAdmins()) <= 1) {
+      throw new ApiError(409, "LAST_OWNER_REQUIRED", "Sistemdə ən azı bir aktiv platforma sahibi qalmalıdır.");
+    }
+  }
   const user = await adminUpdateUser(id, patch);
   if (!user) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
   await synchronizeProfessionalProfilesForUser(user);
@@ -173,9 +200,14 @@ adminRouter.patch("/users/:id", async (request, response) => {
   response.json({ data: toAdminUser(user) });
 });
 
-adminRouter.delete("/users/:id", requirePrimaryAdmin, async (request, response) => {
+adminRouter.delete("/users/:id", requireOwnerAdmin, async (request, response) => {
   const id = z.string().parse(request.params.id);
   if (id === request.auth!.userId) throw new ApiError(409, "SELF_DELETE_FORBIDDEN", "Aktiv admin hesabını silmək olmaz.");
+  const target = await findUserById(id);
+  if (!target) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
+  if (target.role === "owner_admin" && (await countOwnerAdmins()) <= 1) {
+    throw new ApiError(409, "LAST_OWNER_REQUIRED", "Son platforma sahibi silinə bilməz.");
+  }
   await deactivateProfessionalProfilesForUser(id);
   if (!(await deleteUser(id))) throw new ApiError(404, "USER_NOT_FOUND", "İstifadəçi tapılmadı.");
   await writeAudit(request.auth!.userId,"İstifadəçi silindi","user",id);

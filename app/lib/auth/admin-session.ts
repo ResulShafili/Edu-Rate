@@ -66,6 +66,7 @@ function readAdminRole(user: SessionUser): AdminAccessRole | null {
   if (isAdminAccessRole(user.role)) return user.role;
 
   if (!Array.isArray(user.roles)) return null;
+  if (user.roles.includes("owner_admin")) return "owner_admin";
   if (user.roles.includes("admin")) return "admin";
   return user.roles.includes("assistant_admin") ? "assistant_admin" : null;
 }

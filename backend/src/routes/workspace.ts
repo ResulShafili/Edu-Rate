@@ -67,7 +67,7 @@ workspaceRouter.get("/", async (request, response) => {
     return;
   }
 
-  if (user.role === "admin" || user.role === "assistant_admin") {
+  if (["owner_admin", "admin", "assistant_admin"].includes(user.role)) {
     const [users, events, counts] = await Promise.all([listUsers(10_000), listEvents(), getPlatformCounts()]);
     response.json({ data: { role: user.role, title: "Rəhbərlik paneli", focus: "Platforma idarəetməsi", metrics: [
       { label: "İstifadəçi", value: users.length },

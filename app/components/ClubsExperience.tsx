@@ -27,7 +27,7 @@ export function ClubsExperience({ clubs, failed=false }: ClubsExperienceProps) {
   const [coverPreview,setCoverPreview]=useState("");
   const coverPreviewRef=useRef("");
   const coverInputRef=useRef<HTMLInputElement>(null);
-  const canCreate = Boolean(user?.accessRole && ["teacher", "mentor", "assistant_admin", "admin"].includes(user.accessRole));
+  const canCreate = Boolean(user?.accessRole && ["teacher", "mentor", "assistant_admin", "admin", "owner_admin"].includes(user.accessRole));
 
   useEffect(()=>()=>{if(coverPreviewRef.current)URL.revokeObjectURL(coverPreviewRef.current);},[]);
 

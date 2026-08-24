@@ -29,7 +29,7 @@ type PlatformNavigationRailProps = {
   pathname: string;
   authenticated: boolean;
   isAdmin: boolean;
-  accountRole?: "student" | "mentor" | "teacher" | "admin" | "assistant_admin";
+  accountRole?: "student" | "mentor" | "teacher" | "admin" | "assistant_admin" | "owner_admin";
   mobileOpen: boolean;
   onMobileClose: () => void;
 };

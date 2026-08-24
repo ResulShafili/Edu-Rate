@@ -286,7 +286,8 @@ function UserFields({
           {canAssignElevatedRoles && (
             <>
               <option value="assistant_admin">Admin köməkçisi</option>
-              <option value="admin">Əsas administrator</option>
+              <option value="admin">Administrator</option>
+              <option value="owner_admin">Platforma sahibi</option>
             </>
           )}
         </select>

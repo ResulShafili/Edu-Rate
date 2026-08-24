@@ -28,7 +28,7 @@ export async function resolveAdminAccess(
     if (!identity) return { status: "signed-out", signInHref: "/auth?returnTo=%2Fadmin" };
 
     const role = identity.role;
-    const hasAccess = role === "admin"
+    const hasAccess = role === "owner_admin" || role === "admin"
       || (options.allowAssistant === true && role === "assistant_admin");
 
     return hasAccess && isAdminAccessRole(role)

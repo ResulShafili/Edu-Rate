@@ -44,6 +44,14 @@ const envSchema = z
         message: "Production mühitində DATABASE_URL tələb olunur.",
       });
     }
+
+    if (value.NODE_ENV === "production" && value.SEED_DEMO_DATA) {
+      context.addIssue({
+        code: "custom",
+        path: ["SEED_DEMO_DATA"],
+        message: "Production mühitində demo məlumat seed etmək qadağandır.",
+      });
+    }
   });
 
 const parsed = envSchema.safeParse(process.env);

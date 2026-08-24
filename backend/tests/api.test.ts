@@ -20,7 +20,7 @@ before(async () => {
   const module = await import("../src/app.js");
   app = module.createApp();
   const [{createUser},{createAccessToken,hashPassword}]=await Promise.all([import("../src/db/database.js"),import("../src/lib/auth.js")]);
-  const admin=await createUser({name:"Başlanğıc Administrator",email:"bootstrap.admin@example.az",passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Pedaqoji fakültə",program:"Riyaziyyat müəllimliyi",role:"admin",status:"Aktiv"});
+  const admin=await createUser({name:"Başlanğıc Platforma Sahibi",email:"bootstrap.admin@example.az",passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Pedaqoji fakültə",program:"Riyaziyyat müəllimliyi",role:"owner_admin",status:"Aktiv"});
   reusableAdminToken=createAccessToken(admin);
   const mediaStudent=await createUser({name:"Şəkil Təhlükəsizlik Testi",email:"media.security@example.az",passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"Mühəndislik fakültəsi",program:"Kompüter mühəndisliyi",role:"student",status:"Aktiv"});
   reusableMediaStudentToken=createAccessToken(mediaStudent);
@@ -47,6 +47,7 @@ describe("EduRate API", () => {
     assert.ok(response.body.paths["/api/clubs/{clubId}/leaders/{userId}"].patch);
     assert.ok(response.body.paths["/api/reviews"]);
     assert.ok(response.body.paths["/api/network/announcements"]);
+    assert.ok(response.body.paths["/api/network/announcements/{id}/state"].patch);
     assert.ok(response.body.paths["/api/network/feed"]);
     assert.ok(response.body.paths["/api/admin/reviews"]);
     assert.ok(response.body.paths["/api/admin/announcements"]);
@@ -518,7 +519,7 @@ describe("EduRate API", () => {
     assert.equal(review.author, "Təsdiqlənmiş EduRate hesabı");
   });
 
-  it("iki səviyyəli admin icazələrini server tərəfində tətbiq edir", async () => {
+  it("üç səviyyəli admin icazələrini server tərəfində tətbiq edir", async () => {
     const adminAuthorization = `Bearer ${reusableAdminToken}`;
     const suffix = Date.now();
 
@@ -654,7 +655,7 @@ describe("EduRate API", () => {
         faculty: "İqtisadiyyat fakültəsi",
       })
       .expect(403);
-    assert.equal(forbiddenUserCreate.body.error.code, "PRIMARY_ADMIN_REQUIRED");
+    assert.equal(forbiddenUserCreate.body.error.code, "OWNER_ADMIN_REQUIRED");
 
     const allowedLowerRoleChange = await request(app)
       .patch(`/api/admin/users/${studentId}`)
@@ -700,7 +701,7 @@ describe("EduRate API", () => {
       .delete(`/api/admin/users/${studentId}`)
       .set("Authorization", assistantAuthorization)
       .expect(403);
-    assert.equal(forbiddenUserDelete.body.error.code, "PRIMARY_ADMIN_REQUIRED");
+    assert.equal(forbiddenUserDelete.body.error.code, "OWNER_ADMIN_REQUIRED");
 
     for (const path of ["/api/admin/overview", "/api/admin/users", "/api/admin/events", "/api/admin/clubs"]) {
       const denied = await request(app)
@@ -1102,6 +1103,14 @@ describe("EduRate API", () => {
     const reactedAnnouncement=publicAnnouncements.body.data.find((item:{id:string})=>item.id===announcement.body.data.id);
     assert.equal(reactedAnnouncement.reactions["❤️"],1);
     assert.equal(reactedAnnouncement.myReaction,"❤️");
+    const announcementState=await request(app).patch(`/api/network/announcements/${announcement.body.data.id}/state`).set("Authorization",studentAuthorization).send({read:true,bookmarked:true}).expect(200);
+    assert.deepEqual(announcementState.body.data,{read:true,bookmarked:true});
+    const announcementAfterState=await request(app).get("/api/network/announcements").set("Authorization",studentAuthorization).expect(200);
+    const persistedAnnouncement=announcementAfterState.body.data.find((item:{id:string})=>item.id===announcement.body.data.id);
+    assert.equal(persistedAnnouncement.read,true);
+    assert.equal(persistedAnnouncement.bookmarked,true);
+    const missingAnnouncementState=await request(app).patch("/api/network/announcements/missing-announcement/state").set("Authorization",studentAuthorization).send({read:true}).expect(404);
+    assert.equal(missingAnnouncementState.body.error.code,"ANNOUNCEMENT_NOT_FOUND");
 
     const post=await request(app).post("/api/network/feed").set("Authorization",studentAuthorization).send({title:"Layihə komandası",summary:"Yeni tələbə layihəsi üçün iki komanda yoldaşı axtarılır.",tags:["Komanda"]}).expect(202);
     let publicFeed=await request(app).get("/api/network/feed").expect(200);

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { createAnnouncement, createFeedPost, getAnnouncementReactionState, listAnnouncements, listFeed, recordAnnouncementView, setAnnouncementReaction } from "../db/network.js";
+import { createAnnouncement, createFeedPost, findAnnouncementById, getAnnouncementReactionState, listAnnouncements, listFeed, recordAnnouncementView, setAnnouncementReaction, setAnnouncementUserState } from "../db/network.js";
 import { authenticate, optionalAuthenticate } from "../middleware/authenticate.js";
 import { findUserById } from "../db/database.js";
 import { ApiError } from "../lib/api-error.js";
@@ -31,9 +31,15 @@ networkRouter.post("/announcements",authenticate,async(request,response)=>{
 });
 
 const reactionSchema=z.enum(["👍","❤️","😂","😮","😢","👏","🎉","🤔","👎","🙏"]);
-networkRouter.post("/announcements/:id/view",authenticate,async(request,response)=>response.json({data:{viewCount:await recordAnnouncementView(z.string().parse(request.params.id),request.auth!.userId)}}));
-networkRouter.get("/announcements/:id/reactions",authenticate,async(request,response)=>{const id=z.string().parse(request.params.id);response.json({data:await getAnnouncementReactionState(id,request.auth!.userId)});});
-networkRouter.patch("/announcements/:id/reaction",authenticate,async(request,response)=>{const id=z.string().parse(request.params.id);const {emoji}=z.object({emoji:reactionSchema.nullable()}).parse(request.body);await setAnnouncementReaction(id,request.auth!.userId,emoji);response.json({data:await getAnnouncementReactionState(id,request.auth!.userId)});});
+async function requirePublishedAnnouncement(id:string){
+  const announcement=await findAnnouncementById(id);
+  if(!announcement||announcement.status!=="published")throw new ApiError(404,"ANNOUNCEMENT_NOT_FOUND","Elan tapılmadı.");
+  return announcement;
+}
+networkRouter.post("/announcements/:id/view",authenticate,async(request,response)=>{const id=z.string().parse(request.params.id);await requirePublishedAnnouncement(id);response.json({data:{viewCount:await recordAnnouncementView(id,request.auth!.userId)}});});
+networkRouter.get("/announcements/:id/reactions",authenticate,async(request,response)=>{const id=z.string().parse(request.params.id);await requirePublishedAnnouncement(id);response.json({data:await getAnnouncementReactionState(id,request.auth!.userId)});});
+networkRouter.patch("/announcements/:id/reaction",authenticate,async(request,response)=>{const id=z.string().parse(request.params.id);await requirePublishedAnnouncement(id);const {emoji}=z.object({emoji:reactionSchema.nullable()}).parse(request.body);await setAnnouncementReaction(id,request.auth!.userId,emoji);response.json({data:await getAnnouncementReactionState(id,request.auth!.userId)});});
+networkRouter.patch("/announcements/:id/state",authenticate,async(request,response)=>{const id=z.string().parse(request.params.id);await requirePublishedAnnouncement(id);const input=z.object({read:z.boolean().optional(),bookmarked:z.boolean().optional()}).strict().refine((value)=>value.read!==undefined||value.bookmarked!==undefined).parse(request.body);response.json({data:await setAnnouncementUserState(id,request.auth!.userId,input)});});
 
 networkRouter.get("/feed", async (request, response) => {
   const { category } = querySchema.parse(request.query);

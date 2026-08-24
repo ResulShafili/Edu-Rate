@@ -66,7 +66,7 @@ export default async function RootLayout({
     ? {
         ...createIdentityProfile(requestIdentity.displayName, requestIdentity.email),
         accessRole: requestIdentity.role ?? "student",
-        role: requestIdentity.role === "teacher" ? "Müəllim" as const : requestIdentity.role === "mentor" ? "Mentor" as const : requestIdentity.role === "admin" || requestIdentity.role === "assistant_admin" ? "Rəhbərlik" as const : "Tələbə" as const,
+        role: requestIdentity.role === "teacher" ? "Müəllim" as const : requestIdentity.role === "mentor" ? "Mentor" as const : requestIdentity.role === "owner_admin" || requestIdentity.role === "admin" || requestIdentity.role === "assistant_admin" ? "Rəhbərlik" as const : "Tələbə" as const,
       }
     : null;
   return (

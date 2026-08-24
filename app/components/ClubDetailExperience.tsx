@@ -30,7 +30,7 @@ export function ClubDetailExperience({ club }: ClubDetailExperienceProps) {
   const [memberBusy,setMemberBusy]=useState("");
   const [deleteConfirm,setDeleteConfirm]=useState(false);
   const [deleting,setDeleting]=useState(false);
-  const initialManage = Boolean(user && (user.id === club.createdBy || user.accessRole === "admin" || user.accessRole === "assistant_admin"));
+  const initialManage = Boolean(user && (user.id === club.createdBy || user.accessRole === "owner_admin" || user.accessRole === "admin" || user.accessRole === "assistant_admin"));
   const canManage=management?.canManage??initialManage;
   const reduceMotion = Boolean(useReducedMotion());
   const heroRef = useRef<HTMLElement>(null);

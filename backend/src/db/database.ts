@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 import { env } from "../config/env.js";
 
-export type UserRole = "student" | "mentor" | "teacher" | "assistant_admin" | "admin";
+export type UserRole = "student" | "mentor" | "teacher" | "assistant_admin" | "admin" | "owner_admin";
 export type UserStatus = "Aktiv" | "Gözləmədə" | "Məhdudlaşdırılıb";
 
 export interface UserRecord {
@@ -22,6 +22,7 @@ export interface UserRecord {
   termsVersion: string | null;
   privacyVersion: string | null;
   legalAcceptedAt: string | null;
+  deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -78,18 +79,13 @@ function mapUser(row: Record<string, unknown>): UserRecord {
     termsVersion: row.terms_version ? String(row.terms_version) : null,
     privacyVersion: row.privacy_version ? String(row.privacy_version) : null,
     legalAcceptedAt: row.legal_accepted_at ? new Date(String(row.legal_accepted_at)).toISOString() : null,
+    deletedAt: row.deleted_at ? new Date(String(row.deleted_at)).toISOString() : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
     updatedAt: new Date(String(row.updated_at ?? row.created_at)).toISOString(),
   };
 }
 
-export async function initializeDatabase() {
-  if (!databasePool) {
-    console.warn("DATABASE_URL yoxdur; lokal yaddaş rejimi aktivdir.");
-    return;
-  }
-
-  await databasePool.query(`
+export const BASE_USER_SCHEMA_SQL = `
     CREATE TABLE IF NOT EXISTS users (
       id UUID PRIMARY KEY,
       name VARCHAR(120) NOT NULL,
@@ -115,11 +111,18 @@ export async function initializeDatabase() {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS about VARCHAR(600) NOT NULL DEFAULT 'EduRate icmasına xoş gəlmisən.';
     ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'Aktiv';
     ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
-    ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('student', 'mentor', 'teacher', 'assistant_admin', 'admin'));
+    ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('student', 'mentor', 'teacher', 'assistant_admin', 'admin', 'owner_admin'));
     ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check;
     ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('Aktiv', 'Gözləmədə', 'Məhdudlaşdırılıb'));
-  `);
+  `;
 
+export async function initializeDatabase() {
+  if (!databasePool) {
+    console.warn("DATABASE_URL yoxdur; lokal yaddaş rejimi aktivdir.");
+    return;
+  }
+
+  await databasePool.query(BASE_USER_SCHEMA_SQL);
 }
 
 export async function closeDatabase() {
@@ -137,7 +140,7 @@ export async function findUserByEmail(email: string): Promise<UserRecord | null>
     return memoryUsers.get(normalizedEmail) ?? null;
   }
 
-  const result = await databasePool.query("SELECT * FROM users WHERE email = $1 LIMIT 1", [
+  const result = await databasePool.query("SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL LIMIT 1", [
     normalizedEmail,
   ]);
   return result.rows[0] ? mapUser(result.rows[0]) : null;
@@ -145,10 +148,10 @@ export async function findUserByEmail(email: string): Promise<UserRecord | null>
 
 export async function findUserById(id: string): Promise<UserRecord | null> {
   if (!databasePool) {
-    return [...memoryUsers.values()].find((user) => user.id === id) ?? null;
+    return [...memoryUsers.values()].find((user) => user.id === id && !user.deletedAt) ?? null;
   }
 
-  const result = await databasePool.query("SELECT * FROM users WHERE id = $1 LIMIT 1", [id]);
+  const result = await databasePool.query("SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL LIMIT 1", [id]);
   return result.rows[0] ? mapUser(result.rows[0]) : null;
 }
 
@@ -173,6 +176,7 @@ export async function createUser(input: CreateUserRecord): Promise<UserRecord> {
     termsVersion: input.termsVersion ?? null,
     privacyVersion: input.privacyVersion ?? null,
     legalAcceptedAt: input.termsVersion && input.privacyVersion ? new Date().toISOString() : null,
+    deletedAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -220,10 +224,10 @@ export async function updatePassword(id:string,passwordHash:string):Promise<bool
 
 export async function listUsers(limit = 50): Promise<UserRecord[]> {
   if (!databasePool) {
-    return [...memoryUsers.values()].slice(0, limit);
+    return [...memoryUsers.values()].filter((user) => !user.deletedAt).slice(0, limit);
   }
 
-  const result = await databasePool.query("SELECT * FROM users ORDER BY created_at DESC LIMIT $1", [
+  const result = await databasePool.query("SELECT * FROM users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1", [
     limit,
   ]);
   return result.rows.map(mapUser);
@@ -286,10 +290,48 @@ export async function assistantUpdateUserRole(
 export async function deleteUser(id: string): Promise<boolean> {
   if (!databasePool) {
     const user = [...memoryUsers.values()].find((entry) => entry.id === id);
-    return user ? memoryUsers.delete(user.email) : false;
+    if (!user || user.deletedAt) return false;
+    memoryUsers.delete(user.email);
+    Object.assign(user, {
+      name: "Silinmiş istifadəçi",
+      email: `deleted-${user.id}@deleted.invalid`,
+      passwordHash: "account-deleted",
+      university: "Anonimləşdirilib",
+      faculty: "Anonimləşdirilib",
+      program: "Anonimləşdirilib",
+      year: "Anonimləşdirilib",
+      city: "Anonimləşdirilib",
+      about: "",
+      role: "student" as UserRole,
+      status: "Məhdudlaşdırılıb" as UserStatus,
+      emailVerifiedAt: null,
+      deletedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    memoryUsers.set(user.email, user);
+    return true;
   }
-  const result = await databasePool.query("DELETE FROM users WHERE id = $1", [id]);
+  const result = await databasePool.query(
+    `UPDATE users SET
+       name='Silinmiş istifadəçi', email='deleted-' || id::text || '@deleted.invalid',
+       password_hash='account-deleted', university='Anonimləşdirilib', faculty='Anonimləşdirilib',
+       program='Anonimləşdirilib', year='Anonimləşdirilib', city='Anonimləşdirilib', about='',
+       role='student', status='Məhdudlaşdırılıb', email_verified_at=NULL,
+       deleted_at=NOW(), anonymized_at=NOW(), updated_at=NOW()
+     WHERE id=$1 AND deleted_at IS NULL`,
+    [id],
+  );
   return (result.rowCount ?? 0) > 0;
+}
+
+export async function countOwnerAdmins(): Promise<number> {
+  if (!databasePool) {
+    return [...memoryUsers.values()].filter((user) => user.role === "owner_admin" && user.status === "Aktiv" && !user.deletedAt).length;
+  }
+  const result = await databasePool.query(
+    "SELECT COUNT(*)::int AS count FROM users WHERE role='owner_admin' AND status='Aktiv' AND deleted_at IS NULL",
+  );
+  return Number(result.rows[0]?.count ?? 0);
 }
 
 export async function updateUserProfile(

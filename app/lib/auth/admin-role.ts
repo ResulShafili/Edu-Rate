@@ -1,4 +1,4 @@
-export type AdminAccessRole = "admin" | "assistant_admin";
+export type AdminAccessRole = "owner_admin" | "admin" | "assistant_admin";
 export type AssignableUserRole = "student" | "mentor" | "teacher";
 
 export type AdminCapabilities = {
@@ -13,20 +13,20 @@ export type AdminCapabilities = {
 };
 
 export function isAdminAccessRole(value: unknown): value is AdminAccessRole {
-  return value === "admin" || value === "assistant_admin";
+  return value === "owner_admin" || value === "admin" || value === "assistant_admin";
 }
 
 export function getAdminCapabilities(role: AdminAccessRole): AdminCapabilities {
-  const isPrimaryAdmin = role === "admin";
+  const isOwner = role === "owner_admin";
   return {
     role,
     canAccessPanel: true,
     canManageContent: true,
     canManageUsers: true,
-    canCreateUsers: isPrimaryAdmin,
-    canEditPrivilegedUsers: isPrimaryAdmin,
-    canDeleteUsers: isPrimaryAdmin,
-    canAssignElevatedRoles: isPrimaryAdmin,
+    canCreateUsers: isOwner,
+    canEditPrivilegedUsers: isOwner,
+    canDeleteUsers: isOwner,
+    canAssignElevatedRoles: isOwner,
   };
 }
 
@@ -38,9 +38,12 @@ export function canEditUserRole(
   actorRole: AdminAccessRole,
   targetRole: string,
 ): boolean {
-  return actorRole === "admin" || isAssignableUserRole(targetRole);
+  if (actorRole === "owner_admin") return true;
+  if (actorRole === "admin") return targetRole !== "owner_admin";
+  return isAssignableUserRole(targetRole);
 }
 
 export function getAdminRoleLabel(role: AdminAccessRole): string {
-  return role === "admin" ? "Əsas administrator" : "Admin köməkçisi";
+  if (role === "owner_admin") return "Platforma sahibi";
+  return role === "admin" ? "Administrator" : "Admin köməkçisi";
 }

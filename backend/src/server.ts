@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { createApp } from "./app.js";
 import { env } from "./config/env.js";
-import { closeDatabase, initializeDatabase } from "./db/database.js";
+import { closeDatabase } from "./db/database.js";
 import { initializeBusinessDatabase } from "./db/business.js";
 import { initializePlatformDatabase } from "./db/platform.js";
 import { initializeNetworkDatabase } from "./db/network.js";
@@ -10,11 +10,12 @@ import { seedProfessionalProfiles } from "./db/professionals.js";
 import { attachRealtime, closeRealtime } from "./realtime.js";
 import { cleanupExpiredSecurityData } from "./db/auth-security.js";
 
-await initializeDatabase();
-await initializeBusinessDatabase();
-await initializePlatformDatabase();
-await initializeNetworkDatabase();
 await runMigrations();
+if (env.SEED_DEMO_DATA) {
+  await initializeBusinessDatabase();
+  await initializePlatformDatabase();
+  await initializeNetworkDatabase();
+}
 await seedProfessionalProfiles();
 await cleanupExpiredSecurityData();
 

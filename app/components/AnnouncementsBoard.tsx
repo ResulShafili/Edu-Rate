@@ -38,8 +38,7 @@ const tones: Record<NetworkTone, { marker: string; date: string; initials: strin
 
 export function AnnouncementsBoard({ items, activeFilter, onFilterChange, reducedMotion }: AnnouncementsBoardProps) {
   const {user}=useAuth();
-  const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
-  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => new Set());
+  const [stateOverrides, setStateOverrides] = useState<Record<string, { read?: boolean; bookmarked?: boolean }>>({});
   const [compactLimit, setCompactLimit] = useState(4);
   const [submissionOpen,setSubmissionOpen]=useState(false);
   const filtered = items.filter((item) => activeFilter === "all" || item.category === activeFilter);
@@ -48,13 +47,20 @@ export function AnnouncementsBoard({ items, activeFilter, onFilterChange, reduce
   const priority = active.filter((item) => item.priority).slice(0, 3);
   const rest = active.filter((item) => !priority.some((priorityItem) => priorityItem.id === item.id));
 
-  function toggle(setter: typeof setReadIds, id: string) {
-    setter((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+  async function updateState(kind:"read"|"bookmarked",id:string,current:boolean){
+    if (!user) return;
+    const nextValue=!current;
+    setStateOverrides((values)=>({...values,[id]:{...values[id],[kind]:nextValue}}));
+    try{
+      const response=await fetch(`/api/network/announcements/${encodeURIComponent(id)}/state`,{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({[kind]:nextValue})});
+      if(!response.ok)throw new Error("STATE_NOT_SAVED");
+    }catch{
+      setStateOverrides((values)=>({...values,[id]:{...values[id],[kind]:current}}));
+    }
   }
+
+  const readState=(item:AnnouncementItem)=>stateOverrides[item.id]?.read??Boolean(item.read);
+  const bookmarkState=(item:AnnouncementItem)=>stateOverrides[item.id]?.bookmarked??Boolean(item.bookmarked);
 
   return (
     <section className="announcements-board" aria-labelledby="announcements-title">
@@ -80,8 +86,8 @@ export function AnnouncementsBoard({ items, activeFilter, onFilterChange, reduce
         <EmptyState title="Bu kateqoriyada aktiv elan yoxdur" description="Müddəti bitmiş məlumatlara aşağıdakı arxivdən baxa bilərsən." />
       ) : (
         <>
-          {priority.length > 0 && <div className="announcement-priority-grid"><AnimatePresence mode="popLayout">{priority.map((item, index) => <AnnouncementCard key={item.id} item={item} index={index} reducedMotion={reducedMotion} read={readIds.has(item.id)} bookmarked={bookmarkedIds.has(item.id)} onRead={() => toggle(setReadIds, item.id)} onBookmark={() => toggle(setBookmarkedIds, item.id)} />)}</AnimatePresence></div>}
-          {rest.length > 0 && <section className="announcement-compact-section" aria-labelledby="other-announcements-title"><h3 id="other-announcements-title">Digər elanlar</h3><div className="announcement-compact-list">{rest.slice(0, compactLimit).map((item) => <AnnouncementCompact key={item.id} item={item} read={readIds.has(item.id)} bookmarked={bookmarkedIds.has(item.id)} onRead={() => toggle(setReadIds, item.id)} onBookmark={() => toggle(setBookmarkedIds, item.id)} />)}</div>{compactLimit < rest.length && <button type="button" className="announcement-load-more" onClick={() => setCompactLimit((current) => current + 4)}>Daha çox elan göstər</button>}</section>}
+          {priority.length > 0 && <div className="announcement-priority-grid"><AnimatePresence mode="popLayout">{priority.map((item, index) => <AnnouncementCard key={item.id} item={item} index={index} reducedMotion={reducedMotion} read={readState(item)} bookmarked={bookmarkState(item)} onRead={() => void updateState("read",item.id,readState(item))} onBookmark={() => void updateState("bookmarked",item.id,bookmarkState(item))} />)}</AnimatePresence></div>}
+          {rest.length > 0 && <section className="announcement-compact-section" aria-labelledby="other-announcements-title"><h3 id="other-announcements-title">Digər elanlar</h3><div className="announcement-compact-list">{rest.slice(0, compactLimit).map((item) => <AnnouncementCompact key={item.id} item={item} read={readState(item)} bookmarked={bookmarkState(item)} onRead={() => void updateState("read",item.id,readState(item))} onBookmark={() => void updateState("bookmarked",item.id,bookmarkState(item))} />)}</div>{compactLimit < rest.length && <button type="button" className="announcement-load-more" onClick={() => setCompactLimit((current) => current + 4)}>Daha çox elan göstər</button>}</section>}
         </>
       )}
 
@@ -114,5 +120,6 @@ function AnnouncementEngagement({item}:{item:AnnouncementItem}){
 }
 
 function AnnouncementActions({ read, bookmarked, onRead, onBookmark }: { read: boolean; bookmarked: boolean; onRead: () => void; onBookmark: () => void }) {
-  return <div className="announcement-actions"><button type="button" onClick={onRead} aria-pressed={read} aria-label={read ? "Oxunmamış kimi işarələ" : "Oxunmuş kimi işarələ"}><Check size={15} aria-hidden="true" /></button><button type="button" onClick={onBookmark} aria-pressed={bookmarked} aria-label={bookmarked ? "Yadda saxlananlardan çıxar" : "Yadda saxla"}><Bookmark size={15} fill={bookmarked ? "currentColor" : "none"} aria-hidden="true" /></button></div>;
+  const {user}=useAuth();
+  return <div className="announcement-actions"><button type="button" onClick={onRead} disabled={!user} title={user?undefined:"Bu seçim üçün daxil ol"} aria-pressed={read} aria-label={read ? "Oxunmamış kimi işarələ" : "Oxunmuş kimi işarələ"}><Check size={15} aria-hidden="true" /></button><button type="button" onClick={onBookmark} disabled={!user} title={user?undefined:"Bu seçim üçün daxil ol"} aria-pressed={bookmarked} aria-label={bookmarked ? "Yadda saxlananlardan çıxar" : "Yadda saxla"}><Bookmark size={15} fill={bookmarked ? "currentColor" : "none"} aria-hidden="true" /></button></div>;
 }

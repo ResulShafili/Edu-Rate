@@ -165,5 +165,5 @@ export function PeerDirectory({ canInteract, currentUserId, onMessage, onRequire
 }
 
 function roleLabel(role: string) {
-  return ({ student: "Tələbə", teacher: "Müəllim", mentor: "Mentor", assistant_admin: "Admin köməkçisi", admin: "Administrator" } as Record<string, string>)[role] ?? role;
+  return ({ student: "Tələbə", teacher: "Müəllim", mentor: "Mentor", assistant_admin: "Admin köməkçisi", admin: "Administrator", owner_admin: "Platforma sahibi" } as Record<string, string>)[role] ?? role;
 }

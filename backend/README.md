@@ -64,7 +64,7 @@ Render build mərhələsində TypeScript və tip paketlərini quraşdırmaq üç
 
 Frontend Elanlar səhifəsi artıq bu API-lərlə işləyir; yüklənmə, boş və xəta vəziyyətləri mövcuddur. Admin panelində rəy moderasiyası ayrıca qorunan bölmə kimi təqdim edilir.
 
-Müəllim və mentor qeydiyyatları təhlükəsizlik məqsədilə `Gözləmədə` statusunda yaradılır. Əsas administrator hesabı yoxlayıb aktivləşdirdikdən sonra rol panelinə giriş açılır. Müəllim qeydiyyatında fakültə tələb edilmir; yalnız tədris sahəsi yazılır.
+Müəllim qeydiyyatları təhlükəsizlik məqsədilə `Gözləmədə` statusunda yaradılır. Platforma sahibi hesabı yoxlayıb aktivləşdirdikdən sonra rol panelinə giriş açılır. Müəllim qeydiyyatında fakültə tələb edilmir; yalnız tədris sahəsi yazılır. Mentor profili ayrıca qeydiyyatla deyil, aktiv müəllim hesabından göndərilən və rəhbərlik tərəfindən təsdiqlənən müraciətlə yaradılır.
 
 Bütün yazma əməliyyatları JWT tələb edir. Tədbiri yalnız onu yaradan istifadəçi və ya admin dəyişə/silə bilər. Endpoint-lərin nümunələri və cavab kodları Swagger UI daxilində test edilə bilər.
 
@@ -77,15 +77,24 @@ NEXT_PUBLIC_API_BASE_URL=https://edurate-api.onrender.com
 EDURATE_API_BASE_URL=https://edurate-api.onrender.com
 ```
 
-İlkin administrator açıq qeydiyyat vasitəsilə yaradılmır. Hesab adi qaydada yaradıldıqdan sonra yalnız database sahibi Render PostgreSQL konsolunda həmin hesabı bir dəfə yüksəltməlidir:
+İlkin platforma sahibi açıq qeydiyyat vasitəsilə yaradılmır. Hesab adi qaydada yaradıldıqdan sonra yalnız database sahibi Render PostgreSQL konsolunda həmin hesabı bir dəfə yüksəltməlidir:
 
 ```sql
 UPDATE users
-SET role = 'admin', status = 'Aktiv', updated_at = NOW()
+SET role = 'owner_admin', status = 'Aktiv', updated_at = NOW()
 WHERE email = 'admin@example.az';
 ```
 
-Bu əməliyyatdan əvvəl e-poçtun doğru şəxsə məxsus olduğunu təşkilati qaydada yoxlayın. Sonrakı admin və admin köməkçisi rolları əsas administratorun qorunan panelindən idarə olunur.
+Bu əməliyyatdan əvvəl e-poçtun doğru şəxsə məxsus olduğunu təşkilati qaydada yoxlayın. Sistemdə həmişə ən azı bir aktiv platforma sahibi saxlanılır. Sonrakı admin və admin köməkçisi rolları platforma sahibinin qorunan panelindən idarə olunur.
+
+Production buraxılışından əvvəl backup yaradın, sonra versiyalı migration-ları ayrıca tətbiq edin:
+
+```bash
+npm run build
+npm run migrate
+```
+
+Server də başlanğıcda gözləyən migration-ları yoxlayır. `SEED_DEMO_DATA=true` production-da qəsdən bloklanır.
 
 Sonra frontend-i Vercel-də redeploy edin.
 

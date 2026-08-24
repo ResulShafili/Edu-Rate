@@ -3198,3 +3198,13 @@ body {
 .kuds-shell .route-page>*{animation:premium-route-rise .68s cubic-bezier(.22,1,.36,1) both}.kuds-shell .route-page>*:nth-child(2){animation-delay:.07s}.kuds-shell .route-page>*:nth-child(3){animation-delay:.14s}.kuds-shell .route-page>*:nth-child(4){animation-delay:.21s}@keyframes premium-route-rise{from{opacity:0;transform:translateY(20px) scale(.992)}to{opacity:1;transform:none}}
 @media(max-width:767px){.kuds-shell .platform-route-content{padding:14px!important}.kuds-shell .platform-route-content::before{inset:64px 0 0}.kuds-shell :is(.section-heading,.peers-heading,.mentor-heading,.support-heading,.teachers-heading,.clubs-section-heading,.reviews-heading,.admin-header){padding:18px!important;border-radius:19px!important}.kuds-shell :is(.event-card,.peer-card,.mentor-card,.teacher-card,.club-card,.club-directory-card,.review-card,.community-card-shell,.announcement-card,.faq-panel,.ticket-panel,.teacher-rating-panel,.settings-card,.auth-panel,.auth-form-panel,.kuds-home-section){border-radius:19px!important}.kuds-shell .site-footer{padding:19px!important;border-radius:19px}}
 @media(prefers-reduced-motion:reduce){.kuds-shell .route-page>*{animation:none!important}.kuds-shell :is(.event-card,.peer-card,.mentor-card,.teacher-card,.club-directory-card,.review-card,.community-card-shell,.announcement-card,.club-member-card,.kuds-landing-card):hover{transform:none!important}}
+
+/* Compact directory filters: mobile users open the full-width panel only when needed. */
+.kuds-shell .directory-filter-toggle{display:none}
+@media(max-width:767px){
+  .kuds-shell .directory-filter-toggle{display:flex;width:100%;min-height:48px;margin:0 0 10px;padding:0 14px;align-items:center;gap:9px;color:var(--kuds-text);border:1px solid rgba(255,255,255,.82);border-radius:15px;background:rgba(255,255,255,.68);box-shadow:0 12px 28px -23px rgba(26,67,58,.48);font:inherit;font-size:12px;font-weight:780;cursor:pointer}
+  .kuds-shell .directory-filter-toggle small{margin-left:auto;color:var(--kuds-muted);font-size:10px;font-weight:650}
+  .kuds-shell :is(.teacher-directory-filters,.mentor-filters){display:none!important;width:100%;margin:0 0 16px;padding:10px!important;overflow:visible!important;grid-template-columns:minmax(0,1fr)!important;gap:9px!important}
+  .kuds-shell :is(.teacher-directory-filters,.mentor-filters).is-open{display:grid!important}
+  .kuds-shell :is(.teacher-directory-filters,.mentor-filters) label{width:100%!important;min-width:0!important;max-width:none!important;min-height:58px;grid-column:auto!important}
+}

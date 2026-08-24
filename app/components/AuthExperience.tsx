@@ -77,6 +77,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
   const [selectedProgram, setSelectedProgram] = useState("");
   const [accountType, setAccountType] = useState<AccountType>("student");
   const [pendingTeacherEmail, setPendingTeacherEmail] = useState("");
+  const [pendingTeacherDelivery, setPendingTeacherDelivery] = useState(false);
   const reduceMotion = Boolean(useReducedMotion());
   const formId = useId();
   const router = useRouter();
@@ -165,12 +166,13 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
         });
         if (result.requiresApproval) {
           setPendingTeacherEmail(values.email);
+          setPendingTeacherDelivery(Boolean(result.emailDeliveryPending));
           form.reset();
           setSelectedFaculty("");
           setSelectedProgram("");
           return;
         }
-        if(result.requiresEmailVerification){setFormMessage("Təsdiq keçidi e-poçt ünvanına göndərildi. Məktubdakı keçidi aç.");form.reset();return;}
+        if(result.requiresEmailVerification){setFormMessage(result.emailDeliveryPending?"Hesab yaradıldı, lakin məktub xidməti hazırda cavab vermir. Giriş bölməsindən təsdiq məktubunu yenidən istəyə bilərsən.":"Təsdiq keçidi e-poçt ünvanına göndərildi. Məktubdakı keçidi aç.");form.reset();return;}
         setFormMessage("Hazırsan — hesabın yaradıldı. Profilin açılır.");
         form.reset();
         router.push(getRoleHome(result.user?.accessRole, returnTo));
@@ -304,7 +306,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                   <div>
                     <span>Müəllim qeydiyyatı tamamlandı</span>
                     <h2>Müraciətin təsdiq gözləyir.</h2>
-                    <p><strong>{pendingTeacherEmail}</strong> ünvanı ilə hesab yaradıldı. Rəhbərlik müəllim statusunu təsdiqlədikdən sonra həmin e-poçt və şifrə ilə daxil ola biləcəksən.</p>
+                    <p><strong>{pendingTeacherEmail}</strong> ünvanı ilə hesab yaradıldı. {pendingTeacherDelivery ? "Təsdiq məktubu xidməti hazırda cavab vermir; bir qədər sonra məktubu yenidən istə. " : ""}Rəhbərlik müəllim statusunu təsdiqlədikdən və e-poçt təsdiqindən sonra daxil ola biləcəksən.</p>
                   </div>
                   <button type="button" className="auth-submit" onClick={() => selectMode("login")}>
                     <span>Daxil ol bölməsinə keç</span><ArrowRight size={16} aria-hidden="true" />
@@ -586,7 +588,7 @@ function isAuthField(value: string): value is AuthField {
 }
 
 function getRoleHome(role: string | undefined, fallback: string) {
-  if (role === "admin" || role === "assistant_admin") return "/admin";
+  if (role === "owner_admin" || role === "admin" || role === "assistant_admin") return "/admin";
   if (role === "teacher" || role === "mentor") return "/workspace";
   return fallback;
 }

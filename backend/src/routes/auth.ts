@@ -91,6 +91,16 @@ async function sendVerification(user:{id:string;email:string;name:string}){
   await sendAccountEmail({to:user.email,subject:"EduRate e-poçt təsdiqi",html:`<p>Salam ${escapeHtml(user.name)},</p><p>EduRate hesabını təsdiqləmək üçün aşağıdakı keçiddən istifadə et.</p><p><a href="${url}">E-poçtu təsdiqlə</a></p><p>Keçid 24 saat qüvvədədir.</p>`});
 }
 
+async function trySendVerification(user:{id:string;email:string;name:string}){
+  try {
+    await sendVerification(user);
+    return true;
+  } catch (error) {
+    if (error instanceof EmailDeliveryError) return false;
+    throw error;
+  }
+}
+
 function escapeHtml(value:string){return value.replace(/[&<>"']/g,(character)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[character]!));}
 
 function passwordResetEmailHtml(name:string,code:string){
@@ -169,11 +179,11 @@ authRouter.post("/signup", signupLimiter, async (request, response) => {
     privacyVersion: "2026-08-15",
   });
   if (user.status !== "Aktiv") {
-    if (!user.emailVerifiedAt) await sendVerification(user);
-    response.status(201).json({ data: { user: toPublicUser(user), requiresApproval: true, requiresEmailVerification: !user.emailVerifiedAt } });
+    const emailDelivered = user.emailVerifiedAt ? true : await trySendVerification(user);
+    response.status(201).json({ data: { user: toPublicUser(user), requiresApproval: true, requiresEmailVerification: !user.emailVerifiedAt, emailDeliveryPending: !emailDelivered } });
     return;
   }
-  if(!user.emailVerifiedAt){await sendVerification(user);response.status(201).json({data:{user:toPublicUser(user),requiresApproval:false,requiresEmailVerification:true}});return;}
+  if(!user.emailVerifiedAt){const emailDelivered=await trySendVerification(user);response.status(201).json({data:{user:toPublicUser(user),requiresApproval:false,requiresEmailVerification:true,emailDeliveryPending:!emailDelivered}});return;}
   response.status(201).json({ data: { token: await issueSession(user,request), user: toPublicUser(user), requiresApproval: false, requiresEmailVerification:false } });
 });
 
@@ -250,7 +260,7 @@ authRouter.post("/logout", authenticate, async (request, response) => {
   response.status(204).send();
 });
 
-authRouter.post("/verify-email/request",signupLimiter,async(request,response)=>{const {email}=emailSchema.parse(request.body);const user=await findUserByEmail(email);if(user&&!user.emailVerifiedAt)await sendVerification(user);response.status(202).json({data:{accepted:true}});});
+authRouter.post("/verify-email/request",signupLimiter,async(request,response)=>{const {email}=emailSchema.parse(request.body);const user=await findUserByEmail(email);if(user&&!user.emailVerifiedAt)await trySendVerification(user);response.status(202).json({data:{accepted:true}});});
 authRouter.post("/verify-email/confirm",async(request,response)=>{const {token}=tokenSchema.parse(request.body);const userId=await consumeActionToken(token,"verify_email");if(!userId)throw new ApiError(422,"TOKEN_INVALID","Təsdiq keçidi etibarsızdır və ya vaxtı bitib.");const user=await markEmailVerified(userId);if(!user)throw new ApiError(404,"USER_NOT_FOUND","İstifadəçi tapılmadı.");response.json({data:{verified:true}});});
 authRouter.post("/password/forgot",loginLimiter,async(request,response)=>{
   const {email}=emailSchema.parse(request.body);
@@ -274,6 +284,7 @@ authRouter.post("/password/reset",loginLimiter,async(request,response)=>{
   const userId=await consumeActionToken(input.resetToken,"reset_password");
   if(!userId)throw new ApiError(422,"RESET_EXPIRED","Şifrə yeniləmə icazəsinin vaxtı bitib. Yeni kod istəyin.");
   await updatePassword(userId,await hashPassword(input.password));
+  await markEmailVerified(userId);
   await revokeAllSessions(userId);
   response.json({data:{reset:true}});
 });

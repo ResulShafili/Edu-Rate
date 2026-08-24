@@ -21,7 +21,7 @@ export const credentialAuthGateway: AuthGateway = {
     return result.user;
   },
   async register(input: RegisterInput) {
-    const result = await api.post<{ user: UserProfile | null; requiresApproval: boolean; requiresEmailVerification?:boolean }, RegisterInput>("/auth/signup", input);
+    const result = await api.post<{ user: UserProfile | null; requiresApproval: boolean; requiresEmailVerification?:boolean; emailDeliveryPending?:boolean }, RegisterInput>("/auth/signup", input);
     return { ...result, accountType: input.accountType } satisfies RegisterResult;
   },
   async signOut() {

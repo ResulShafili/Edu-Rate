@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, CircleAlert, Send, Sparkles, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Send, SlidersHorizontal, Sparkles, Star } from "lucide-react";
 import Link from "next/link";
 import useSWR from "swr";
 import {
@@ -85,6 +85,7 @@ export function TeacherEvaluation() {
   const [modeFilter, setModeFilter] = useState("all");
   const [languageFilter, setLanguageFilter] = useState("all");
   const [teacherSort, setTeacherSort] = useState("rating");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [reviewLimit, setReviewLimit] = useState(6);
   const [availableTeacherIds,setAvailableTeacherIds]=useState<Set<string>|null>(null);
   const [teacherCatalogError,setTeacherCatalogError]=useState("");
@@ -317,8 +318,20 @@ export function TeacherEvaluation() {
         </div>
       </motion.div>
 
+      <button
+        type="button"
+        className="directory-filter-toggle"
+        aria-expanded={filtersOpen}
+        aria-controls="teacher-directory-filters"
+        onClick={() => setFiltersOpen((current) => !current)}
+      >
+        <SlidersHorizontal size={16} aria-hidden="true" />
+        <span>Filtrlər</span>
+        <small>{displayedTeachers.length} nəticə</small>
+      </button>
       <div
-        className="teacher-directory-filters"
+        id="teacher-directory-filters"
+        className={`teacher-directory-filters${filtersOpen ? " is-open" : ""}`}
         aria-label="Müəllim axtarış filtrləri"
       >
         <label>

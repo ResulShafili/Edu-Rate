@@ -20,6 +20,7 @@ import { supportRouter } from "./routes/support.js";
 import { workspaceRouter } from "./routes/workspace.js";
 import { communityRouter } from "./routes/community.js";
 import { realtimeRouter } from "./routes/realtime.js";
+import { authenticate, requirePrimaryAdmin } from "./middleware/authenticate.js";
 
 export function createApp() {
   const app = express();
@@ -92,6 +93,8 @@ export function createApp() {
         swaggerOptions: { persistAuthorization: false, displayRequestDuration: true },
       }),
     );
+  } else {
+    app.get("/api/openapi.json", authenticate, requirePrimaryAdmin, (_request, response) => response.json(openApiDocument));
   }
 
   app.use(notFound);

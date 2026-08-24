@@ -19,7 +19,7 @@ export type UserProfile = {
   initials: string;
   email: string;
   role: "Tələbə" | "Müəllim" | "Mentor" | "Rəhbərlik";
-  accessRole?: "student" | "mentor" | "teacher" | "admin" | "assistant_admin";
+  accessRole?: "student" | "mentor" | "teacher" | "admin" | "assistant_admin" | "owner_admin";
   university: string;
   faculty: string;
   program: string;
@@ -52,6 +52,7 @@ export type RegisterResult = {
   user: UserProfile | null;
   requiresApproval: boolean;
   requiresEmailVerification?: boolean;
+  emailDeliveryPending?: boolean;
   accountType: RegisterInput["accountType"];
 };
 

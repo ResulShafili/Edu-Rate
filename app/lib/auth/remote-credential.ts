@@ -20,7 +20,7 @@ export type RemoteApiUser = {
   year?: string;
   city?: string;
   about?: string;
-  role: "student" | "mentor" | "teacher" | "admin" | "assistant_admin";
+  role: "student" | "mentor" | "teacher" | "admin" | "assistant_admin" | "owner_admin";
   createdAt: string;
 };
 
@@ -142,6 +142,7 @@ export function mapRemoteUserToProfile(user: RemoteApiUser): UserProfile {
     mentor: "Mentor",
     assistant_admin: "Rəhbərlik",
     admin: "Rəhbərlik",
+    owner_admin: "Rəhbərlik",
   };
   return { ...profile, role: roleLabels[user.role], completion: Math.round((completed / 6) * 100) };
 }

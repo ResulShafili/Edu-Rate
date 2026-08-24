@@ -105,10 +105,7 @@ function mapMentorshipRequest(row: Record<string, unknown>): MentorshipRequestRe
   };
 }
 
-export async function initializeBusinessDatabase() {
-  if (!databasePool) return;
-
-  await databasePool.query(`
+export const BASE_BUSINESS_SCHEMA_SQL = `
     CREATE TABLE IF NOT EXISTS events (
       id TEXT PRIMARY KEY,
       title VARCHAR(140) NOT NULL,
@@ -161,7 +158,12 @@ export async function initializeBusinessDatabase() {
     );
 
     CREATE INDEX IF NOT EXISTS mentorship_requests_user_idx ON mentorship_requests (user_id, created_at DESC);
-  `);
+  `;
+
+export async function initializeBusinessDatabase() {
+  if (!databasePool) return;
+
+  await databasePool.query(BASE_BUSINESS_SCHEMA_SQL);
 
   if (env.SEED_DEMO_DATA) for (const event of seedEvents) {
     await databasePool.query(
