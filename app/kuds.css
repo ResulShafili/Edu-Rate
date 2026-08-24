@@ -3282,3 +3282,66 @@ body {
   .kuds-shell .club-detail .club-about-copy,.kuds-shell .club-detail .club-meeting-card{padding:24px 20px;border-radius:19px!important}
   .kuds-shell .club-detail .club-about-copy h2,.kuds-shell .club-detail .club-meeting-card h2{font-size:29px}
 }
+
+/* Compact density system — remove legacy presentation-sized whitespace. */
+.kuds-shell .platform-route-content{padding:clamp(14px,1.7vw,26px)!important}
+.kuds-shell :is(.events-section,.peers-section,.mentor-section,.teachers-section,.support-section){padding-block:clamp(16px,2vw,28px) clamp(28px,3.6vw,52px)!important}
+.kuds-shell :is(.events-section,.peers-section,.mentor-section,.support-section){padding-inline:0!important}
+.kuds-shell .teachers-heading{padding:0 0 18px!important}
+.kuds-shell :is(.section-heading,.peers-heading,.mentor-heading,.support-heading,.teachers-heading,.clubs-section-heading,.reviews-heading,.admin-header){gap:16px!important;margin-bottom:16px!important;padding:clamp(15px,1.8vw,22px)!important}
+.kuds-shell .support-heading>div{gap:24px!important}
+.kuds-shell .support-layout{margin-top:16px!important}
+.kuds-shell .filters-row{margin-bottom:14px!important}
+.kuds-shell :is(.teacher-directory-filters,.mentor-filters){margin-bottom:16px!important}
+.kuds-shell .clubs-experience,.kuds-shell .kuds-home,.kuds-shell .kuds-landing{gap:16px}
+.kuds-shell .clubs-hero{padding:18px 22px!important}
+.kuds-shell .site-footer{margin-top:28px;padding-top:18px}
+.kuds-shell .kuds-home-section{padding:20px}
+.kuds-shell .kuds-welcome-banner{min-height:230px;padding:clamp(22px,3vw,32px)}
+.kuds-shell .kuds-landing-hero{min-height:clamp(440px,58svh,520px);padding:clamp(34px,5vw,58px)}
+.kuds-shell .kuds-landing-copy h1{margin:16px 0 14px;font-size:clamp(48px,6.2vw,86px)}
+.kuds-shell .kuds-landing-actions{margin-top:20px}
+.kuds-shell .kuds-landing-card{min-height:126px;padding:16px}
+.kuds-shell .peer-card,.kuds-shell .peer-skeleton{min-height:260px!important}
+.kuds-shell .club-directory-link{min-height:340px!important}
+.kuds-shell .club-card-copy{margin:13px 0!important}
+.kuds-shell .profile-cover-canvas{height:clamp(165px,18vw,220px)}
+.kuds-shell .profile-hero-main{min-height:138px;padding-bottom:20px}
+.kuds-shell .profile-hero-main .profile-avatar-shell{width:132px;height:132px;margin-top:-54px}
+.kuds-shell .profile-hero-main .profile-avatar{width:108px;height:108px}
+.kuds-shell .profile-hero-main .profile-hero-copy{padding-top:18px}
+.kuds-shell .profile-hero-main .profile-hero-actions{padding-top:20px}
+.kuds-shell .profile-stats{gap:12px!important;margin-top:14px!important}
+.kuds-shell .profile-stat-card{min-height:126px;padding:17px!important}
+.kuds-shell .profile-stat-card strong{font-size:clamp(34px,3.4vw,46px)}
+.kuds-shell .profile-dashboard-grid{gap:12px;margin-top:12px}
+.kuds-shell .profile-info-card{min-height:240px;padding:clamp(20px,2.2vw,28px)}
+.kuds-shell .profile-security-card{margin:12px 0;padding:18px}
+.kuds-shell .club-detail .club-detail-hero{min-height:500px;padding-block:24px 32px}
+.kuds-shell .club-detail .club-detail-hero__footer{margin-top:24px}
+.kuds-shell .club-detail .club-detail-body{padding:22px clamp(18px,3vw,38px) 34px}
+.kuds-shell .club-detail .club-about-copy,.kuds-shell .club-detail .club-meeting-card{min-height:330px;padding:clamp(24px,2.8vw,36px)}
+.kuds-shell .club-detail .club-meeting-icon{margin-bottom:20px}
+.kuds-shell .club-detail .club-meeting-card dl{margin-top:20px}
+
+@media(max-width:767px){
+  .kuds-shell .platform-route-content{padding:10px!important}
+  .kuds-shell :is(.events-section,.peers-section,.mentor-section,.teachers-section,.support-section){padding-block:10px 28px!important}
+  .kuds-shell :is(.events-section,.peers-section,.mentor-section,.support-section){padding-inline:0!important}
+  .kuds-shell :is(.section-heading,.peers-heading,.mentor-heading,.support-heading,.teachers-heading,.clubs-section-heading,.reviews-heading,.admin-header){gap:10px!important;margin-bottom:12px!important;padding:14px!important}
+  .kuds-shell .teachers-heading{padding:14px!important}
+  .kuds-shell .support-heading>div{gap:14px!important}
+  .kuds-shell .support-layout{margin-top:12px!important}
+  .kuds-shell .site-footer{margin-top:20px;padding:16px!important}
+  .kuds-shell .kuds-landing-hero{min-height:410px;padding:24px 18px}
+  .kuds-shell .kuds-landing-copy h1{margin:14px 0 12px;font-size:clamp(42px,13vw,62px)}
+  .kuds-shell .profile-cover-canvas{height:135px}
+  .kuds-shell .profile-hero-main{min-height:0;padding-bottom:18px}
+  .kuds-shell .profile-hero-main .profile-avatar-shell{width:78px;height:78px;margin-top:-31px}
+  .kuds-shell .profile-hero-main .profile-avatar{width:70px;height:70px}
+  .kuds-shell .profile-hero-main .profile-hero-copy{padding-top:10px}
+  .kuds-shell .profile-stat-card{min-height:108px;padding:12px!important}
+  .kuds-shell .profile-info-card{min-height:0;padding:18px}
+  .kuds-shell .club-detail .club-detail-hero{min-height:0;padding-block:18px 26px}
+  .kuds-shell .club-detail .club-detail-body{padding:14px 8px 28px}
+}
