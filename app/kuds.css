@@ -3216,9 +3216,9 @@ body {
 .kuds-shell .club-detail .club-detail-owner-actions{position:relative;z-index:5}
 .kuds-shell .club-detail .club-detail-owner-actions>button{color:#fff;border-color:rgba(38,86,75,.16);background:#356f62;box-shadow:0 14px 28px -18px rgba(24,72,61,.58);transition:transform .22s ease,box-shadow .22s ease,background-color .22s ease}
 .kuds-shell .club-detail .club-detail-owner-actions>button:hover{background:#285d52;box-shadow:0 20px 34px -17px rgba(24,72,61,.62);transform:translateY(-2px)}
-.kuds-shell .club-detail .club-detail-hero__visual.has-cover{z-index:1;top:168px;right:30px;bottom:auto;width:45%;height:auto;aspect-ratio:2.18/1;overflow:hidden;opacity:1;border:1px solid rgba(37,82,72,.13);border-radius:22px;background-color:rgba(255,255,255,.88);background-position:center!important;background-repeat:no-repeat!important;background-size:cover!important;box-shadow:0 26px 68px -34px rgba(25,67,58,.46),inset 0 1px 0 #fff}
-.kuds-shell .club-detail .club-detail-hero__visual.has-cover::after{position:absolute;inset:0;pointer-events:none;content:"";border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.18),transparent 34%,rgba(24,68,58,.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,.48)}
-.kuds-shell .club-detail .club-detail-hero__content{z-index:2;width:51%;max-width:690px;margin-top:6px}
+.kuds-shell .club-detail .club-detail-hero__visual.has-cover{z-index:1;top:0;right:0;bottom:0;width:50%;height:auto;aspect-ratio:auto;overflow:hidden;opacity:1;border:0;border-left:1px solid rgba(37,82,72,.1);border-radius:0;background-color:#eef4f1;background-position:center!important;background-repeat:no-repeat!important;background-size:cover!important;box-shadow:-28px 0 64px -54px rgba(25,67,58,.48)}
+.kuds-shell .club-detail .club-detail-hero__visual.has-cover::after{position:absolute;inset:0;pointer-events:none;content:"";border-radius:inherit;background:linear-gradient(90deg,rgba(239,247,244,.34),transparent 15%,rgba(24,68,58,.03));box-shadow:inset 1px 0 0 rgba(255,255,255,.52)}
+.kuds-shell .club-detail .club-detail-hero__content{z-index:2;width:46%;max-width:620px;margin-top:6px}
 .kuds-shell .club-detail .club-detail-eyebrow{display:inline-flex;padding:7px 10px;color:#356f62;border:1px solid rgba(53,111,98,.12);border-radius:999px;background:rgba(255,255,255,.7);font-size:9px;letter-spacing:.13em}
 .kuds-shell .club-detail .club-detail-hero h1{max-width:650px;margin:19px 0 14px;color:#1b2f2a;font-size:clamp(42px,5vw,70px);font-weight:760;line-height:.98;letter-spacing:-.055em}
 .kuds-shell .club-detail .club-detail-tagline{max-width:620px;color:#285f53;font-size:clamp(24px,2.6vw,38px);line-height:1.12}
@@ -3257,7 +3257,7 @@ body {
 @media(max-width:980px){
   .kuds-shell .club-detail .club-detail-hero{min-height:0;padding:24px 22px 38px}
   .kuds-shell .club-detail .club-detail-hero:has(.club-detail-hero__visual.has-cover){padding-top:24px}
-  .kuds-shell .club-detail .club-detail-hero__visual.has-cover{top:88px;right:22px;left:22px;width:auto;height:250px}
+  .kuds-shell .club-detail .club-detail-hero__visual.has-cover{top:88px;right:22px;bottom:auto;left:22px;width:auto;height:250px;aspect-ratio:auto;border:1px solid rgba(37,82,72,.13);border-radius:20px;box-shadow:0 26px 68px -34px rgba(25,67,58,.46),inset 0 1px 0 #fff}
   .kuds-shell .club-detail .club-detail-hero__content{width:100%;max-width:none;margin-top:265px}
   .kuds-shell .club-detail .club-detail-description{max-width:760px}
   .kuds-shell .club-detail .club-about-layout{grid-template-columns:1fr}
