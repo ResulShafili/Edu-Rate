@@ -232,60 +232,66 @@ export function UserProfileDashboard() {
       <div className="profile-ambient profile-ambient-two" aria-hidden="true" />
 
       <motion.header
-        className="profile-hero"
+        className="profile-hero profile-hero-premium"
         initial={reduceMotion ? false : { opacity: 0, y: 26, scale: 0.995 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={enterTransition}
       >
-        <div className="profile-avatar-shell" aria-hidden="true">
-          <span className={`profile-avatar${avatar.data?.secureUrl?" has-image":""}`} style={avatar.data?.secureUrl?{"--avatar-image":`url("${avatar.data.secureUrl}")`} as CSSProperties:undefined}>{avatar.data?.secureUrl?null:user.initials}</span>
-          <i className="profile-avatar-orbit" />
-          <i className="profile-avatar-status" />
+        <div className="profile-cover-canvas" aria-hidden="true">
+          <i className="profile-cover-mesh" />
+          <i className="profile-cover-orbit profile-cover-orbit-one" />
+          <i className="profile-cover-orbit profile-cover-orbit-two" />
+          <span className="profile-cover-monogram">ER</span>
         </div>
-
-        <div className="profile-hero-copy">
-          <span className="profile-kicker">Profil</span>
-          <h1 id="profile-title">{user.name}</h1>
-          <p>{user.program}</p>
-          <div className="profile-identity-meta">
-            <span><BadgeCheck size={14} aria-hidden="true" /> {user.role}</span>
-            <span><Mail size={14} aria-hidden="true" /> {user.email}</span>
-            <span><MapPin size={14} aria-hidden="true" /> {user.city}</span>
+        <div className="profile-hero-main">
+          <motion.div className="profile-avatar-shell" aria-hidden="true" initial={reduceMotion?false:{opacity:0,scale:.72,y:20}} animate={{opacity:1,scale:1,y:0}} transition={{type:"spring",stiffness:260,damping:20,delay:reduceMotion?0:.18}}>
+            <span className={`profile-avatar${avatar.data?.secureUrl?" has-image":""}`} style={avatar.data?.secureUrl?{"--avatar-image":`url("${avatar.data.secureUrl}")`} as CSSProperties:undefined}>{avatar.data?.secureUrl?null:user.initials}</span>
+            <i className="profile-avatar-orbit" />
+            <i className="profile-avatar-status" />
+          </motion.div>
+          <div className="profile-hero-copy">
+            <span className="profile-kicker"><Sparkles size={12} aria-hidden="true" /> Şəxsi profil</span>
+            <h1 id="profile-title">{user.name}</h1>
+            <p>{user.program}</p>
+            <div className="profile-identity-meta">
+              <span><BadgeCheck size={14} aria-hidden="true" /> {user.role}</span>
+              <span><Mail size={14} aria-hidden="true" /> {user.email}</span>
+              <span><MapPin size={14} aria-hidden="true" /> {user.city}</span>
+            </div>
           </div>
-        </div>
-
-        <div className="profile-hero-actions">
-          {credentialAuthAvailable && (
-            <button
-              type="button"
-              className="profile-edit-button"
-              aria-expanded={editing}
-              aria-controls="profile-edit-panel"
-              onClick={() => {
-                if (!editing) {
-                  const nextFaculty = isStudent && isFacultyName(user.faculty) ? user.faculty : "";
-                  setEditFaculty(nextFaculty);
-                  setEditProgram(
-                    isStudent ? (isValidFacultyProgram(nextFaculty, user.program) ? user.program : "") : user.program,
-                  );
-                }
-                setEditing((open) => !open);
-                setProfileMessage("");
-              }}
-            >
-              {editing ? <X size={15} aria-hidden="true" /> : <Pencil size={15} aria-hidden="true" />}
-              {editing ? "Redaktəni bağla" : "Məlumatları redaktə et"}
-            </button>
-          )}
-          {signOutHref ? (
-            <a href={signOutHref} className="profile-signout-button">
-              <LogOut size={15} aria-hidden="true" /> Hesabdan çıx
-            </a>
-          ) : (
-            <button type="button" className="profile-signout-button" onClick={handleSignOut} disabled={submitting}>
-              <LogOut size={15} aria-hidden="true" /> Hesabdan çıx
-            </button>
-          )}
+          <div className="profile-hero-actions">
+            {credentialAuthAvailable && (
+              <button
+                type="button"
+                className="profile-edit-button profile-ripple-button"
+                aria-expanded={editing}
+                aria-controls="profile-edit-panel"
+                onClick={() => {
+                  if (!editing) {
+                    const nextFaculty = isStudent && isFacultyName(user.faculty) ? user.faculty : "";
+                    setEditFaculty(nextFaculty);
+                    setEditProgram(
+                      isStudent ? (isValidFacultyProgram(nextFaculty, user.program) ? user.program : "") : user.program,
+                    );
+                  }
+                  setEditing((open) => !open);
+                  setProfileMessage("");
+                }}
+              >
+                {editing ? <X size={15} aria-hidden="true" /> : <Pencil size={15} aria-hidden="true" />}
+                {editing ? "Redaktəni bağla" : "Profili yenilə"}
+              </button>
+            )}
+            {signOutHref ? (
+              <a href={signOutHref} className="profile-signout-button">
+                <LogOut size={15} aria-hidden="true" /> Çıxış
+              </a>
+            ) : (
+              <button type="button" className="profile-signout-button" onClick={handleSignOut} disabled={submitting}>
+                <LogOut size={15} aria-hidden="true" /> Çıxış
+              </button>
+            )}
+          </div>
         </div>
       </motion.header>
 
@@ -388,22 +394,27 @@ export function UserProfileDashboard() {
         transition={enterTransition}
         aria-label="Profil göstəriciləri"
       >
-        {profileMetrics.map((stat) => {
+        {profileMetrics.map((stat,index) => {
           const Icon = stat.Icon;
           const value = typeof stat.value === "number" ? String(stat.value).padStart(2, "0") : stat.value;
           return (
-            <button
+            <motion.button
               key={stat.id}
               type="button"
-              className={`profile-stat-card${stat.id === "connections" ? " profile-stat-button" : ""}`}
+              className={`profile-stat-card profile-stat-tone-${index%4}${stat.id === "connections" ? " profile-stat-button" : ""}`}
               onClick={stat.id === "connections" ? () => setConnectionsOpen(true) : undefined}
               disabled={stat.id !== "connections"}
               aria-haspopup={stat.id === "connections" ? "dialog" : undefined}
+              initial={reduceMotion?false:{opacity:0,y:24,scale:.97}}
+              animate={{opacity:1,y:0,scale:1}}
+              whileHover={reduceMotion?undefined:{y:-6,scale:1.018}}
+              transition={{duration:.5,ease,delay:reduceMotion?0:.32+index*.1}}
             >
-              <span><Icon size={16} aria-hidden="true" /></span>
+              <span><Icon size={18} aria-hidden="true" /></span>
               <strong>{value}</strong>
               <p>{stat.label}</p>
-            </button>
+              <i aria-hidden="true"><Icon size={72}/></i>
+            </motion.button>
           );
         })}
       </motion.div>
@@ -485,25 +496,16 @@ export function UserProfileDashboard() {
           transition={{ ...enterTransition, delay: reduceMotion ? 0 : 0.06 }}
         >
           <span className="profile-card-number">02</span>
-          <div>
-            <span className="profile-card-kicker">Profil vəziyyəti</span>
-            <strong>{user.completion}%</strong>
-            <p>{user.completion >= 100 ? "Bütün profil məlumatları tamamlanıb." : "Çatışmayan məlumatları redaktə bölməsindən tamamlaya bilərsən."}</p>
-          </div>
-          <div
-            className="profile-progress-track"
-            role="progressbar"
-            aria-label="Profil tamamlanması"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={user.completion}
-          >
-            <motion.i
-              initial={reduceMotion ? false : { scaleX: 0 }}
-              whileInView={{ scaleX: user.completion / 100 }}
-              viewport={viewportOnce}
-              transition={{ duration: reduceMotion ? 0 : 0.8, ease }}
-            />
+          <div className="profile-progress-layout">
+            <div className="profile-progress-ring" role="progressbar" aria-label="Profil tamamlanması" aria-valuemin={0} aria-valuemax={100} aria-valuenow={user.completion}>
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <defs><linearGradient id="profile-progress-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#347c70"/><stop offset=".52" stopColor="#79b768"/><stop offset="1" stopColor="#9c83dc"/></linearGradient></defs>
+                <circle className="profile-progress-ring-track" cx="60" cy="60" r="52"/>
+                <motion.circle className="profile-progress-ring-value" cx="60" cy="60" r="52" initial={reduceMotion?false:{pathLength:0}} whileInView={{pathLength:user.completion/100}} viewport={viewportOnce} transition={{duration:reduceMotion?0:1.25,ease}}/>
+              </svg>
+              <strong><AnimatedNumber value={user.completion} reduced={reduceMotion}/><small>%</small></strong>
+            </div>
+            <div className="profile-progress-copy"><span className="profile-card-kicker">Profil vəziyyəti</span><h2>{user.completion>=100?"Profilin hazırdır":"Tamamlamağa davam et"}</h2><p>{user.completion >= 100 ? "Bütün əsas profil məlumatların tamamlanıb." : "Çatışmayan məlumatları redaktə bölməsindən əlavə edə bilərsən."}</p></div>
           </div>
         </motion.article>
 
@@ -609,4 +611,26 @@ function ProfileEditField({
 function readValue(formData: FormData, field: keyof ProfileUpdateInput): string {
   const value = formData.get(field);
   return typeof value === "string" ? value.trim() : "";
+}
+
+function AnimatedNumber({value,reduced}:{value:number;reduced:boolean}){
+  const [display,setDisplay]=useState(0);
+
+  useEffect(()=>{
+    if(reduced)return;
+
+    let frame=0;
+    const start=performance.now();
+    const duration=1100;
+    const tick=(time:number)=>{
+      const progress=Math.min(1,(time-start)/duration);
+      setDisplay(Math.round(value*(1-Math.pow(1-progress,3))));
+      if(progress<1)frame=requestAnimationFrame(tick);
+    };
+
+    frame=requestAnimationFrame(tick);
+    return()=>cancelAnimationFrame(frame);
+  },[value,reduced]);
+
+  return <>{reduced?value:display}</>;
 }
