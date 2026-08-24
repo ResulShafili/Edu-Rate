@@ -3345,3 +3345,79 @@ body {
   .kuds-shell .club-detail .club-detail-hero{min-height:0;padding-block:18px 26px}
   .kuds-shell .club-detail .club-detail-body{padding:14px 8px 28px}
 }
+
+/* Authentication — calm, task-focused and responsive. */
+.kuds-shell .auth-section{position:relative;isolation:isolate;padding:clamp(8px,1.5vw,18px)!important}
+.kuds-shell .auth-section::before{position:absolute;z-index:-1;inset:0;pointer-events:none;content:"";border-radius:30px;background:radial-gradient(circle at 12% 10%,rgba(188,226,214,.48),transparent 28%),radial-gradient(circle at 88% 16%,rgba(202,190,238,.32),transparent 30%)}
+.kuds-shell .auth-layout{width:100%;max-width:780px!important;margin-inline:auto;overflow:hidden;border:1px solid rgba(255,255,255,.9)!important;border-radius:28px!important;background:rgba(255,255,255,.68)!important;box-shadow:0 30px 75px -38px rgba(24,67,58,.42),inset 0 1px 0 #fff!important;backdrop-filter:blur(24px) saturate(116%)}
+.kuds-shell .auth-layout-login{max-width:520px!important}
+.kuds-shell .auth-panel{position:relative;padding:clamp(26px,4vw,44px)!important;background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(246,250,248,.56))!important}
+.kuds-shell .auth-panel::before{position:absolute;top:-90px;right:-80px;width:220px;height:220px;pointer-events:none;content:"";border-radius:50%;background:radial-gradient(circle,rgba(194,226,214,.42),transparent 68%)}
+.kuds-shell .auth-panel-heading{position:relative}
+.kuds-shell .auth-panel-heading>span{display:inline-flex;color:#4b776d!important;font-size:9px!important;font-weight:800!important;letter-spacing:.13em!important}
+.kuds-shell .auth-panel-heading h1{margin:9px 0 7px!important;color:#1c302b!important;background:none!important;-webkit-text-fill-color:currentColor!important;font-size:clamp(32px,4.2vw,44px)!important;font-weight:760!important;line-height:1.04!important;letter-spacing:-.045em!important}
+.kuds-shell .auth-panel-heading p{max-width:520px;color:#667a74!important;font-size:12px!important;line-height:1.55!important}
+.kuds-shell .auth-mode-tabs{margin:22px 0 24px!important;padding:4px!important;border:1px solid rgba(53,104,92,.12)!important;border-radius:16px!important;background:rgba(231,239,236,.76)!important;box-shadow:inset 0 1px 2px rgba(32,73,64,.05)!important}
+.kuds-shell .auth-mode-tabs button{min-height:44px!important;border-radius:12px!important;color:#657872!important;font-size:12px!important;transition:color .2s ease,transform .2s ease!important}
+.kuds-shell .auth-mode-tabs button:hover:not(:disabled){color:#234d43!important}
+.kuds-shell .auth-mode-tabs button[aria-selected="true"]{color:#fff!important}
+.kuds-shell .auth-mode-pill{border-radius:12px!important;background:linear-gradient(110deg,#376e63,#4f8878)!important;box-shadow:0 10px 22px -14px rgba(25,73,62,.72)!important}
+.kuds-shell .auth-form{gap:14px!important}
+.kuds-shell .auth-form-register{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.kuds-shell .auth-field>label,.kuds-shell .auth-account-type legend{margin:0 0 7px 2px!important;color:#314f48!important;font-size:10px!important;font-weight:740!important}
+.kuds-shell .auth-input-shell :is(input,select){height:52px!important;padding-inline:43px 14px!important;color:#1b302b!important;border:1px solid rgba(48,91,81,.14)!important;border-radius:13px!important;background:rgba(255,255,255,.82)!important;box-shadow:0 10px 26px -23px rgba(23,66,57,.48)!important;font-size:13px!important}
+.kuds-shell .auth-input-shell select{padding-right:38px!important}
+.kuds-shell .auth-input-shell :is(input,select):hover{border-color:rgba(48,91,81,.3)!important}
+.kuds-shell .auth-input-shell :is(input,select):focus{border-color:#44766c!important;background:#fff!important;box-shadow:0 0 0 4px rgba(68,118,108,.1)!important}
+.kuds-shell .auth-field-icon{left:14px!important;color:#6d8680!important}
+.kuds-shell .auth-password-toggle{right:4px!important;color:#70847f!important}
+.kuds-shell .auth-account-type{grid-column:1/-1!important}
+.kuds-shell .auth-account-type>div{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+.kuds-shell .auth-account-type button{min-height:66px!important;padding:11px 14px!important;justify-content:flex-start!important;gap:11px!important;text-align:left!important;border:1px solid rgba(48,91,81,.14)!important;border-radius:14px!important;background:rgba(255,255,255,.72)!important;box-shadow:0 10px 24px -23px rgba(23,66,57,.42)!important;transition:transform .2s ease,border-color .2s ease,background-color .2s ease!important}
+.kuds-shell .auth-account-type button:hover:not(:disabled){border-color:rgba(68,118,108,.42)!important;transform:translateY(-2px)}
+.kuds-shell .auth-account-type button>span{display:grid;gap:3px}
+.kuds-shell .auth-account-type button strong{color:#264b42;font-size:12px}
+.kuds-shell .auth-account-type button small{color:#758983;font-size:9px;font-weight:560}
+.kuds-shell .auth-account-type button[aria-checked="true"]{color:#fff!important;border-color:#44766c!important;background:linear-gradient(115deg,#376e63,#4f8878)!important;box-shadow:0 14px 26px -17px rgba(30,78,67,.68)!important}
+.kuds-shell .auth-account-type button[aria-checked="true"] :is(strong,small){color:#fff!important}
+.kuds-shell .auth-account-type button[aria-checked="true"] small{opacity:.72}
+.kuds-shell .auth-form-footer{display:grid!important;grid-column:1/-1!important;margin-top:2px!important;gap:12px!important}
+.kuds-shell .auth-forgot-link{justify-self:end;color:#315f55!important;font-size:11px!important;text-decoration:none!important}
+.kuds-shell .auth-forgot-link:hover{text-decoration:underline!important;text-underline-offset:3px}
+.kuds-shell .auth-privacy-note{max-width:none!important;padding:11px 12px!important;align-items:center!important;color:#61756f!important;border:1px solid rgba(48,91,81,.1);border-radius:11px;background:rgba(237,244,241,.7);font-size:9px!important}
+.kuds-shell .auth-submit{width:100%!important;min-height:50px!important;margin-top:0!important;justify-content:center!important;gap:10px!important;border-radius:13px!important;font-size:12px!important}
+.kuds-shell .auth-form-message:empty,.kuds-shell .auth-legal-links:empty{display:none}
+.kuds-shell .auth-form-message{min-height:0!important;margin:0!important;padding:0 2px!important;font-size:10px!important}
+.kuds-shell .auth-form-message.is-visible{padding:10px 12px!important;border:1px solid rgba(68,118,108,.13);border-radius:10px;background:rgba(237,248,243,.8)}
+.kuds-shell .auth-form-message[role="alert"]{border-color:rgba(158,62,52,.15);background:#fff3f1}
+.kuds-shell .auth-legal-links{margin:0!important;color:#84938f!important;font-size:9px!important;line-height:1.5!important;text-align:center}
+
+@media(max-width:760px){
+  .kuds-shell .auth-section{padding:0!important}
+  .kuds-shell .auth-layout,.kuds-shell .auth-layout-login{max-width:100%!important;border-radius:20px!important}
+  .kuds-shell .auth-panel{padding:22px 16px 24px!important}
+  .kuds-shell .auth-panel-heading h1{font-size:32px!important}
+  .kuds-shell .auth-mode-tabs{margin:18px 0!important}
+  .kuds-shell .auth-form-register{grid-template-columns:1fr!important}
+  .kuds-shell .auth-account-type,.kuds-shell .auth-form-register>.auth-form-footer,.kuds-shell .auth-form-register>.auth-form-message{grid-column:1!important}
+  .kuds-shell .auth-input-shell :is(input,select){height:50px!important}
+}
+@media(max-width:420px){
+  .kuds-shell .auth-account-type>div{grid-template-columns:1fr!important}
+  .kuds-shell .auth-account-type button{min-height:58px!important}
+}
+
+/* Authentication finishing pass: one visual surface, readable controls and honest consent. */
+.kuds-shell .auth-panel,.kuds-shell .auth-form-panel{border:0!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important}
+.kuds-shell .auth-form-panel{background:transparent!important}
+.kuds-shell .auth-field>label,.kuds-shell .auth-account-type legend{font-size:11px!important}
+.kuds-shell .auth-input-shell :is(input,select){font-size:14px!important}
+.kuds-shell .auth-input-shell:has(.auth-password-toggle) input{padding-right:52px!important}
+.kuds-shell .auth-input-shell input[readonly]{cursor:default;color:#49665f!important;background:rgba(238,244,242,.78)!important}
+.kuds-shell .auth-form-register>.auth-legal-links{grid-column:1/-1!important}
+.kuds-shell .auth-legal-error{grid-column:1/-1;margin-top:-7px;padding-inline:3px;color:#9d3e35!important;font-size:10px!important}
+.kuds-shell .auth-legal-consent:has(input[aria-invalid="true"]){border-color:rgba(157,62,53,.28)!important;background:#fff3f1!important}
+
+@media(max-width:760px){
+  .kuds-shell .auth-form-register>.auth-legal-links,.kuds-shell .auth-legal-error{grid-column:1!important}
+}

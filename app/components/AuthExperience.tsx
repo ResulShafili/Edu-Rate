@@ -40,7 +40,7 @@ import {
 
 type AuthMode = "login" | "register";
 type AccountType = "student" | "teacher";
-type AuthField = "name" | "email" | "password" | "university" | "faculty" | "program" | "accountType";
+type AuthField = "name" | "email" | "password" | "university" | "faculty" | "program" | "accountType" | "legalAccepted";
 type FieldErrors = Partial<Record<AuthField, string>>;
 
 type AuthFormValues = Record<AuthField, string>;
@@ -204,11 +204,11 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
   }
 
   const panelHeading = mode === "login"
-    ? <>Yenidən <em>xoş gəldin.</em></>
-    : <>EduRate icmasına <em>qoşul.</em></>;
+    ? <>Hesabına daxil ol</>
+    : <>Yeni hesab yarat</>;
   const panelDescription = mode === "login"
-    ? "Dərslər, elanlar və öyrənmə çevrən bir addım uzaqdadır."
-    : "Universitet həyatını daha əlaqəli və məqsədli etmək üçün profilini yarat.";
+    ? "E-poçt ünvanını və şifrəni daxil et."
+    : "Hesab növünü seç, sonra əsas məlumatlarını tamamla.";
 
   return (
     <section className="auth-section" aria-labelledby="auth-title">
@@ -234,7 +234,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
       </div>
 
       <motion.div
-        className="auth-layout"
+        className={`auth-layout auth-layout-${mode}`}
         initial={reduceMotion ? false : { opacity: 0, y: 22, scale: 0.99 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.65, ease }}
@@ -320,6 +320,22 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                 onSubmit={handleSubmit}
               >
                 {mode === "register" && (
+                  <fieldset className="auth-account-type">
+                    <legend>Kim kimi qeydiyyatdan keçirsən?</legend>
+                    <input type="hidden" name="accountType" value={accountType} />
+                    <div role="radiogroup" aria-label="Hesab növünü seç">
+                      {([
+                        { value: "student", label: "Tələbə", description: "Fakültə və ixtisasını seç", icon: GraduationCap },
+                        { value: "teacher", label: "Müəllim", description: "Tədris sahəni qeyd et", icon: BriefcaseBusiness },
+                      ] as const).map((option) => {
+                        const Icon = option.icon;
+                        return <button key={option.value} type="button" role="radio" aria-checked={accountType === option.value} onClick={() => { setAccountType(option.value); setSelectedFaculty(""); setSelectedProgram(""); }} disabled={submitting}><Icon size={17} /><span><strong>{option.label}</strong><small>{option.description}</small></span></button>;
+                      })}
+                    </div>
+                  </fieldset>
+                )}
+
+                {mode === "register" && (
                   <AuthFieldShell
                     id={`${formId}-name`}
                     label="Ad və soyad"
@@ -394,38 +410,25 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
 
                 {mode === "register" && (
                   <>
-                    <fieldset className="auth-account-type">
-                      <legend>Hesab növü</legend>
-                      <input type="hidden" name="accountType" value={accountType} />
-                      <div role="radiogroup" aria-label="Hesab növünü seç">
-                        {([
-                          { value: "student", label: "Tələbə", icon: GraduationCap },
-                          { value: "teacher", label: "Müəllim", icon: BriefcaseBusiness },
-                        ] as const).map((option) => {
-                          const Icon = option.icon;
-                          return <button key={option.value} type="button" role="radio" aria-checked={accountType === option.value} onClick={() => { setAccountType(option.value); setSelectedFaculty(""); setSelectedProgram(""); }} disabled={submitting}><Icon size={15} /><span>{option.label}</span></button>;
-                        })}
-                      </div>
-                    </fieldset>
-
                     <AuthFieldShell
                       id={`${formId}-university`}
                       label="Universitet"
                       error={errors.university}
                       icon={<Building2 size={16} aria-hidden="true" />}
                     >
-                      <select
+                      <input
                         id={`${formId}-university`}
                         name="university"
+                        type="text"
                         autoComplete="organization"
-                        defaultValue={canonicalUniversity}
+                        value={canonicalUniversity}
+                        readOnly
+                        aria-readonly="true"
                         aria-invalid={Boolean(errors.university)}
                         aria-describedby={errors.university ? `${formId}-university-error` : undefined}
                         disabled={!credentialAuthAvailable || submitting}
                         required
-                      >
-                        <option value={canonicalUniversity}>{canonicalUniversity}</option>
-                      </select>
+                      />
                     </AuthFieldShell>
 
                     {accountType === "student" && <AuthFieldShell
@@ -472,10 +475,24 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                     <a className="auth-forgot-link" href="/auth/recovery">Şifrəni unutmusansa, bərpa et</a>
                   )}
                   {mode === "register" ? (
-                    <label className="auth-privacy-note auth-legal-consent">
-                      <input type="checkbox" name="legalAccepted" value="true" required />
-                      <span><Check size={13} aria-hidden="true" /> <a href="/terms" target="_blank">İstifadə şərtlərini</a> və <a href="/privacy" target="_blank">məxfilik siyasətini</a> oxudum və qəbul edirəm.</span>
-                    </label>
+                    <>
+                      <label className="auth-privacy-note auth-legal-consent">
+                        <input
+                          type="checkbox"
+                          name="legalAccepted"
+                          value="true"
+                          aria-invalid={Boolean(errors.legalAccepted)}
+                          aria-describedby={errors.legalAccepted ? `${formId}-legalAccepted-error` : undefined}
+                          required
+                        />
+                        <span><a href="/terms" target="_blank">İstifadə şərtlərini</a> və <a href="/privacy" target="_blank">məxfilik siyasətini</a> oxudum və qəbul edirəm.</span>
+                      </label>
+                      {errors.legalAccepted && (
+                        <span id={`${formId}-legalAccepted-error`} className="auth-field-error auth-legal-error">
+                          {errors.legalAccepted}
+                        </span>
+                      )}
+                    </>
                   ) : null}
                   <motion.button
                     type="submit"
@@ -545,6 +562,7 @@ function readFormValues(formData: FormData): AuthFormValues {
     faculty: getFormValue(formData, "faculty"),
     program: getFormValue(formData, "program"),
     accountType: getFormValue(formData, "accountType") || "student",
+    legalAccepted: getFormValue(formData, "legalAccepted"),
   };
 }
 
@@ -579,12 +597,15 @@ function validateAuthForm(mode: AuthMode, values: AuthFormValues): FieldErrors {
   if (mode === "register" && values.accountType !== "student" && values.program.length < 2) {
     errors.program = values.accountType === "teacher" ? "Tədris sahəsini yaz." : "İxtisası seç.";
   }
+  if (mode === "register" && values.legalAccepted !== "true") {
+    errors.legalAccepted = "Davam etmək üçün istifadə şərtlərini və məxfilik siyasətini qəbul et.";
+  }
 
   return errors;
 }
 
 function isAuthField(value: string): value is AuthField {
-  return ["name", "email", "password", "university", "faculty", "program", "accountType"].includes(value);
+  return ["name", "email", "password", "university", "faculty", "program", "accountType", "legalAccepted"].includes(value);
 }
 
 function getRoleHome(role: string | undefined, fallback: string) {
