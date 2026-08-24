@@ -3208,3 +3208,77 @@ body {
   .kuds-shell :is(.teacher-directory-filters,.mentor-filters).is-open{display:grid!important}
   .kuds-shell :is(.teacher-directory-filters,.mentor-filters) label{width:100%!important;min-width:0!important;max-width:none!important;min-height:58px;grid-column:auto!important}
 }
+
+/* Club profile — restrained editorial layout with reliable image and text contrast. */
+.kuds-shell .club-detail{overflow:hidden;border:1px solid rgba(255,255,255,.9);border-radius:28px;background:rgba(247,250,249,.72);box-shadow:0 30px 80px -46px rgba(23,65,56,.48),inset 0 1px 0 #fff}
+.kuds-shell .club-detail .club-detail-hero{min-height:570px;padding:28px clamp(28px,4vw,60px) 42px;gap:42px;border:0;border-radius:0;background:radial-gradient(circle at 12% 12%,rgba(190,231,218,.46),transparent 30%),radial-gradient(circle at 86% 82%,rgba(205,194,239,.34),transparent 31%),linear-gradient(145deg,rgba(255,255,255,.9),rgba(240,247,244,.76))}
+.kuds-shell .club-detail .club-detail-hero__topline{z-index:4;min-height:44px}
+.kuds-shell .club-detail .club-detail-owner-actions{position:relative;z-index:5}
+.kuds-shell .club-detail .club-detail-owner-actions>button{color:#fff;border-color:rgba(38,86,75,.16);background:#356f62;box-shadow:0 14px 28px -18px rgba(24,72,61,.58);transition:transform .22s ease,box-shadow .22s ease,background-color .22s ease}
+.kuds-shell .club-detail .club-detail-owner-actions>button:hover{background:#285d52;box-shadow:0 20px 34px -17px rgba(24,72,61,.62);transform:translateY(-2px)}
+.kuds-shell .club-detail .club-detail-hero__visual.has-cover{z-index:1;top:118px;right:30px;bottom:auto;width:45%;height:340px;aspect-ratio:auto;overflow:hidden;opacity:1;border:1px solid rgba(37,82,72,.13);border-radius:24px;background-color:rgba(255,255,255,.88);background-position:center!important;background-repeat:no-repeat!important;background-size:contain!important;box-shadow:0 26px 68px -34px rgba(25,67,58,.46),inset 0 1px 0 #fff}
+.kuds-shell .club-detail .club-detail-hero__visual.has-cover::after{position:absolute;inset:0;pointer-events:none;content:"";border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.18),transparent 34%,rgba(24,68,58,.04));box-shadow:inset 0 0 0 1px rgba(255,255,255,.48)}
+.kuds-shell .club-detail .club-detail-hero__content{z-index:2;width:51%;max-width:690px;margin-top:6px}
+.kuds-shell .club-detail .club-detail-eyebrow{display:inline-flex;padding:7px 10px;color:#356f62;border:1px solid rgba(53,111,98,.12);border-radius:999px;background:rgba(255,255,255,.7);font-size:9px;letter-spacing:.13em}
+.kuds-shell .club-detail .club-detail-hero h1{max-width:650px;margin:19px 0 14px;color:#1b2f2a;font-size:clamp(42px,5vw,70px);font-weight:760;line-height:.98;letter-spacing:-.055em}
+.kuds-shell .club-detail .club-detail-tagline{max-width:620px;color:#285f53;font-size:clamp(24px,2.6vw,38px);line-height:1.12}
+.kuds-shell .club-detail .club-detail-description{max-width:620px;margin-top:18px;color:#5a716b;font-size:13px;line-height:1.75}
+.kuds-shell .club-detail .club-detail-hero__footer{margin-top:34px;align-items:flex-start;flex-direction:column;gap:18px}
+.kuds-shell .club-detail .club-detail-stats{gap:9px}
+.kuds-shell .club-detail .club-detail-stats div{min-width:128px;padding:14px 16px;border:1px solid rgba(46,92,81,.12);border-radius:15px;background:rgba(255,255,255,.76);box-shadow:0 13px 28px -24px rgba(22,65,56,.5)}
+.kuds-shell .club-detail .club-detail-stats dt{color:#70847f;font-size:8px;font-weight:760;letter-spacing:.1em}
+.kuds-shell .club-detail .club-detail-stats dd{margin-top:7px;color:#1f3932;font-size:26px;font-weight:760}
+.kuds-shell .club-detail .club-join-action{display:flex;align-items:flex-start;flex-wrap:wrap;gap:9px 12px}
+.kuds-shell .club-detail .club-join-action__status,.kuds-shell .club-detail .club-join-action__error{width:100%;margin:0;color:#527169}
+.kuds-shell .club-detail .club-group-shortcut{min-height:44px;border-radius:13px;box-shadow:0 13px 28px -20px rgba(18,62,53,.62)}
+
+.kuds-shell .club-detail .club-detail-body{padding:30px clamp(28px,4vw,58px) 58px;color:#1c302b;border-radius:0;background:linear-gradient(180deg,rgba(247,250,249,.72),rgba(241,247,245,.9))}
+.kuds-shell .club-detail .club-detail-tabs{top:18px;margin-bottom:26px;border:1px solid rgba(43,88,78,.12);background:rgba(255,255,255,.78);box-shadow:0 16px 38px -26px rgba(25,64,56,.48)}
+.kuds-shell .club-detail .club-detail-tab{color:#6a7e79}
+.kuds-shell .club-detail .club-detail-tab.is-active{color:#fff}
+.kuds-shell .club-detail .club-detail-tab__indicator{background:#356f62;box-shadow:0 10px 24px -15px rgba(23,68,58,.75)}
+.kuds-shell .club-detail .club-about-layout{grid-template-columns:minmax(0,1.18fr) minmax(310px,.82fr);gap:16px}
+.kuds-shell .club-detail .club-about-copy{min-height:390px;padding:clamp(28px,3.5vw,46px);color:#1b302a!important;border:1px solid rgba(255,255,255,.92)!important;background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(239,247,244,.7))!important;box-shadow:0 22px 50px -32px rgba(22,64,55,.38),inset 0 1px 0 #fff!important}
+.kuds-shell .club-detail .club-about-copy .club-panel-kicker{color:#39786a}
+.kuds-shell .club-detail .club-about-copy h2{max-width:620px;margin:13px 0 24px;color:#1c332d!important;font-size:clamp(30px,3.3vw,46px);font-weight:760;line-height:1.04;letter-spacing:-.045em}
+.kuds-shell .club-detail .club-about-copy>p{max-width:720px;margin:0 0 13px;color:#526c65!important;font-size:13px;line-height:1.78}
+.kuds-shell .club-detail .club-focus-list{margin-top:28px;padding-top:20px;border-color:rgba(44,90,80,.11)}
+.kuds-shell .club-detail .club-focus-list li{padding:9px 13px;color:#2f675b!important;border:1px solid rgba(54,112,99,.18);background:rgba(211,232,191,.34)!important;font-size:9px;font-weight:720}
+.kuds-shell .club-detail .club-meeting-card{min-height:390px;padding:clamp(28px,3.5vw,44px);color:#fff!important;border:1px solid rgba(255,255,255,.15)!important;background:radial-gradient(circle at 92% 6%,rgba(205,194,239,.27),transparent 32%),linear-gradient(145deg,#24594e,#173e36)!important;box-shadow:0 24px 54px -31px rgba(16,59,50,.68),inset 0 1px 0 rgba(255,255,255,.14)!important;backdrop-filter:none!important}
+.kuds-shell .club-detail .club-meeting-card .club-panel-kicker{color:#d9edce!important}
+.kuds-shell .club-detail .club-meeting-card h2{margin:13px 0 0;color:#fff!important;font-size:clamp(30px,3vw,43px);font-weight:740;line-height:1.04;letter-spacing:-.04em}
+.kuds-shell .club-detail .club-meeting-icon{width:46px;height:46px;margin-bottom:28px;color:#1e4e43;background:#d8edcd;box-shadow:0 13px 28px -18px rgba(0,0,0,.55)}
+.kuds-shell .club-detail .club-meeting-card dl{margin-top:28px}
+.kuds-shell .club-detail .club-meeting-card dl div{padding:15px 0;border-color:rgba(255,255,255,.13)}
+.kuds-shell .club-detail .club-meeting-card dt{color:rgba(255,255,255,.68)!important;font-size:9px;font-weight:650}
+.kuds-shell .club-detail .club-meeting-card dt svg{color:#d8edcd}
+.kuds-shell .club-detail .club-meeting-card dd{margin-top:8px;color:#fff!important;font-size:13px;font-weight:650;line-height:1.55}
+
+@media(max-width:980px){
+  .kuds-shell .club-detail .club-detail-hero{min-height:0;padding:24px 22px 38px}
+  .kuds-shell .club-detail .club-detail-hero:has(.club-detail-hero__visual.has-cover){padding-top:24px}
+  .kuds-shell .club-detail .club-detail-hero__visual.has-cover{top:88px;right:22px;left:22px;width:auto;height:250px}
+  .kuds-shell .club-detail .club-detail-hero__content{width:100%;max-width:none;margin-top:265px}
+  .kuds-shell .club-detail .club-detail-description{max-width:760px}
+  .kuds-shell .club-detail .club-about-layout{grid-template-columns:1fr}
+  .kuds-shell .club-detail .club-about-copy,.kuds-shell .club-detail .club-meeting-card{min-height:0}
+}
+@media(max-width:620px){
+  .kuds-shell .club-detail{border-radius:20px}
+  .kuds-shell .club-detail .club-detail-hero{padding:18px 14px 28px;gap:20px}
+  .kuds-shell .club-detail .club-detail-hero__topline{align-items:flex-start;flex-wrap:wrap;gap:10px}
+  .kuds-shell .club-detail .club-detail-owner-actions{width:100%;align-items:center;justify-content:space-between;flex-direction:row}
+  .kuds-shell .club-detail .club-detail-hero__visual.has-cover{top:122px;right:14px;left:14px;height:210px;border-radius:17px}
+  .kuds-shell .club-detail .club-detail-hero__content{margin-top:220px}
+  .kuds-shell .club-detail .club-detail-hero h1{font-size:clamp(36px,11vw,48px)}
+  .kuds-shell .club-detail .club-detail-tagline{font-size:22px}
+  .kuds-shell .club-detail .club-detail-description{font-size:12px;line-height:1.65}
+  .kuds-shell .club-detail .club-detail-stats{display:grid;width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kuds-shell .club-detail .club-detail-stats div{min-width:0}
+  .kuds-shell .club-detail .club-join-action{width:100%;flex-direction:column}
+  .kuds-shell .club-detail .club-join-action :is(.magnetic-join-button,.club-group-shortcut){width:100%;justify-content:center}
+  .kuds-shell .club-detail .club-detail-body{padding:18px 10px 34px}
+  .kuds-shell .club-detail .club-detail-tabs{top:10px;margin-bottom:16px}
+  .kuds-shell .club-detail .club-about-copy,.kuds-shell .club-detail .club-meeting-card{padding:24px 20px;border-radius:19px!important}
+  .kuds-shell .club-detail .club-about-copy h2,.kuds-shell .club-detail .club-meeting-card h2{font-size:29px}
+}
