@@ -245,7 +245,14 @@ export function UserProfileDashboard() {
         </div>
         <div className="profile-hero-main">
           <motion.div className="profile-avatar-shell" aria-hidden="true" initial={reduceMotion?false:{opacity:0,scale:.72,y:20}} animate={{opacity:1,scale:1,y:0}} transition={{type:"spring",stiffness:260,damping:20,delay:reduceMotion?0:.18}}>
-            <span className={`profile-avatar${avatar.data?.secureUrl?" has-image":""}`} style={avatar.data?.secureUrl?{"--avatar-image":`url("${avatar.data.secureUrl}")`} as CSSProperties:undefined}>{avatar.data?.secureUrl?null:user.initials}</span>
+            <span className={`profile-avatar${avatar.data?.secureUrl?" has-image":""}`}>
+              {avatar.data?.secureUrl ? (
+                <i
+                  className="profile-avatar-photo"
+                  style={{ backgroundImage: `url("${avatar.data.secureUrl}")` } as CSSProperties}
+                />
+              ) : user.initials}
+            </span>
             <i className="profile-avatar-orbit" />
             <i className="profile-avatar-status" />
           </motion.div>

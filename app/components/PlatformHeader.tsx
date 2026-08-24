@@ -69,13 +69,13 @@ export function PlatformHeader({ searchOpen, updatesOpen, onSearchToggle, onUpda
           {user ? (
             <span
               className={avatar.data?.secureUrl ? "has-image" : undefined}
-              style={
-                avatar.data?.secureUrl
-                  ? ({ "--avatar-image": `url("${avatar.data.secureUrl}")` } as CSSProperties)
-                  : undefined
-              }
             >
-              {avatar.data?.secureUrl ? null : user.initials}
+              {avatar.data?.secureUrl ? (
+                <i
+                  className="platform-header-avatar-photo"
+                  style={{ backgroundImage: `url("${avatar.data.secureUrl}")` } as CSSProperties}
+                />
+              ) : user.initials}
             </span>
           ) : (
             <LogIn size={18} aria-hidden="true" />
