@@ -446,6 +446,23 @@ const migrations: Migration[] = [
         ON announcement_user_state(user_id,is_bookmarked,updated_at DESC);
     `,
   },
+  {
+    version: 20,
+    name: "chat replies and message reactions",
+    sql: `
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id UUID REFERENCES messages(id) ON DELETE SET NULL;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ;
+
+      CREATE TABLE IF NOT EXISTS message_reactions (
+        message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        emoji VARCHAR(12) NOT NULL CHECK (emoji IN ('👍','❤️','😂','😮','😢','🙏')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (message_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS message_reactions_message_idx ON message_reactions(message_id);
+    `,
+  },
 ];
 
 export const latestMigrationVersion = Math.max(...migrations.map((migration) => migration.version));

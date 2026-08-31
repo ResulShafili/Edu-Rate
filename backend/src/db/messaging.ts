@@ -7,14 +7,19 @@ export type CommunityUser = { id: string; name: string; role: string; faculty: s
 export type Connection = { id: string; requesterId: string; recipientId: string; status: "pending" | "accepted" | "blocked"; createdAt: string };
 export type Conversation = { id: string; peer: CommunityUser; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
 export type ClubConversation = { id: string; kind: "club"; club: { id: string; slug: string; name: string }; memberCount: number; isAdmin: boolean; lastMessage: string; updatedAt: string; unreadCount: number; muted:boolean };
-export type Message = { id: string; conversationId: string; senderId: string; senderName: string; senderInitials: string; senderAvatarUrl?:string; body: string; createdAt: string; deleted?:boolean };
+export const MESSAGE_REACTIONS = ["👍","❤️","😂","😮","😢","🙏"] as const;
+export type MessageReactionEmoji = (typeof MESSAGE_REACTIONS)[number];
+export type MessageReaction = { emoji: MessageReactionEmoji; count: number; mine: boolean };
+export type ReplyPreview = { id: string; senderName: string; body: string; deleted: boolean };
+export type Message = { id: string; conversationId: string; senderId: string; senderName: string; senderInitials: string; senderAvatarUrl?:string; body: string; createdAt: string; deleted?:boolean; editedAt?:string; replyToId?:string; replyTo?:ReplyPreview; reactions?:MessageReaction[]; status?:"sent"|"read" };
 export type ContentReport = { id:string; reporterId:string; entityType:"message"|"profile"|"review"|"club"; entityId:string; reason:string; details:string; status:"open"|"reviewing"|"resolved"|"dismissed"; reviewedBy:string|null; resolutionNote:string; createdAt:string; updatedAt:string };
 
-type MemoryConversation = { id: string; participants: string[]; updatedAt: string; kind: "direct" | "club"; clubId?: string; clubSlug?: string; title?: string; createdBy?: string | null; mutedParticipants?:Set<string> };
+type MemoryConversation = { id: string; participants: string[]; updatedAt: string; kind: "direct" | "club"; clubId?: string; clubSlug?: string; title?: string; createdBy?: string | null; mutedParticipants?:Set<string>; lastReadAt?:Map<string,string> };
 
 const connections = new Map<string, Connection>();
 const conversations = new Map<string, MemoryConversation>();
 const messages = new Map<string, Message[]>();
+const messageReactions = new Map<string, Map<string, MessageReactionEmoji>>();
 const reports = new Map<string, ContentReport>();
 const now = () => new Date().toISOString();
 const iso = (value: unknown) => new Date(String(value)).toISOString();
@@ -217,22 +222,113 @@ export async function listMessages(conversationId: string, userId: string, befor
   await assertParticipant(conversationId, userId);
   if (!databasePool) {
     const users = await listUsers(1000);
-    return Promise.all((messages.get(conversationId) ?? []).slice(-limit).map(async(message) => {
+    const conversation = conversations.get(conversationId);
+    const stored = messages.get(conversationId) ?? [];
+    const byId = new Map(stored.map((message) => [message.id, message]));
+    const peerId = conversation?.kind === "direct" ? conversation.participants.find((id) => id !== userId) : undefined;
+    const peerReadAt = peerId ? conversation?.lastReadAt?.get(peerId) : undefined;
+    return Promise.all(stored.slice(-limit).map(async (message) => {
       const sender = users.find((user) => user.id === message.senderId);
       const senderName = sender?.name ?? message.senderName;
-      return { ...message, senderName, senderInitials: initials(senderName),senderAvatarUrl:(await getMedia("avatar",message.senderId))?.secureUrl };
+      return {
+        ...message,
+        senderName,
+        senderInitials: initials(senderName),
+        senderAvatarUrl: (await getMedia("avatar", message.senderId))?.secureUrl,
+        replyTo: message.replyToId ? buildReplyPreview(byId.get(message.replyToId), users) : undefined,
+        reactions: buildMemoryReactions(message.id, userId),
+        status: message.senderId === userId && conversation?.kind === "direct"
+          ? (peerReadAt && peerReadAt >= message.createdAt ? "read" : "sent")
+          : undefined,
+      };
     }));
   }
   const values: unknown[] = [conversationId, limit];
   const cursor = before ? "AND (m.created_at,m.id)<(SELECT created_at,id FROM messages WHERE id=$3)" : "";
   if (before) values.push(before);
-  const result = await databasePool.query(`SELECT m.*,u.name sender_name,media_assets.secure_url sender_avatar_url FROM messages m JOIN users u ON u.id=m.sender_id
+  const result = await databasePool.query(`SELECT m.*,u.name sender_name,media_assets.secure_url sender_avatar_url,
+      r.id reply_id,r.body reply_body,r.deleted_at reply_deleted_at,ru.name reply_sender_name
+    FROM messages m JOIN users u ON u.id=m.sender_id
     LEFT JOIN media_assets ON media_assets.owner_type='avatar' AND media_assets.owner_id=u.id::text
+    LEFT JOIN messages r ON r.id=m.reply_to_id
+    LEFT JOIN users ru ON ru.id=r.sender_id
     WHERE m.conversation_id=$1 ${cursor} ORDER BY m.created_at DESC,m.id DESC LIMIT $2`, values);
-  return result.rows.reverse().map((row) => ({ id: String(row.id), conversationId: String(row.conversation_id), senderId: String(row.sender_id), senderName: String(row.sender_name), senderInitials: initials(String(row.sender_name)),senderAvatarUrl:row.sender_avatar_url?String(row.sender_avatar_url):undefined, body: row.deleted_at ? "Mesaj silindi" : String(row.body), createdAt: iso(row.created_at), deleted:Boolean(row.deleted_at) }));
+  const rows = result.rows.reverse();
+  const ids = rows.map((row) => String(row.id));
+  const [reactionMap, peerReadAt, kind] = await Promise.all([
+    loadReactions(ids, userId),
+    directPeerReadAt(conversationId, userId),
+    conversationKind(conversationId),
+  ]);
+  return rows.map((row) => {
+    const id = String(row.id);
+    const own = String(row.sender_id) === userId;
+    return {
+      id,
+      conversationId: String(row.conversation_id),
+      senderId: String(row.sender_id),
+      senderName: String(row.sender_name),
+      senderInitials: initials(String(row.sender_name)),
+      senderAvatarUrl: row.sender_avatar_url ? String(row.sender_avatar_url) : undefined,
+      body: row.deleted_at ? "Mesaj silindi" : String(row.body),
+      createdAt: iso(row.created_at),
+      deleted: Boolean(row.deleted_at),
+      editedAt: row.edited_at ? iso(row.edited_at) : undefined,
+      replyTo: row.reply_id
+        ? { id: String(row.reply_id), senderName: String(row.reply_sender_name ?? "İstifadəçi"), body: row.reply_deleted_at ? "Mesaj silindi" : String(row.reply_body ?? ""), deleted: Boolean(row.reply_deleted_at) }
+        : undefined,
+      reactions: reactionMap.get(id),
+      status: own && kind === "direct" ? (peerReadAt && peerReadAt >= iso(row.created_at) ? "read" : "sent") : undefined,
+    };
+  });
 }
 
-export async function createMessage(conversationId: string, senderId: string, body: string): Promise<Message> {
+function buildMemoryReactions(messageId: string, userId: string): MessageReaction[] | undefined {
+  const map = messageReactions.get(messageId);
+  if (!map || map.size === 0) return undefined;
+  const counts = new Map<MessageReactionEmoji, number>();
+  for (const emoji of map.values()) counts.set(emoji, (counts.get(emoji) ?? 0) + 1);
+  return [...counts.entries()].map(([emoji, count]) => ({ emoji, count, mine: map.get(userId) === emoji }));
+}
+
+function buildReplyPreview(target: Message | undefined, users: { id: string; name: string }[]): ReplyPreview | undefined {
+  if (!target) return undefined;
+  const sender = users.find((user) => user.id === target.senderId);
+  return { id: target.id, senderName: sender?.name ?? target.senderName, body: target.deleted ? "Mesaj silindi" : target.body, deleted: Boolean(target.deleted) };
+}
+
+async function loadReactions(messageIds: string[], userId: string): Promise<Map<string, MessageReaction[]>> {
+  const map = new Map<string, MessageReaction[]>();
+  if (!databasePool || messageIds.length === 0) return map;
+  const result = await databasePool.query(
+    "SELECT message_id,emoji,COUNT(*)::int count,BOOL_OR(user_id=$2) mine FROM message_reactions WHERE message_id=ANY($1::uuid[]) GROUP BY message_id,emoji ORDER BY count DESC",
+    [messageIds, userId],
+  );
+  for (const row of result.rows) {
+    const id = String(row.message_id);
+    const list = map.get(id) ?? [];
+    list.push({ emoji: String(row.emoji) as MessageReactionEmoji, count: Number(row.count), mine: Boolean(row.mine) });
+    map.set(id, list);
+  }
+  return map;
+}
+
+async function directPeerReadAt(conversationId: string, userId: string): Promise<string | undefined> {
+  if (!databasePool) return undefined;
+  const result = await databasePool.query(
+    "SELECT last_read_at FROM conversation_participants WHERE conversation_id=$1 AND user_id<>$2 AND last_read_at IS NOT NULL ORDER BY last_read_at DESC LIMIT 1",
+    [conversationId, userId],
+  );
+  return result.rows[0]?.last_read_at ? iso(result.rows[0].last_read_at) : undefined;
+}
+
+async function conversationKind(conversationId: string): Promise<string | undefined> {
+  if (!databasePool) return conversations.get(conversationId)?.kind;
+  const result = await databasePool.query("SELECT kind FROM conversations WHERE id=$1", [conversationId]);
+  return result.rows[0]?.kind ? String(result.rows[0].kind) : undefined;
+}
+
+export async function createMessage(conversationId: string, senderId: string, body: string, replyToId?: string): Promise<Message> {
   await assertParticipant(conversationId, senderId);
   const memoryConversation = !databasePool ? conversations.get(conversationId) : null;
   const databaseConversation = databasePool ? await databasePool.query("SELECT kind FROM conversations WHERE id=$1", [conversationId]) : null;
@@ -244,15 +340,72 @@ export async function createMessage(conversationId: string, senderId: string, bo
   }
   const sender = (await listUsers(1000)).find((user) => user.id === senderId);
   const senderName = sender?.name ?? "İstifadəçi";
-  const message: Message = { id: randomUUID(), conversationId, senderId, senderName, senderInitials: initials(senderName),senderAvatarUrl:(await getMedia("avatar",senderId))?.secureUrl, body: body.trim(), createdAt: now() };
+  const message: Message = { id: randomUUID(), conversationId, senderId, senderName, senderInitials: initials(senderName),senderAvatarUrl:(await getMedia("avatar",senderId))?.secureUrl, body: body.trim(), createdAt: now(), replyToId, status: kind === "direct" ? "sent" : undefined };
   if (!databasePool) {
-    messages.set(conversationId, [...(messages.get(conversationId) ?? []), message]);
+    const stored = messages.get(conversationId) ?? [];
+    const replyTarget = replyToId ? stored.find((item) => item.id === replyToId) : undefined;
+    if (replyToId && !replyTarget) throw new ApiError(422, "REPLY_NOT_FOUND", "Cavab verilən mesaj tapılmadı.");
+    messages.set(conversationId, [...stored, message]);
     if (memoryConversation) memoryConversation.updatedAt = message.createdAt;
-    return message;
+    return { ...message, replyTo: buildReplyPreview(replyTarget, await listUsers(1000)) };
   }
-  const result = await databasePool.query("INSERT INTO messages(id,conversation_id,sender_id,body) VALUES($1,$2,$3,$4) RETURNING *", [message.id, conversationId, senderId, message.body]);
+  if (replyToId) {
+    const target = await databasePool.query("SELECT id FROM messages WHERE id=$1 AND conversation_id=$2", [replyToId, conversationId]);
+    if (!target.rowCount) throw new ApiError(422, "REPLY_NOT_FOUND", "Cavab verilən mesaj tapılmadı.");
+  }
+  const result = await databasePool.query("INSERT INTO messages(id,conversation_id,sender_id,body,reply_to_id) VALUES($1,$2,$3,$4,$5) RETURNING *", [message.id, conversationId, senderId, message.body, replyToId ?? null]);
   await databasePool.query("UPDATE conversations SET updated_at=NOW() WHERE id=$1", [conversationId]);
-  return { ...message, id: String(result.rows[0].id), createdAt: iso(result.rows[0].created_at) };
+  const created = { ...message, id: String(result.rows[0].id), createdAt: iso(result.rows[0].created_at) };
+  if (replyToId) {
+    const preview = await databasePool.query("SELECT m.id,m.body,m.deleted_at,u.name sender_name FROM messages m JOIN users u ON u.id=m.sender_id WHERE m.id=$1", [replyToId]);
+    const row = preview.rows[0];
+    if (row) created.replyTo = { id: String(row.id), senderName: String(row.sender_name), body: row.deleted_at ? "Mesaj silindi" : String(row.body), deleted: Boolean(row.deleted_at) };
+  }
+  return created;
+}
+
+export async function editMessage(conversationId: string, messageId: string, userId: string, body: string): Promise<Message | null> {
+  await assertParticipant(conversationId, userId);
+  const trimmed = body.trim();
+  if (!databasePool) {
+    const target = (messages.get(conversationId) ?? []).find((item) => item.id === messageId);
+    if (!target || target.senderId !== userId || target.deleted) return null;
+    target.body = trimmed;
+    target.editedAt = now();
+    const users = await listUsers(1000);
+    return { ...target, reactions: buildMemoryReactions(target.id, userId), replyTo: target.replyToId ? buildReplyPreview((messages.get(conversationId) ?? []).find((item) => item.id === target.replyToId), users) : undefined };
+  }
+  const result = await databasePool.query(
+    "UPDATE messages SET body=$4,edited_at=NOW() WHERE id=$1 AND conversation_id=$2 AND sender_id=$3 AND deleted_at IS NULL RETURNING id",
+    [messageId, conversationId, userId, trimmed],
+  );
+  if (!result.rowCount) return null;
+  return (await listMessages(conversationId, userId, undefined, 80)).find((item) => item.id === messageId) ?? null;
+}
+
+export async function toggleReaction(conversationId: string, messageId: string, userId: string, emoji: MessageReactionEmoji): Promise<MessageReaction[]> {
+  await assertParticipant(conversationId, userId);
+  if (!databasePool) {
+    const belongs = (messages.get(conversationId) ?? []).some((item) => item.id === messageId);
+    if (!belongs) throw new ApiError(404, "MESSAGE_NOT_FOUND", "Mesaj tapılmadı.");
+    const map = messageReactions.get(messageId) ?? new Map<string, MessageReactionEmoji>();
+    if (map.get(userId) === emoji) map.delete(userId);
+    else map.set(userId, emoji);
+    messageReactions.set(messageId, map);
+    return buildMemoryReactions(messageId, userId) ?? [];
+  }
+  const belongs = await databasePool.query("SELECT 1 FROM messages WHERE id=$1 AND conversation_id=$2", [messageId, conversationId]);
+  if (!belongs.rowCount) throw new ApiError(404, "MESSAGE_NOT_FOUND", "Mesaj tapılmadı.");
+  const existing = await databasePool.query("SELECT emoji FROM message_reactions WHERE message_id=$1 AND user_id=$2", [messageId, userId]);
+  if (existing.rows[0]?.emoji === emoji) {
+    await databasePool.query("DELETE FROM message_reactions WHERE message_id=$1 AND user_id=$2", [messageId, userId]);
+  } else {
+    await databasePool.query(
+      "INSERT INTO message_reactions(message_id,user_id,emoji) VALUES($1,$2,$3) ON CONFLICT(message_id,user_id) DO UPDATE SET emoji=EXCLUDED.emoji,created_at=NOW()",
+      [messageId, userId, emoji],
+    );
+  }
+  return (await loadReactions([messageId], userId)).get(messageId) ?? [];
 }
 
 export async function deleteMessage(conversationId: string, messageId: string, userId: string, reason="İstifadəçi tərəfindən silindi"): Promise<boolean> {
@@ -288,7 +441,12 @@ function mapReport(row:Record<string,unknown>):ContentReport{return{id:String(ro
 
 export async function markRead(conversationId: string, userId: string) {
   await assertParticipant(conversationId, userId);
-  if (databasePool) await databasePool.query("UPDATE conversation_participants SET last_read_at=NOW() WHERE conversation_id=$1 AND user_id=$2", [conversationId, userId]);
+  if (!databasePool) {
+    const conversation = conversations.get(conversationId);
+    if (conversation) { conversation.lastReadAt ??= new Map(); conversation.lastReadAt.set(userId, now()); }
+    return;
+  }
+  await databasePool.query("UPDATE conversation_participants SET last_read_at=NOW() WHERE conversation_id=$1 AND user_id=$2", [conversationId, userId]);
 }
 
 export async function conversationParticipants(conversationId: string) {
