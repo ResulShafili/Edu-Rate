@@ -174,7 +174,9 @@ authRouter.post("/signup", signupLimiter, async (request, response) => {
     role: input.accountType,
     status: isPrivilegedRegistration ? "Gözləmədə" : "Aktiv",
     passwordHash: await hashPassword(input.password),
-    emailVerifiedAt: env.RESEND_API_KEY || env.BREVO_API_KEY ? null : new Date().toISOString(),
+    // E-poçt təsdiqi pilot üçün söndürülüb: hesab dərhal təsdiqlənir ki,
+    // tələbə qeydiyyatdan sonra avtomatik daxil olsun (token qaytarılır).
+    emailVerifiedAt: new Date().toISOString(),
     termsVersion: "2026-08-15",
     privacyVersion: "2026-08-15",
   });
@@ -197,7 +199,6 @@ authRouter.post("/login", loginLimiter, async (request, response) => {
   if (user.status !== "Aktiv") {
     throw new ApiError(403, "ACCOUNT_RESTRICTED", "Hesab aktiv deyil.");
   }
-  if(!user.emailVerifiedAt)throw new ApiError(403,"EMAIL_NOT_VERIFIED","Daxil olmadan əvvəl e-poçt ünvanını təsdiqlə.");
 
   response.json({ data: { token: await issueSession(user,request), user: toPublicUser(user) } });
 });
