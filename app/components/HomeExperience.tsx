@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
+import { OrbitalHero } from "./OrbitalHero";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -58,11 +59,7 @@ export function HomeExperience() {
           </div>
         </div>
 
-        <div className="kuds-landing-visual" aria-hidden="true">
-          <span className="kuds-landing-orbit kuds-landing-orbit-one" />
-          <span className="kuds-landing-orbit kuds-landing-orbit-two" />
-          <span className="kuds-landing-core">EDU</span>
-        </div>
+        <OrbitalHero />
       </motion.section>
 
       <section id="home-modules" className="kuds-landing-directory" aria-labelledby="home-modules-title">

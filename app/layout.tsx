@@ -7,6 +7,7 @@ import { getServerRequestIdentity } from "./lib/auth/request-identity";
 import { getCanonicalSiteOrigin } from "./lib/site-origin";
 import "./globals.css";
 import "./kuds.css";
+import "./creative.css";
 
 const title = "EduRate — Universitet həyatın bir yerdə.";
 const description =
