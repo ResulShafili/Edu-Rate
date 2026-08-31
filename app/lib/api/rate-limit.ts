@@ -31,8 +31,17 @@ export function checkRateLimit(request: Request, options: RateLimitOptions) {
 }
 
 function getClientIdentifier(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  // Prefer headers set by the trusted proxy/platform, which a client cannot
+  // spoof (cf-connecting-ip on Cloudflare, x-real-ip on Vercel). The
+  // x-forwarded-for chain is client-prependable, so the attacker-controlled
+  // leftmost entry must not be trusted — fall back to the last hop instead.
   const connecting = request.headers.get("cf-connecting-ip")?.trim();
-  const value = connecting || forwarded || "unknown";
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  const forwardedChain = request.headers
+    .get("x-forwarded-for")
+    ?.split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const value = connecting || realIp || forwardedChain?.at(-1) || "unknown";
   return value.replace(/[^a-fA-F0-9:.,-]/g, "").slice(0, 80) || "unknown";
 }

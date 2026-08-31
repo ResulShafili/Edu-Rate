@@ -10,14 +10,6 @@ const memoryActions = new Map<string, MemoryAction>();
 const digest = (value:string) => createHash("sha256").update(value).digest("hex");
 const opaqueToken = () => randomBytes(32).toString("base64url");
 
-export async function createSession(userId:string, userAgent="", ipAddress="") {
-  const token=opaqueToken(); const tokenHash=digest(token); const id=randomUUID();
-  const expiresAt=new Date(Date.now()+30*24*60*60*1000);
-  if(!databasePool){memorySessions.set(tokenHash,{id,userId,hash:tokenHash,expiresAt:expiresAt.getTime(),userAgent:userAgent.slice(0,300),ipAddress:ipAddress.slice(0,80),createdAt:new Date().toISOString(),lastSeenAt:new Date().toISOString()});return {id,token,expiresAt:expiresAt.toISOString()};}
-  await databasePool.query("INSERT INTO auth_sessions(id,user_id,token_hash,user_agent,ip_address,expires_at) VALUES($1,$2,$3,$4,$5,$6)",[id,userId,tokenHash,userAgent.slice(0,300),ipAddress.slice(0,80),expiresAt]);
-  return {id,token,expiresAt:expiresAt.toISOString()};
-}
-
 export async function registerSessionToken(userId:string,token:string,id:string,userAgent="",ipAddress=""){
   const tokenHash=digest(token);const expiresAt=new Date(Date.now()+30*24*60*60*1000);
   if(!databasePool){memorySessions.set(tokenHash,{id,userId,hash:tokenHash,expiresAt:expiresAt.getTime(),userAgent:userAgent.slice(0,300),ipAddress:ipAddress.slice(0,80),createdAt:new Date().toISOString(),lastSeenAt:new Date().toISOString()});return;}
