@@ -50,9 +50,21 @@ export interface UpdateUserRecord {
   about: string;
 }
 
+// Managed Postgres (Neon, Supabase, Render external) tələb edir TLS. Lokal
+// host üçün SSL bağlı qalır; qeyri-lokal host üçün avtomatik aktivləşir.
+function shouldUseSsl(connectionString: string): boolean {
+  try {
+    const host = new URL(connectionString).hostname;
+    return !["localhost", "127.0.0.1", "::1"].includes(host);
+  } catch {
+    return false;
+  }
+}
+
 export const databasePool = env.DATABASE_URL
   ? new Pool({
       connectionString: env.DATABASE_URL,
+      ssl: shouldUseSsl(env.DATABASE_URL) ? { rejectUnauthorized: false } : undefined,
       max: 10,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 10_000,

@@ -12,10 +12,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Xarici idarə olunan Postgres (Neon/Supabase). Render dashboard →
+      # Environment bölməsində Neon connection string-ini əl ilə qoy.
+      # Neon üçün ?sslmode=require saxla, ?channel_binding=require-i sil.
       - key: DATABASE_URL
-        fromDatabase:
-          name: edurate-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
@@ -38,10 +39,3 @@ services:
         sync: false
       - key: CLOUDINARY_UPLOAD_PRESET
         value: edurate-secure
-
-databases:
-  - name: edurate-db
-    databaseName: edurate
-    user: edurate
-    plan: free
-    region: frankfurt
