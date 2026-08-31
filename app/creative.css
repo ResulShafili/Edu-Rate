@@ -323,3 +323,282 @@
     transform: none;
   }
 }
+
+/* ============================================================
+   Chat — WhatsApp səviyyəli qat (qabarcıq modeli, oxu qəbzləri,
+   reaksiyalar, cavab-sitat, tarix ayırıcıları, emoji seçici)
+   ============================================================ */
+
+/* Qabarcıq konteyner modeli — mətn <p> yox, .message-bubble görünən qabarcıqdır */
+.message-list .message-bubble-wrap { display: flex; flex-direction: column; min-width: 0; }
+.message-own .message-bubble-wrap { align-items: flex-end; }
+.message-peer .message-bubble-wrap { align-items: flex-start; }
+
+.message-list .message-bubble {
+  position: relative;
+  max-width: 100%;
+  padding: 7px 11px 5px;
+  border-radius: 16px;
+}
+.message-list .message-bubble > p {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.message-peer .message-bubble {
+  color: rgba(243, 241, 233, 0.9);
+  border: 1px solid rgba(243, 241, 233, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+}
+.message-own .message-bubble {
+  color: #10241d;
+  border: 1px solid transparent;
+  background: var(--peer-accent);
+  box-shadow: 0 8px 26px color-mix(in srgb, var(--peer-glow), transparent 55%);
+}
+.message-row[data-deleted="true"] .message-bubble > p { font-style: italic; opacity: 0.65; }
+
+/* Qruplaşma + quyruqlar */
+.message-list .message-row { margin-bottom: 2px; }
+.message-list .message-row.group-end { margin-bottom: 11px; }
+.message-own.group-end .message-bubble { border-bottom-right-radius: 5px; }
+.message-peer.group-end .message-bubble { border-bottom-left-radius: 5px; }
+.message-avatar-spacer { visibility: hidden; background: none !important; box-shadow: none !important; }
+
+/* Vaxt + oxu qəbzləri (✓ / ✓✓) */
+.message-meta { display: inline-flex; align-items: center; justify-content: flex-end; gap: 3px; margin-top: 2px; font-size: 9px; }
+.message-peer .message-meta { color: rgba(243, 241, 233, 0.42); }
+.message-own .message-meta { color: rgba(16, 36, 29, 0.58); }
+.message-meta .tick { opacity: 0.85; }
+.message-meta .tick-read { color: #1f6fe0; opacity: 1; }
+.message-meta .message-edited { margin-right: 3px; font-style: normal; opacity: 0.75; }
+
+/* Cavab-sitat (qabarcıq içində) */
+.message-quote {
+  display: block;
+  width: 100%;
+  margin: 0 0 5px;
+  padding: 4px 8px;
+  text-align: left;
+  border: 0;
+  border-left: 3px solid;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.message-peer .message-quote { border-left-color: var(--peer-accent); background: rgba(255, 255, 255, 0.07); }
+.message-own .message-quote { border-left-color: #10241d; background: rgba(16, 36, 29, 0.12); }
+.message-quote span { display: block; font-size: 10px; font-weight: 700; }
+.message-quote small { display: block; max-width: 210px; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; opacity: 0.72; }
+
+/* Sürüşmə vurğusu */
+.message-flash .message-bubble { animation: chat-flash 1.2s ease; }
+@keyframes chat-flash {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  30% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--peer-accent), transparent 50%); }
+}
+
+/* Mesaj əməliyyatları (hover / tap) */
+.message-bubble .message-actions {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  gap: 3px;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+.message-own .message-actions { right: 100%; margin-right: 6px; }
+.message-peer .message-actions { left: 100%; margin-left: 6px; }
+.message-row:hover .message-actions,
+.message-row.actions-open .message-actions { opacity: 1; pointer-events: auto; }
+/* Toxunma cihazlarında (hover yoxdur) əməliyyat düymələri həmişə əlçatan olsun */
+@media (hover: none) {
+  .message-bubble .message-actions { opacity: 1; pointer-events: auto; }
+}
+.message-actions button {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  color: rgba(243, 241, 233, 0.68);
+  border: 1px solid rgba(243, 241, 233, 0.12);
+  border-radius: 50%;
+  background: rgba(20, 21, 20, 0.92);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.message-actions button:hover { color: #fff; background: rgba(44, 46, 44, 0.96); }
+
+/* Reaksiya seçici (emoji bar) */
+.message-bubble .reaction-bar {
+  position: absolute;
+  bottom: 100%;
+  z-index: 5;
+  display: flex;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 5px 6px;
+  border: 1px solid rgba(243, 241, 233, 0.14);
+  border-radius: 999px;
+  background: rgba(20, 21, 20, 0.97);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+.message-own .reaction-bar { right: 0; }
+.message-peer .reaction-bar { left: 0; }
+.reaction-bar button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  font-size: 17px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.reaction-bar button:hover { background: rgba(255, 255, 255, 0.08); transform: scale(1.25); }
+
+/* Reaksiya çipləri (qabarcıq altında) */
+.message-reactions { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
+.message-reactions.own { justify-content: flex-end; }
+.message-reactions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px 2px;
+  color: rgba(243, 241, 233, 0.82);
+  font-size: 11px;
+  border: 1px solid rgba(243, 241, 233, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.message-reactions button.mine { border-color: var(--peer-accent); background: color-mix(in srgb, var(--peer-accent), transparent 82%); }
+.message-reactions button b { font-size: 10px; font-weight: 700; }
+
+/* Aşağı-sürüşmə düyməsi */
+.chat-center-main { position: relative; }
+.chat-scroll-bottom {
+  position: absolute;
+  right: 16px;
+  bottom: 96px;
+  z-index: 4;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: rgba(243, 241, 233, 0.85);
+  border: 1px solid rgba(243, 241, 233, 0.14);
+  border-radius: 50%;
+  background: rgba(20, 21, 20, 0.95);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+/* Başlıqda "yazır…" */
+.chat-status-typing { color: var(--peer-accent); font-weight: 600; }
+
+/* Composer — cavab/redaktə preview + emoji seçici */
+.chat-composer { display: flex; flex-direction: column; gap: 7px; }
+.composer-context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  padding: 6px 10px;
+  border-left: 3px solid var(--peer-accent);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.composer-context-body { flex: 1; min-width: 0; }
+.composer-context-body span { display: block; color: var(--peer-accent); font-size: 10px; font-weight: 700; }
+.composer-context-body small { display: block; overflow: hidden; color: rgba(243, 241, 233, 0.6); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.composer-context > button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  place-items: center;
+  color: rgba(243, 241, 233, 0.6);
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+}
+.composer-row { display: flex; align-items: flex-end; gap: 8px; }
+.composer-row textarea { flex: 1; }
+.composer-emoji { position: relative; flex: none; }
+.composer-emoji-trigger {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: rgba(243, 241, 233, 0.6);
+  border: 1px solid rgba(243, 241, 233, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.composer-emoji-trigger:hover { color: var(--peer-accent); background: rgba(255, 255, 255, 0.09); }
+.composer-emoji-panel {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  width: 236px;
+  max-height: 182px;
+  margin-bottom: 8px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid rgba(243, 241, 233, 0.14);
+  border-radius: 14px;
+  background: rgba(18, 19, 18, 0.98);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+.composer-emoji-panel button {
+  display: grid;
+  height: 32px;
+  place-items: center;
+  font-size: 18px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+}
+.composer-emoji-panel button:hover { background: rgba(255, 255, 255, 0.09); }
+.chat-composer button[type="submit"] {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  color: var(--ink);
+  border: 0;
+  border-radius: 50%;
+  background: var(--peer-accent);
+  box-shadow: 0 8px 24px var(--peer-glow);
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.chat-composer button[type="submit"]:hover:not(:disabled) { transform: translateY(-2px); }
+.chat-composer button[type="submit"]:disabled { cursor: default; opacity: 0.26; box-shadow: none; }
+.chat-composer .composer-hint { grid-column: auto; padding-left: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .message-flash .message-bubble { animation: none; }
+  .reaction-bar button:hover { transform: none; }
+}
