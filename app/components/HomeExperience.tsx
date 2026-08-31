@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
 import { OrbitalHero } from "./OrbitalHero";
+import { TiltCard } from "./TiltCard";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -76,12 +77,12 @@ export function HomeExperience() {
               viewport={{ once: true, margin: "-24px" }}
               transition={{ duration: 0.42, delay: reducedMotion ? 0 : index * 0.035, ease }}
             >
-              <Link href={href} className="kuds-landing-card">
+              <TiltCard href={href} className="kuds-landing-card" ariaLabel={`${label} bölməsinə keç`}>
                 <span className="kuds-landing-card-number">{number}</span>
                 <Icon size={21} strokeWidth={1.7} aria-hidden="true" />
                 <strong>{label}</strong>
                 <ArrowRight className="kuds-landing-card-arrow" size={17} aria-hidden="true" />
-              </Link>
+              </TiltCard>
             </motion.div>
           ))}
         </div>
