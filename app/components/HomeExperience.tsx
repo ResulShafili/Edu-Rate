@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useAuth } from "./AuthProvider";
 import { OrbitalHero } from "./OrbitalHero";
 import { TiltCard } from "./TiltCard";
+import { MagneticLink } from "./MagneticLink";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -51,9 +52,9 @@ export function HomeExperience() {
           </h1>
           <p>Başlamaq üçün bölmə seç.</p>
           <div className="kuds-landing-actions">
-            <a href="#home-modules" className="kuds-primary-button">
+            <MagneticLink href="#home-modules" className="kuds-primary-button">
               Bölmələrə bax <ArrowRight size={16} aria-hidden="true" />
-            </a>
+            </MagneticLink>
             <Link href={user ? "/profile" : "/auth"} className="kuds-landing-secondary">
               {user ? "Profilim" : "Daxil ol"}
             </Link>
