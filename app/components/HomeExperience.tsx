@@ -14,7 +14,6 @@ import {
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
 import { OrbitalHero } from "./OrbitalHero";
-import { TiltCard } from "./TiltCard";
 import { MagneticLink } from "./MagneticLink";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -78,12 +77,21 @@ export function HomeExperience() {
               viewport={{ once: true, margin: "-24px" }}
               transition={{ duration: 0.42, delay: reducedMotion ? 0 : index * 0.035, ease }}
             >
-              <TiltCard href={href} className="kuds-landing-card" ariaLabel={`${label} bölməsinə keç`}>
-                <span className="kuds-landing-card-number">{number}</span>
-                <Icon size={21} strokeWidth={1.7} aria-hidden="true" />
-                <strong>{label}</strong>
-                <ArrowRight className="kuds-landing-card-arrow" size={17} aria-hidden="true" />
-              </TiltCard>
+              <Link href={href} className="flip-card" aria-label={`${label} bölməsinə keç`}>
+                <span className="flip-card__inner">
+                  <span className="flip-card__face flip-card__face--front kuds-landing-card">
+                    <span className="kuds-landing-card-number">{number}</span>
+                    <Icon size={21} strokeWidth={1.7} aria-hidden="true" />
+                    <strong>{label}</strong>
+                    <ArrowRight className="kuds-landing-card-arrow" size={17} aria-hidden="true" />
+                  </span>
+                  <span className="flip-card__face flip-card__face--back" aria-hidden="true">
+                    <Icon size={26} strokeWidth={1.6} />
+                    <strong>{label}</strong>
+                    <em>Bölməyə keç <ArrowRight size={15} /></em>
+                  </span>
+                </span>
+              </Link>
             </motion.div>
           ))}
         </div>

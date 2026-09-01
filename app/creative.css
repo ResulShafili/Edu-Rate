@@ -230,70 +230,68 @@
   50% { opacity: 1; transform: scale(1.05); }
 }
 
-/* ---------- Tilt + sheen kartları (landing modul grid) ---------- */
-.kuds-landing-grid > * {
-  perspective: 820px;
+/* ---------- Çevrilən kartlar (landing modul grid) ---------- */
+.kuds-landing-grid > * { perspective: 1200px; }
+
+.flip-card {
+  display: block;
+  height: 148px;
+  perspective: 1200px;
+  text-decoration: none;
+  outline-offset: 4px;
 }
 
-.kuds-landing-card.tilt-card {
-  transform:
-    rotateY(var(--tx, 0deg))
-    rotateX(var(--ty, 0deg))
-    translateY(calc(var(--active, 0) * -5px))
-    translateZ(0);
+.flip-card__inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
   transform-style: preserve-3d;
-  transition:
-    transform 140ms ease-out,
-    border-color 220ms ease,
-    box-shadow 220ms ease;
-  will-change: transform;
+  transition: rotate 620ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+.flip-card:hover .flip-card__inner,
+.flip-card:focus-visible .flip-card__inner { rotate: y 180deg; }
 
-.kuds-landing-card.tilt-card:hover {
-  transform:
-    rotateY(var(--tx, 0deg))
-    rotateX(var(--ty, 0deg))
-    translateY(-5px)
-    translateZ(0);
-  border-color: rgb(68 118 108 / 55%);
-  box-shadow:
-    0 18px 40px rgb(15 40 34 / 14%),
-    0 2px 6px rgb(15 23 42 / 6%);
-}
-
-.tilt-card__sheen {
+.flip-card__face {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  border-radius: inherit;
-  opacity: calc(var(--active, 0) * 1);
-  background: radial-gradient(
-    220px circle at var(--mx, 50%) var(--my, 50%),
-    rgb(68 118 108 / 16%),
-    rgb(68 118 108 / 5%) 40%,
-    transparent 68%
-  );
-  transition: opacity 240ms ease;
-  pointer-events: none;
+  backface-visibility: hidden;
+  border-radius: 12px;
 }
 
-/* Kart məzmunu sheen-in üstündə və nüvədən azca qabaqda dayansın */
-.kuds-landing-card.tilt-card > :not(.tilt-card__sheen) {
-  position: relative;
-  z-index: 1;
-  transform: translateZ(22px);
+.flip-card__face--back {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 8px;
+  padding: 18px;
+  rotate: y 180deg;
+  color: #eefaf1;
+  border: 1px solid rgb(255 255 255 / 18%);
+  background: linear-gradient(150deg, var(--ku-dark-green, #16423c), var(--ku-green, #44766c) 78%);
+  box-shadow: 0 22px 46px -26px rgb(12 40 33 / 62%);
+}
+.flip-card__face--back strong { font-size: 18px; letter-spacing: -0.025em; }
+.flip-card__face--back em {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #d8f3c6;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 650;
+}
+
+@media (max-width: 640px) {
+  .flip-card { height: 124px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .kuds-landing-card.tilt-card,
-  .kuds-landing-card.tilt-card:hover {
-    transform: none;
-  }
-  .kuds-landing-card.tilt-card > :not(.tilt-card__sheen) {
-    transform: none;
-  }
-  .tilt-card__sheen { display: none; }
+  .flip-card__inner { transition: none; }
+  .flip-card:hover .flip-card__inner,
+  .flip-card:focus-visible .flip-card__inner { rotate: none; }
 }
+
 
 /* Kiçik ekranlarda dekorativ və sakit (mövcud davranışa uyğun) */
 @media (max-width: 860px) {
@@ -770,6 +768,34 @@
 }
 [data-motion="alive"] [data-tilting="true"] > :is(h2, h3, strong, .event-card-title) {
   translate: 0 0 52px;
+}
+
+/* ---------- Maqnit düymələr (kursora doğru çəkilir) ---------- */
+[data-motion="alive"] .kuds-shell :is(
+  .kuds-primary-button, .reserve-button, .auth-submit, .profile-save-button,
+  .rating-submit, .ticket-submit, .event-create-trigger, .announcement-submit-trigger
+) {
+  transition: translate 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease;
+}
+[data-motion="alive"] [data-magnetic="true"] {
+  translate: var(--mag-x, 0) var(--mag-y, 0);
+  transition: translate 90ms linear, box-shadow 260ms ease;
+}
+
+/* ---------- Parallaks dərinlik (sürüşmə ilə) ---------- */
+[data-motion="alive"] .motion-aura__blob--one {
+  translate: 0 calc(var(--scroll-y, 0px) * -0.08);
+}
+[data-motion="alive"] .motion-aura__blob--two {
+  translate: 0 calc(var(--scroll-y, 0px) * 0.05);
+}
+[data-motion="alive"] .motion-aura__blob--three {
+  translate: 0 calc(var(--scroll-y, 0px) * -0.14);
+}
+/* Kart üzərindəki media zolağı gövdədən yavaş hərəkət edir */
+[data-motion="alive"] :is(.event-card, .club-directory-card) > :is(figure, .event-card-visual, .club-card-visual) {
+  translate: 0 calc(var(--scroll-y, 0px) * 0.012);
+  will-change: translate;
 }
 
 /* ---------- 3D basma effekti (bütün düymələr) ---------- */
