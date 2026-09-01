@@ -9,12 +9,12 @@ type RouteTransitionProps = {
 };
 
 const pageVariants = {
-  initial: { y: 8, scale: 0.997 },
-  visible: { y: 0, scale: 1 },
+  initial: { opacity: 0, y: 26, rotateX: 9, scale: 0.985 },
+  visible: { opacity: 1, y: 0, rotateX: 0, scale: 1 },
 };
 
 const pageTransition = {
-  duration: 0.32,
+  duration: 0.62,
   ease: [0.22, 1, 0.36, 1] as const,
 };
 
@@ -42,6 +42,7 @@ export function RouteTransition({ children }: RouteTransitionProps) {
         ref={frameRef}
         key={pathname}
         className="route-frame"
+        style={reduceMotion ? undefined : { transformPerspective: 1400, transformOrigin: "50% 0%" }}
         variants={pageVariants}
         initial={reduceMotion ? false : "initial"}
         animate="visible"

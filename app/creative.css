@@ -719,6 +719,128 @@
   to { translate: 100% 0; }
 }
 
+/* ============================================================
+   3D qat — əsl perspektiv tilt, Z-dərinlik, parıltı, kursor işığı
+   `rotate`/`translate` müstəqil xüsusiyyətlərdir: Framer Motion-un
+   `transform`-u ilə toqquşmur.
+   ============================================================ */
+
+/* Grid-lərə perspektiv ver — tilt yalnız bununla 3D görünür */
+[data-motion="alive"] :is(
+  .events-grid, .clubs-directory-grid, .peers-grid, .mentors-grid,
+  .teachers-grid, .reviews-grid, .community-grid, .announcements-grid,
+  .club-members-grid, .kuds-quick-grid, .profile-stats, .kuds-module-grid
+) {
+  perspective: 1100px;
+  perspective-origin: 50% 50%;
+}
+
+[data-motion="alive"] :is(
+  .event-card, .club-directory-card, .peer-card, .mentor-card, .teacher-card,
+  .review-card, .community-card-shell, .announcement-card, .club-member-card,
+  .kuds-quick-card, .profile-stat-card
+) {
+  position: relative;
+  transform-style: preserve-3d;
+  transition:
+    rotate 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    translate 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms ease;
+  will-change: rotate, translate;
+}
+
+/* Kursorun altındakı kart: əyilir və irəli çıxır */
+[data-motion="alive"] [data-tilting="true"] {
+  rotate: var(--tilt-ax, 0) var(--tilt-ay, 0) 0 var(--tilt-angle, 0deg);
+  translate: 0 -8px 40px;
+  box-shadow:
+    0 40px 74px -30px rgb(16 46 38 / 52%),
+    0 12px 28px -18px rgb(16 46 38 / 32%);
+  z-index: 3;
+  transition:
+    rotate 90ms linear,
+    translate 90ms linear,
+    box-shadow 260ms ease;
+}
+
+/* Daxili qatlar səthin üstündə üzür — əsl dərinlik hissi */
+[data-motion="alive"] [data-tilting="true"] > * {
+  translate: 0 0 30px;
+  transition: translate 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-motion="alive"] [data-tilting="true"] > :is(h2, h3, strong, .event-card-title) {
+  translate: 0 0 52px;
+}
+
+/* ---------- 3D basma effekti (bütün düymələr) ---------- */
+[data-motion="alive"] .kuds-shell :is(button, .kuds-primary-button, [role="button"]) {
+  transition: rotate 180ms ease, translate 180ms ease;
+}
+[data-motion="alive"] .kuds-shell :is(button, .kuds-primary-button, [role="button"]):active {
+  translate: 0 1px -8px;
+}
+
+/* ---------- Naviqasiya keçidlərində 3D meyl ---------- */
+[data-motion="alive"] .platform-rail-navigation { perspective: 800px; }
+[data-motion="alive"] .platform-rail-link {
+  transform-style: preserve-3d;
+  transition: rotate 260ms cubic-bezier(0.22, 1, 0.36, 1), translate 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-motion="alive"] .platform-rail-link:hover {
+  rotate: y -7deg;
+  translate: 3px 0 16px;
+}
+
+/* Kursorun izlədiyi parıltı */
+[data-motion="alive"] [data-tilting="true"]::after {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+  background: radial-gradient(
+    340px circle at var(--glare-x, 50%) var(--glare-y, 50%),
+    rgb(255 255 255 / 46%),
+    rgb(255 255 255 / 8%) 42%,
+    transparent 66%
+  );
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* ---------- Kursor işığı ---------- */
+.cursor-halo {
+  position: fixed;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 340px;
+  margin: -170px 0 0 -170px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(68 118 108 / 13%), rgb(158 207 143 / 8%) 45%, transparent 68%);
+  opacity: 0;
+  translate: var(--cursor-x, 50vw) var(--cursor-y, 50vh);
+  transition: opacity 400ms ease;
+  pointer-events: none;
+  will-change: translate;
+}
+[data-motion="alive"] .cursor-halo { opacity: 1; }
+
+/* ---------- Başlıqlarda 3D açılış ---------- */
+[data-motion="alive"] :is(.section-heading, .kuds-home-section > header, .clubs-hero-copy) {
+  perspective: 900px;
+}
+[data-motion="alive"] .module-page-title,
+[data-motion="alive"] .kuds-home-section > header h2 {
+  transform-origin: 50% 100%;
+  animation: title-swing 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes title-swing {
+  from { opacity: 0; rotate: x -72deg; translate: 0 14px; }
+  to { opacity: 1; rotate: x 0deg; translate: 0 0; }
+}
+
 /* ---------- Kart daxili mikro-hərəkət ---------- */
 .kuds-shell :is(.event-card, .club-directory-card, .peer-card, .mentor-card, .teacher-card, .community-card-shell) svg {
   transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -797,6 +919,21 @@
 @media (prefers-reduced-motion: reduce) {
   .motion-aura { display: none; }
   .motion-aura__blob { animation: none; }
+  .cursor-halo { display: none; }
+  [data-tilting="true"],
+  [data-tilting="true"] > * {
+    rotate: none;
+    translate: none;
+    transition: none;
+  }
+  [data-tilting="true"]::after { display: none; }
+  .module-page-title,
+  .kuds-home-section > header h2 { animation: none; }
+  .kuds-shell :is(button, .kuds-primary-button, [role="button"]):active,
+  .platform-rail-link:hover {
+    rotate: none;
+    translate: none;
+  }
   :is(.event-card-skeleton, .admin-skeleton-cell, .skeleton-block, [class*="-skeleton"])::after {
     animation: none;
     display: none;
