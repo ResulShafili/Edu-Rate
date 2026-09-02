@@ -45,15 +45,6 @@ export const platformRoutes = [
     accent: "#ff9e7a",
   },
   {
-    href: "/marketplace",
-    label: "Elanlar lövhəsi",
-    number: "09",
-    title: "Tələbədən tələbəyə",
-    description: "Kitab, texnika, dərs köməyi və yaşayış elanları bir lövhədə.",
-    metric: "Tələbə elanları",
-    accent: "#ffcf66",
-  },
-  {
     href: "/questions",
     label: "Suallar",
     number: "08",
@@ -102,7 +93,7 @@ export const accountRoutes = [
 
 export const primaryNavigationGroups = [
   { label: "Gündəlik", routes: ["/schedule"] },
-  { label: "Kəşf et", routes: ["/events", "/feed", "/clubs", "/marketplace"] },
+  { label: "Kəşf et", routes: ["/events", "/feed", "/clubs"] },
   { label: "İnsanlar", routes: ["/community", "/teachers", "/mentors"] },
   { label: "Kömək", routes: ["/questions", "/support"] },
 ] as const;

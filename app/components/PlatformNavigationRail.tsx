@@ -13,7 +13,6 @@ import {
   LogIn,
   LayoutDashboard,
   Megaphone,
-  ShoppingBag,
   Settings,
   ShieldCheck,
   UserPlus,
@@ -40,7 +39,6 @@ type PlatformNavigationRailProps = {
 const routeIcons: Record<string, LucideIcon> = {
   "/schedule": CalendarRange,
   "/questions": MessageCircleQuestion,
-  "/marketplace": ShoppingBag,
   "/events": CalendarDays,
   "/community": UsersRound,
   "/teachers": GraduationCap,
