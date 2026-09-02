@@ -63,6 +63,10 @@ export function MotionLayer() {
     const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     root.setAttribute("data-motion", calm ? "calm" : "alive");
 
+    // Mobil/toxunma: parallaks CSS-i söndürülüb, ona görə --scroll-y-i hər
+    // frame-də yazmaq mənasız stil-recalc yaradar. Yalnız masaüstündə yazırıq.
+    const parallax = window.matchMedia("(hover: hover) and (pointer: fine) and (min-width: 769px)");
+
     // --- Sürüşmə: göstərici + parallaks ---------------------------------
     let scrollFrame = 0;
     function onScrollFrame() {
@@ -70,7 +74,7 @@ export function MotionLayer() {
       const scrollable = root.scrollHeight - window.innerHeight;
       const ratio = scrollable > 8 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
       root.style.setProperty("--scroll-progress", String(ratio));
-      root.style.setProperty("--scroll-y", `${window.scrollY}px`);
+      if (parallax.matches) root.style.setProperty("--scroll-y", `${window.scrollY}px`);
     }
     function scheduleScroll() {
       if (scrollFrame) return;

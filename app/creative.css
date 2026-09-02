@@ -1849,3 +1849,45 @@
 .market-contact:hover { background: var(--ku-dark-green, #16423c); }
 .market-close { color: var(--kuds-danger, #ef4444); border: 1px solid var(--kuds-border, #e2e8f0); background: #fff; }
 .market-close:hover { border-color: rgb(239 68 68 / 45%); }
+
+/* ============================================================
+   Mobil / toxunma performansı
+   Sürüşmə axıcılığını pozan bahalı effektlər toxunma cihazlarında və
+   kiçik ekranlarda söndürülür. Bu effektlər maus-yönümlü bəzəkdir;
+   telefonda faydası yox, amma sürüşmədə jank yaradır.
+   ============================================================ */
+@media (hover: none), (max-width: 768px) {
+  /* 1) Sürüşmə parallaksı tamamilə söndürülür — mobildə jank-ın əsas səbəbi:
+        90px blur-lu böyük qatı hər frame-də yenidən kompozit etmək çox bahalıdır. */
+  [data-motion="alive"] .motion-aura__blob--one,
+  [data-motion="alive"] .motion-aura__blob--two,
+  [data-motion="alive"] .motion-aura__blob--three,
+  [data-motion="alive"] :is(.event-card, .club-directory-card)
+    > :is(figure, .event-card-visual, .club-card-visual) {
+    translate: none;
+    will-change: auto;
+  }
+
+  /* 2) Aura statik və daha yüngül blur ilə — hərəkət olmayanda kompozitor
+        onu bir dəfə rasterizə edib keşləyir. */
+  .motion-aura__blob {
+    filter: blur(48px);
+    opacity: 0.34;
+    animation: none;
+    will-change: auto;
+  }
+
+  /* 3) Kursor halosu maus olmayan cihazda mənasızdır. */
+  .cursor-halo { display: none; }
+
+  /* 4) Kartlar toxunmada əyilmir (tilt yalnız fine-pointer-dədir), ona görə
+        daimi kompozitor qatı və 3D kontekst təmiz israfdır. */
+  [data-motion="alive"] :is(
+    .event-card, .club-directory-card, .peer-card, .mentor-card, .teacher-card,
+    .review-card, .community-card-shell, .announcement-card, .club-member-card,
+    .kuds-quick-card, .profile-stat-card
+  ) {
+    will-change: auto;
+    transform-style: flat;
+  }
+}

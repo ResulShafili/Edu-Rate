@@ -2,26 +2,43 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 type RouteTransitionProps = {
   children: ReactNode;
 };
 
-const pageVariants = {
+// Masaüstü: dərinlik hissi üçün 3D yellənmə. Mobil: yüngül fade + sürüşmə,
+// 3D olmadan — zəif cihazlarda keçid daha axıcı olsun.
+const desktopVariants = {
   initial: { opacity: 0, y: 26, rotateX: 9, scale: 0.985 },
   visible: { opacity: 1, y: 0, rotateX: 0, scale: 1 },
 };
 
-const pageTransition = {
-  duration: 0.62,
-  ease: [0.22, 1, 0.36, 1] as const,
+const mobileVariants = {
+  initial: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0 },
 };
+
+const desktopTransition = { duration: 0.62, ease: [0.22, 1, 0.36, 1] as const };
+const mobileTransition = { duration: 0.34, ease: [0.22, 1, 0.36, 1] as const };
 
 export function RouteTransition({ children }: RouteTransitionProps) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const media = window.matchMedia("(hover: none), (max-width: 768px)");
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  const variants = isMobile ? mobileVariants : desktopVariants;
+  const transition = isMobile ? mobileTransition : desktopTransition;
 
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -42,11 +59,11 @@ export function RouteTransition({ children }: RouteTransitionProps) {
         ref={frameRef}
         key={pathname}
         className="route-frame"
-        style={reduceMotion ? undefined : { transformPerspective: 1400, transformOrigin: "50% 0%" }}
-        variants={pageVariants}
+        style={reduceMotion || isMobile ? undefined : { transformPerspective: 1400, transformOrigin: "50% 0%" }}
+        variants={variants}
         initial={reduceMotion ? false : "initial"}
         animate="visible"
-        transition={reduceMotion ? { duration: 0 } : pageTransition}
+        transition={reduceMotion ? { duration: 0 } : transition}
       >
         {children}
       </motion.div>
