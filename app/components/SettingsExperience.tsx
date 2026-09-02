@@ -3,6 +3,7 @@
 import { Bell, Check, Mail, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PageHeader } from "./ui/Primitives";
+import { PushToggle } from "./PushToggle";
 
 type Preferences = {
   announcements: boolean;
@@ -47,6 +48,7 @@ export function SettingsExperience() {
     <section className="settings-page" aria-labelledby="settings-title">
       <PageHeader id="settings-title" eyebrow="Hesab" title="Parametrlər" />
       <div className="settings-card">
+        <PushToggle />
         <div className="settings-list">
           {preferenceItems.map(({ key, title, description, icon: Icon }) => (
             <label key={key} className="settings-row">

@@ -1514,3 +1514,47 @@
   .install-banner { gap: 9px; padding: 11px; }
   .install-banner small { display: none; }
 }
+
+/* ---------- Cihaz bildirişləri açarı ---------- */
+.push-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid rgb(68 118 108 / 26%);
+  border-radius: 14px;
+  background: rgb(68 118 108 / 7%);
+}
+.push-toggle__icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  place-items: center;
+  color: #fff;
+  border-radius: 11px;
+  background: var(--ku-green, #44766c);
+}
+.push-toggle > div { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.push-toggle strong { font-size: 13.5px; letter-spacing: -0.01em; }
+.push-toggle small { color: var(--kuds-muted, #64748b); font-size: 11.5px; line-height: 1.5; }
+.push-toggle em { color: var(--ku-dark-green, #16423c); font-size: 11px; font-style: normal; font-weight: 650; }
+.push-toggle button {
+  min-height: 36px;
+  flex: none;
+  padding: 0 15px;
+  font-size: 12.5px;
+  font-weight: 650;
+  border: 0;
+  border-radius: 11px;
+  cursor: pointer;
+}
+.push-toggle__on { color: #fff; background: var(--ku-green, #44766c); }
+.push-toggle__on:hover:not(:disabled) { background: var(--ku-dark-green, #16423c); }
+.push-toggle__off {
+  color: var(--ku-dark-green, #16423c);
+  border: 1px solid rgb(68 118 108 / 30%) !important;
+  background: #fff;
+}
+.push-toggle button:disabled { opacity: 0.6; cursor: default; }

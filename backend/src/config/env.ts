@@ -27,6 +27,9 @@ const envSchema = z
     CLOUDINARY_API_KEY: z.string().optional().or(z.literal("")),
     CLOUDINARY_API_SECRET: z.string().optional().or(z.literal("")),
     CLOUDINARY_UPLOAD_PRESET: z.string().optional().or(z.literal("")),
+    VAPID_PUBLIC_KEY: z.string().optional().or(z.literal("")),
+    VAPID_PRIVATE_KEY: z.string().optional().or(z.literal("")),
+    VAPID_SUBJECT: z.string().default("mailto:support@edurate.az"),
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV === "production" && value.JWT_SECRET.length < 32) {
@@ -73,4 +76,6 @@ export const env = {
   CLOUDINARY_API_KEY: parsed.data.CLOUDINARY_API_KEY || undefined,
   CLOUDINARY_API_SECRET: parsed.data.CLOUDINARY_API_SECRET || undefined,
   CLOUDINARY_UPLOAD_PRESET: parsed.data.CLOUDINARY_UPLOAD_PRESET || undefined,
+  VAPID_PUBLIC_KEY: parsed.data.VAPID_PUBLIC_KEY || undefined,
+  VAPID_PRIVATE_KEY: parsed.data.VAPID_PRIVATE_KEY || undefined,
 };

@@ -39,3 +39,10 @@ services:
         sync: false
       - key: CLOUDINARY_UPLOAD_PRESET
         value: edurate-secure
+      # Web push açarları: npx web-push generate-vapid-keys
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        value: mailto:support@edurate.az

@@ -44,6 +44,7 @@ import { createAnnouncement, deleteAnnouncement, deleteFeedPost, listAdminAnnoun
 import { decideMentorApplication, listMentorApplications } from "../db/mentor-applications.js";
 import { ensureClubConversation, listContentReports, updateContentReport } from "../db/messaging.js";
 import { createActionToken } from "../db/auth-security.js";
+import { sendPush } from "../db/push.js";
 import { accountActionUrl, EmailDeliveryError, sendAccountEmail } from "../lib/email.js";
 
 export const adminRouter = Router();
@@ -283,7 +284,17 @@ adminRouter.delete("/events/:id", async (request, response) => {
 });
 
 adminRouter.get("/announcements",async(_request,response)=>response.json({data:await listAdminAnnouncements()}));
-adminRouter.post("/announcements",async(request,response)=>{const item=await createAnnouncement(announcementSchema.parse(request.body),request.auth!.userId);await writeAudit(request.auth!.userId,"Elan yaradıldı","announcement",String(item.id));response.status(201).json({data:item});});
+adminRouter.post("/announcements",async(request,response)=>{
+  const input=announcementSchema.parse(request.body);
+  const item=await createAnnouncement(input,request.auth!.userId);
+  await writeAudit(request.auth!.userId,"Elan yaradıldı","announcement",String(item.id));
+  // Yayımlanan elan bütün abunə cihazlara bildiriş göndərir; push bağlıdırsa səssiz keçir.
+  if(input.status==="published"){
+    void sendPush({title:"Yeni elan",body:input.title,url:"/feed",tag:`announcement-${item.id}`})
+      .catch((error)=>console.error("Push bildirişi göndərilmədi.",error));
+  }
+  response.status(201).json({data:item});
+});
 adminRouter.patch("/announcements/:id",async(request,response)=>{const id=z.string().parse(request.params.id);const item=await updateAnnouncement(id,announcementSchema.partial().parse(request.body));if(!item)throw new ApiError(404,"ANNOUNCEMENT_NOT_FOUND","Elan tapılmadı.");await writeAudit(request.auth!.userId,"Elan yeniləndi","announcement",id);response.json({data:item});});
 adminRouter.delete("/announcements/:id",async(request,response)=>{const id=z.string().parse(request.params.id);if(!await deleteAnnouncement(id))throw new ApiError(404,"ANNOUNCEMENT_NOT_FOUND","Elan tapılmadı.");await writeAudit(request.auth!.userId,"Elan silindi","announcement",id);response.status(204).send();});
 
