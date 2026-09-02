@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   CalendarDays,
+  CalendarRange,
   CircleHelp,
   Compass,
   GraduationCap,
@@ -35,6 +36,7 @@ type PlatformNavigationRailProps = {
 };
 
 const routeIcons: Record<string, LucideIcon> = {
+  "/schedule": CalendarRange,
   "/events": CalendarDays,
   "/community": UsersRound,
   "/teachers": GraduationCap,

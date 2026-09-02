@@ -463,6 +463,28 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS message_reactions_message_idx ON message_reactions(message_id);
     `,
   },
+  {
+    version: 21,
+    name: "personal timetable",
+    sql: `
+      CREATE TABLE IF NOT EXISTS timetable_entries (
+        id UUID PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        subject VARCHAR(120) NOT NULL,
+        teacher VARCHAR(120) NOT NULL DEFAULT '',
+        room VARCHAR(80) NOT NULL DEFAULT '',
+        day_of_week SMALLINT NOT NULL CHECK (day_of_week BETWEEN 1 AND 7),
+        start_minute SMALLINT NOT NULL CHECK (start_minute >= 0 AND start_minute < 1440),
+        end_minute SMALLINT NOT NULL CHECK (end_minute > 0 AND end_minute <= 1440),
+        tone VARCHAR(16) NOT NULL DEFAULT 'mint',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CHECK (end_minute > start_minute)
+      );
+      CREATE INDEX IF NOT EXISTS timetable_entries_user_idx
+        ON timetable_entries (user_id, day_of_week, start_minute);
+    `,
+  },
 ];
 
 export const latestMigrationVersion = Math.max(...migrations.map((migration) => migration.version));

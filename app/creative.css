@@ -967,3 +967,195 @@
   .scroll-progress__bar { transition: none; }
   .kuds-shell :is(.kuds-primary-button, .reserve-button, .auth-submit, .profile-save-button)::after { display: none; }
 }
+
+/* ============================================================
+   Dərs cədvəli — həftəlik grid və "Bu gün kampusda"
+   ============================================================ */
+
+.schedule-shell { display: grid; gap: 20px; }
+
+/* Bu gün paneli */
+.today-panel {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  color: #eefaf1;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 88% 10%, rgb(202 234 241 / 22%), transparent 16rem),
+    linear-gradient(135deg, #123c33 0%, var(--ku-dark-green, #16423c) 58%, #39766b 100%);
+  box-shadow: 0 22px 48px -28px rgb(12 40 33 / 62%);
+}
+.today-panel__head { display: flex; align-items: center; gap: 8px; }
+.today-panel__head h2 { margin: 0; font-size: 15px; letter-spacing: -0.01em; }
+.today-panel__head small { margin-left: auto; color: rgb(238 250 241 / 62%); font-size: 11px; }
+
+.today-next {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--tone-accent, #9ecf8f);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 9%);
+}
+.today-next__label {
+  color: var(--tone-accent, #9ecf8f);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.today-next strong { font-size: 19px; letter-spacing: -0.02em; }
+.today-next p { display: flex; flex-wrap: wrap; gap: 12px; margin: 2px 0 0; color: rgb(238 250 241 / 72%); font-size: 12px; }
+.today-next p span { display: inline-flex; align-items: center; gap: 4px; }
+
+.today-none { margin: 0; color: rgb(238 250 241 / 66%); font-size: 13px; }
+
+.today-events { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.today-events li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 7%);
+  font-size: 12px;
+}
+.today-events li span { color: var(--orbit-accent, #d8f3c6); font-weight: 700; }
+.today-events li strong { font-weight: 600; }
+.today-events li small { color: rgb(238 250 241 / 55%); }
+
+/* Forma */
+.schedule-form {
+  overflow: hidden;
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 16px;
+  background: var(--kuds-surface, #fff);
+  box-shadow: var(--kuds-shadow-sm);
+}
+.schedule-form__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.schedule-form label { display: grid; gap: 5px; color: var(--kuds-muted, #64748b); font-size: 11px; font-weight: 650; }
+.schedule-form :is(input, select) {
+  min-height: 40px;
+  padding: 0 11px;
+  color: var(--kuds-text, #1e293b);
+  font: inherit;
+  font-size: 13px;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 10px;
+  background: #fff;
+  outline: none;
+}
+.schedule-form :is(input, select):focus { border-color: var(--ku-green, #44766c); }
+.schedule-form__tones { display: flex; flex-wrap: wrap; gap: 7px; }
+.tone-chip {
+  width: 26px;
+  height: 26px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--tone-accent, #9ecf8f);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+.tone-chip:hover { transform: scale(1.12); }
+.tone-chip.is-active { border-color: var(--ku-dark-green, #16423c); transform: scale(1.12); }
+.schedule-form__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.schedule-form__actions button[type="button"] {
+  min-height: 40px;
+  padding: 0 14px;
+  color: var(--kuds-muted, #64748b);
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Həftəlik grid */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(150px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.week-day {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 140px;
+  padding: 12px;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 14px;
+  background: var(--kuds-surface, #fff);
+}
+.week-day.is-today { border-color: rgb(68 118 108 / 55%); box-shadow: 0 0 0 3px rgb(68 118 108 / 10%); }
+.week-day > header { display: grid; gap: 1px; padding-bottom: 6px; border-bottom: 1px solid var(--kuds-border, #e2e8f0); }
+.week-day > header strong { font-size: 13px; letter-spacing: -0.01em; }
+.week-day > header span { color: var(--kuds-muted, #64748b); font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; }
+.week-day ul { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.week-day__empty { margin: 0; color: rgb(100 116 139 / 62%); font-size: 11px; }
+
+.lesson {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  border-left: 3px solid var(--tone-accent, #9ecf8f);
+  border-radius: 10px;
+  background: var(--tone-soft, rgb(158 207 143 / 14%));
+}
+.lesson div { display: grid; gap: 1px; min-width: 0; }
+.lesson strong { font-size: 12.5px; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.lesson small { color: var(--kuds-muted, #64748b); font-size: 10.5px; }
+.lesson em { color: var(--kuds-muted, #64748b); font-size: 10px; font-style: normal; }
+.lesson button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  place-items: center;
+  color: var(--kuds-muted, #64748b);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 180ms ease, color 180ms ease, background 180ms ease;
+}
+.lesson:hover button, .lesson button:focus-visible { opacity: 1; }
+.lesson button:hover { color: var(--kuds-danger, #ef4444); background: rgb(239 68 68 / 10%); }
+
+/* Rəng tonları */
+.tone-mint { --tone-accent: #6fc79a; --tone-soft: rgb(111 199 154 / 14%); }
+.tone-lilac { --tone-accent: #a596e8; --tone-soft: rgb(165 150 232 / 14%); }
+.tone-blue { --tone-accent: #6aa9e0; --tone-soft: rgb(106 169 224 / 14%); }
+.tone-coral { --tone-accent: #e8917a; --tone-soft: rgb(232 145 122 / 14%); }
+.tone-gold { --tone-accent: #dfb45f; --tone-soft: rgb(223 180 95 / 14%); }
+.tone-sage { --tone-accent: #44766c; --tone-soft: rgb(68 118 108 / 12%); }
+
+/* Boş vəziyyət */
+.schedule-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--kuds-muted, #64748b);
+  border: 1px dashed var(--kuds-border, #e2e8f0);
+  border-radius: 16px;
+  background: var(--kuds-surface, #fff);
+}
+.schedule-empty svg { color: var(--ku-green, #44766c); }
+.schedule-empty h2 { margin: 4px 0 0; color: var(--kuds-text, #1e293b); font-size: 17px; }
+.schedule-empty p { max-width: 46ch; margin: 0 0 6px; font-size: 13px; line-height: 1.6; }
+
+@media (max-width: 860px) {
+  .week-grid { grid-template-columns: repeat(6, minmax(146px, 1fr)); }
+  .lesson button { opacity: 1; }
+}

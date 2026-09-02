@@ -1,5 +1,14 @@
 export const platformRoutes = [
   {
+    href: "/schedule",
+    label: "Cədvəl",
+    number: "00",
+    title: "Həftən bir baxışda",
+    description: "Dərslərin, növbəti dərsin və bu gün kampusda baş verənlər bir yerdə.",
+    metric: "Şəxsi dərs cədvəli",
+    accent: "#7de5d1",
+  },
+  {
     href: "/events",
     label: "Tədbirlər",
     number: "01",
@@ -74,6 +83,7 @@ export const accountRoutes = [
 ] as const;
 
 export const primaryNavigationGroups = [
+  { label: "Gündəlik", routes: ["/schedule"] },
   { label: "Kəşf et", routes: ["/events", "/feed", "/clubs"] },
   { label: "İnsanlar", routes: ["/community", "/teachers", "/mentors"] },
   { label: "Kömək", routes: ["/support"] },

@@ -20,6 +20,7 @@ import { supportRouter } from "./routes/support.js";
 import { workspaceRouter } from "./routes/workspace.js";
 import { communityRouter } from "./routes/community.js";
 import { realtimeRouter } from "./routes/realtime.js";
+import { timetableRouter } from "./routes/timetable.js";
 import { authenticate, requirePrimaryAdmin } from "./middleware/authenticate.js";
 
 export function createApp() {
@@ -81,6 +82,7 @@ export function createApp() {
   app.use("/api/community", communityRouter);
   app.use("/api/media", mediaRouter);
   app.use("/api/realtime", realtimeRouter);
+  app.use("/api/timetable", timetableRouter);
   app.use("/api", catalogRouter);
   app.use("/api/admin", adminRouter);
   if(env.NODE_ENV!=="production"||env.SWAGGER_PUBLIC){
