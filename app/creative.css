@@ -1785,3 +1785,67 @@
 
 .drawer-share-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .drawer-share-row .calendar-download { margin-top: 10px; }
+
+/* ============================================================
+   Elanlar lövhəsi
+   ============================================================ */
+
+.market-shell { display: grid; gap: 16px; }
+
+.market-filters { display: flex; flex-wrap: wrap; gap: 7px; }
+.market-filters button {
+  min-height: 36px;
+  padding: 0 14px;
+  color: var(--kuds-muted, #64748b);
+  font-size: 12.5px;
+  font-weight: 650;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 999px;
+  background: var(--kuds-surface, #fff);
+  cursor: pointer;
+}
+.market-filters button.is-active { color: #fff; border-color: var(--ku-green, #44766c); background: var(--ku-green, #44766c); }
+
+.market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 12px; }
+.market-card {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  padding: 16px;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 15px;
+  background: var(--kuds-surface, #fff);
+  box-shadow: var(--kuds-shadow-xs);
+}
+.market-card__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.market-kind {
+  padding: 3px 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 999px;
+}
+.market-kind--satiram { color: #16423c; background: rgb(158 207 143 / 34%); }
+.market-kind--axtariram { color: #1e3a5f; background: rgb(106 169 224 / 26%); }
+.market-kind--pulsuz { color: #7a4b16; background: rgb(223 180 95 / 30%); }
+.market-kind--komek { color: #4a2c6d; background: rgb(165 150 232 / 28%); }
+.market-card__head small { color: var(--kuds-muted, #64748b); font-size: 10.5px; }
+.market-card h2 { margin: 0; font-size: 15px; letter-spacing: -0.02em; line-height: 1.35; overflow-wrap: anywhere; }
+.market-price { color: var(--ku-dark-green, #16423c); font-size: 15px; font-weight: 780; }
+.market-card p { margin: 0; color: var(--kuds-muted, #64748b); font-size: 12.5px; line-height: 1.55; overflow-wrap: anywhere; }
+.market-card__foot { margin-top: 4px; }
+.market-contact, .market-close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 640;
+  text-decoration: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.market-contact { color: #fff; border: 0; background: var(--ku-green, #44766c); }
+.market-contact:hover { background: var(--ku-dark-green, #16423c); }
+.market-close { color: var(--kuds-danger, #ef4444); border: 1px solid var(--kuds-border, #e2e8f0); background: #fff; }
+.market-close:hover { border-color: rgb(239 68 68 / 45%); }

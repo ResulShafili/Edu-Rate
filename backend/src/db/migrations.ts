@@ -541,6 +541,31 @@ const migrations: Migration[] = [
       );
     `,
   },
+  {
+    version: 24,
+    name: "student marketplace listings",
+    sql: `
+      CREATE TABLE IF NOT EXISTS marketplace_listings (
+        id UUID PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title VARCHAR(140) NOT NULL,
+        details VARCHAR(1000) NOT NULL DEFAULT '',
+        kind VARCHAR(16) NOT NULL DEFAULT 'satiram'
+          CHECK (kind IN ('satiram','axtariram','pulsuz','komek')),
+        category VARCHAR(24) NOT NULL DEFAULT 'kitab'
+          CHECK (category IN ('kitab','texnika','ders','yasayis','diger')),
+        price VARCHAR(40) NOT NULL DEFAULT '',
+        status VARCHAR(16) NOT NULL DEFAULT 'active'
+          CHECK (status IN ('active','closed')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS marketplace_listings_feed_idx
+        ON marketplace_listings (status, created_at DESC);
+      CREATE INDEX IF NOT EXISTS marketplace_listings_user_idx
+        ON marketplace_listings (user_id, created_at DESC);
+    `,
+  },
 ];
 
 export const latestMigrationVersion = Math.max(...migrations.map((migration) => migration.version));
