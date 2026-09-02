@@ -1782,3 +1782,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.drawer-share-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.drawer-share-row .calendar-download { margin-top: 10px; }

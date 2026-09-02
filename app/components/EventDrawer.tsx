@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, CalendarDays, Check, Clock3, MapPin, Sparkles, X, CalendarPlus} from "lucide-react";
+import { ArrowRight, CalendarDays, Check, Clock3, MapPin, Sparkles, X, CalendarPlus, Share2} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
@@ -240,13 +240,23 @@ export function EventDrawer({ event, onClose }: EventDrawerProps) {
                   <span className="event-registration-closed">Qeydiyyat bağlıdır</span>
                 )}
               </div>
-              <a
-                className="calendar-download"
-                href={`/api/events/${encodeURIComponent(event.id)}/calendar`}
-                download
-              >
-                <CalendarPlus size={15} /> Təqvimə əlavə et
-              </a>
+              <div className="drawer-share-row">
+                <a
+                  className="calendar-download"
+                  href={`/api/events/${encodeURIComponent(event.id)}/calendar`}
+                  download
+                >
+                  <CalendarPlus size={15} /> Təqvimə əlavə et
+                </a>
+                <a
+                  className="calendar-download"
+                  href={`/api/events/${encodeURIComponent(event.id)}/share`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Share2 size={15} /> Paylaşım şəkli
+                </a>
+              </div>
               {registrationError && <p className="event-registration-error" role="alert">{registrationError}</p>}
               <span className="sr-only" aria-live="polite">{registrationFeedback}</span>
             </div>
