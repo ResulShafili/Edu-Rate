@@ -35,9 +35,17 @@ export async function authenticate(request: Request, _response: Response, next: 
   }
 }
 
-export async function optionalAuthenticate(request:Request,_response:Response,next:NextFunction){
+/**
+ * İstəyə bağlı autentifikasiya: token varsa istifadəçini tanıyır, YOXSA və ya
+ * token etibarsızdırsa (vaxtı bitib, sessiya ləğv olunub) sorğu anonim davam
+ * edir. Köhnəlmiş kuki ictimai məzmunu bloklamamalıdır.
+ */
+export async function optionalAuthenticate(request:Request,response:Response,next:NextFunction){
   if(!request.header("authorization"))return next();
-  return authenticate(request,_response,next);
+  return authenticate(request,response,(error?:unknown)=>{
+    if(error)request.auth=undefined;
+    next();
+  });
 }
 
 export function requireAdmin(request: Request, _response: Response, next: NextFunction) {

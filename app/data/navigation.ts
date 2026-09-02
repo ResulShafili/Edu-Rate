@@ -45,6 +45,15 @@ export const platformRoutes = [
     accent: "#ff9e7a",
   },
   {
+    href: "/questions",
+    label: "Suallar",
+    number: "08",
+    title: "Soruş, cavab al",
+    description: "Kampus və tədrislə bağlı sualları anonim ver, cavabı bilənlərdən öyrən.",
+    metric: "Anonim tələbə sualları",
+    accent: "#b9a7ff",
+  },
+  {
     href: "/support",
     label: "Dəstək",
     number: "05",
@@ -86,7 +95,7 @@ export const primaryNavigationGroups = [
   { label: "Gündəlik", routes: ["/schedule"] },
   { label: "Kəşf et", routes: ["/events", "/feed", "/clubs"] },
   { label: "İnsanlar", routes: ["/community", "/teachers", "/mentors"] },
-  { label: "Kömək", routes: ["/support"] },
+  { label: "Kömək", routes: ["/questions", "/support"] },
 ] as const;
 
 export const allPlatformRoutes = [...platformRoutes, ...accountRoutes] as const;

@@ -502,6 +502,45 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS push_subscriptions_user_idx ON push_subscriptions (user_id);
     `,
   },
+  {
+    version: 23,
+    name: "campus questions and answers",
+    sql: `
+      CREATE TABLE IF NOT EXISTS campus_questions (
+        id UUID PRIMARY KEY,
+        author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        title VARCHAR(180) NOT NULL,
+        body VARCHAR(1200) NOT NULL DEFAULT '',
+        topic VARCHAR(32) NOT NULL DEFAULT 'kampus'
+          CHECK (topic IN ('kampus','tedris','yasayis','texniki','diger')),
+        status VARCHAR(16) NOT NULL DEFAULT 'published'
+          CHECK (status IN ('published','hidden')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS campus_questions_feed_idx
+        ON campus_questions (status, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS campus_answers (
+        id UUID PRIMARY KEY,
+        question_id UUID NOT NULL REFERENCES campus_questions(id) ON DELETE CASCADE,
+        author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        body VARCHAR(1200) NOT NULL,
+        status VARCHAR(16) NOT NULL DEFAULT 'published'
+          CHECK (status IN ('published','hidden')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS campus_answers_question_idx
+        ON campus_answers (question_id, created_at);
+
+      CREATE TABLE IF NOT EXISTS campus_question_votes (
+        question_id UUID NOT NULL REFERENCES campus_questions(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (question_id, user_id)
+      );
+    `,
+  },
 ];
 
 export const latestMigrationVersion = Math.max(...migrations.map((migration) => migration.version));

@@ -5,6 +5,7 @@ import {
   CalendarDays,
   CalendarRange,
   CircleHelp,
+  MessageCircleQuestion,
   Compass,
   GraduationCap,
   HeartHandshake,
@@ -37,6 +38,7 @@ type PlatformNavigationRailProps = {
 
 const routeIcons: Record<string, LucideIcon> = {
   "/schedule": CalendarRange,
+  "/questions": MessageCircleQuestion,
   "/events": CalendarDays,
   "/community": UsersRound,
   "/teachers": GraduationCap,
