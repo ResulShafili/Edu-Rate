@@ -1159,3 +1159,153 @@
   .week-grid { grid-template-columns: repeat(6, minmax(146px, 1fr)); }
   .lesson button { opacity: 1; }
 }
+
+/* ============================================================
+   Müəllim seçimi köməkçisi — yan-yana müqayisə
+   ============================================================ */
+
+.compare-shell { display: grid; gap: 18px; }
+.compare-back {
+  align-self: center;
+  padding: 9px 14px;
+  color: var(--ku-dark-green, #16423c);
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--kuds-surface, #fff);
+}
+.compare-lead { max-width: 74ch; margin: 0; color: var(--kuds-muted, #64748b); font-size: 13.5px; line-height: 1.65; }
+
+.compare-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 14px; }
+.compare-filters label { display: grid; gap: 5px; color: var(--kuds-muted, #64748b); font-size: 11px; font-weight: 650; }
+.compare-filters select {
+  min-height: 40px;
+  min-width: 210px;
+  padding: 0 11px;
+  color: var(--kuds-text, #1e293b);
+  font: inherit;
+  font-size: 13px;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 10px;
+  background: #fff;
+}
+.compare-counter { color: var(--kuds-muted, #64748b); font-size: 11px; font-weight: 650; }
+
+.compare-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(228px, 1fr)); gap: 9px; }
+.compare-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  text-align: left;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 13px;
+  background: var(--kuds-surface, #fff);
+  cursor: pointer;
+  transition: border-color 180ms ease, box-shadow 180ms ease, translate 180ms ease;
+}
+.compare-chip:hover:not(:disabled) { border-color: rgb(68 118 108 / 45%); translate: 0 -2px; }
+.compare-chip:disabled { cursor: not-allowed; opacity: 0.45; }
+.compare-chip.is-active {
+  border-color: var(--ku-green, #44766c);
+  box-shadow: 0 0 0 3px rgb(68 118 108 / 12%);
+}
+.compare-chip__mark {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  place-items: center;
+  color: var(--ku-green, #44766c);
+  border-radius: 50%;
+  background: rgb(68 118 108 / 10%);
+}
+.compare-chip.is-active .compare-chip__mark { color: #fff; background: var(--ku-green, #44766c); }
+.compare-chip > span:nth-child(2) { display: grid; gap: 1px; min-width: 0; flex: 1; }
+.compare-chip strong { font-size: 13px; letter-spacing: -0.01em; }
+.compare-chip small { color: var(--kuds-muted, #64748b); font-size: 10.5px; }
+.compare-chip__score {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  color: var(--ku-dark-green, #16423c);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Müqayisə cədvəli */
+.compare-table {
+  display: grid;
+  gap: 2px;
+  overflow-x: auto;
+  padding: 16px;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 16px;
+  background: var(--kuds-surface, #fff);
+  box-shadow: var(--kuds-shadow-sm);
+}
+.compare-table__head,
+.compare-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.3fr) repeat(auto-fit, minmax(110px, 1fr));
+  align-items: center;
+  gap: 12px;
+}
+.compare-table__head { padding-bottom: 10px; border-bottom: 1px solid var(--kuds-border, #e2e8f0); }
+.compare-table__corner { display: inline-flex; align-items: center; gap: 6px; color: var(--kuds-muted, #64748b); font-size: 11px; font-weight: 700; }
+.compare-table__teacher { display: grid; gap: 1px; }
+.compare-table__teacher strong { font-size: 13px; letter-spacing: -0.015em; }
+.compare-table__teacher small { color: var(--kuds-muted, #64748b); font-size: 10px; }
+
+.compare-row { padding: 11px 0; border-bottom: 1px solid rgb(226 232 240 / 60%); }
+.compare-row:last-child { border-bottom: 0; }
+.compare-row__label { display: grid; gap: 1px; }
+.compare-row__label strong { font-size: 12.5px; }
+.compare-row__label small { color: var(--kuds-muted, #64748b); font-size: 10px; line-height: 1.4; }
+
+.compare-cell { display: flex; align-items: center; gap: 8px; }
+.compare-cell b { min-width: 26px; font-size: 12.5px; font-weight: 750; }
+.compare-bar {
+  display: block;
+  flex: 1;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgb(68 118 108 / 12%);
+}
+.compare-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--ku-green, #44766c), #7fb98f);
+  transition: width 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.compare-cell.is-leader b { color: var(--ku-dark-green, #16423c); }
+.compare-cell.is-leader .compare-bar > span { background: linear-gradient(90deg, var(--ku-dark-green, #16423c), #9ecf8f); }
+.compare-row--meta .compare-cell b { font-weight: 650; }
+.compare-empty-note { margin: 12px 0 0; color: var(--kuds-muted, #64748b); font-size: 12.5px; line-height: 1.6; }
+
+@media (max-width: 720px) {
+  .compare-table__head, .compare-row { grid-template-columns: minmax(120px, 1fr) repeat(auto-fit, minmax(86px, 1fr)); gap: 8px; }
+  .compare-row__label small { display: none; }
+}
+
+.teachers-compare-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 9px 14px;
+  color: var(--ku-dark-green, #16423c);
+  font-size: 12.5px;
+  font-weight: 650;
+  text-decoration: none;
+  border: 1px solid rgb(68 118 108 / 32%);
+  border-radius: 999px;
+  background: rgb(68 118 108 / 8%);
+  transition: background 200ms ease, translate 200ms ease;
+}
+.teachers-compare-link:hover { background: rgb(68 118 108 / 15%); translate: 0 -2px; }

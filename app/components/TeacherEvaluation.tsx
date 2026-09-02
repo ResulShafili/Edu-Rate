@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, CircleAlert, Send, SlidersHorizontal, Sparkles, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Scale, Send, SlidersHorizontal, Sparkles, Star } from "lucide-react";
 import Link from "next/link";
 import useSWR from "swr";
 import {
@@ -304,6 +304,9 @@ export function TeacherEvaluation() {
         <div>
           <span className="teachers-kicker">Müəllim seçimi</span>
           <h1 id="teachers-title" className="module-page-title">Müəllimlər</h1>
+          <Link href="/teachers/compare" className="teachers-compare-link">
+            <Scale size={15} /> Hansı müəllimi seçim? Yan-yana müqayisə et
+          </Link>
         </div>
         <div className="teachers-heading-aside">
           <div className="teacher-carousel-controls">

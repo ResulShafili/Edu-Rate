@@ -8,6 +8,7 @@ export type ProfessionalProfile = {
   headline: string; specialty: string; biography: string; city: string; experienceYears: number;
   availability: string; meetingMode: string; languages: string[]; expertise: string[];
   rating: number; reviewCount: number;
+  criteria: { clarity: number; subjectKnowledge: number; objectivity: number; communication: number };
   status: "pending" | "approved" | "rejected"; visible: boolean;
 };
 
@@ -21,7 +22,7 @@ type ProfessionalUser = {
   about?: string;
 };
 
-const seedProfiles: Omit<ProfessionalProfile, "id" | "userId" | "rating" | "reviewCount">[] = [
+const seedProfiles: Omit<ProfessionalProfile, "id" | "userId" | "rating" | "reviewCount" | "criteria">[] = [
   { kind:"teacher", slug:"leyla-memmedova", name:"Leyla Məmmədova", headline:"Riyaziyyat müəllimi", specialty:"Riyaziyyat", biography:"Mürəkkəb mövzuları gündəlik nümunələrlə sadələşdirir.", city:"Bakı", experienceYears:11, availability:"Bu gün · 18:30-dan sonra", meetingMode:"Hibrid", languages:["Azərbaycan dili"], expertise:["Cəbr","Analiz"], status:"approved", visible:true },
   { kind:"teacher", slug:"nigar-huseynli", name:"Nigar Hüseynli", headline:"İngilis dili müəllimi", specialty:"İngilis dili", biography:"Danışıq və akademik yazı bacarıqlarını praktik yanaşma ilə inkişaf etdirir.", city:"Xankəndi", experienceYears:8, availability:"Həftəiçi", meetingMode:"Onlayn", languages:["Azərbaycan dili","İngilis dili"], expertise:["Speaking","Writing"], status:"approved", visible:true },
   { kind:"teacher", slug:"tural-kerimov", name:"Tural Kərimov", headline:"Fizika müəllimi", specialty:"Fizika", biography:"Fiziki qanunları təcrübə və vizual nümunələrlə izah edir.", city:"Bakı", experienceYears:10, availability:"Çərşənbə axşamı", meetingMode:"Əyani", languages:["Azərbaycan dili"], expertise:["Mexanika","Elektrik"], status:"approved", visible:true },
@@ -37,7 +38,7 @@ const seedProfiles: Omit<ProfessionalProfile, "id" | "userId" | "rating" | "revi
 ];
 
 const memory = new Map<string, ProfessionalProfile>(
-  seedProfiles.map((profile) => [profile.slug, { ...profile, id: randomUUID(), userId: null, rating: 0, reviewCount: 0 }]),
+  seedProfiles.map((profile) => [profile.slug, { ...profile, id: randomUUID(), userId: null, rating: 0, reviewCount: 0, criteria: emptyCriteria() }]),
 );
 
 export function activateMemoryMentorProfile(input: {
@@ -51,7 +52,7 @@ export function activateMemoryMentorProfile(input: {
     headline: `${input.specialty} mentoru`, specialty: input.specialty, biography: input.biography,
     city: "Xankəndi", experienceYears: 0, availability: input.availability,
     meetingMode: input.meetingMode, languages: input.languages, expertise: [input.specialty],
-    rating: 0, reviewCount: 0,
+    rating: 0, reviewCount: 0, criteria: emptyCriteria(),
     status: "approved", visible: true,
   });
 }
@@ -70,12 +71,17 @@ export async function seedProfessionalProfiles() {
     WHERE r.mentor_profile_id IS NULL AND r.mentor_id=p.slug`);
 }
 
+function emptyCriteria() {
+  return { clarity: 0, subjectKnowledge: 0, objectivity: 0, communication: 0 };
+}
+
 function map(row: Record<string, unknown>): ProfessionalProfile {
   return { id:String(row.id), userId:row.user_id ? String(row.user_id) : null, kind:row.kind as ProfessionalKind,
     slug:String(row.slug), name:String(row.display_name), headline:String(row.headline), specialty:String(row.specialty),
     biography:String(row.biography), city:String(row.city), experienceYears:Number(row.experience_years),
     availability:String(row.availability), meetingMode:String(row.meeting_mode), languages:Array.isArray(row.languages)?row.languages.map(String):[],
     expertise:Array.isArray(row.expertise)?row.expertise.map(String):[], rating:Number(row.rating ?? 0), reviewCount:Number(row.review_count ?? 0),
+    criteria:{ clarity:Number(row.clarity ?? 0), subjectKnowledge:Number(row.subject_knowledge ?? 0), objectivity:Number(row.objectivity ?? 0), communication:Number(row.communication ?? 0) },
     status:row.status as ProfessionalProfile["status"], visible:Boolean(row.visible) };
 }
 
@@ -87,10 +93,16 @@ export async function listProfessionalProfiles(kind?: ProfessionalKind, includeH
   const result=await databasePool.query(`
     SELECT p.*,
       COALESCE(review_stats.rating, 0)::float AS rating,
-      COALESCE(review_stats.review_count, 0)::int AS review_count
+      COALESCE(review_stats.review_count, 0)::int AS review_count,
+      COALESCE(review_stats.clarity, 0)::float AS clarity,
+      COALESCE(review_stats.subject_knowledge, 0)::float AS subject_knowledge,
+      COALESCE(review_stats.objectivity, 0)::float AS objectivity,
+      COALESCE(review_stats.communication, 0)::float AS communication
     FROM professional_profiles p
     LEFT JOIN (
-      SELECT teacher_profile_id, AVG(rating) AS rating, COUNT(*) AS review_count
+      SELECT teacher_profile_id, AVG(rating) AS rating, COUNT(*) AS review_count,
+        AVG(clarity) AS clarity, AVG(subject_knowledge) AS subject_knowledge,
+        AVG(objectivity) AS objectivity, AVG(communication) AS communication
       FROM teacher_reviews
       WHERE status='approved' AND teacher_profile_id IS NOT NULL
       GROUP BY teacher_profile_id
@@ -152,7 +164,7 @@ export async function synchronizeProfessionalProfilesForUser(user: ProfessionalU
       headline: `${user.program} ${kind === "teacher" ? "müəllimi" : "mentoru"}`,
       specialty: user.program, biography: user.about?.trim() ?? "", city: user.city,
       experienceYears: 0, availability: "", meetingMode: "Onlayn", languages: [],
-      expertise: [user.program], rating: 0, reviewCount: 0, status: "approved", visible: true,
+      expertise: [user.program], rating: 0, reviewCount: 0, criteria: emptyCriteria(), status: "approved", visible: true,
     };
     memory.set(slug, created);
     return created;
