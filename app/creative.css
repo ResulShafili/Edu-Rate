@@ -1728,3 +1728,57 @@
   transition: background 200ms ease, translate 200ms ease;
 }
 .calendar-download:hover { background: rgb(68 118 108 / 16%); translate: 0 -2px; }
+
+/* ---------- Kampus izi ---------- */
+.campus-trail {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 16px;
+  background: var(--kuds-surface, #fff);
+  box-shadow: var(--kuds-shadow-xs);
+}
+.campus-trail header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.campus-trail h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+.campus-trail h2 svg { color: var(--ku-green, #44766c); }
+.campus-trail header small { margin-left: auto; color: var(--kuds-muted, #64748b); font-size: 11px; }
+.campus-trail__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.campus-trail__item {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  padding: 13px;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 13px;
+  background: rgb(248 250 252 / 75%);
+}
+.campus-trail__icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 4px;
+  place-items: center;
+  color: var(--ku-dark-green, #16423c);
+  border-radius: 10px;
+  background: rgb(68 118 108 / 11%);
+}
+.campus-trail__item strong { font-size: 22px; font-weight: 780; letter-spacing: -0.03em; }
+.campus-trail__item small { color: var(--kuds-muted, #64748b); font-size: 11px; }
+.campus-trail__item em {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--ku-green, #44766c);
+  font-size: 10.5px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

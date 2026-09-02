@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { CampusTrail } from "./CampusTrail";
 import {
   ArrowRight,
   BadgeCheck,
@@ -393,6 +394,7 @@ export function UserProfileDashboard() {
 
       <SessionManager />
 
+      <CampusTrail />
       <motion.div
         className="profile-stats"
         initial={reduceMotion ? false : { opacity: 0, y: 24 }}

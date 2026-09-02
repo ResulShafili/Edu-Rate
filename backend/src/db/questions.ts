@@ -169,3 +169,21 @@ export async function hideQuestion(questionId: string, userId: string, isModerat
     : await databasePool.query("UPDATE campus_questions SET status='hidden',updated_at=NOW() WHERE id=$1 AND author_id=$2", [questionId, userId]);
   return Boolean(result.rowCount);
 }
+
+/** Profil "kampus izi" üçün: istifadəçinin verdiyi sual və yazdığı cavab sayı. */
+export async function countUserContributions(userId: string) {
+  if (!databasePool) {
+    const questions = [...memory.values()];
+    return {
+      questions: questions.filter((item) => item.authorId === userId).length,
+      answers: questions.reduce((sum, item) => sum + item.answers.filter((a) => a.authorId === userId).length, 0),
+    };
+  }
+  const result = await databasePool.query(
+    `SELECT
+       (SELECT COUNT(*)::int FROM campus_questions WHERE author_id=$1 AND status='published') AS questions,
+       (SELECT COUNT(*)::int FROM campus_answers WHERE author_id=$1 AND status='published') AS answers`,
+    [userId],
+  );
+  return { questions: Number(result.rows[0]?.questions ?? 0), answers: Number(result.rows[0]?.answers ?? 0) };
+}

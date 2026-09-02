@@ -23,6 +23,7 @@ import { realtimeRouter } from "./routes/realtime.js";
 import { timetableRouter } from "./routes/timetable.js";
 import { pushRouter } from "./routes/push.js";
 import { questionsRouter } from "./routes/questions.js";
+import { trailRouter } from "./routes/trail.js";
 import { authenticate, requirePrimaryAdmin } from "./middleware/authenticate.js";
 
 export function createApp() {
@@ -87,6 +88,7 @@ export function createApp() {
   app.use("/api/timetable", timetableRouter);
   app.use("/api/push", pushRouter);
   app.use("/api/questions", questionsRouter);
+  app.use("/api/trail", trailRouter);
   app.use("/api", catalogRouter);
   app.use("/api/admin", adminRouter);
   if(env.NODE_ENV!=="production"||env.SWAGGER_PUBLIC){
