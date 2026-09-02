@@ -173,9 +173,12 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
           return;
         }
         if(result.requiresEmailVerification){setFormMessage(result.emailDeliveryPending?"Hesab yaradıldı, lakin məktub xidməti hazırda cavab vermir. Giriş bölməsindən təsdiq məktubunu yenidən istəyə bilərsən.":"Təsdiq keçidi e-poçt ünvanına göndərildi. Məktubdakı keçidi aç.");form.reset();return;}
-        setFormMessage("Hazırsan — hesabın yaradıldı. Profilin açılır.");
+        setFormMessage("Hazırsan — hesabın yaradıldı.");
         form.reset();
-        router.push(getRoleHome(result.user?.accessRole, returnTo));
+        // Yeni tələbə boş profil əvəzinə ilk addımlar səhifəsinə düşür.
+        const role = result.user?.accessRole;
+        const isStudent = !role || role === "student";
+        router.push(isStudent && returnTo === "/profile" ? "/welcome" : getRoleHome(role, returnTo));
       }
 
       setSelectedFaculty("");

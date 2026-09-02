@@ -4,6 +4,14 @@ import { readRemoteCredentialToken, requestRemoteApi } from "../../lib/auth/remo
 
 export const dynamic = "force-dynamic";
 
+export async function GET() {
+  try {
+    return apiSuccess(await requestRemoteApi<unknown[]>("/api/clubs"));
+  } catch (error) {
+    return apiError(error);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     assertTrustedMutation(request);
