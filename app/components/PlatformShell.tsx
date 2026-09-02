@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useAuth } from "./AuthProvider";
 import { MotionLayer } from "./MotionLayer";
+import { PwaLayer } from "./PwaLayer";
 import { PlatformHeader } from "./PlatformHeader";
 import { PlatformNavigationRail } from "./PlatformNavigationRail";
 import { PlatformUtilityRail, type UtilityTab } from "./PlatformUtilityRail";
@@ -160,6 +161,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
   return (
     <div className="site-shell kuds-shell">
       <MotionLayer />
+      <PwaLayer />
       <a className="skip-link" href="#main-content">Əsas məzmuna keç</a>
 
       <button

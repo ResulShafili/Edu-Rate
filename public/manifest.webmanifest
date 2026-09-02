@@ -1,0 +1,24 @@
+{
+  "name": "EduRate — Universitet həyatın bir yerdə",
+  "short_name": "EduRate",
+  "description": "Dərs cədvəli, tədbirlər, klublar, müəllim qiymətləndirməsi və kampus icması bir yerdə.",
+  "lang": "az",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f8fafc",
+  "theme_color": "#16423c",
+  "categories": ["education", "social"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Dərs cədvəli", "short_name": "Cədvəl", "url": "/schedule", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Tədbirlər", "short_name": "Tədbirlər", "url": "/events", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Elanlar", "short_name": "Elanlar", "url": "/feed", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

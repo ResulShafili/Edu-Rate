@@ -17,6 +17,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#16423c",
 };
 
 export function generateMetadata(): Metadata {
@@ -29,9 +30,12 @@ export function generateMetadata(): Metadata {
     description,
     applicationName: "EduRate",
     keywords: ["EduRate", "universitet", "tələbə", "tədbirlər", "mentor", "klublar"],
+    manifest: "/manifest.webmanifest",
+    appleWebApp: { capable: true, title: "EduRate", statusBarStyle: "default" },
     icons: {
       icon: "/favicon.svg",
       shortcut: "/favicon.svg",
+      apple: "/apple-touch-icon.png",
     },
     openGraph: {
       title,
