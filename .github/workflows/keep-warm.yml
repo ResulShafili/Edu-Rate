@@ -1,0 +1,29 @@
+# Render pulsuz planı 15 dəqiqə hərəkətsizlikdən sonra backend-i yuxuya verir və
+# növbəti sorğu ~30-60 saniyə soyuq start gözləyir. Bu iş backend-i hər 10
+# dəqiqədən bir "oyaq" saxlayır ki, sayt tez açılsın.
+#
+# Qeyd: GitHub cədvəlli işləri bəzən gecikə bilər və repo 60 gün hərəkətsiz
+# qalsa dayandırılır. Daha dəqiq nəticə üçün cron-job.org / UptimeRobot da
+# eyni ünvana qoşula bilər.
+name: Keep backend warm
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: keep-warm
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health endpoint
+        # Soyuq start uzun çəkə bilər — 90 saniyəyə qədər gözlə, uğursuzluqda işi
+        # sındırma (növbəti icra yenidən cəhd edir).
+        run: |
+          curl -fsS --max-time 90 https://edurate-api.onrender.com/api/health \
+            && echo "Backend oyaqdır." \
+            || echo "Ping cavab vermədi (növbəti icrada yenidən yoxlanacaq)."

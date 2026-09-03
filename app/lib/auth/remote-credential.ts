@@ -64,7 +64,12 @@ export async function requestRemoteApi<T>(
   if (options.token) headers.set("Authorization", `Bearer ${options.token}`);
 
   const method=options.method??"GET";
-  const attempts=method==="GET"?3:1;
+  const attempts=method==="GET"?2:1;
+  // Oxuma sorğuları tez uğursuz olmalıdır ki, backend "yuxuda" olanda (Render
+  // pulsuz plan soyuq start ~30-60s) sayt 65 saniyə donmasın — bunun əvəzinə
+  // nümunə məlumatla dərhal açılır. Yazma sorğuları (giriş/qeydiyyat) bir qədər
+  // daha uzun gözləyir, çünki onların uğuru vacibdir.
+  const timeoutMs=method==="GET"?8_000:22_000;
   let response:Response|null=null;
   for(let attempt=0;attempt<attempts;attempt+=1){
     try{
@@ -73,7 +78,7 @@ export async function requestRemoteApi<T>(
         headers,
         cache:"no-store",
         body:options.body===undefined?undefined:JSON.stringify(options.body),
-        signal:AbortSignal.timeout(65_000),
+        signal:AbortSignal.timeout(timeoutMs),
       });
       if(![502,503,504].includes(response.status)||attempt===attempts-1)break;
     }catch{

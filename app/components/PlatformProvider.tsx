@@ -1,10 +1,14 @@
 "use client";
 
 import { MotionConfig } from "framer-motion";
+import dynamic from "next/dynamic";
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import type { Peer } from "../data/peers";
-import { ChatDock } from "./ChatDock";
 import { useAuth } from "./AuthProvider";
+
+// Çat yalnız giriş etmiş istifadəçi üçün və yalnız lazım olduqda yüklənir.
+// Beləcə socket.io-client və çat kodu ilkin paketi ağırlaşdırmır — sayt tez açılır.
+const ChatDock = dynamic(() => import("./ChatDock").then((module) => module.ChatDock), { ssr: false });
 
 type PlatformContextValue = {
   activePeer: Peer | null;
