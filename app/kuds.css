@@ -2425,7 +2425,18 @@ body {
   }
   .kuds-shell .platform-mobile-navigation nav a.is-active { color: var(--ku-dark-green); background: var(--ku-soft-green); }
   .kuds-shell .platform-mobile-navigation nav a small { color: var(--kuds-muted); }
-  .kuds-shell .platform-mobile-utility-tabs button { color: var(--kuds-muted); border-color: var(--kuds-border); }
+  /* Alət tabları: ikon üstdə, etiket altda — yığcam, sətir keçmir, daşmır. */
+  .kuds-shell .platform-mobile-utility-tabs button {
+    flex-direction: column;
+    gap: 3px;
+    min-height: 54px;
+    padding: 6px 4px;
+    color: var(--kuds-muted);
+    border-color: var(--kuds-border);
+    font-size: 10px;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
   .kuds-shell .platform-mobile-utility-tabs button.is-active { color: #fff; background: var(--ku-green); }
   .kuds-shell .platform-utility-panel { display: none; }
   .kuds-shell .site-footer { grid-template-columns: 1fr; gap: 12px; margin-top: 32px; padding-top: 20px; }
@@ -2464,8 +2475,9 @@ body {
   .kuds-shell :is(.section-heading, .peers-heading, .mentor-heading, .support-heading, .teachers-heading, .clubs-hero-copy) h1 { font-size: 32px !important; }
   .kuds-shell .events-grid,
   .kuds-shell .clubs-directory-grid,
-  .kuds-shell .peers-grid,
   .kuds-shell .support-layout { grid-template-columns: 1fr !important; }
+  /* İcma kartları telefonda 2 sütun (yığcam) — tam en deyil. */
+  .kuds-shell .peers-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .kuds-shell .event-art { min-height: 118px !important; }
   .kuds-shell .event-card-content { grid-template-columns: 46px minmax(0, 1fr) !important; gap: 14px !important; padding: 16px !important; }
   .kuds-shell .teacher-card { flex-basis: calc(100vw - 32px) !important; max-width: 360px; }
@@ -3448,6 +3460,12 @@ body {
     box-shadow: 0 -8px 26px rgba(16, 52, 45, 0.09);
     backdrop-filter: blur(18px) saturate(1.4);
     -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    transition: transform 0.2s ease;
+  }
+  /* Yazı yazarkən alt panel gizlənir — sahəni örtmür, klaviatura ilə vuruşmur. */
+  .kuds-shell .platform-tabbar.is-typing {
+    transform: translateY(115%);
+    pointer-events: none;
   }
   .kuds-shell .platform-tabbar-item {
     display: flex;

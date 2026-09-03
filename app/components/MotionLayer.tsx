@@ -47,7 +47,9 @@ const MAGNET_SELECTOR = [
   ".announcement-submit-trigger",
 ].join(",");
 
-const MAX_TILT = 15;
+// Əyilmə yarıya endirildi: kartlar (xüsusən icma peer-kartları) kənara
+// daşmasın və 3D effekt daha sakit olsun.
+const MAX_TILT = 8;
 const MAGNET_PULL = 0.32;
 const MAGNET_LIMIT = 14;
 /** Sərhəddə yanıb-sönməni dayandıran ehtiyat zolaq. */

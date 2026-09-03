@@ -3783,10 +3783,22 @@ a { color: inherit; text-decoration: none; }
   .peers-heading-aside p { max-width: 300px; }
   .directory-meta { display: block; padding-bottom: 28px; line-height: 1.6; }
   .directory-meta span:last-child { display: block; margin-top: 8px; }
-  .peers-grid { grid-template-columns: 1fr; gap: 13px; min-height: 0; }
-  .peers-grid[aria-busy="true"] { min-height: 3040px; }
-  .peer-card, .peer-skeleton { min-height: 358px; }
-  .peer-actions { opacity: 1; pointer-events: auto; transform: none; }
+  /* İcma kartları telefonda yığcam 2-sütunlu şəbəkə — əvvəlki tam-en
+     kartların təxminən dörddə biri. Ağır bəzək elementləri gizlədilir,
+     yalnız əsas: status, avatar, ad, rol və düymələr qalır. */
+  .peers-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; min-height: 0; }
+  .peers-grid[aria-busy="true"] { min-height: 0; }
+  .peer-card { min-height: 0; padding: 12px 11px; border-radius: 15px; }
+  .peer-skeleton { min-height: 176px; }
+  .peer-card-topline { font-size: 7px; }
+  .peer-avatar { width: 52px; height: 52px; margin: 8px auto 9px; }
+  .peer-avatar > span { font-size: 17px; }
+  .peer-avatar-orbit { display: none; }
+  .peer-identity h3 { font-size: 13.5px; }
+  .peer-identity p { margin-top: 3px; font-size: 8px; }
+  .peer-bio, .peer-tags, .peer-location { display: none; }
+  .peer-actions { grid-template-columns: 1fr; gap: 6px; height: auto; margin-top: 11px; opacity: 1; pointer-events: auto; transform: none; }
+  .peer-actions button { min-height: 33px; padding: 0 8px; font-size: 9.5px; }
   .teachers-section { padding-top: 94px; padding-bottom: 106px; }
   .teachers-heading { grid-template-columns: 1fr; gap: 31px; padding-bottom: 38px; }
   .teachers-heading :is(h1, h2) { font-size: clamp(48px, 14.2vw, 73px); }

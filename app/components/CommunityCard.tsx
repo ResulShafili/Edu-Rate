@@ -36,20 +36,21 @@ export function CommunityCard({
   const boundsRef = useRef<DOMRect | null>(null);
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
+  // 3D əyilmə yarıya endirildi — kartlar daha sakit tərpənir və kənara daşmır.
   const rotateX = useSpring(
-    useTransform(pointerY, [-1, 1], [6.5, -6.5]),
+    useTransform(pointerY, [-1, 1], [3.25, -3.25]),
     tiltSpring,
   );
   const rotateY = useSpring(
-    useTransform(pointerX, [-1, 1], [-7.5, 7.5]),
+    useTransform(pointerX, [-1, 1], [-3.75, 3.75]),
     tiltSpring,
   );
   const visualX = useSpring(
-    useTransform(pointerX, [-1, 1], [-9, 9]),
+    useTransform(pointerX, [-1, 1], [-4.5, 4.5]),
     tiltSpring,
   );
   const visualY = useSpring(
-    useTransform(pointerY, [-1, 1], [-7, 7]),
+    useTransform(pointerY, [-1, 1], [-3.5, 3.5]),
     tiltSpring,
   );
 

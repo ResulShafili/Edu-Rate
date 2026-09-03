@@ -2,43 +2,28 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 
 type RouteTransitionProps = {
   children: ReactNode;
 };
 
-// Masaüstü: dərinlik hissi üçün 3D yellənmə. Mobil: yüngül fade + sürüşmə,
-// 3D olmadan — zəif cihazlarda keçid daha axıcı olsun.
-const desktopVariants = {
-  initial: { opacity: 0, y: 26, rotateX: 9, scale: 0.985 },
-  visible: { opacity: 1, y: 0, rotateX: 0, scale: 1 },
+// YALNIZ opasite ilə keçid — heç bir transform (y/scale/rotate/perspective) YOX.
+//
+// Səbəb: wrapper-də qalan istənilən transform onun daxilindəki `position: fixed`
+// modal/drawer-lər üçün yeni "containing block" yaradır və onları viewport əvəzinə
+// bütün səhifə hündürlüyünə uzadır — X düyməsi əlçatmaz olur, pəncərə həddindən
+// uzun görünür, məzmun kənara daşır (PC və mobil, əksər ekranlar). Sadə fade bu
+// problemi tamamilə aradan qaldırır və daha yığcam, sakit təəssürat verir.
+const variants = {
+  initial: { opacity: 0 },
+  visible: { opacity: 1 },
 };
-
-const mobileVariants = {
-  initial: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const desktopTransition = { duration: 0.62, ease: [0.22, 1, 0.36, 1] as const };
-const mobileTransition = { duration: 0.34, ease: [0.22, 1, 0.36, 1] as const };
 
 export function RouteTransition({ children }: RouteTransitionProps) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
-  const [isMobile, setIsMobile] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const media = window.matchMedia("(hover: none), (max-width: 768px)");
-    const update = () => setIsMobile(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-
-  const variants = isMobile ? mobileVariants : desktopVariants;
-  const transition = isMobile ? mobileTransition : desktopTransition;
 
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -56,16 +41,15 @@ export function RouteTransition({ children }: RouteTransitionProps) {
 
   return (
     <motion.div
-        ref={frameRef}
-        key={pathname}
-        className="route-frame"
-        style={reduceMotion || isMobile ? undefined : { transformPerspective: 1400, transformOrigin: "50% 0%" }}
-        variants={variants}
-        initial={reduceMotion ? false : "initial"}
-        animate="visible"
-        transition={reduceMotion ? { duration: 0 } : transition}
-      >
-        {children}
-      </motion.div>
+      ref={frameRef}
+      key={pathname}
+      className="route-frame"
+      variants={variants}
+      initial={reduceMotion ? false : "initial"}
+      animate="visible"
+      transition={{ duration: reduceMotion ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {children}
+    </motion.div>
   );
 }

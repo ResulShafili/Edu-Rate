@@ -158,7 +158,7 @@ function UtilityContent({
             type="search"
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="Bölmə və ya xüsusiyyət axtar..."
+            placeholder="Bölmə axtar…"
             autoComplete="off"
             onKeyDown={(event) => {
               if (event.key !== "ArrowDown") return;

@@ -210,7 +210,6 @@ export function PlatformShell({ children }: PlatformShellProps) {
 
           <footer className="site-footer" data-home={pathname === "/" ? "true" : "false"}>
             <Link href="/" className="brand"><span className="brand-mark"><span /></span>EDURATE</Link>
-            <p>EduRate müstəqil tələbə pilotudur və Qarabağ Universitetinin rəsmi informasiya sistemi deyil.</p>
             <div>
               <span>© 2026 EduRate</span>
               <Link href="/support?topic=privacy">Əlaqə və məxfilik sorğusu</Link>
