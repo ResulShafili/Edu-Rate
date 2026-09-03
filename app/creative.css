@@ -1891,3 +1891,37 @@
     transform-style: flat;
   }
 }
+
+/* ============================================================
+   Mobil dizayn düzəlişləri
+   Real cihazlarda tapılan layout və giriş problemləri.
+   ============================================================ */
+@media (max-width: 768px) {
+  /* ---- KRİTİK: bütün mətn sahələri ən azı 16px ----
+     iOS Safari 16px-dən kiçik input-a fokus olanda səhifəni avtomatik
+     zoom edir — bu, "yazı yazmaq olmur / sayt donur" hissinin əsas
+     səbəbidir. 16px bunun qarşısını alır. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* ---- Auth səhifəsi: təmiz tək-sütun, daşma yoxdur ----
+     Masaüstü grid track-i (≈355px) mobil viewport-dan geniş olduğu üçün
+     panel sola daşıb kəsilirdi. */
+  .auth-section {
+    display: block !important;
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+  }
+  .auth-section > .auth-story,
+  .auth-section > .auth-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-inline: 0 !important;
+    box-sizing: border-box;
+  }
+  .auth-section > .auth-story { margin-bottom: 14px !important; }
+}
