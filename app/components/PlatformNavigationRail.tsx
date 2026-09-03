@@ -16,6 +16,7 @@ import {
   Settings,
   ShieldCheck,
   UserPlus,
+  UserRound,
   UsersRound,
   X,
   type LucideIcon,
@@ -72,6 +73,7 @@ export function PlatformNavigationRail(props: PlatformNavigationRailProps) {
       {props.authenticated ? (
         <div className="platform-nav-group">
           <span className="platform-nav-group-label">Hesab</span>
+          <NavigationLink href="/profile" label="Profil" pathname={props.pathname} icon={UserRound} reducedMotion={Boolean(reducedMotion)} />
           {!props.isAdmin && <NavigationLink href="/workspace" label={props.accountRole === "teacher" ? "Müəllim paneli" : props.accountRole === "mentor" ? "Mentor paneli" : "Şəxsi panel"} pathname={props.pathname} icon={LayoutDashboard} reducedMotion={Boolean(reducedMotion)} />}
           <NavigationLink href="/settings" label="Parametrlər" pathname={props.pathname} icon={Settings} reducedMotion={Boolean(reducedMotion)} />
         </div>

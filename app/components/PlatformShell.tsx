@@ -15,6 +15,7 @@ import { MotionLayer } from "./MotionLayer";
 import { PwaLayer } from "./PwaLayer";
 import { PlatformHeader } from "./PlatformHeader";
 import { PlatformNavigationRail } from "./PlatformNavigationRail";
+import { PlatformTabBar } from "./PlatformTabBar";
 import { PlatformUtilityRail, type UtilityTab } from "./PlatformUtilityRail";
 import { RouteTransition } from "./RouteTransition";
 
@@ -207,7 +208,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
         <div className="platform-route-content">
           <RouteTransition>{children}</RouteTransition>
 
-          <footer className="site-footer">
+          <footer className="site-footer" data-home={pathname === "/" ? "true" : "false"}>
             <Link href="/" className="brand"><span className="brand-mark"><span /></span>EDURATE</Link>
             <p>EduRate müstəqil tələbə pilotudur və Qarabağ Universitetinin rəsmi informasiya sistemi deyil.</p>
             <div>
@@ -217,6 +218,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
           </footer>
         </div>
       </div>
+      <PlatformTabBar pathname={pathname} menuOpen={navigationOpen} onMenu={toggleNavigation} />
       <PlatformUtilityRail
         key={`${pathname}:${requestedUtilityTab}`}
         mobileOpen={toolsOpen}
