@@ -3511,4 +3511,84 @@ body {
   /* ---- Bölmə başlıqları iki kənara dağılmasın: soldan yığcam ---- */
   .kuds-landing-directory > header { flex-direction: column; align-items: flex-start; gap: 3px; }
   .kuds-landing-directory > header h2 { font-size: 26px; }
+
+  /* ---- Filtrlər sadələşir: boş görünən tarix qutusu telefonda gizlənir,
+     axtarış tam en olur (yalnız axtarış + kateqoriya çipləri qalır) ---- */
+  .kuds-shell .event-date-field { display: none !important; }
+  .kuds-shell .event-search-field { flex: 1 1 100% !important; }
+
+  /* ---- Artıq mətn: uzun giriş abzasları telefonda gizlənir (başlıq + məzmun
+     kifayətdir) ---- */
+  .kuds-shell .compare-lead { display: none !important; }
+}
+
+/* ============================================================
+   MOBİL ÇAT — WhatsApp üslubu tək panel
+   Telefonda iki panel yan-yana deyil: əvvəl söhbət siyahısı, kartı seçəndə
+   söhbət açılır, başlıqdakı geri oxu ilə siyahıya qayıdırsan.
+   ============================================================ */
+.chat-back, .chat-sidebar-close { display: none; }
+
+@media (max-width: 768px) {
+  /* Dock alt panelin (z:140) üstündə olmalıdır ki, tam-ekran çat onu örtsün. */
+  .chat-dock { z-index: 210 !important; }
+
+  /* Çat telefonda tam ekran (WhatsApp kimi) — üzən deyil, alt panelin üstündə. */
+  .kuds-shell .chat-panel.chat-center,
+  .chat-panel.chat-center {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100svh !important;
+    z-index: 210 !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+  }
+  /* Siyahı başlığında "Mesajlar" adı görünsün (tam ekranda yer var). */
+  .chat-center-sidebar > header div { display: grid !important; flex: 1; min-width: 0; }
+  .kuds-shell .chat-center,
+  .chat-center { grid-template-columns: 1fr !important; }
+  .chat-center-sidebar,
+  .chat-center-main { grid-column: 1 !important; min-width: 0; }
+  .chat-center[data-view="list"] .chat-center-main { display: none !important; }
+  .chat-center[data-view="thread"] .chat-center-sidebar { display: none !important; }
+  .chat-center-sidebar { border-right: 0 !important; }
+
+  /* Söhbətdən geri (siyahıya) — köhnə X-i əvəz edir */
+  .chat-back {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    margin-right: 2px;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    color: #142a26;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+  }
+  .chat-back:active { background: rgba(20, 42, 38, 0.08); }
+  .chat-center-main .chat-center-close { display: none !important; }
+  .chat-center-main .chat-header { padding-right: 12px !important; }
+
+  /* Siyahı görünüşündə çatı bağla */
+  .chat-sidebar-close {
+    display: inline-flex;
+    width: 36px;
+    height: 36px;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    color: #536964;
+    border: 1px solid var(--kuds-border);
+    border-radius: 50%;
+    background: #f5f8f7;
+    cursor: pointer;
+  }
+
+  /* Artıq mətn: masaüstü klaviatura ipucu telefonda lazım deyil */
+  .composer-hint { display: none !important; }
 }
