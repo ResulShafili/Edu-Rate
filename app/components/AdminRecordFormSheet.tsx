@@ -17,6 +17,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import type {
   AdminClub,
   AdminClubCreateInput,
@@ -140,7 +141,11 @@ export function AdminRecordFormSheet({
       ? "Bu əməliyyat geri qaytarılmır. Təsdiqdən əvvəl qeydi bir daha yoxla."
       : "Yalnız vacib məlumatları daxil et. Dəyişikliklər REST API-yə təhlükəsiz göndəriləcək.";
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  // Modal document.body-yə portal olunur ki, heç bir transform/filter saxlayan
+  // ata element onu viewport əvəzinə səhifə hündürlüyünə "uzada" bilməsin.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -239,7 +244,8 @@ export function AdminRecordFormSheet({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
