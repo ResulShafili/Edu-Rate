@@ -69,7 +69,7 @@ export function HomeExperience() {
           <h2 id="home-modules-title">Bölmələr</h2>
         </header>
         <div className="kuds-landing-grid">
-          {modules.map(({ href, label, number, icon: Icon }, index) => (
+          {modules.map(({ href, label, icon: Icon }, index) => (
             <motion.div
               key={href}
               initial={reducedMotion ? false : { opacity: 0, y: 16 }}
@@ -80,7 +80,6 @@ export function HomeExperience() {
               <Link href={href} className="flip-card" aria-label={`${label} bölməsinə keç`}>
                 <span className="flip-card__inner">
                   <span className="flip-card__face flip-card__face--front kuds-landing-card">
-                    <span className="kuds-landing-card-number">{number}</span>
                     <Icon size={21} strokeWidth={1.7} aria-hidden="true" />
                     <strong>{label}</strong>
                     <ArrowRight className="kuds-landing-card-arrow" size={17} aria-hidden="true" />

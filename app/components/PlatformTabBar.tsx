@@ -2,10 +2,10 @@
 
 import {
   CalendarDays,
+  Compass,
   Home,
   Megaphone,
   Menu,
-  MessageCircleQuestion,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -35,7 +35,7 @@ const tabs: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/", label: "Əsas", icon: Home },
   { href: "/feed", label: "Elanlar", icon: Megaphone },
   { href: "/events", label: "Tədbir", icon: CalendarDays },
-  { href: "/questions", label: "Suallar", icon: MessageCircleQuestion },
+  { href: "/clubs", label: "Klublar", icon: Compass },
 ];
 
 /**

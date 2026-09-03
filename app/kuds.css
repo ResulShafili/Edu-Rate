@@ -104,19 +104,18 @@ body {
 }
 
 .kuds-shell .brand-mark {
-  display: grid;
+  display: block;
   width: 30px;
   height: 30px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--ku-dark-green);
+  border-radius: 0;
+  background: url("/favicon.svg") center / contain no-repeat;
   box-shadow: none;
 }
 
 .kuds-shell .brand-mark::before,
 .kuds-shell .brand-mark::after,
 .kuds-shell .brand-mark span {
-  background: var(--ku-soft-green);
+  display: none;
 }
 
 .kuds-shell .platform-rail-navigation {
@@ -1106,6 +1105,8 @@ body {
 }
 
 .kuds-landing-card > svg:not(.kuds-landing-card-arrow) {
+  grid-column: 1 / -1;
+  justify-self: start;
   color: var(--ku-green);
 }
 

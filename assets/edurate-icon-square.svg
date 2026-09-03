@@ -22,21 +22,17 @@
     </filter>
   </defs>
 
-  <rect width="512" height="512" rx="116" fill="url(#tile)"/>
-  <rect width="512" height="512" rx="116" fill="url(#glow)"/>
+  <rect width="512" height="512" fill="url(#tile)"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
 
-  <g filter="url(#soft)">
-    <!-- cap head / band -->
-    <path d="M182 236 L182 276 C182 302 208 314 256 314 C304 314 330 302 330 276 L330 236 L256 272 Z" fill="url(#head)"/>
-    <!-- mortarboard -->
-    <path d="M256 150 L410 218 L256 286 L102 218 Z" fill="url(#board)"/>
+  <!-- content scaled to 0.9 around centre to sit inside the maskable safe zone -->
+  <g transform="translate(25.6 25.6) scale(0.9)">
+    <g filter="url(#soft)">
+      <path d="M182 236 L182 276 C182 302 208 314 256 314 C304 314 330 302 330 276 L330 236 L256 272 Z" fill="url(#head)"/>
+      <path d="M256 150 L410 218 L256 286 L102 218 Z" fill="url(#board)"/>
+    </g>
+    <path d="M262 214 C352 216 392 220 392 250 L392 302" fill="none" stroke="#f2f1e6" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="392" cy="300" r="9" fill="#f2f1e6"/>
+    <path d="M377 306 h30 l-4 34 a11 11 0 0 1 -22 0 Z" fill="#c8ff4d"/>
   </g>
-
-  <!-- tassel cord (starts at board centre) -->
-  <path d="M262 214 C352 216 392 220 392 250 L392 302" fill="none" stroke="#f2f1e6" stroke-width="9" stroke-linecap="round"/>
-  <!-- tassel knot + lime tuft -->
-  <circle cx="392" cy="300" r="9" fill="#f2f1e6"/>
-  <path d="M377 306 h30 l-4 34 a11 11 0 0 1 -22 0 Z" fill="#c8ff4d"/>
-
-  <rect x="1.5" y="1.5" width="509" height="509" rx="114.5" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="3"/>
 </svg>
