@@ -145,7 +145,11 @@ export function AdminRecordFormSheet({
 
   // Modal document.body-yə portal olunur ki, heç bir transform/filter saxlayan
   // ata element onu viewport əvəzinə səhifə hündürlüyünə "uzada" bilməsin.
+  // `kuds-shell` sarğısı (display:contents — heç nə çəkmir) işıqlı temanın
+  // `.kuds-shell ...` seçiciləri bədənə portal olunandan sonra da işləməsini
+  // təmin edir; onsuz vərəq köhnə tünd temaya qayıdırdı.
   return createPortal(
+    <div className="kuds-shell" style={{ display: "contents" }}>
     <AnimatePresence>
       {open && (
         <motion.div
@@ -244,7 +248,8 @@ export function AdminRecordFormSheet({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>,
+    </AnimatePresence>
+    </div>,
     document.body,
   );
 }
