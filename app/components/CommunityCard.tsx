@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, Radio, UsersRound } from "lucide-react";
-import { useRef, type PointerEvent } from "react";
+import type { PointerEvent } from "react";
 import type { Community } from "../data/clubs";
 
 type CommunityCardProps = {
@@ -14,16 +14,6 @@ type CommunityCardProps = {
   onDeactivate: (slug: string) => void;
 };
 
-const tiltSpring = {
-  stiffness: 190,
-  damping: 24,
-  mass: 0.62,
-} as const;
-
-function clampPointer(value: number) {
-  return Math.max(-1, Math.min(1, value));
-}
-
 export function CommunityCard({
   community,
   index,
@@ -33,49 +23,8 @@ export function CommunityCard({
   onDeactivate,
 }: CommunityCardProps) {
   const reducedMotion = useReducedMotion();
-  const boundsRef = useRef<DOMRect | null>(null);
-  const pointerX = useMotionValue(0);
-  const pointerY = useMotionValue(0);
-  // 3D əyilmə yarıya endirildi — kartlar daha sakit tərpənir və kənara daşmır.
-  const rotateX = useSpring(
-    useTransform(pointerY, [-1, 1], [3.25, -3.25]),
-    tiltSpring,
-  );
-  const rotateY = useSpring(
-    useTransform(pointerX, [-1, 1], [-3.75, 3.75]),
-    tiltSpring,
-  );
-  const visualX = useSpring(
-    useTransform(pointerX, [-1, 1], [-4.5, 4.5]),
-    tiltSpring,
-  );
-  const visualY = useSpring(
-    useTransform(pointerY, [-1, 1], [-3.5, 3.5]),
-    tiltSpring,
-  );
-
-  function updateTilt(event: PointerEvent<HTMLElement>) {
-    if (reducedMotion || event.pointerType !== "mouse") return;
-
-    const bounds = boundsRef.current ?? event.currentTarget.getBoundingClientRect();
-    boundsRef.current = bounds;
-    pointerX.set(clampPointer(((event.clientX - bounds.left) / bounds.width - 0.5) * 2));
-    pointerY.set(clampPointer(((event.clientY - bounds.top) / bounds.height - 0.5) * 2));
-  }
-
-  function resetTilt() {
-    boundsRef.current = null;
-    pointerX.set(0);
-    pointerY.set(0);
-  }
-
-  function deactivate() {
-    resetTilt();
-    onDeactivate(community.slug);
-  }
 
   function handlePointerLeave(event: PointerEvent<HTMLElement>) {
-    resetTilt();
     if (!event.currentTarget.contains(event.currentTarget.ownerDocument.activeElement)) {
       onDeactivate(community.slug);
     }
@@ -88,33 +37,24 @@ export function CommunityCard({
         isDimmed ? " is-dimmed" : ""
       }`}
       data-tone={community.tone}
-      initial={reducedMotion ? false : { opacity: 0, y: 32, scale: 0.97 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      initial={reducedMotion ? false : { opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={
         reducedMotion
           ? { duration: 0 }
           : {
-              duration: 0.58,
+              duration: 0.5,
               delay: Math.min(index * 0.045, 0.24),
               ease: [0.22, 1, 0.36, 1],
             }
       }
-      style={
-        reducedMotion
-          ? undefined
-          : { rotateX, rotateY, transformPerspective: 1100 }
-      }
       onPointerEnter={(event) => {
-        if (event.pointerType === "mouse") {
-          boundsRef.current = event.currentTarget.getBoundingClientRect();
-          onActivate(community.slug);
-        }
+        if (event.pointerType === "mouse") onActivate(community.slug);
       }}
-      onPointerMove={updateTilt}
       onPointerLeave={handlePointerLeave}
       onFocusCapture={() => onActivate(community.slug)}
-      onBlurCapture={deactivate}
+      onBlurCapture={() => onDeactivate(community.slug)}
     >
       <button
         type="button"
@@ -130,17 +70,13 @@ export function CommunityCard({
           onActivate(community.slug);
         }}
       >
-        <motion.span
-          className="community-card-visual"
-          style={reducedMotion ? undefined : { x: visualX, y: visualY }}
-          aria-hidden="true"
-        >
+        <span className="community-card-visual" aria-hidden="true">
           <span className="community-card-visual-grid" />
           <span className="community-card-visual-ring community-card-visual-ring-one" />
           <span className="community-card-visual-ring community-card-visual-ring-two" />
           <span className="community-card-visual-glow" />
           <span className="community-card-visual-mark">{community.visualMark}</span>
-        </motion.span>
+        </span>
 
         <span className="community-card-content">
           <span className="community-card-topline">

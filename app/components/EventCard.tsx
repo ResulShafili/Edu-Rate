@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, MapPin } from "lucide-react";
-import { useRef, type CSSProperties, type MouseEvent } from "react";
+import { type CSSProperties } from "react";
 import {
   eventCategoryLabels,
   eventMonthLabels,
@@ -19,52 +19,21 @@ type EventCardProps = {
 
 export function EventCard({ event, index, onSelect }: EventCardProps) {
   const reduceMotion = useReducedMotion();
-  const boundsRef = useRef<DOMRect | null>(null);
-  const pointerX = useMotionValue(0.5);
-  const pointerY = useMotionValue(0.5);
-  const rotateX = useSpring(useTransform(pointerY, [0, 1], [5, -5]), {
-    stiffness: 220,
-    damping: 26,
-  });
-  const rotateY = useSpring(useTransform(pointerX, [0, 1], [-6, 6]), {
-    stiffness: 220,
-    damping: 26,
-  });
   const temporalStatus = getTemporalStatus(event.startAt, event.endAt);
   const registrationOpen = getDeadlineStatus(event.registrationDeadline) === "open" && event.availableSpots > 0 && temporalStatus !== "finished";
-
-  function handleMove(event: MouseEvent<HTMLElement>) {
-    if (reduceMotion) return;
-    const bounds = boundsRef.current ?? event.currentTarget.getBoundingClientRect();
-    boundsRef.current = bounds;
-    pointerX.set((event.clientX - bounds.left) / bounds.width);
-    pointerY.set((event.clientY - bounds.top) / bounds.height);
-  }
-
-  function resetTilt() {
-    boundsRef.current = null;
-    pointerX.set(0.5);
-    pointerY.set(0.5);
-  }
 
   return (
     <motion.article
       layout
       layoutId={`card-${event.id}`}
-      initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 32, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.94 }}
+      initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={reduceMotion ? { opacity: 0 } : { opacity: 0 }}
       transition={{
         layout: { type: "spring", stiffness: 210, damping: 26 },
         opacity: { duration: 0.35, delay: index * 0.035 },
-        y: { duration: 0.45, delay: index * 0.035 },
+        y: { duration: 0.42, delay: index * 0.035, ease: [0.22, 1, 0.36, 1] },
       }}
-      style={{ rotateX, rotateY, transformPerspective: 1000 }}
-      onMouseEnter={(event) => {
-        if (!reduceMotion) boundsRef.current = event.currentTarget.getBoundingClientRect();
-      }}
-      onMouseMove={handleMove}
-      onMouseLeave={resetTilt}
       className="event-card group"
     >
       <button

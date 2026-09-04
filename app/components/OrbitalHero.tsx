@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
 import {
   CalendarDays,
   GraduationCap,
@@ -12,7 +11,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useRef, type PointerEvent } from "react";
 
 type OrbitNode = {
   href: string;
@@ -30,53 +28,16 @@ const nodes: OrbitNode[] = [
   { href: "/support", label: "Dəstək", icon: LifeBuoy },
 ];
 
-const tiltSpring = { stiffness: 140, damping: 18, mass: 0.5 } as const;
-
 /**
- * İnteraktiv orbital hero. Bölmələr EDU nüvəsinin ətrafında fırlanır, kursora
- * doğru zərif şəkildə əyilir (3D parallaks), üzərinə gələndə dayanır və etiketini
- * açır. Hər node əsl naviqasiya keçididir; reduced-motion rejimində hərəkət dayanır,
- * lakin bütün keçidlər əlçatan qalır.
+ * Orbital hero. Bölmələr EDU nüvəsinin ətrafında zərif fırlanır (yalnız 2D),
+ * üzərinə gələndə dayanır və etiketini açır. Hər node əsl naviqasiya keçididir;
+ * reduced-motion rejimində hərəkət dayanır, lakin bütün keçidlər əlçatan qalır.
  */
 export function OrbitalHero() {
-  const reduceMotion = Boolean(useReducedMotion());
-  const stageRef = useRef<HTMLDivElement>(null);
-  const rotateX = useSpring(useMotionValue(0), tiltSpring);
-  const rotateY = useSpring(useMotionValue(0), tiltSpring);
-
-  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (
-      reduceMotion ||
-      event.pointerType !== "mouse" ||
-      typeof window === "undefined" ||
-      !window.matchMedia("(hover: hover) and (pointer: fine)").matches
-    ) {
-      return;
-    }
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const relX = (event.clientX - bounds.left) / bounds.width - 0.5;
-    const relY = (event.clientY - bounds.top) / bounds.height - 0.5;
-    rotateY.set(relX * 22);
-    rotateX.set(relY * -22);
-  }
-
-  function resetTilt() {
-    rotateX.set(0);
-    rotateY.set(0);
-  }
-
   return (
-    <div
-      ref={stageRef}
-      className="orbital-hero"
-      onPointerMove={handlePointerMove}
-      onPointerLeave={resetTilt}
-    >
+    <div className="orbital-hero">
       <span className="orbital-hero__aura" aria-hidden="true" />
-      <motion.div
-        className="orbital-hero__stage"
-        style={reduceMotion ? undefined : { rotateX, rotateY }}
-      >
+      <div className="orbital-hero__stage">
         <span className="orbital-hero__ring orbital-hero__ring--outer" aria-hidden="true" />
         <span className="orbital-hero__ring orbital-hero__ring--inner" aria-hidden="true" />
 
@@ -113,7 +74,7 @@ export function OrbitalHero() {
             );
           })}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

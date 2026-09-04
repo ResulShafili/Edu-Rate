@@ -1081,8 +1081,7 @@ a { color: inherit; text-decoration: none; }
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.26);
   box-shadow: 0 20px 60px rgba(25, 26, 22, 0);
-  transform-style: preserve-3d;
-  transition: border-color 350ms ease;
+  transition: border-color 350ms ease, box-shadow 350ms ease;
 }
 
 .event-card:hover { border-color: rgba(13, 14, 13, 0.24); box-shadow: 0 28px 65px rgba(25, 26, 22, 0.14); }
@@ -1110,7 +1109,6 @@ a { color: inherit; text-decoration: none; }
   min-height: 245px;
   overflow: hidden;
   background: radial-gradient(circle at 50% 110%, var(--event-glow), transparent 58%), linear-gradient(145deg, #171915, #0d0e0d 65%);
-  transform: translateZ(18px);
 }
 
 .event-art::after {
@@ -1171,7 +1169,7 @@ a { color: inherit; text-decoration: none; }
 .event-card:hover .event-art-orbit-one { transform: translate(-50%, -42%) rotate(35deg); }
 .event-card:hover .event-art-orbit-two { transform: translate(-50%, -42%) rotate(-2deg); }
 
-.event-card-content { display: grid; grid-template-columns: 54px 1fr; gap: 19px; padding: 24px 22px 25px; transform: translateZ(24px); }
+.event-card-content { display: grid; grid-template-columns: 54px 1fr; gap: 19px; padding: 24px 22px 25px; }
 
 .event-date { display: flex; flex-direction: column; align-items: center; padding-top: 2px; border-right: 1px solid rgba(13, 14, 13, 0.14); }
 .event-date span { font-family: var(--font-instrument-serif), serif; font-size: 31px; line-height: 0.9; }
@@ -3017,7 +3015,7 @@ a { color: inherit; text-decoration: none; }
 .clubs-section-heading > p, .communities-heading > p { max-width: 360px; margin: 0; color: rgba(13, 14, 13, 0.52); font-size: 11px; line-height: 1.7; }
 
 .clubs-directory-grid { display: grid; width: min(100%, 1380px); margin-inline: auto; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; }
-.club-directory-card { grid-column: span 6; min-width: 0; border-radius: 25px; transform-style: preserve-3d; }
+.club-directory-card { grid-column: span 6; min-width: 0; border-radius: 25px; }
 .club-directory-card:nth-child(4n + 1) { grid-column: span 7; }
 .club-directory-card:nth-child(4n + 2) { grid-column: span 5; }
 .club-directory-link { display: grid; min-height: 650px; overflow: hidden; grid-template-rows: minmax(280px, 0.9fr) minmax(310px, 1fr); color: var(--paper); border: 1px solid rgba(13, 14, 13, 0.13); border-radius: inherit; background: #111210; box-shadow: 0 22px 70px rgba(13, 14, 13, 0.1); transition: border-color 240ms ease, box-shadow 320ms ease, transform 320ms ease; }
@@ -3060,8 +3058,8 @@ a { color: inherit; text-decoration: none; }
 .communities-section::before { position: absolute; z-index: -1; inset: 0; content: ""; opacity: 0.13; background-image: radial-gradient(circle, rgba(243, 241, 233, 0.32) 0 1px, transparent 1px); background-size: 28px 28px; mask-image: linear-gradient(to bottom, transparent, black 25%, transparent); }
 .communities-heading { color: var(--paper); border-color: rgba(243, 241, 233, 0.13); }
 .communities-heading > p { color: rgba(243, 241, 233, 0.5); }
-.communities-grid { display: grid; width: min(100%, 1380px); margin-inline: auto; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; perspective: 1200px; }
-.community-card-shell { min-width: 0; opacity: 1; transform-style: preserve-3d; transition: opacity 260ms ease; }
+.communities-grid { display: grid; width: min(100%, 1380px); margin-inline: auto; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.community-card-shell { min-width: 0; opacity: 1; transition: opacity 260ms ease; }
 .community-card-shell.is-dimmed { opacity: 0.34; }
 .community-card-button { position: relative; display: grid; width: 100%; min-height: 390px; padding: 0; overflow: hidden; cursor: pointer; color: var(--paper); text-align: left; border: 1px solid rgba(243, 241, 233, 0.12); border-radius: 21px; background: rgba(255, 255, 255, 0.035); box-shadow: 0 18px 60px rgba(0, 0, 0, 0.12); transition: transform 280ms ease, border-color 240ms ease, box-shadow 280ms ease, background-color 240ms ease; }
 .community-card-shell.is-dimmed .community-card-button { transform: scale(0.975); }

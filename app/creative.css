@@ -22,7 +22,6 @@
   width: min(100%, 420px);
   aspect-ratio: 1;
   justify-self: end;
-  perspective: 1100px;
 }
 
 .orbital-hero__aura {
@@ -44,15 +43,12 @@
   place-items: center;
   width: 100%;
   height: 100%;
-  transform-style: preserve-3d;
-  will-change: transform;
 }
 
 .orbital-hero__ring {
   position: absolute;
   border-radius: 50%;
   border: 1px solid var(--orbit-line);
-  transform-style: preserve-3d;
 }
 
 .orbital-hero__ring--outer {
@@ -83,7 +79,6 @@
     0 0 0 1px rgb(255 255 255 / 45%),
     0 18px 48px rgb(9 30 24 / 55%),
     0 0 64px rgb(var(--orbit-glow) / 40%);
-  transform: translateZ(46px);
   transition: box-shadow 0.4s ease, transform 0.4s ease;
 }
 
@@ -105,7 +100,6 @@
 .orbital-hero__belt {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
   animation: orbital-spin var(--orbit-duration) linear infinite;
 }
 
@@ -203,7 +197,7 @@
 
 .orbital-hero__stage:has(.orbital-hero__planet:hover) .orbital-hero__core,
 .orbital-hero__stage:has(.orbital-hero__planet:focus-visible) .orbital-hero__core {
-  transform: translateZ(46px) scale(1.06);
+  transform: scale(1.06);
   box-shadow:
     0 0 0 1px rgb(255 255 255 / 55%),
     0 18px 48px rgb(9 30 24 / 55%),
@@ -230,13 +224,14 @@
   50% { opacity: 1; transform: scale(1.05); }
 }
 
-/* ---------- Çevrilən kartlar (landing modul grid) ---------- */
-.kuds-landing-grid > * { perspective: 1200px; }
-
+/* ---------- Bölmə kartları (landing modul grid) — sadə 2D keçid ----------
+   Əvvəlki 3D flip (rotate y 180deg / preserve-3d / perspective) götürüldü.
+   İndi ön və arxa üz üst-üstə dayanır; hover-də zərif crossfade + yüngül qalxma
+   ilə əvəzlənir — tamamilə 2D, sürətli və premium. */
 .flip-card {
+  position: relative;
   display: block;
   height: 148px;
-  perspective: 1200px;
   text-decoration: none;
   outline-offset: 4px;
 }
@@ -246,31 +241,33 @@
   display: block;
   width: 100%;
   height: 100%;
-  transform-style: preserve-3d;
-  transition: rotate 620ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.flip-card:hover .flip-card__inner,
-.flip-card:focus-visible .flip-card__inner { rotate: y 180deg; }
 
 .flip-card__face {
   position: absolute;
   inset: 0;
-  backface-visibility: hidden;
   border-radius: 12px;
 }
 
-.flip-card__face--back {
+/* Arxa üz tam qeyri-şəffaf gradient panelidir; ön üzün üstündən zərif açılır.
+   Ön üz sabit qalır (opasite dəyişmir) — keçid təmiz və flaş-sız görünür. */
+.flip-card .flip-card__face--back {
   display: grid;
   align-content: center;
   justify-items: start;
   gap: 8px;
   padding: 18px;
-  rotate: y 180deg;
+  opacity: 0;
+  translate: 0 10px;
   color: #eefaf1;
   border: 1px solid rgb(255 255 255 / 18%);
   background: linear-gradient(150deg, var(--ku-dark-green, #16423c), var(--ku-green, #44766c) 78%);
   box-shadow: 0 22px 46px -26px rgb(12 40 33 / 62%);
+  transition: opacity 280ms ease, translate 420ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+.flip-card:hover .flip-card__face--back,
+.flip-card:focus-visible .flip-card__face--back { opacity: 1; translate: 0 0; }
 .flip-card__face--back strong { font-size: 18px; letter-spacing: -0.025em; }
 .flip-card__face--back em {
   display: inline-flex;
@@ -287,9 +284,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .flip-card__inner { transition: none; }
-  .flip-card:hover .flip-card__inner,
-  .flip-card:focus-visible .flip-card__inner { rotate: none; }
+  .flip-card .flip-card__face--back { transition: opacity 180ms ease; translate: 0 0; }
 }
 
 
@@ -718,56 +713,35 @@
 }
 
 /* ============================================================
-   3D qat — əsl perspektiv tilt, Z-dərinlik, parıltı, kursor işığı
-   `rotate`/`translate` müstəqil xüsusiyyətlərdir: Framer Motion-un
-   `transform`-u ilə toqquşmur.
+   2D interaktiv qat — yüngül qalxma və kölgə (3D tilt/parıltı GÖTÜRÜLDÜ).
+   Premium hiss, GPU-yüngül, sürətli. `translate` müstəqil xüsusiyyətdir:
+   Framer Motion-un `transform`-u ilə toqquşmur.
    ============================================================ */
 
-/* Grid-lərə perspektiv ver — tilt yalnız bununla 3D görünür */
-[data-motion="alive"] :is(
-  .events-grid, .clubs-directory-grid, .peers-grid, .mentors-grid,
-  .teachers-grid, .reviews-grid, .community-grid, .announcements-grid,
-  .club-members-grid, .kuds-quick-grid, .profile-stats, .kuds-module-grid
-) {
-  perspective: 1100px;
-  perspective-origin: 50% 50%;
-}
-
+/* Kartlar hover-də zərif qalxır — tamamilə 2D, perspektiv/preserve-3d yoxdur */
 [data-motion="alive"] :is(
   .event-card, .club-directory-card, .peer-card, .mentor-card, .teacher-card,
   .review-card, .community-card-shell, .announcement-card, .club-member-card,
   .kuds-quick-card, .profile-stat-card
 ) {
   position: relative;
-  transform-style: preserve-3d;
   transition:
-    rotate 260ms cubic-bezier(0.22, 1, 0.36, 1),
     translate 260ms cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 260ms ease;
-  will-change: rotate, translate;
 }
 
-/* Kursorun altındakı kart: əyilir və irəli çıxır */
-[data-motion="alive"] [data-tilting="true"] {
-  rotate: var(--tilt-ax, 0) var(--tilt-ay, 0) 0 var(--tilt-angle, 0deg);
-  translate: 0 -8px 40px;
-  box-shadow:
-    0 40px 74px -30px rgb(16 46 38 / 52%),
-    0 12px 28px -18px rgb(16 46 38 / 32%);
-  z-index: 3;
-  transition:
-    rotate 90ms linear,
-    translate 90ms linear,
-    box-shadow 260ms ease;
-}
-
-/* Daxili qatlar səthin üstündə üzür — əsl dərinlik hissi */
-[data-motion="alive"] [data-tilting="true"] > * {
-  translate: 0 0 30px;
-  transition: translate 220ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-[data-motion="alive"] [data-tilting="true"] > :is(h2, h3, strong, .event-card-title) {
-  translate: 0 0 52px;
+@media (hover: hover) and (pointer: fine) {
+  [data-motion="alive"] :is(
+    .event-card, .club-directory-card, .peer-card, .mentor-card, .teacher-card,
+    .review-card, .community-card-shell, .announcement-card, .club-member-card,
+    .kuds-quick-card, .profile-stat-card
+  ):hover {
+    translate: 0 -6px;
+    box-shadow:
+      0 32px 60px -32px rgb(16 46 38 / 46%),
+      0 10px 24px -18px rgb(16 46 38 / 30%);
+    z-index: 3;
+  }
 }
 
 /* ---------- Maqnit düymələr (kursora doğru çəkilir) ---------- */
@@ -798,40 +772,20 @@
   will-change: translate;
 }
 
-/* ---------- 3D basma effekti (bütün düymələr) ---------- */
+/* ---------- Basma effekti (bütün düymələr) — yalnız 2D ---------- */
 [data-motion="alive"] .kuds-shell :is(button, .kuds-primary-button, [role="button"]) {
-  transition: rotate 180ms ease, translate 180ms ease;
+  transition: translate 180ms ease;
 }
 [data-motion="alive"] .kuds-shell :is(button, .kuds-primary-button, [role="button"]):active {
-  translate: 0 1px -8px;
+  translate: 0 1px;
 }
 
-/* ---------- Naviqasiya keçidlərində 3D meyl ---------- */
-[data-motion="alive"] .platform-rail-navigation { perspective: 800px; }
+/* ---------- Naviqasiya keçidlərində zərif 2D sürüşmə ---------- */
 [data-motion="alive"] .platform-rail-link {
-  transform-style: preserve-3d;
-  transition: rotate 260ms cubic-bezier(0.22, 1, 0.36, 1), translate 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: translate 240ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 [data-motion="alive"] .platform-rail-link:hover {
-  rotate: y -7deg;
-  translate: 3px 0 16px;
-}
-
-/* Kursorun izlədiyi parıltı */
-[data-motion="alive"] [data-tilting="true"]::after {
-  position: absolute;
-  z-index: 4;
-  inset: 0;
-  border-radius: inherit;
-  content: "";
-  background: radial-gradient(
-    340px circle at var(--glare-x, 50%) var(--glare-y, 50%),
-    rgb(255 255 255 / 46%),
-    rgb(255 255 255 / 8%) 42%,
-    transparent 66%
-  );
-  mix-blend-mode: overlay;
-  pointer-events: none;
+  translate: 3px 0;
 }
 
 /* ---------- Kursor işığı ---------- */
@@ -853,18 +807,14 @@
 }
 [data-motion="alive"] .cursor-halo { opacity: 1; }
 
-/* ---------- Başlıqlarda 3D açılış ---------- */
-[data-motion="alive"] :is(.section-heading, .kuds-home-section > header, .clubs-hero-copy) {
-  perspective: 900px;
-}
+/* ---------- Başlıqlarda zərif 2D açılış ---------- */
 [data-motion="alive"] .module-page-title,
 [data-motion="alive"] .kuds-home-section > header h2 {
-  transform-origin: 50% 100%;
-  animation: title-swing 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: title-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-@keyframes title-swing {
-  from { opacity: 0; rotate: x -72deg; translate: 0 14px; }
-  to { opacity: 1; rotate: x 0deg; translate: 0 0; }
+@keyframes title-rise {
+  from { opacity: 0; translate: 0 16px; }
+  to { opacity: 1; translate: 0 0; }
 }
 
 /* ---------- Kart daxili mikro-hərəkət ---------- */
