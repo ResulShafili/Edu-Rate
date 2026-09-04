@@ -625,12 +625,13 @@
   z-index: 2;
 }
 
+/* İstifadəçinin istəyi ilə PC-də effektlər azaldıldı: aura artıq FIRLANMIR —
+   sadəcə sakit, solğun bir işıq təbəqəsidir (daha sürətli, gözə dinc). */
 .motion-aura__blob {
   position: absolute;
   border-radius: 50%;
   filter: blur(90px);
-  opacity: 0.42;
-  will-change: transform;
+  opacity: 0.2;
 }
 
 .motion-aura__blob--one {
@@ -639,7 +640,6 @@
   width: 46vw;
   height: 46vw;
   background: radial-gradient(circle, rgb(68 118 108 / 15%), transparent 68%);
-  animation: aura-drift-one 34s ease-in-out infinite;
 }
 
 .motion-aura__blob--two {
@@ -648,7 +648,6 @@
   width: 52vw;
   height: 52vw;
   background: radial-gradient(circle, rgb(202 234 241 / 42%), transparent 68%);
-  animation: aura-drift-two 42s ease-in-out infinite;
 }
 
 .motion-aura__blob--three {
@@ -657,20 +656,6 @@
   width: 30vw;
   height: 30vw;
   background: radial-gradient(circle, rgb(211 232 191 / 34%), transparent 70%);
-  animation: aura-drift-three 38s ease-in-out infinite;
-}
-
-@keyframes aura-drift-one {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(6vw, 5vh, 0) scale(1.12); }
-}
-@keyframes aura-drift-two {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(-7vw, -4vh, 0) scale(1.08); }
-}
-@keyframes aura-drift-three {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(-4vw, 6vh, 0) scale(0.9); }
 }
 
 /* ---------- Sürüşmə göstəricisi ---------- */
@@ -744,33 +729,8 @@
   }
 }
 
-/* ---------- Maqnit düymələr (kursora doğru çəkilir) ---------- */
-[data-motion="alive"] .kuds-shell :is(
-  .kuds-primary-button, .reserve-button, .auth-submit, .profile-save-button,
-  .rating-submit, .ticket-submit, .event-create-trigger, .announcement-submit-trigger
-) {
-  transition: translate 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease;
-}
-[data-motion="alive"] [data-magnetic="true"] {
-  translate: var(--mag-x, 0) var(--mag-y, 0);
-  transition: translate 90ms linear, box-shadow 260ms ease;
-}
-
-/* ---------- Parallaks dərinlik (sürüşmə ilə) ---------- */
-[data-motion="alive"] .motion-aura__blob--one {
-  translate: 0 calc(var(--scroll-y, 0px) * -0.08);
-}
-[data-motion="alive"] .motion-aura__blob--two {
-  translate: 0 calc(var(--scroll-y, 0px) * 0.05);
-}
-[data-motion="alive"] .motion-aura__blob--three {
-  translate: 0 calc(var(--scroll-y, 0px) * -0.14);
-}
-/* Kart üzərindəki media zolağı gövdədən yavaş hərəkət edir */
-[data-motion="alive"] :is(.event-card, .club-directory-card) > :is(figure, .event-card-visual, .club-card-visual) {
-  translate: 0 calc(var(--scroll-y, 0px) * 0.012);
-  will-change: translate;
-}
+/* Maqnit düymələr və sürüşmə parallaksı İSTİFADƏÇİNİN istəyi ilə PC-dən
+   GÖTÜRÜLDÜ — düymələr kursora dartılmır, fon sürüşmə ilə tərpənmir. */
 
 /* ---------- Basma effekti (bütün düymələr) — yalnız 2D ---------- */
 [data-motion="alive"] .kuds-shell :is(button, .kuds-primary-button, [role="button"]) {
@@ -788,24 +748,7 @@
   translate: 3px 0;
 }
 
-/* ---------- Kursor işığı ---------- */
-.cursor-halo {
-  position: fixed;
-  z-index: 2;
-  top: 0;
-  left: 0;
-  width: 340px;
-  height: 340px;
-  margin: -170px 0 0 -170px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgb(68 118 108 / 13%), rgb(158 207 143 / 8%) 45%, transparent 68%);
-  opacity: 0;
-  translate: var(--cursor-x, 50vw) var(--cursor-y, 50vh);
-  transition: opacity 400ms ease;
-  pointer-events: none;
-  will-change: translate;
-}
-[data-motion="alive"] .cursor-halo { opacity: 1; }
+/* Kursor işığı (mouse-follow halo) İSTİFADƏÇİNİN istəyi ilə GÖTÜRÜLDÜ. */
 
 /* ---------- Başlıqlarda zərif 2D açılış ---------- */
 [data-motion="alive"] .module-page-title,
@@ -894,15 +837,6 @@
 /* ---------- Hərəkəti azaldılmış rejim ---------- */
 @media (prefers-reduced-motion: reduce) {
   .motion-aura { display: none; }
-  .motion-aura__blob { animation: none; }
-  .cursor-halo { display: none; }
-  [data-tilting="true"],
-  [data-tilting="true"] > * {
-    rotate: none;
-    translate: none;
-    transition: none;
-  }
-  [data-tilting="true"]::after { display: none; }
   .module-page-title,
   .kuds-home-section > header h2 { animation: none; }
   .kuds-shell :is(button, .kuds-primary-button, [role="button"]):active,
