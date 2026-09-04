@@ -4,9 +4,11 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   AlertTriangle,
   Check,
+  Crown,
   Pencil,
   Plus,
   Trash2,
+  UserPlus,
   X,
 } from "lucide-react";
 import {
@@ -227,6 +229,12 @@ export function AdminRecordFormSheet({
                   )}
                 </div>
 
+                {mode === "edit" && kind === "clubs" && record?.kind === "clubs" ? (
+                  <div className="admin-record-form__leaders">
+                    <ClubLeadersManager clubId={record.id} />
+                  </div>
+                ) : null}
+
                 {error && (
                   <p className="admin-record-form__error" role="alert">
                     <AlertTriangle size={16} aria-hidden="true" />
@@ -251,6 +259,86 @@ export function AdminRecordFormSheet({
     </AnimatePresence>
     </div>,
     document.body,
+  );
+}
+
+type ClubLeaderMember = { id: string; name: string; role: "leader" | "member"; isCreator: boolean; avatarUrl?: string };
+
+/**
+ * Admin panelində klub liderlərinin idarəsi. Üzvləri gətirir və admin istənilən
+ * üzvü lider təyin edə / liderlikdən çıxara bilər (klubu yaradan daimi liderdir).
+ */
+function ClubLeadersManager({ clubId }: { clubId: string }) {
+  const [members, setMembers] = useState<ClubLeaderMember[] | null>(null);
+  const [busy, setBusy] = useState("");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/api/clubs/${encodeURIComponent(clubId)}/members`, { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        const payload = (await response.json().catch(() => null)) as { data?: { members: ClubLeaderMember[] } } | null;
+        if (response.ok && payload?.data) setMembers(payload.data.members);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [clubId]);
+
+  async function change(member: ClubLeaderMember) {
+    setBusy(member.id);
+    setMessage("");
+    try {
+      const response = await fetch(`/api/clubs/${encodeURIComponent(clubId)}/leaders/${encodeURIComponent(member.id)}`, {
+        method: member.role === "leader" ? "DELETE" : "PATCH",
+      });
+      const payload = (await response.json().catch(() => null)) as { data?: ClubLeaderMember; error?: { message?: string } } | null;
+      if (!response.ok || !payload?.data) throw new Error(payload?.error?.message || "Liderlik dəyişdirilmədi.");
+      const updated = payload.data;
+      setMembers((current) => current?.map((item) => (item.id === member.id ? updated : item)) ?? current);
+      setMessage(member.role === "leader" ? "Liderlik səlahiyyəti götürüldü." : "Yeni lider təyin edildi.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Liderlik dəyişdirilmədi.");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  return (
+    <section className="club-leader-manager">
+      <header>
+        <div>
+          <small>KLUB RƏHBƏRLİYİ</small>
+          <h3>Liderləri idarə et</h3>
+          <p>Klubu yaradan şəxs daimi liderdir. Üzvlər arasından lider təyin et və ya liderliyi geri götür.</p>
+        </div>
+        <Crown size={22} />
+      </header>
+      <div>
+        {members
+          ? members.length
+            ? members.map((member) => (
+                <article key={member.id}>
+                  <span className={`club-leader-avatar${member.avatarUrl ? " has-image" : ""}`} style={member.avatarUrl ? { backgroundImage: `url("${member.avatarUrl}")` } : undefined}>
+                    {member.avatarUrl ? null : member.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}
+                  </span>
+                  <div>
+                    <strong>{member.name}</strong>
+                    <small>{member.isCreator ? "Klubun yaradıcısı · Lider" : member.role === "leader" ? "Lider" : "Üzv"}</small>
+                  </div>
+                  {!member.isCreator ? (
+                    <button type="button" disabled={busy === member.id} onClick={() => void change(member)}>
+                      {member.role === "leader" ? <><Trash2 size={14} />Liderlikdən çıxar</> : <><UserPlus size={14} />Lider et</>}
+                    </button>
+                  ) : (
+                    <Crown size={17} aria-label="Lider" />
+                  )}
+                </article>
+              ))
+            : <p className="club-leader-empty">Hələ üzv yoxdur — üzvlər qoşulduqca burada görünəcək.</p>
+          : <p className="club-leader-empty">Üzvlər yüklənir…</p>}
+      </div>
+      {message ? <p className="club-leader-empty" role="status">{message}</p> : null}
+    </section>
   );
 }
 
