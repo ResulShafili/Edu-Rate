@@ -531,7 +531,7 @@ export function TeacherEvaluation() {
           <Sparkles size={18} aria-hidden="true" />
           <div>
             <span>Hələ müəllim seçilməyib</span>
-            <h3>Əvvəl profillə tanış ol.</h3>
+            <h2>Əvvəl profillə tanış ol.</h2>
             <p>Müəllim kartına toxun, profili nəzərdən keçir və sonra qiymətləndirmək üçün seç.</p>
           </div>
         </motion.div>
@@ -541,7 +541,7 @@ export function TeacherEvaluation() {
       <div className="reviews-heading">
         <div>
           <span className="teachers-kicker">Tələbə qiymətləndirmələri</span>
-          <h3>Son nəticələr</h3>
+          <h2>Son nəticələr</h2>
         </div>
         <p><Star size={14} fill="currentColor" /> {formatInteger(allReviews.length)} dərc edilmiş qiymətləndirmə</p>
       </div>

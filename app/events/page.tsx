@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { EventsExperience } from "../components/EventsExperience";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/events" },
   title: "Tədbirlər — EduRate",
   description: "EduRate icmasının seçilmiş öyrənmə və yaradıcılıq tədbirlərini kəşf et.",
 };

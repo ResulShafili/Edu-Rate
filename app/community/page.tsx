@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ConnectionsExperience } from "../components/ConnectionsExperience";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/community" },
   title: "İcma — EduRate",
   description: "Ortaq maraqları olan öyrənənlər, yaradıcılar və mentorlarla tanış ol.",
 };

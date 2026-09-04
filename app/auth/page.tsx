@@ -3,7 +3,7 @@ import { AuthExperience } from "../components/AuthExperience";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/auth" },
   title: "Daxil ol və qeydiyyat — EduRate",
   description: "EduRate universitet şəbəkəsinə daxil ol və şəxsi tələbə profilini yarat.",
   robots: { index: false, follow: false },

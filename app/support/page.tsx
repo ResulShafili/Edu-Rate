@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SupportCenter } from "../components/SupportCenter";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/support" },
   title: "Dəstək — EduRate",
   description: "Tez-tez verilən suallara cavab tap və EduRate dəstək komandası ilə əlaqə saxla.",
 };

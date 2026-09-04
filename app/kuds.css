@@ -1328,7 +1328,7 @@ body {
 .kuds-shell .review-card { padding: 20px !important; }
 .kuds-shell .review-card :is(h3, strong) { color: var(--kuds-text) !important; }
 .kuds-shell .review-card :is(p, time, small) { color: var(--kuds-muted) !important; }
-.kuds-shell .reviews-heading h3 {
+.kuds-shell .reviews-heading :is(h2, h3) {
   margin: 0 !important;
   color: var(--kuds-text) !important;
   font-family: inherit !important;
@@ -1338,7 +1338,7 @@ body {
   line-height: 1.12 !important;
   letter-spacing: -0.035em !important;
 }
-.kuds-shell .reviews-heading h3 em { color: var(--ku-green) !important; font-family: inherit !important; font-style: normal !important; }
+.kuds-shell .reviews-heading :is(h2, h3) em { color: var(--ku-green) !important; font-family: inherit !important; font-style: normal !important; }
 .kuds-shell .teacher-profile-drawer { color: var(--kuds-text) !important; background: var(--kuds-surface) !important; }
 .kuds-shell .teacher-profile-hero,
 .kuds-shell .teacher-profile-bottom { border-color: var(--kuds-border) !important; }
@@ -2497,7 +2497,7 @@ body {
   .kuds-shell .teacher-card-trigger { grid-template-columns: 82px minmax(0, 1fr) 32px !important; min-height: 132px !important; padding: 12px !important; gap: 12px !important; }
   .kuds-shell .teacher-avatar { width: 82px !important; height: 106px !important; }
   .kuds-shell .teacher-card-summary > strong { font-size: 20px !important; }
-  .kuds-shell .reviews-heading h3 { font-size: 28px !important; }
+  .kuds-shell .reviews-heading :is(h2, h3) { font-size: 28px !important; }
   .kuds-shell .mentor-card.is-expanded .mentor-card-trigger { min-height: 124px !important; }
   .kuds-shell .mentor-details-inner { margin-inline: 14px !important; padding: 20px 0 !important; }
   .kuds-shell .mentor-story blockquote { margin-top: 14px !important; }

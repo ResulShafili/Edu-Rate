@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { MentorshipDashboard } from "../components/MentorshipDashboard";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/mentors" },
   title: "Mentorlar — EduRate",
   description: "Sənin məqsədinə və inkişaf yoluna uyğun mentor tap.",
 };

@@ -1911,12 +1911,12 @@ a { color: inherit; text-decoration: none; }
 .faq-list { border-bottom: 1px solid rgba(243, 241, 233, 0.1); }
 .faq-item { border-bottom: 1px solid rgba(243, 241, 233, 0.1); }
 .faq-item:last-child { border-bottom: 0; }
-.faq-item > h3 { margin: 0; }
-.faq-item > h3 > button { display: grid; grid-template-columns: 28px 1fr 31px; align-items: center; gap: 10px; width: 100%; padding: 21px 0; cursor: pointer; color: var(--paper); text-align: left; border: 0; background: transparent; }
-.faq-item > h3 > button:focus-visible { outline: 2px solid var(--lilac); outline-offset: 5px; border-radius: 4px; }
+.faq-item > :is(h2, h3) { margin: 0; }
+.faq-item > :is(h2, h3) > button { display: grid; grid-template-columns: 28px 1fr 31px; align-items: center; gap: 10px; width: 100%; padding: 21px 0; cursor: pointer; color: var(--paper); text-align: left; border: 0; background: transparent; }
+.faq-item > :is(h2, h3) > button:focus-visible { outline: 2px solid var(--lilac); outline-offset: 5px; border-radius: 4px; }
 .faq-number { align-self: start; padding-top: 3px; color: rgba(243, 241, 233, 0.29); font-size: 8px; font-weight: 600; letter-spacing: 0.1em; }
 .faq-item strong { font-size: 13px; font-weight: 520; line-height: 1.45; letter-spacing: -0.02em; }
-.faq-item > h3 > button i { display: grid; width: 30px; height: 30px; color: rgba(243, 241, 233, 0.54); place-items: center; border: 1px solid rgba(243, 241, 233, 0.11); border-radius: 50%; font-style: normal; }
+.faq-item > :is(h2, h3) > button i { display: grid; width: 30px; height: 30px; color: rgba(243, 241, 233, 0.54); place-items: center; border: 1px solid rgba(243, 241, 233, 0.11); border-radius: 50%; font-style: normal; }
 .faq-item.is-open > h3 > button i { color: var(--ink); border-color: var(--lilac); background: var(--lilac); }
 .faq-answer { overflow: hidden; }
 .faq-answer p { margin: 0; padding: 0 44px 23px 38px; color: rgba(243, 241, 233, 0.48); font-size: 11px; line-height: 1.72; }
@@ -2045,7 +2045,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .teachers-heading :is(h1, h2) em,
-.reviews-heading h3 em {
+.reviews-heading :is(h2, h3) em {
   color: var(--lilac);
   font-family: var(--font-instrument-serif), Georgia, serif;
   font-weight: 400;
@@ -2269,7 +2269,7 @@ a { color: inherit; text-decoration: none; }
 
 .teacher-rating-empty > svg { flex: 0 0 auto; color: var(--lime); }
 .teacher-rating-empty span { color: var(--lime); font-size: 8px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
-.teacher-rating-empty h3 { margin: 6px 0 4px; font-size: clamp(23px, 2.2vw, 31px); font-weight: 480; letter-spacing: -0.04em; }
+.teacher-rating-empty :is(h2, h3) { margin: 6px 0 4px; font-size: clamp(23px, 2.2vw, 31px); font-weight: 480; letter-spacing: -0.04em; }
 .teacher-rating-empty p { margin: 0; color: rgba(243, 241, 233, 0.48); font-size: 10px; line-height: 1.55; }
 
 .teacher-profile-drawer {
@@ -2554,7 +2554,7 @@ a { color: inherit; text-decoration: none; }
   gap: 40px;
 }
 
-.reviews-heading h3 { margin: 17px 0 0; font-size: clamp(48px, 5.6vw, 82px); font-weight: 450; line-height: 0.91; letter-spacing: -0.064em; }
+.reviews-heading :is(h2, h3) { margin: 17px 0 0; font-size: clamp(48px, 5.6vw, 82px); font-weight: 450; line-height: 0.91; letter-spacing: -0.064em; }
 .reviews-heading > p { display: inline-flex; margin: 0 0 6px; align-items: center; gap: 7px; color: rgba(243, 241, 233, 0.42); font-size: 9px; }
 .reviews-heading > p svg { color: var(--lime); }
 
@@ -3806,7 +3806,7 @@ a { color: inherit; text-decoration: none; }
   .rating-form-footer > button { width: 100%; }
   .review-confirmation { inset: 7px; }
   .reviews-heading { padding-top: 92px; align-items: flex-start; flex-direction: column; gap: 22px; }
-  .reviews-heading h3 { font-size: clamp(47px, 14vw, 72px); }
+  .reviews-heading :is(h2, h3) { font-size: clamp(47px, 14vw, 72px); }
   .reviews-masonry { columns: 1; }
   .mentor-section { padding-top: 92px; padding-bottom: 100px; border-radius: 25px 25px 0 0; }
   .mentor-heading { grid-template-columns: 1fr; gap: 31px; padding-bottom: 42px; }
@@ -3836,7 +3836,7 @@ a { color: inherit; text-decoration: none; }
   .support-heading p { max-width: 290px; }
   .support-layout { margin-top: 50px; }
   .faq-panel, .ticket-panel { padding: 19px; border-radius: 18px; }
-  .faq-item > h3 > button { grid-template-columns: 24px 1fr 30px; padding: 19px 0; }
+  .faq-item > :is(h2, h3) > button { grid-template-columns: 24px 1fr 30px; padding: 19px 0; }
   .faq-answer p { padding-right: 33px; padding-left: 34px; }
   .ticket-form { grid-template-columns: 1fr; }
   .floating-select,
@@ -4102,7 +4102,7 @@ a { color: inherit; text-decoration: none; }
   .teacher-carousel-controls button { width: 44px; height: 44px; }
 
   .teacher-rating-empty { width: calc(100% - 36px); min-height: 0; margin-top: 28px; padding: 18px; align-items: flex-start; border-radius: 16px; }
-  .teacher-rating-empty h3 { font-size: 22px; }
+  .teacher-rating-empty :is(h2, h3) { font-size: 22px; }
 
   .teacher-profile-drawer {
     top: max(7px, env(safe-area-inset-top));
@@ -4139,7 +4139,7 @@ a { color: inherit; text-decoration: none; }
   .review-confirmation { padding: 20px; }
 
   .reviews-heading { gap: 16px; padding: 76px var(--mobile-gutter) 32px; }
-  .reviews-heading h3 { font-size: clamp(38px, 11vw, 48px); line-height: 0.94; }
+  .reviews-heading :is(h2, h3) { font-size: clamp(38px, 11vw, 48px); line-height: 0.94; }
   .reviews-masonry { padding-inline: var(--mobile-gutter); }
   .review-card { padding: 20px; border-radius: 16px; }
 
@@ -4163,7 +4163,7 @@ a { color: inherit; text-decoration: none; }
   .support-layout { margin-top: 36px; }
   .faq-panel,
   .ticket-panel { padding: 16px; border-radius: 16px; }
-  .faq-item > h3 > button { grid-template-columns: 22px minmax(0, 1fr) 30px; gap: 8px; padding: 16px 0; }
+  .faq-item > :is(h2, h3) > button { grid-template-columns: 22px minmax(0, 1fr) 30px; gap: 8px; padding: 16px 0; }
   .faq-answer p { padding: 0 30px 20px; }
   .ticket-progress { margin: 20px 0 24px; }
   .ticket-form { gap: 9px; }

@@ -3,7 +3,7 @@ import { ClubsExperience } from "../components/ClubsExperience";
 import { clubFromApi, type ClubApiRecord } from "../data/clubs";
 import { requestRemoteApi } from "../lib/auth/remote-credential";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/clubs" },
   title: "Klublar və icmalar — EduRate",
   description:
     "Tələbə klublarını və təşkilatlarını kəşf et; sənə uyğun kampus çevrəsinə qoşul.",

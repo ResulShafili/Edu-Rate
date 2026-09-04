@@ -105,11 +105,11 @@ export function AdminSkeleton({
     );
   }
 
+  // Yüklənmə placeholder-i landmark/id daşımır (bax: app/loading.tsx qeydi) —
+  // əks halda əsl səhifə ilə birlikdə iki <main> və təkrar id yaranır.
   return (
-    <main
-      id="main-content"
+    <div
       className="route-page admin-dashboard admin-dashboard--loading"
-      tabIndex={-1}
       aria-busy="true"
     >
       <span className="sr-only" role="status">
@@ -131,6 +131,6 @@ export function AdminSkeleton({
           <TableSkeleton />
         </section>
       </div>
-    </main>
+    </div>
   );
 }

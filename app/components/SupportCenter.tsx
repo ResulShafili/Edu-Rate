@@ -143,7 +143,8 @@ export function SupportCenter() {
               const answerId = `faq-answer-${faq.id}`;
               return (
                 <div className={`faq-item${open ? " is-open" : ""}`} key={faq.id}>
-                  <h3>
+                  {/* h2: h1-dən sonra birbaşa h3 gəlirdi (başlıq sırası pozulurdu). */}
+                  <h2>
                     <button
                       id={`faq-trigger-${faq.id}`}
                       type="button"
@@ -157,7 +158,7 @@ export function SupportCenter() {
                         <ChevronDown size={16} />
                       </motion.i>
                     </button>
-                  </h3>
+                  </h2>
                   <AnimatePresence initial={false}>
                     {open && (
                       <motion.div
