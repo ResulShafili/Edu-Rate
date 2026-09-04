@@ -1063,6 +1063,12 @@ describe("EduRate API", () => {
     await request(app).patch(`/api/clubs/${clubId}/leaders/${member.id}`).set("Authorization",creatorAuthorization).expect(200);
     management=await request(app).get(`/api/clubs/${clubId}/members`).set("Authorization",memberAuthorization).expect(200);
     assert.equal(management.body.data.canManage,true);assert.equal(management.body.data.canDelete,false);
+    // Klub lideri (yaradıcı olmasa da) başqa üzvü lider təyin edə və geri götürə bilər.
+    const member2=await createUser({name:"İkinci Namizəd",email:`club.leader2.${suffix}@example.az`,passwordHash:await hashPassword("EduRate2026"),university:"Qarabağ Universiteti",faculty:"İqtisadiyyat fakültəsi",program:"Menecment"});
+    const member2Authorization=`Bearer ${createAccessToken(member2)}`;
+    await request(app).post(`/api/clubs/${clubId}/memberships`).set("Authorization",member2Authorization).expect(201);
+    await request(app).patch(`/api/clubs/${clubId}/leaders/${member2.id}`).set("Authorization",memberAuthorization).expect(200);
+    await request(app).delete(`/api/clubs/${clubId}/leaders/${member2.id}`).set("Authorization",memberAuthorization).expect(200);
     await request(app).delete(`/api/clubs/${clubId}/leaders/${creator.id}`).set("Authorization",creatorAuthorization).expect(409);
     await request(app).delete(`/api/clubs/${clubId}`).set("Authorization",memberAuthorization).expect(403);
     await request(app).delete(`/api/clubs/${clubId}/leaders/${member.id}`).set("Authorization",creatorAuthorization).expect(200);
