@@ -3171,6 +3171,22 @@ body {
 .message-list[data-pattern="0"]{background-color:#f5f9f7!important;background-image:radial-gradient(circle at 18px 20px,rgba(68,118,108,.08) 0 2px,transparent 2.5px),radial-gradient(circle at 74px 58px,rgba(180,150,95,.07) 0 3px,transparent 3.5px),repeating-linear-gradient(35deg,transparent 0 54px,rgba(68,118,108,.025) 55px 56px)!important;background-size:96px 88px,132px 120px,120px 120px!important}
 .message-list[data-pattern="1"]{background-color:#f7faf8!important;background-image:radial-gradient(ellipse at 22px 18px,transparent 0 8px,rgba(68,118,108,.055) 8.5px 9.5px,transparent 10px),radial-gradient(circle at 82px 76px,rgba(130,112,170,.055) 0 2px,transparent 2.5px),linear-gradient(120deg,transparent 48%,rgba(68,118,108,.022) 49% 51%,transparent 52%)!important;background-size:106px 96px,128px 112px,84px 84px!important}
 .message-list[data-pattern="2"]{background-color:#f6f9f7!important;background-image:radial-gradient(circle at 14px 16px,rgba(68,118,108,.065) 0 1.5px,transparent 2px),radial-gradient(circle at 52px 48px,transparent 0 6px,rgba(191,157,93,.055) 6.5px 7.5px,transparent 8px),repeating-linear-gradient(-28deg,transparent 0 62px,rgba(68,118,108,.022) 63px 64px)!important;background-size:72px 72px,110px 104px,132px 132px!important}
+
+/* WhatsApp üslubu söhbət fonu: təhsil temalı sətir-rəsm (doodle) naxışı,
+   işıqlı ilıq zəmin. Bütün variantlar üçün eyni təmiz naxış. */
+.kuds-shell .message-list,
+.kuds-shell .message-list[data-pattern="0"],
+.kuds-shell .message-list[data-pattern="1"],
+.kuds-shell .message-list[data-pattern="2"],
+.message-list[data-pattern="0"],
+.message-list[data-pattern="1"],
+.message-list[data-pattern="2"] {
+  background-color: #e9ede3 !important;
+  background-image: url("/chat-pattern.svg") !important;
+  background-size: 320px 320px !important;
+  background-repeat: repeat !important;
+  background-position: center top !important;
+}
 @media(max-width:899px){.chat-center-main .chat-header{padding-right:90px}.chat-more{top:13px;right:50px}.chat-more-trigger{width:34px;height:34px}.chat-more-menu{position:fixed;top:76px;right:16px;width:min(270px,calc(100vw - 32px))}}
 
 @media (max-width: 640px) {
