@@ -1,6 +1,5 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   BookOpen,
@@ -19,7 +18,6 @@ import { useRouter } from "next/navigation";
 import {
   useId,
   useState,
-  type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
   type ReactNode,
@@ -45,23 +43,9 @@ type FieldErrors = Partial<Record<AuthField, string>>;
 
 type AuthFormValues = Record<AuthField, string>;
 
-const ease = [0.22, 1, 0.36, 1] as const;
-const panelTransition = { duration: 0.38, ease };
-
-const particles = [
-  { id: "one", left: "8%", top: "18%", size: 7, delay: 0, duration: 6.8 },
-  { id: "two", left: "19%", top: "73%", size: 11, delay: 0.8, duration: 7.4 },
-  { id: "three", left: "42%", top: "11%", size: 5, delay: 1.2, duration: 6.2 },
-  { id: "four", left: "68%", top: "22%", size: 9, delay: 0.4, duration: 8 },
-  { id: "five", left: "87%", top: "67%", size: 6, delay: 1.7, duration: 7.1 },
-  { id: "six", left: "57%", top: "84%", size: 12, delay: 1, duration: 8.4 },
-] as const;
-
-const particleAnimation = {
-  y: [0, -16, 0],
-  scale: [0.88, 1.08, 0.88],
-  opacity: [0.16, 0.58, 0.16],
-};
+/* Giriş səhifəsi tamamilə sakitdir: istifadəçinin istəyi ilə bütün animasiyalar
+   götürülüb — sonsuz üzən zərrəciklər, panel açılışı, tab-lar arası sürüşmə və
+   layout keçidləri. Forma dərhal, sabit görünür (həm də daha sürətli). */
 
 type AuthExperienceProps = {
   initialMode?: AuthMode;
@@ -78,7 +62,6 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
   const [accountType, setAccountType] = useState<AccountType>("student");
   const [pendingTeacherEmail, setPendingTeacherEmail] = useState("");
   const [pendingTeacherDelivery, setPendingTeacherDelivery] = useState(false);
-  const reduceMotion = Boolean(useReducedMotion());
   const formId = useId();
   const router = useRouter();
   const {
@@ -215,33 +198,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
 
   return (
     <section className="auth-section" aria-labelledby="auth-title">
-      <div className="auth-particles" aria-hidden="true">
-        {particles.map((particle) => (
-          <motion.i
-            key={particle.id}
-            style={{
-              left: particle.left,
-              top: particle.top,
-              width: particle.size,
-              height: particle.size,
-            } as CSSProperties}
-            animate={reduceMotion ? undefined : particleAnimation}
-            transition={{
-              duration: particle.duration,
-              delay: particle.delay,
-              repeat: Number.POSITIVE_INFINITY,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
-      </div>
-
-      <motion.div
-        className={`auth-layout auth-layout-${mode}`}
-        initial={reduceMotion ? false : { opacity: 0, y: 22, scale: 0.99 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.65, ease }}
-      >
+      <div className={`auth-layout auth-layout-${mode}`}>
         <aside className="auth-story" aria-label="EduRate universitet şəbəkəsi">
           <div>
             <span className="auth-kicker"><Sparkles size={13} aria-hidden="true" /> Universitet şəbəkən</span>
@@ -259,7 +216,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
           <div className="auth-orbit auth-orbit-two" aria-hidden="true" />
         </aside>
 
-        <motion.div className="auth-panel" layout>
+        <div className="auth-panel">
           <header className="auth-panel-heading">
             <span>EduRate hesabı</span>
             <h1 id="auth-title">{panelHeading}</h1>
@@ -284,25 +241,20 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                   onClick={() => selectMode(tabMode)}
                   onKeyDown={handleTabKeyDown}
                 >
-                  {active && <motion.i layoutId="active-auth-mode" className="auth-mode-pill" />}
+                  {active && <i className="auth-mode-pill" />}
                   <span>{label}</span>
                 </button>
               );
             })}
           </div>
 
-          <AnimatePresence initial={false} mode="popLayout">
-            <motion.div
-              key={mode}
-              id={`${formId}-${mode}-panel`}
-              className="auth-form-panel"
-              role="tabpanel"
-              aria-labelledby={`${formId}-${mode}-tab`}
-              initial={reduceMotion ? false : { opacity: 0, x: mode === "login" ? -24 : 24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={reduceMotion ? { opacity: 1 } : { opacity: 0, x: mode === "login" ? 18 : -18 }}
-              transition={reduceMotion ? { duration: 0 } : panelTransition}
-            >
+          <div
+            key={mode}
+            id={`${formId}-${mode}-panel`}
+            className="auth-form-panel"
+            role="tabpanel"
+            aria-labelledby={`${formId}-${mode}-tab`}
+          >
               {mode === "register" && pendingTeacherEmail ? (
                 <section className="auth-registration-receipt" aria-live="polite">
                   <span className="auth-registration-check"><Check size={26} aria-hidden="true" /></span>
@@ -497,11 +449,10 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                       )}
                     </>
                   ) : null}
-                  <motion.button
+                  <button
                     type="submit"
                     className="auth-submit"
                     disabled={submitting || !credentialAuthAvailable}
-                    whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                   >
                     <span>
                       {submitting
@@ -513,7 +464,7 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                             : "Hesab yarat"}
                     </span>
                     <ArrowRight size={16} aria-hidden="true" />
-                  </motion.button>
+                  </button>
                 </div>
 
                 <p
@@ -525,10 +476,9 @@ export function AuthExperience({ initialMode = "login", returnTo = "/profile" }:
                 </p>
                 <p className="auth-legal-links">EduRate müstəqil tələbə pilotudur və universitetin rəsmi informasiya sistemi deyil.</p>
               </form>}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
-      </motion.div>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

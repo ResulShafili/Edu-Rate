@@ -33,7 +33,6 @@
     radial-gradient(circle at 68% 70%, rgb(120 200 175 / 22%), transparent 60%);
   filter: blur(18px);
   opacity: 0.9;
-  animation: orbital-breathe 9s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -60,7 +59,6 @@
   inset: 24%;
   border-style: dashed;
   border-color: rgb(255 255 255 / 12%);
-  animation: orbital-drift calc(var(--orbit-duration) * 1.6) linear infinite;
 }
 
 /* Nüvə */
@@ -82,14 +80,7 @@
   transition: box-shadow 0.4s ease, transform 0.4s ease;
 }
 
-.orbital-hero__core-pulse {
-  position: absolute;
-  inset: -6%;
-  border-radius: 50%;
-  border: 1px solid rgb(var(--orbit-glow) / 60%);
-  animation: orbital-pulse 3.4s ease-out infinite;
-  pointer-events: none;
-}
+/* Nüvənin sonsuz "nəbz" halqası götürüldü — sadələşdirmə. */
 
 .orbital-hero__core-label {
   position: relative;
@@ -211,18 +202,8 @@
 @keyframes orbital-counter {
   to { transform: rotate(-360deg); }
 }
-@keyframes orbital-drift {
-  to { transform: rotate(-360deg); }
-}
-@keyframes orbital-pulse {
-  0% { opacity: 0.55; transform: scale(1); }
-  70% { opacity: 0; transform: scale(1.5); }
-  100% { opacity: 0; transform: scale(1.5); }
-}
-@keyframes orbital-breathe {
-  0%, 100% { opacity: 0.7; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
+/* orbital-drift / orbital-pulse / orbital-breathe götürüldü — hero-da yalnız
+   bir sakit orbit fırlanması qaldı (5 sonsuz animasiya → 2). */
 
 /* ---------- Bölmə kartları (landing modul grid) — sadə 2D keçid ----------
    Əvvəlki 3D flip (rotate y 180deg / preserve-3d / perspective) götürüldü.
@@ -305,10 +286,7 @@
 /* Hərəkəti azalt: fırlanma və əyilmə dayanır, düzülüş və keçidlər qalır */
 @media (prefers-reduced-motion: reduce) {
   .orbital-hero__belt,
-  .orbital-hero__spin,
-  .orbital-hero__ring--inner,
-  .orbital-hero__core-pulse,
-  .orbital-hero__aura {
+  .orbital-hero__spin {
     animation: none !important;
   }
   .orbital-hero__planet-label {
@@ -750,15 +728,8 @@
 
 /* Kursor işığı (mouse-follow halo) İSTİFADƏÇİNİN istəyi ilə GÖTÜRÜLDÜ. */
 
-/* ---------- Başlıqlarda zərif 2D açılış ---------- */
-[data-motion="alive"] .module-page-title,
-[data-motion="alive"] .kuds-home-section > header h2 {
-  animation: title-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes title-rise {
-  from { opacity: 0; translate: 0 16px; }
-  to { opacity: 1; translate: 0 0; }
-}
+/* Başlıqların ayrıca açılış animasiyası götürüldü — səhifə onsuz da
+   `premium-route-rise` ilə bir dəfə görünür, ikiqat animasiya artıq idi. */
 
 /* ---------- Kart daxili mikro-hərəkət ---------- */
 .kuds-shell :is(.event-card, .club-directory-card, .peer-card, .mentor-card, .teacher-card, .community-card-shell) svg {
@@ -779,47 +750,8 @@
   transform: scale(1.08);
 }
 
-/* ---------- Brend nişanı: sakit nəbz ---------- */
-[data-motion="alive"] .platform-sidebar-brand .brand-mark {
-  position: relative;
-}
-[data-motion="alive"] .platform-sidebar-brand .brand-mark::after {
-  position: absolute;
-  inset: -4px;
-  border-radius: inherit;
-  border: 1px solid rgb(68 118 108 / 45%);
-  content: "";
-  opacity: 0;
-  animation: brand-pulse 4.2s ease-out infinite;
-  pointer-events: none;
-}
-@keyframes brand-pulse {
-  0% { opacity: 0.5; transform: scale(0.92); }
-  60%, 100% { opacity: 0; transform: scale(1.35); }
-}
-
-/* ---------- Əsas düymələrdə işıq süpürgəsi ---------- */
-.kuds-shell :is(.kuds-primary-button, .reserve-button, .auth-submit, .profile-save-button) {
-  position: relative;
-  overflow: hidden;
-}
-.kuds-shell :is(.kuds-primary-button, .reserve-button, .auth-submit, .profile-save-button)::after {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -60%;
-  width: 45%;
-  content: "";
-  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 28%), transparent);
-  transform: skewX(-18deg);
-  pointer-events: none;
-}
-[data-motion="alive"] .kuds-shell :is(.kuds-primary-button, .reserve-button, .auth-submit, .profile-save-button):hover::after {
-  animation: button-shine 720ms ease-out;
-}
-@keyframes button-shine {
-  to { left: 115%; }
-}
+/* Loqodakı sonsuz "nəbz" halqası və düymələrdəki işıq süpürgəsi götürüldü —
+   sadəcə bəzək idi, fasiləsiz işləyirdi. */
 
 /* ---------- Mətn keçidlərində alt xətt süpürgəsi ---------- */
 .kuds-shell .route-page p > a:not([class]) {
@@ -837,11 +769,8 @@
 /* ---------- Hərəkəti azaldılmış rejim ---------- */
 @media (prefers-reduced-motion: reduce) {
   .motion-aura { display: none; }
-  .module-page-title,
-  .kuds-home-section > header h2 { animation: none; }
   .kuds-shell :is(button, .kuds-primary-button, [role="button"]):active,
   .platform-rail-link:hover {
-    rotate: none;
     translate: none;
   }
   :is(.event-card-skeleton, .admin-skeleton-cell, .skeleton-block, [class*="-skeleton"])::after {
@@ -849,7 +778,6 @@
     display: none;
   }
   .scroll-progress__bar { transition: none; }
-  .kuds-shell :is(.kuds-primary-button, .reserve-button, .auth-submit, .profile-save-button)::after { display: none; }
 }
 
 /* ============================================================

@@ -42,7 +42,6 @@ export function OrbitalHero() {
         <span className="orbital-hero__ring orbital-hero__ring--inner" aria-hidden="true" />
 
         <span className="orbital-hero__core" aria-hidden="true">
-          <span className="orbital-hero__core-pulse" />
           <span className="orbital-hero__core-label">EDU</span>
         </span>
 
