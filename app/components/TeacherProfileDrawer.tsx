@@ -199,5 +199,10 @@ export function TeacherProfileDrawer({
     </AnimatePresence>
   );
 
-  return typeof document === "undefined" ? null : createPortal(drawer, document.body);
+  // `kuds-shell` sarğısı (display:contents — heç nə çəkmir) işıqlı temanın
+  // `.kuds-shell ...` seçicilərinin bədənə portal olunandan sonra da işləməsini
+  // təmin edir; onsuz müəllim profili köhnə tünd temada qara qalırdı.
+  return typeof document === "undefined"
+    ? null
+    : createPortal(<div className="kuds-shell" style={{ display: "contents" }}>{drawer}</div>, document.body);
 }

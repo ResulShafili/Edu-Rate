@@ -2130,6 +2130,23 @@ body {
 }
 .kuds-shell .message-own p,
 .message-own p { color: #10221e !important; background: #c9f36a !important; }
+/* WhatsApp üslubu: qabarcıqlarda yüngül kölgə + kənar quyruq (qrupun son
+   mesajında). Əvvəlki neon parıltı sakit kölgə ilə əvəz olunur. */
+.kuds-shell .message-own p, .message-own p,
+.kuds-shell .message-peer p, .message-peer p {
+  position: relative;
+  box-shadow: 0 1px 1.5px rgba(16, 52, 45, 0.13) !important;
+}
+.kuds-shell .message-own.group-end p::after, .message-own.group-end p::after {
+  content: ""; position: absolute; right: -6px; bottom: 0;
+  width: 13px; height: 13px; background: #c9f36a;
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+}
+.kuds-shell .message-peer.group-end p::after, .message-peer.group-end p::after {
+  content: ""; position: absolute; left: -6px; bottom: 0;
+  width: 13px; height: 13px; background: #edf3f0;
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+}
 .kuds-shell .message-row > div > span,
 .message-row > div > span { color: #70817d !important; }
 .kuds-shell .typing-bubble,
