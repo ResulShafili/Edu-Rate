@@ -362,8 +362,8 @@ function UserFields({
         <Field label="Yeni rol" name="role" required>
           <select name="role" defaultValue={record?.role ?? "student"} autoFocus required>
             <option value="student">Tələbə</option>
-            <option value="mentor">Mentor</option>
             <option value="teacher">Müəllim</option>
+            {record?.role === "mentor" ? <option value="mentor">Mentor (köhnə)</option> : null}
           </select>
         </Field>
       </>
@@ -380,15 +380,15 @@ function UserFields({
       <Field label="Rol" name="role" required>
         <select name="role" defaultValue={record?.role ?? "student"} required>
           <option value="student">Tələbə</option>
-          <option value="mentor">Mentor</option>
           <option value="teacher">Müəllim</option>
           {canAssignElevatedRoles && (
             <>
               <option value="assistant_admin">Admin köməkçisi</option>
               <option value="admin">Administrator</option>
-              <option value="owner_admin">Platforma sahibi</option>
             </>
           )}
+          {record?.role === "mentor" ? <option value="mentor">Mentor (köhnə)</option> : null}
+          {record?.role === "owner_admin" ? <option value="owner_admin">Platforma sahibi (köhnə)</option> : null}
         </select>
       </Field>
       <Field label="Universitet" name="university" required>
