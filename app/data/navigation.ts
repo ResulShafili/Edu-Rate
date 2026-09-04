@@ -91,11 +91,23 @@ export const accountRoutes = [
   { href: "/auth", label: "Daxil ol" },
 ] as const;
 
+/**
+ * Menyu qrupları istifadəçinin məqsədinə görə düzülüb:
+ *  - Gündəlik  → şəxsən SƏNƏ aid olan cari məlumat (cədvəl, elanlar);
+ *  - Kəşf et   → qoşulacağın yeni şeylər (tədbirlər, klublar);
+ *  - İnsanlar  → adamlarla bağlı hər şey (icma, müəllimlər, mentorlar, suallar);
+ *  - Kömək     → yalnız platforma dəstəyi.
+ *
+ * "Suallar" əvvəl "Kömək" qrupunda idi, "Dəstək"in yanında. Amma Suallar
+ * tələbələrin bir-birinə verdiyi kampus suallarıdır, platforma dəstəyi deyil —
+ * iki oxşar adlı bölmə istifadəçini çaşdırırdı. Ona görə "İnsanlar"a keçdi.
+ * "Elanlar" da kəşf yox, gündəlik xəbərdir — "Gündəlik"ə keçdi.
+ */
 export const primaryNavigationGroups = [
-  { label: "Gündəlik", routes: ["/schedule"] },
-  { label: "Kəşf et", routes: ["/events", "/feed", "/clubs"] },
-  { label: "İnsanlar", routes: ["/community", "/teachers", "/mentors"] },
-  { label: "Kömək", routes: ["/questions", "/support"] },
+  { label: "Gündəlik", routes: ["/schedule", "/feed"] },
+  { label: "Kəşf et", routes: ["/events", "/clubs"] },
+  { label: "İnsanlar", routes: ["/community", "/teachers", "/mentors", "/questions"] },
+  { label: "Kömək", routes: ["/support"] },
 ] as const;
 
 export const allPlatformRoutes = [...platformRoutes, ...accountRoutes] as const;
