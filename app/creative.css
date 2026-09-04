@@ -1515,6 +1515,15 @@
   .install-banner small { display: none; }
 }
 
+/* Telefonda "əlavə et" banneri alt naviqasiya paneli və söhbət düyməsinin
+   üstündə dayanmalıdır — əks halda düyməsi onların arxasında qalıb basılmır. */
+@media (max-width: 768px) {
+  .install-banner {
+    bottom: calc(148px + env(safe-area-inset-bottom));
+    z-index: 150;
+  }
+}
+
 /* ---------- Cihaz bildirişləri açarı ---------- */
 .push-toggle {
   display: flex;

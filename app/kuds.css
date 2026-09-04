@@ -1197,9 +1197,16 @@ body {
 .kuds-shell .community-chat-list button > svg { color: var(--ku-green); }
 .kuds-shell .community-chat-empty { border-color: var(--kuds-border); }
 .kuds-shell .community-chat-skeleton i { background: #e8eef1; }
-.kuds-shell .peers-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 16px !important; }
-.kuds-shell .peer-card { min-height: 300px !important; padding: 18px !important; }
+/* İcma kartları masaüstündə kiçildildi: 4 sütun, daha yığcam ölçü. */
+.kuds-shell .peers-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 14px !important; }
+.kuds-shell .peer-card { min-height: 248px !important; padding: 15px !important; }
+.kuds-shell .peer-avatar { width: 70px !important; height: 70px !important; margin: 14px auto 12px !important; }
+.kuds-shell .peer-avatar > span { font-size: 22px !important; }
+.kuds-shell .peer-avatar-orbit { width: 96px !important; height: 42px !important; }
+.kuds-shell .peer-identity h3 { font-size: 16px !important; }
+.kuds-shell .peer-bio { min-height: 0 !important; margin: 10px 0 !important; }
 .kuds-shell .peer-card-topline { color: var(--kuds-muted) !important; }
+@media (max-width: 1180px) { .kuds-shell .peers-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }
 .kuds-shell .peer-status { color: var(--ku-dark-green) !important; }
 .kuds-shell .peer-status i { background: var(--kuds-success) !important; }
 .kuds-shell .peer-avatar,

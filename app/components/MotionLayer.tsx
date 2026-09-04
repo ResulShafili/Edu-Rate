@@ -8,33 +8,13 @@ import { useEffect } from "react";
  *  - ambient aura + parallaks: arxa plan sürüşmə ilə fərqli sürətlə hərəkət edir;
  *  - sürüşmə göstəricisi;
  *  - kursor işığı;
- *  - 3D tilt: kursorun altındakı kart əsl perspektivlə əyilir;
- *  - maqnit düymələr: düymə kursora doğru çəkilir.
+ *  - maqnit düymələr: düymə kursora doğru yüngülcə çəkilir.
  *
- * Elementin `transform`-una toxunmuruq — müstəqil `rotate`/`translate` CSS
- * xüsusiyyətləri işlədilir, ona görə marşrutların Framer Motion animasiyaları
- * ilə toqquşmur.
- *
- * TİTRƏMƏNİN QARŞISI: effekt elementi yerindən tərpətdiyi üçün kursor sərhəddə
- * olanda hit-test yanıb-sönə bilər (kart əyilir → kursor çıxır → effekt sönür →
- * kart qayıdır → yenidən tutulur). Ona görə element tutulan anda ölçüsü
- * yaddaşa alınır və həm bucaq hesabı, həm də "çıxdı" yoxlaması yalnız həmin
- * sabit düzbucaqlıya əsaslanır — geri-əlaqə döngəsi tamamilə qırılır.
+ * QEYD: əvvəllər burada kartların kursor altında 3D perspektivlə əyilməsi (tilt)
+ * var idi. İstifadəçi bunu ləğv etməyi istədi (kartlar sadə, düz qalsın), ona görə
+ * tilt tamamilə çıxarılıb. Kartların yüngül "qalxma" effekti artıq yalnız CSS
+ * :hover ilə verilir.
  */
-
-const TILT_SELECTOR = [
-  ".event-card",
-  ".club-directory-card",
-  ".peer-card",
-  ".mentor-card",
-  ".teacher-card",
-  ".review-card",
-  ".community-card-shell",
-  ".announcement-card",
-  ".club-member-card",
-  ".kuds-quick-card",
-  ".profile-stat-card",
-].join(",");
 
 const MAGNET_SELECTOR = [
   ".kuds-primary-button",
@@ -47,9 +27,6 @@ const MAGNET_SELECTOR = [
   ".announcement-submit-trigger",
 ].join(",");
 
-// Əyilmə yarıya endirildi: kartlar (xüsusən icma peer-kartları) kənara
-// daşmasın və 3D effekt daha sakit olsun.
-const MAX_TILT = 8;
 const MAGNET_PULL = 0.32;
 const MAGNET_LIMIT = 14;
 /** Sərhəddə yanıb-sönməni dayandıran ehtiyat zolaq. */
@@ -94,9 +71,8 @@ export function MotionLayer() {
       };
     }
 
-    // --- Kursor, tilt və maqnit -----------------------------------------
+    // --- Kursor və maqnit -----------------------------------------------
     const fine = window.matchMedia("(hover: hover) and (pointer: fine)");
-    let tilt: Held | null = null;
     let magnet: Held | null = null;
     let pointerFrame = 0;
     let pointerX = 0;
@@ -109,18 +85,6 @@ export function MotionLayer() {
         y < rect.top - EXIT_MARGIN ||
         y > rect.bottom + EXIT_MARGIN
       );
-    }
-
-    function releaseTilt() {
-      if (!tilt) return;
-      const { element } = tilt;
-      element.style.removeProperty("--tilt-ax");
-      element.style.removeProperty("--tilt-ay");
-      element.style.removeProperty("--tilt-angle");
-      element.style.removeProperty("--glare-x");
-      element.style.removeProperty("--glare-y");
-      element.removeAttribute("data-tilting");
-      tilt = null;
     }
 
     function releaseMagnet() {
@@ -136,33 +100,6 @@ export function MotionLayer() {
       pointerFrame = 0;
       root.style.setProperty("--cursor-x", `${pointerX}px`);
       root.style.setProperty("--cursor-y", `${pointerY}px`);
-    }
-
-    function updateTilt(x: number, y: number, target: Element | null) {
-      // Tutulmuş kart varsa, YALNIZ yaddaşdakı sabit düzbucaqlıya baxırıq.
-      if (tilt) {
-        if (outside(tilt.rect, x, y)) releaseTilt();
-        else return applyTilt(tilt, x, y);
-      }
-      const candidate = target?.closest?.(TILT_SELECTOR) as HTMLElement | null;
-      if (!candidate) return;
-      const rect = candidate.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      candidate.dataset.tilting = "true";
-      tilt = { element: candidate, rect };
-      applyTilt(tilt, x, y);
-    }
-
-    function applyTilt(held: Held, x: number, y: number) {
-      const { element, rect } = held;
-      const px = (x - rect.left) / rect.width - 0.5;
-      const py = (y - rect.top) / rect.height - 0.5;
-      const angle = Math.min(1, Math.hypot(px, py) * 2) * MAX_TILT;
-      element.style.setProperty("--tilt-ax", String(py));
-      element.style.setProperty("--tilt-ay", String(-px));
-      element.style.setProperty("--tilt-angle", `${angle}deg`);
-      element.style.setProperty("--glare-x", `${(px + 0.5) * 100}%`);
-      element.style.setProperty("--glare-y", `${(py + 0.5) * 100}%`);
     }
 
     function updateMagnet(x: number, y: number, target: Element | null) {
@@ -193,32 +130,25 @@ export function MotionLayer() {
       pointerX = event.clientX;
       pointerY = event.clientY;
       if (!pointerFrame) pointerFrame = window.requestAnimationFrame(paintCursor);
-      const target = event.target as Element | null;
-      updateTilt(pointerX, pointerY, target);
-      updateMagnet(pointerX, pointerY, target);
-    }
-
-    function releaseAll() {
-      releaseTilt();
-      releaseMagnet();
+      updateMagnet(pointerX, pointerY, event.target as Element | null);
     }
 
     document.addEventListener("pointermove", onPointerMove, { passive: true });
-    document.addEventListener("pointerleave", releaseAll, { passive: true });
+    document.addEventListener("pointerleave", releaseMagnet, { passive: true });
     // Sürüşəndə yaddaşdakı ölçülər köhnəlir — buraxırıq.
-    window.addEventListener("scroll", releaseAll, { passive: true });
-    window.addEventListener("blur", releaseAll);
+    window.addEventListener("scroll", releaseMagnet, { passive: true });
+    window.addEventListener("blur", releaseMagnet);
 
     return () => {
       window.removeEventListener("scroll", scheduleScroll);
       window.removeEventListener("resize", scheduleScroll);
-      window.removeEventListener("scroll", releaseAll);
-      window.removeEventListener("blur", releaseAll);
+      window.removeEventListener("scroll", releaseMagnet);
+      window.removeEventListener("blur", releaseMagnet);
       document.removeEventListener("pointermove", onPointerMove);
-      document.removeEventListener("pointerleave", releaseAll);
+      document.removeEventListener("pointerleave", releaseMagnet);
       if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
       if (pointerFrame) window.cancelAnimationFrame(pointerFrame);
-      releaseAll();
+      releaseMagnet();
     };
   }, []);
 
