@@ -3815,3 +3815,77 @@ body {
   .kuds-shell .home-quick { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .kuds-shell .home-quick__item { font-size: 11px; padding: 10px 4px; }
 }
+
+/* ---------- Çərəz razılığı ----------
+   Kiçik, küncdə, ekranı tutmayan panel. Mobildə alt naviqasiya barının
+   ÜSTÜNDƏ dayanır ki, düymələri örtməsin. */
+.kuds-shell .cookie-consent,
+.cookie-consent {
+  position: fixed;
+  z-index: 160;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: max(16px, env(safe-area-inset-left));
+  width: min(360px, calc(100vw - 32px));
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 14px;
+  background: var(--kuds-surface, #ffffff);
+  box-shadow: 0 14px 38px -14px rgb(16 46 38 / 30%);
+}
+.cookie-consent strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--kuds-text, #1e293b);
+}
+.cookie-consent p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--kuds-muted, #64748b);
+}
+.cookie-consent p a {
+  color: var(--ku-green, #44766c);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.cookie-consent__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.cookie-consent__actions button {
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  color: var(--kuds-text, #1e293b);
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  background: #ffffff;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.cookie-consent__actions button:hover { background: #f1f5f9; }
+.cookie-consent__actions button.is-primary {
+  color: #ffffff;
+  border-color: transparent;
+  background: var(--ku-green, #44766c);
+}
+.cookie-consent__actions button.is-primary:hover { background: var(--ku-dark-green, #16423c); }
+.cookie-consent__actions button:focus-visible {
+  outline: 2px solid var(--ku-green, #44766c);
+  outline-offset: 2px;
+}
+
+/* Mobildə alt bar 84px-dir — bannerı onun üstünə qaldırırıq. */
+@media (max-width: 768px) {
+  .kuds-shell .cookie-consent,
+  .cookie-consent {
+    bottom: calc(92px + env(safe-area-inset-bottom));
+    left: 12px;
+    width: calc(100vw - 24px);
+  }
+}

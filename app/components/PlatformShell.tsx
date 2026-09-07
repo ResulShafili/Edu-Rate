@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useAuth } from "./AuthProvider";
 import { MotionLayer } from "./MotionLayer";
+import { CookieConsent } from "./CookieConsent";
 import { PwaLayer } from "./PwaLayer";
 import { PlatformHeader } from "./PlatformHeader";
 import { PlatformNavigationRail } from "./PlatformNavigationRail";
@@ -163,6 +164,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
     <div className="site-shell kuds-shell">
       <MotionLayer />
       <PwaLayer />
+      <CookieConsent />
       <a className="skip-link" href="#main-content">Əsas məzmuna keç</a>
 
       <button

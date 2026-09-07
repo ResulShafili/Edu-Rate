@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 
 export function generateMetadata(): Metadata {
   const origin = getCanonicalSiteOrigin();
-  const socialImage = `${origin}/og.png`;
+  const socialImage = `${origin}/og.jpg`;
 
   return {
     metadataBase: new URL(origin),
@@ -46,8 +46,8 @@ export function generateMetadata(): Metadata {
       images: [
         {
           url: socialImage,
-          width: 1728,
-          height: 909,
+          width: 1200,
+          height: 630,
           alt: "EduRate universitet şəbəkəsi",
         },
       ],

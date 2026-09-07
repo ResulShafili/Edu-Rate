@@ -1,0 +1,78 @@
+"use client";
+
+import { Analytics } from "@vercel/analytics/react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+/**
+ * Çərəz razılığı + statistika.
+ *
+ * Sayt girişi saxlamaq üçün yalnız zəruri (httpOnly) çərəzdən istifadə edir —
+ * ona razılıq tələb olunmur. Razılıq YALNIZ anonim ziyarət statistikasına aiddir:
+ * istifadəçi "Qəbul et" deməyənə qədər `Analytics` ümumiyyətlə yüklənmir.
+ *
+ * GDPR-ə uyğun olaraq imtina qəbul qədər asandır (eyni ölçülü, yan-yana düymələr)
+ * və seçim brauzerdə saxlanır, ona görə banner bir dəfə görünür.
+ */
+
+const STORAGE_KEY = "edurate-cookie-consent";
+type Consent = "accepted" | "declined";
+
+function readConsent(): Consent | null {
+  try {
+    const value = window.localStorage.getItem(STORAGE_KEY);
+    return value === "accepted" || value === "declined" ? value : null;
+  } catch {
+    // Şəxsi rejimdə localStorage bağlı ola bilər — banner sadəcə göstərilmir.
+    return null;
+  }
+}
+
+export function CookieConsent() {
+  const [consent, setConsent] = useState<Consent | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setConsent(readConsent());
+    setReady(true);
+  }, []);
+
+  function choose(value: Consent) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, value);
+    } catch {
+      // Yazmaq mümkün olmasa da seçim bu sessiyada tətbiq olunur.
+    }
+    setConsent(value);
+  }
+
+  // Server və ilk render eyni olsun deyə qərar verilənə qədər heç nə çıxarmırıq.
+  if (!ready) return null;
+
+  return (
+    <>
+      {consent === "accepted" ? <Analytics /> : null}
+
+      {consent === null ? (
+        <div className="cookie-consent" role="dialog" aria-labelledby="cookie-consent-title">
+          <div>
+            <strong id="cookie-consent-title">Çərəzlər</strong>
+            <p>
+              Giriş üçün yalnız zəruri çərəzlərdən istifadə edirik. Saytı yaxşılaşdırmaq
+              üçün anonim ziyarət statistikası toplamağa icazə verirsən?{" "}
+              <Link href="/privacy">Ətraflı</Link>
+            </p>
+          </div>
+          <div className="cookie-consent__actions">
+            <button type="button" onClick={() => choose("declined")}>
+              İmtina et
+            </button>
+            <button type="button" className="is-primary" onClick={() => choose("accepted")}>
+              Qəbul et
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
