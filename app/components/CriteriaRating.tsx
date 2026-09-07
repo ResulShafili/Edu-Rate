@@ -1,12 +1,24 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   useId,
   useRef,
   type KeyboardEvent,
 } from "react";
 import { formatDecimalScore } from "../lib/number-format";
+
+/**
+ * Meyarlar üzrə qiymətləndirmə.
+ *
+ * QEYD: bu komponent əvvəl köhnə TÜND tema üçün yazılmışdı — mətn və sərhədlər
+ * ağa yaxın sabit rənglər idi (`rgba(243,241,233,…)`, `border-white/10`), ona görə
+ * işıqlı kartın üzərində 1–5 düymələri demək olar görünmürdü. İndi bütün rənglər
+ * dizayn tokenlərindən gəlir.
+ *
+ * Animasiya və emoji YALNIZ bu bölmədədir: istifadəçi qiymət verərkən dərhal
+ * canlı geribildirim alsın deyə. Saytın qalan hissəsi sakit qalır.
+ */
 
 export type ReviewCriterionKey =
   | "clarity"
@@ -39,6 +51,15 @@ const criteriaDescriptions: Record<ReviewCriterionKey, string> = {
   communication: "Dinləmə və cavab vermə üslubu",
 };
 
+/** Hər bal üçün emoji + söz. Emoji bəzəkdir (aria-hidden), mənanı söz daşıyır. */
+const ratingFeedback: Record<Exclude<CriterionRating, 0>, { emoji: string; label: string }> = {
+  1: { emoji: "😕", label: "Zəif" },
+  2: { emoji: "🙂", label: "Kafi" },
+  3: { emoji: "😊", label: "Yaxşı" },
+  4: { emoji: "😃", label: "Çox yaxşı" },
+  5: { emoji: "🤩", label: "Əla" },
+};
+
 const criterionKeys = Object.keys(criteriaLabels) as ReviewCriterionKey[];
 const ratingOptions = [1, 2, 3, 4, 5] as const;
 
@@ -54,6 +75,13 @@ export function calculateCriteriaAverage(ratings: CriteriaRatings) {
 
 export function areCriteriaComplete(ratings: CriteriaRatings) {
   return criterionKeys.every((key) => ratings[key] > 0);
+}
+
+/** Orta bala görə ümumi emoji — yuvarlaqlaşdırılmış qiymət. */
+function averageFeedback(average: number) {
+  if (average <= 0) return null;
+  const rounded = Math.max(1, Math.min(5, Math.round(average))) as Exclude<CriterionRating, 0>;
+  return ratingFeedback[rounded];
 }
 
 type CriteriaRatingProps = {
@@ -94,9 +122,10 @@ function CriterionRow({
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const legendId = `${rowId}-legend`;
   const descriptionId = `${rowId}-description`;
-  const transition = reduceMotion
+  const feedback = value > 0 ? ratingFeedback[value as Exclude<CriterionRating, 0>] : null;
+  const pop = reduceMotion
     ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 440, damping: 27, mass: 0.55 };
+    : { type: "spring" as const, stiffness: 460, damping: 24, mass: 0.5 };
 
   function handleKeyboard(
     event: KeyboardEvent<HTMLButtonElement>,
@@ -112,69 +141,72 @@ function CriterionRow({
   }
 
   return (
-    <fieldset
-      className="min-w-0 border-0 border-b border-white/10 p-0 pb-4 last:border-b-0 last:pb-0"
-      disabled={disabled}
-    >
-      <legend
-        id={legendId}
-        className="p-0 text-sm font-semibold tracking-[-0.01em] text-[var(--paper)]"
-      >
+    <fieldset className="criteria-row" disabled={disabled}>
+      <legend id={legendId} className="criteria-row__label">
         {criteriaLabels[criterion]}
       </legend>
 
-      <div className="mt-1 grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-        <p
-          id={descriptionId}
-          className="m-0 text-xs leading-5 text-[color:rgba(243,241,233,0.58)]"
-        >
+      <div className="criteria-row__body">
+        <p id={descriptionId} className="criteria-row__hint">
           {criteriaDescriptions[criterion]}
         </p>
 
-        <div
-          className="flex items-center gap-1.5"
-          role="radiogroup"
-          aria-labelledby={legendId}
-          aria-describedby={descriptionId}
-        >
-          {ratingOptions.map((rating) => {
-            const selected = value === rating;
-            const buttonLabel = teacherName
-              ? `${teacherName} — ${criteriaLabels[criterion]}: ${rating} bal`
-              : `${criteriaLabels[criterion]}: ${rating} bal`;
+        <div className="criteria-row__scale">
+          <div
+            className="criteria-row__options"
+            role="radiogroup"
+            aria-labelledby={legendId}
+            aria-describedby={descriptionId}
+          >
+            {ratingOptions.map((rating) => {
+              const selected = value === rating;
+              const buttonLabel = teacherName
+                ? `${teacherName} — ${criteriaLabels[criterion]}: ${rating} bal (${ratingFeedback[rating].label})`
+                : `${criteriaLabels[criterion]}: ${rating} bal (${ratingFeedback[rating].label})`;
 
-            return (
-              <motion.button
-                key={rating}
-                ref={(node) => {
-                  buttonRefs.current[rating - 1] = node;
-                }}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                aria-label={buttonLabel}
-                tabIndex={selected || (value === 0 && rating === 1) ? 0 : -1}
-                disabled={disabled}
-                className={`relative grid size-8 shrink-0 place-items-center rounded-full border text-xs font-bold outline-none focus-visible:ring-2 focus-visible:ring-[var(--lime)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-40 ${
-                  selected
-                    ? "border-[var(--lime)] bg-[var(--lime)] text-[var(--ink)]"
-                    : "border-white/16 bg-white/[0.045] text-[color:rgba(243,241,233,0.68)]"
-                }`}
-                animate={
-                  selected
-                    ? { opacity: 1, scale: 1.08, y: -1 }
-                    : { opacity: 0.78, scale: 1, y: 0 }
-                }
-                whileHover={disabled || reduceMotion ? undefined : { opacity: 1, scale: 1.06, y: -1 }}
-                whileTap={disabled || reduceMotion ? undefined : { scale: 0.92 }}
-                transition={transition}
-                onClick={() => onChange(rating)}
-                onKeyDown={(event) => handleKeyboard(event, rating)}
-              >
-                {rating}
-              </motion.button>
-            );
-          })}
+              return (
+                <motion.button
+                  key={rating}
+                  ref={(node) => {
+                    buttonRefs.current[rating - 1] = node;
+                  }}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={buttonLabel}
+                  tabIndex={selected || (value === 0 && rating === 1) ? 0 : -1}
+                  disabled={disabled}
+                  className={`criteria-dot${selected ? " is-selected" : ""}`}
+                  animate={selected && !reduceMotion ? { scale: [1, 1.22, 1] } : { scale: 1 }}
+                  whileHover={disabled || reduceMotion ? undefined : { scale: 1.12, y: -2 }}
+                  whileTap={disabled || reduceMotion ? undefined : { scale: 0.9 }}
+                  transition={pop}
+                  onClick={() => onChange(rating)}
+                  onKeyDown={(event) => handleKeyboard(event, rating)}
+                >
+                  {rating}
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {/* Seçilən bala uyğun emoji + söz; bal dəyişəndə yenisi yumşaq gəlir. */}
+          <div className="criteria-row__feedback" aria-live="polite">
+            <AnimatePresence mode="wait" initial={false}>
+              {feedback ? (
+                <motion.span
+                  key={value}
+                  initial={reduceMotion ? false : { opacity: 0, scale: 0.6, y: 4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.7 }}
+                  transition={pop}
+                >
+                  <i aria-hidden="true">{feedback.emoji}</i>
+                  {feedback.label}
+                </motion.span>
+              ) : null}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </fieldset>
@@ -192,6 +224,8 @@ export function CriteriaRating({
   const reduceMotion = Boolean(useReducedMotion());
   const average = calculateCriteriaAverage(value);
   const selectedCount = criterionKeys.filter((key) => value[key] > 0).length;
+  const complete = selectedCount === criterionKeys.length;
+  const summary = averageFeedback(average);
 
   function updateCriterion(
     criterion: ReviewCriterionKey,
@@ -201,41 +235,41 @@ export function CriteriaRating({
   }
 
   return (
-    <section
-      className={`criteria-rating-shell rounded-[1.4rem] border border-white/10 p-4 sm:p-5 ${className}`}
-      aria-labelledby={`${id}-title`}
-    >
-      <div className="mb-5 flex items-end justify-between gap-4">
+    <section className={`criteria-rating-shell ${className}`.trim()} aria-labelledby={`${id}-title`}>
+      <header className="criteria-head">
         <div>
-          <p className="mb-1 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-[var(--lime)]">
-            Meyarlar üzrə
-          </p>
-          <h3 id={`${id}-title`} className="m-0 text-base font-semibold text-[var(--paper)]">
-            Tədris təcrübəsini qiymətləndir
-          </h3>
+          <p className="criteria-head__eyebrow">Meyarlar üzrə</p>
+          <h3 id={`${id}-title`}>Tədris təcrübəsini qiymətləndir</h3>
         </div>
 
         <motion.output
-          className="shrink-0 text-right"
-          aria-label={average > 0 ? `Orta qiymət: ${formatDecimalScore(average)} bal` : "Qiymət seçilməyib"}
-          aria-live="polite"
-          animate={{ opacity: average > 0 ? 1 : 0.55, scale: average > 0 ? 1 : 0.96 }}
-          transition={
-            reduceMotion
-              ? { duration: 0 }
-              : { type: "spring", stiffness: 390, damping: 28, mass: 0.6 }
+          className={`criteria-score${complete ? " is-complete" : ""}`}
+          aria-label={
+            average > 0 ? `Orta qiymət: ${formatDecimalScore(average)} bal` : "Qiymət seçilməyib"
           }
+          aria-live="polite"
+          animate={complete && !reduceMotion ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+          transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 22 }}
         >
-          <strong className="block text-xl leading-none text-[var(--paper)]">
-            {average > 0 ? formatDecimalScore(average) : "—"}
-          </strong>
-          <span className="mt-1 block text-[0.65rem] text-[color:rgba(243,241,233,0.5)]">
-            {selectedCount}/4 meyar
+          <span className="criteria-score__emoji" aria-hidden="true">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={summary?.emoji ?? "empty"}
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.5, rotate: -12 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+                transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 480, damping: 28 }}
+              >
+                {summary?.emoji ?? "⭐"}
+              </motion.span>
+            </AnimatePresence>
           </span>
+          <strong>{average > 0 ? formatDecimalScore(average) : "—"}</strong>
+          <small>{selectedCount}/4 meyar</small>
         </motion.output>
-      </div>
+      </header>
 
-      <div className="grid gap-4">
+      <div className="criteria-list">
         {criterionKeys.map((criterion) => (
           <CriterionRow
             key={criterion}
@@ -249,6 +283,31 @@ export function CriteriaRating({
           />
         ))}
       </div>
+
+      {/* Nə qaldığını açıq deyirik — "göndər" düyməsinin niyə sönük olduğu aydın olsun. */}
+      <AnimatePresence initial={false} mode="wait">
+        {complete ? (
+          <motion.p
+            key="done"
+            className="criteria-progress is-done"
+            initial={reduceMotion ? false : { opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0 }}
+          >
+            <i aria-hidden="true">✅</i> Hazırdır — rəyini göndərə bilərsən.
+          </motion.p>
+        ) : (
+          <motion.p
+            key="left"
+            className="criteria-progress"
+            initial={reduceMotion ? false : { opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+          >
+            Göndərmək üçün daha {criterionKeys.length - selectedCount} meyar qalıb.
+          </motion.p>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
