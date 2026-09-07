@@ -3858,6 +3858,8 @@ body {
   gap: 8px;
 }
 .cookie-consent__actions button {
+  /* WCAG 2.5.5 / Apple HIG: minimum 44px toxunma sahesi */
+  min-height: 44px;
   padding: 9px 12px;
   border-radius: 9px;
   font-size: 12.5px;
@@ -3888,4 +3890,130 @@ body {
     left: 12px;
     width: calc(100vw - 24px);
   }
+}
+
+/* ---------- Hesab silmə (təhlükəli zona) ---------- */
+.kuds-shell .danger-zone {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid #f3cfcb;
+  border-radius: var(--kuds-radius-lg, 16px);
+  background: #fffaf9;
+}
+.kuds-shell .danger-zone > header {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 11px;
+  align-items: center;
+}
+.kuds-shell .danger-zone__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  color: #a33227;
+  background: #fdecea;
+}
+.kuds-shell .danger-zone strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8e3933;
+}
+.kuds-shell .danger-zone small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--kuds-muted, #64748b);
+}
+.kuds-shell .danger-zone__open {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  color: #8e3933;
+  border: 1px solid #f0c2bd;
+  background: #ffffff;
+}
+.kuds-shell .danger-zone__open:hover { background: #fdecea; }
+
+.kuds-shell .danger-zone form {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #f3cfcb;
+}
+.kuds-shell .danger-zone label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--kuds-text, #1e293b);
+}
+.kuds-shell .danger-zone input {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 16px; /* iOS-da fokusda yaxınlaşmanın qarşısını alır */
+  color: var(--kuds-text, #1e293b);
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  border-radius: 9px;
+  background: #ffffff;
+}
+.kuds-shell .danger-zone input:focus {
+  outline: 0;
+  border-color: #d9534f;
+  box-shadow: 0 0 0 4px rgb(217 83 79 / 12%);
+}
+.kuds-shell .danger-zone__error {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 9px;
+  font-size: 12px;
+  color: #8e3933;
+  background: #fff0ee;
+}
+.kuds-shell .danger-zone__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.kuds-shell .danger-zone__actions button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  color: var(--kuds-text, #1e293b);
+  border: 1px solid var(--kuds-border, #e2e8f0);
+  background: #ffffff;
+}
+.kuds-shell .danger-zone__actions button.is-danger {
+  color: #ffffff;
+  border-color: transparent;
+  background: #c2453d;
+}
+.kuds-shell .danger-zone__actions button.is-danger:hover:not(:disabled) { background: #a63a33; }
+.kuds-shell .danger-zone__actions button:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Basliq axtaris duymesi: mobilde 40px idi, 44px-e qaldirildi (WCAG 2.5.5). */
+@media (max-width: 768px) {
+  .kuds-shell .platform-header-search { min-width: 44px; min-height: 44px; }
+}
+
+/* Loqo ve alt-hisse keçidleri ucun 44px toxunma sahesi (WCAG 2.5.5).
+   Gorunus deyismir - yalniz tiklana bilen sahe boyuyur. */
+@media (max-width: 768px) {
+  .kuds-shell .platform-sidebar-brand .brand,
+  .kuds-shell a.brand { display: inline-flex; align-items: center; min-height: 44px; }
+  .kuds-shell .site-footer a { display: inline-flex; align-items: center; min-height: 44px; }
 }

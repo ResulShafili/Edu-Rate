@@ -9,6 +9,7 @@ import {
   updateUserProfile,
   markEmailVerified,
   updatePassword,
+  deleteUser,
   type UserRecord,
 } from "../db/database.js";
 import {
@@ -289,6 +290,30 @@ authRouter.post("/password/reset",loginLimiter,async(request,response)=>{
   await revokeAllSessions(userId);
   response.json({data:{reset:true}});
 });
+/**
+ * Istifadeci oz hesabini silir (GDPR "unudulma huququ").
+ *
+ * Silinme geri qaytarilmadigi ucun parol tesdiqi teleb olunur: yalnizca
+ * sessiya oglanmasi ile hesab silinmesin. Platformani sahibsiz qoymamaq ucun
+ * admin rollari bu yolla silinmir - onlar bashqa adminle elaqe saxlamalidir.
+ */
+authRouter.delete("/account", authenticate, async (request, response) => {
+  const { password } = z.object({ password: z.string().min(1) }).parse(request.body);
+  const user = await findUserById(request.auth!.userId);
+  if (!user) throw new ApiError(404, "USER_NOT_FOUND", "Istifadeci tapilmadi.");
+
+  if (!(await verifyPassword(password, user.passwordHash))) {
+    throw new ApiError(401, "INVALID_CREDENTIALS", "Sifre duzgun deyil.");
+  }
+  if (user.role === "admin" || user.role === "assistant_admin" || user.role === "owner_admin") {
+    throw new ApiError(409, "ADMIN_SELF_DELETE_FORBIDDEN", "Administrator hesabi bu yolla silinmir. Diger administratorla elaqe saxla.");
+  }
+
+  await revokeAllSessions(user.id);
+  if (!(await deleteUser(user.id))) throw new ApiError(404, "USER_NOT_FOUND", "Istifadeci tapilmadi.");
+  response.status(204).send();
+});
+
 authRouter.get("/sessions",authenticate,async(request,response)=>response.json({data:await listSessions(request.auth!.userId,request.auth!.sessionId)}));
 authRouter.delete("/sessions/:id",authenticate,async(request,response)=>{const id=z.string().uuid().parse(request.params.id);if(!await revokeSession(request.auth!.userId,id))throw new ApiError(404,"SESSION_NOT_FOUND","Sessiya tapılmadı.");response.status(204).send();});
 authRouter.delete("/sessions",authenticate,async(request,response)=>{await revokeAllSessions(request.auth!.userId,request.auth!.sessionId);response.status(204).send();});

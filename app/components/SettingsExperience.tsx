@@ -4,6 +4,7 @@ import { Bell, Check, Mail, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PageHeader } from "./ui/Primitives";
 import { PushToggle } from "./PushToggle";
+import { DeleteAccountPanel } from "./DeleteAccountPanel";
 
 type Preferences = {
   announcements: boolean;
@@ -65,6 +66,7 @@ export function SettingsExperience() {
         <button type="button" className="kuds-primary-button" onClick={save}>{saved && <Check size={16} aria-hidden="true" />}{saved ? "Yadda saxlandı" : "Seçimləri yadda saxla"}</button>
         <p className="settings-status" role="status" aria-live="polite">{saved ? "Bildiriş seçimlərin bu cihazda yadda saxlandı." : ""}</p>
       </div>
+      <DeleteAccountPanel />
     </section>
   );
 }
