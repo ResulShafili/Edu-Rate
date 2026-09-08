@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { isPlatformRouteCurrent } from "../data/platform-shell";
+import { useT } from "../i18n/LanguageProvider";
 
 type PlatformTabBarProps = {
   pathname: string;
@@ -32,10 +33,10 @@ function isTextEntry(el: EventTarget | null): boolean {
 }
 
 const tabs: Array<{ href: string; label: string; icon: LucideIcon }> = [
-  { href: "/", label: "Əsas", icon: Home },
-  { href: "/feed", label: "Elanlar", icon: Megaphone },
-  { href: "/events", label: "Tədbir", icon: CalendarDays },
-  { href: "/clubs", label: "Klublar", icon: Compass },
+  { href: "/", label: "nav.home", icon: Home },
+  { href: "/feed", label: "nav.feed", icon: Megaphone },
+  { href: "/events", label: "nav.events", icon: CalendarDays },
+  { href: "/clubs", label: "nav.clubs", icon: Compass },
 ];
 
 /**
@@ -46,6 +47,7 @@ const tabs: Array<{ href: string; label: string; icon: LucideIcon }> = [
  * gizlidir — orada sol naviqasiya reyi işləyir.
  */
 export function PlatformTabBar({ pathname, menuOpen, onMenu }: PlatformTabBarProps) {
+  const t = useT();
   const [typing, setTyping] = useState(false);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export function PlatformTabBar({ pathname, menuOpen, onMenu }: PlatformTabBarPro
   }, []);
 
   return (
-    <nav className={`platform-tabbar${typing ? " is-typing" : ""}`} aria-label="Sürətli naviqasiya" aria-hidden={typing || undefined}>
+    <nav className={`platform-tabbar${typing ? " is-typing" : ""}`} aria-label={t("home.quickLinks")} aria-hidden={typing || undefined}>
       {tabs.map(({ href, label, icon: Icon }) => {
         const current = href === "/" ? pathname === "/" : isPlatformRouteCurrent(pathname, href);
         return (
@@ -73,7 +75,7 @@ export function PlatformTabBar({ pathname, menuOpen, onMenu }: PlatformTabBarPro
             aria-current={current ? "page" : undefined}
           >
             <span className="platform-tabbar-icon"><Icon size={22} aria-hidden="true" /></span>
-            <span className="platform-tabbar-label">{label}</span>
+            <span className="platform-tabbar-label">{t(label)}</span>
           </Link>
         );
       })}
@@ -86,7 +88,7 @@ export function PlatformTabBar({ pathname, menuOpen, onMenu }: PlatformTabBarPro
         aria-label={menuOpen ? "Menyunu bağla" : "Menyunu aç"}
       >
         <span className="platform-tabbar-icon"><Menu size={22} aria-hidden="true" /></span>
-        <span className="platform-tabbar-label">Menyu</span>
+        <span className="platform-tabbar-label">{t("nav.menu")}</span>
       </button>
     </nav>
   );

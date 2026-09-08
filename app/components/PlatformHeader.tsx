@@ -8,6 +8,8 @@ import { useSyncExternalStore } from "react";
 import { getPlatformRouteContext } from "../data/platform-shell";
 import { useCurrentAvatar } from "../lib/current-avatar";
 import type { CSSProperties } from "react";
+import { routeLabelKeys } from "../i18n/config";
+import { useT } from "../i18n/LanguageProvider";
 
 type PlatformHeaderProps = {
   searchOpen: boolean;
@@ -17,6 +19,7 @@ type PlatformHeaderProps = {
 };
 
 export function PlatformHeader({ searchOpen, updatesOpen, onSearchToggle, onUpdatesToggle }: PlatformHeaderProps) {
+  const t = useT();
   const pathname = usePathname();
   const { user } = useAuth();
   const avatar = useCurrentAvatar(user?.id);
@@ -28,12 +31,12 @@ export function PlatformHeader({ searchOpen, updatesOpen, onSearchToggle, onUpda
   );
 
   return (
-    <header className="platform-header" aria-label="Səhifə başlığı">
+    <header className="platform-header" aria-label={t("nav.home")}>
       <div className="platform-header-context">
         <div className="platform-breadcrumb" aria-label="Səhifə yolu">
           <span>EduRate</span>
           <ChevronRight size={14} aria-hidden="true" />
-          <strong>{context.label}</strong>
+          <strong>{t(routeLabelKeys[pathname] ?? context.label)}</strong>
         </div>
       </div>
 
@@ -46,7 +49,7 @@ export function PlatformHeader({ searchOpen, updatesOpen, onSearchToggle, onUpda
           aria-controls="platform-desktop-utility-panel"
         >
           <Search size={17} aria-hidden="true" />
-          <span>Platformada axtar</span>
+          <span>{t("common.search")}</span>
           <kbd aria-hidden="true">{shortcutLabel}</kbd>
         </button>
         <button
@@ -80,7 +83,7 @@ export function PlatformHeader({ searchOpen, updatesOpen, onSearchToggle, onUpda
           ) : (
             <LogIn size={18} aria-hidden="true" />
           )}
-          <small>{user ? user.name : "Daxil ol"}</small>
+          <small>{user ? user.name : t("nav.signIn")}</small>
         </Link>
       </div>
     </header>

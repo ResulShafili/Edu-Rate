@@ -3,7 +3,10 @@ import { AuthProvider } from "./components/AuthProvider";
 import { PlatformProvider } from "./components/PlatformProvider";
 import { PlatformShell } from "./components/PlatformShell";
 import { createIdentityProfile } from "./data/user";
+import { cookies } from "next/headers";
 import { getServerRequestIdentity } from "./lib/auth/request-identity";
+import { languageCookieName, normalizeLanguage } from "./i18n/config";
+import { LanguageProvider } from "./i18n/LanguageProvider";
 import { getCanonicalSiteOrigin } from "./lib/site-origin";
 import "./globals.css";
 import "./kuds.css";
@@ -66,6 +69,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  // Dil serverde oxunur ki, <html lang> ve ilk render dogru dilde olsun.
+  const language = normalizeLanguage(cookieStore.get(languageCookieName)?.value);
   const requestIdentity = await getServerRequestIdentity();
   const initialUser = requestIdentity
     ? {
@@ -75,8 +81,9 @@ export default async function RootLayout({
       }
     : null;
   return (
-    <html lang="az" data-scroll-behavior="smooth">
+    <html lang={language} data-scroll-behavior="smooth">
       <body className="antialiased">
+        <LanguageProvider initialLanguage={language}>
         <AuthProvider
           initialUser={initialUser}
         >
@@ -84,6 +91,7 @@ export default async function RootLayout({
             <PlatformShell>{children}</PlatformShell>
           </PlatformProvider>
         </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

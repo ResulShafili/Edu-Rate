@@ -27,6 +27,8 @@ import {
   primaryNavigationGroups,
 } from "../data/navigation";
 import { isPlatformRouteCurrent } from "../data/platform-shell";
+import { navGroupKeys, routeLabelKeys } from "../i18n/config";
+import { useT } from "../i18n/LanguageProvider";
 
 type PlatformNavigationRailProps = {
   pathname: string;
@@ -51,37 +53,38 @@ const routeIcons: Record<string, LucideIcon> = {
 
 export function PlatformNavigationRail(props: PlatformNavigationRailProps) {
   const reducedMotion = useReducedMotion();
+  const t = useT();
   const navigation = (
     <>
-      <NavigationLink href="/" label="Ana səhifə" pathname={props.pathname} icon={Home} reducedMotion={Boolean(reducedMotion)} />
+      <NavigationLink href="/" label={t("nav.home")} pathname={props.pathname} icon={Home} reducedMotion={Boolean(reducedMotion)} />
       {primaryNavigationGroups.map((group) => (
         <div className="platform-nav-group" key={group.label}>
-          <span className="platform-nav-group-label">{group.label}</span>
+          <span className="platform-nav-group-label">{t(navGroupKeys[group.label] ?? group.label)}</span>
           {group.routes.map((href) => {
             const route = platformRoutes.find((item) => item.href === href);
             if (!route) return null;
-            return <NavigationLink key={href} href={href} label={route.label} pathname={props.pathname} icon={routeIcons[href]} reducedMotion={Boolean(reducedMotion)} />;
+            return <NavigationLink key={href} href={href} label={t(routeLabelKeys[href] ?? route.label)} pathname={props.pathname} icon={routeIcons[href]} reducedMotion={Boolean(reducedMotion)} />;
           })}
         </div>
       ))}
       {props.isAdmin && (
         <div className="platform-nav-group">
-          <span className="platform-nav-group-label">İdarəetmə</span>
+          <span className="platform-nav-group-label">{t("nav.group.account")}</span>
           <NavigationLink href="/admin" label="Rəhbərlik paneli" pathname={props.pathname} icon={ShieldCheck} reducedMotion={Boolean(reducedMotion)} />
         </div>
       )}
       {props.authenticated ? (
         <div className="platform-nav-group">
-          <span className="platform-nav-group-label">Hesab</span>
-          <NavigationLink href="/profile" label="Profil" pathname={props.pathname} icon={UserRound} reducedMotion={Boolean(reducedMotion)} />
+          <span className="platform-nav-group-label">{t("nav.group.account")}</span>
+          <NavigationLink href="/profile" label={t("nav.profile")} pathname={props.pathname} icon={UserRound} reducedMotion={Boolean(reducedMotion)} />
           {!props.isAdmin && <NavigationLink href="/workspace" label={props.accountRole === "teacher" ? "Müəllim paneli" : props.accountRole === "mentor" ? "Mentor paneli" : "Şəxsi panel"} pathname={props.pathname} icon={LayoutDashboard} reducedMotion={Boolean(reducedMotion)} />}
-          <NavigationLink href="/settings" label="Parametrlər" pathname={props.pathname} icon={Settings} reducedMotion={Boolean(reducedMotion)} />
+          <NavigationLink href="/settings" label={t("nav.settings")} pathname={props.pathname} icon={Settings} reducedMotion={Boolean(reducedMotion)} />
         </div>
       ) : (
         <div className="platform-nav-group">
-          <span className="platform-nav-group-label">Hesab</span>
-          <NavigationLink href="/auth" label="Daxil ol" pathname={props.pathname} icon={LogIn} reducedMotion={Boolean(reducedMotion)} />
-          <NavigationLink href="/auth?mode=register" label="Qeydiyyat" pathname={props.pathname} icon={UserPlus} reducedMotion={Boolean(reducedMotion)} />
+          <span className="platform-nav-group-label">{t("nav.group.account")}</span>
+          <NavigationLink href="/auth" label={t("nav.signIn")} pathname={props.pathname} icon={LogIn} reducedMotion={Boolean(reducedMotion)} />
+          <NavigationLink href="/auth?mode=register" label={t("nav.signUp")} pathname={props.pathname} icon={UserPlus} reducedMotion={Boolean(reducedMotion)} />
         </div>
       )}
     </>

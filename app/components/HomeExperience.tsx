@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import useSWR from "swr";
-import { networkFilterLabels, type NetworkFilter } from "../data/network";
 import { useAuth } from "./AuthProvider";
+import { useLanguage } from "../i18n/LanguageProvider";
 
 /**
  * Ana səhifə — sıx idarə paneli.
@@ -26,13 +26,13 @@ import { useAuth } from "./AuthProvider";
  */
 
 const quickLinks = [
-  { href: "/events", label: "Tədbirlər", icon: CalendarDays },
-  { href: "/feed", label: "Elanlar", icon: Megaphone },
-  { href: "/clubs", label: "Klublar", icon: Sparkles },
-  { href: "/community", label: "İcma", icon: UsersRound },
-  { href: "/teachers", label: "Müəllimlər", icon: GraduationCap },
-  { href: "/mentors", label: "Mentorlar", icon: HeartHandshake },
-  { href: "/support", label: "Dəstək", icon: LifeBuoy },
+  { href: "/events", label: "nav.events", icon: CalendarDays },
+  { href: "/feed", label: "nav.feed", icon: Megaphone },
+  { href: "/clubs", label: "nav.clubs", icon: Sparkles },
+  { href: "/community", label: "nav.community", icon: UsersRound },
+  { href: "/teachers", label: "nav.teachers", icon: GraduationCap },
+  { href: "/mentors", label: "nav.mentors", icon: HeartHandshake },
+  { href: "/support", label: "nav.support", icon: LifeBuoy },
 ] as const;
 
 type Club = {
@@ -73,26 +73,23 @@ async function getJson<T>(url: string): Promise<T> {
   return payload.data;
 }
 
-/** API "clubs"/"faculties" kimi açar qaytarır — ekranda azərbaycanca göstərilir. */
-function categoryLabel(value?: string) {
-  if (!value) return "";
-  return networkFilterLabels[value as NetworkFilter] ?? value;
-}
-
-/** "22 May" formatı — tədbir kartındakı tarix bloku üçün. */
-function splitDate(value?: string) {
+/** "22 May" formatı — tarix seçilmiş dilin lokalında yazılır. */
+function splitDate(value: string | undefined, locale: string) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return {
-    day: date.toLocaleDateString("az-AZ", { day: "2-digit" }),
-    month: date.toLocaleDateString("az-AZ", { month: "short" }).toUpperCase(),
-    time: date.toLocaleTimeString("az-AZ", { hour: "2-digit", minute: "2-digit" }),
+    day: date.toLocaleDateString(locale, { day: "2-digit" }),
+    month: date.toLocaleDateString(locale, { month: "short" }).toUpperCase(),
+    time: date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
   };
 }
 
 export function HomeExperience() {
+  const { t, locale } = useLanguage();
   const { user } = useAuth();
+  // API "clubs"/"faculties" kimi açar qaytarır — seçilmiş dildə göstəririk.
+  const categoryLabel = (value?: string) => (value ? t(`category.${value}`) : "");
   const firstName = user?.name.trim().split(/\s+/)[0];
 
   const clubs = useSWR("home-clubs", () => getJson<Club[]>("/api/clubs"), {
@@ -124,16 +121,16 @@ export function HomeExperience() {
             <Sparkles size={13} aria-hidden="true" /> EduRate
           </span>
           <h1 id="home-title">
-            {firstName ? `Xoş gəldin, ${firstName}.` : "Kampus həyatın bir yerdə."}
+            {firstName ? t("home.welcome", { name: firstName }) : t("home.title")}
           </h1>
-          <p>Tədbirlərə qoşul, klubları kəşf et, elanları izlə.</p>
+          <p>{t("home.subtitle")}</p>
         </div>
         <div className="home-banner__actions">
           <Link href="/events" className="home-btn is-primary">
-            Tədbirlərə bax <ArrowRight size={15} aria-hidden="true" />
+            {t("home.ctaEvents")} <ArrowRight size={15} aria-hidden="true" />
           </Link>
           <Link href={user ? "/profile" : "/auth"} className="home-btn">
-            {user ? "Profilim" : "Daxil ol"}
+            {user ? t("home.ctaProfile") : t("nav.signIn")}
           </Link>
         </div>
       </section>
@@ -141,19 +138,19 @@ export function HomeExperience() {
       <div className="home-columns">
         <div className="home-main">
           {/* Sürətli keçidlər — bir sıra, kiçik */}
-          <nav className="home-quick" aria-label="Sürətli keçidlər">
+          <nav className="home-quick" aria-label={t("home.quickLinks")}>
             {quickLinks.map(({ href, label, icon: Icon }) => (
               <Link key={href} href={href} className="home-quick__item">
                 <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
-                <span>{label}</span>
+                <span>{t(label)}</span>
               </Link>
             ))}
           </nav>
 
           <section className="home-panel" aria-labelledby="home-feed-title">
             <header className="home-panel__head">
-              <h2 id="home-feed-title">Son elanlar</h2>
-              <Link href="/feed">Hamısına bax <ArrowRight size={14} aria-hidden="true" /></Link>
+              <h2 id="home-feed-title">{t("home.latestAnnouncements")}</h2>
+              <Link href="/feed">{t("common.seeAll")} <ArrowRight size={14} aria-hidden="true" /></Link>
             </header>
 
             {network.isLoading ? (
@@ -177,17 +174,17 @@ export function HomeExperience() {
                 ))}
               </ul>
             ) : (
-              <p className="home-empty">Hələ elan yoxdur.</p>
+              <p className="home-empty">{t("home.noAnnouncements")}</p>
             )}
           </section>
         </div>
 
         {/* Sağ sütun — tədbirlər və klublar */}
-        <aside className="home-rail" aria-label="Kampus xülasəsi">
+        <aside className="home-rail" aria-label={t("home.campusSummary")}>
           <section className="home-panel" aria-labelledby="home-events-title">
             <header className="home-panel__head">
-              <h2 id="home-events-title">Yaxınlaşan tədbirlər</h2>
-              <Link href="/events" aria-label="Bütün tədbirlərə bax">
+              <h2 id="home-events-title">{t("home.upcomingEvents")}</h2>
+              <Link href="/events" aria-label={t("home.allEvents")}>
                 <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </header>
@@ -197,7 +194,7 @@ export function HomeExperience() {
             ) : upcoming.length ? (
               <ul className="home-events">
                 {upcoming.map((event) => {
-                  const when = splitDate(event.startAt);
+                  const when = splitDate(event.startAt, locale);
                   return (
                     <li key={event.id}>
                       <span className="home-events__date" aria-hidden="true">
@@ -217,14 +214,14 @@ export function HomeExperience() {
                 })}
               </ul>
             ) : (
-              <p className="home-empty">Yaxın vaxtda tədbir planlaşdırılmayıb.</p>
+              <p className="home-empty">{t("home.noEvents")}</p>
             )}
           </section>
 
           <section className="home-panel" aria-labelledby="home-clubs-title">
             <header className="home-panel__head">
-              <h2 id="home-clubs-title">Populyar klublar</h2>
-              <Link href="/clubs" aria-label="Bütün klublara bax">
+              <h2 id="home-clubs-title">{t("home.popularClubs")}</h2>
+              <Link href="/clubs" aria-label={t("home.allClubs")}>
                 <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </header>
@@ -241,16 +238,16 @@ export function HomeExperience() {
                     <div>
                       <h3>{club.name}</h3>
                       <small>
-                        {club.memberCount ?? 0} üzv
+                        {club.memberCount ?? 0} {t("common.members")}
                         {club.category ? ` · ${club.category}` : ""}
                       </small>
                     </div>
-                    <Link href={`/clubs/${club.slug}`} className="home-clubs__cta">Bax</Link>
+                    <Link href={`/clubs/${club.slug}`} className="home-clubs__cta">{t("common.view")}</Link>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="home-empty">Hələ klub yoxdur.</p>
+              <p className="home-empty">{t("home.noClubs")}</p>
             )}
           </section>
         </aside>

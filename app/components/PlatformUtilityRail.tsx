@@ -30,6 +30,7 @@ import {
   type PlatformRouteContext,
 } from "../data/platform-shell";
 import { useAuth } from "./AuthProvider";
+import { useT } from "../i18n/LanguageProvider";
 
 export type UtilityTab = "search" | "shortcuts" | "updates";
 
@@ -76,6 +77,7 @@ function UtilityContent({
   searchInputRef,
   idPrefix,
 }: UtilityContentProps) {
+  const t = useT();
   const { user } = useAuth();
   const [upcomingEvents,setUpcomingEvents]=useState<Array<{id:string;title:string;startAt:string;location:string}>>([]);
   const [activeAnnouncements,setActiveAnnouncements]=useState<Array<{id:string;title:string;dateLabel:string;source:string}>>([]);
@@ -141,7 +143,7 @@ function UtilityContent({
 
   if (activeTab === "search") {
     return (
-      <div id={`${idPrefix}-search`} className="platform-utility-content" role="tabpanel" aria-label="Platformada axtarış">
+      <div id={`${idPrefix}-search`} className="platform-utility-content" role="tabpanel" aria-label={t("common.search")}>
         <form
           className="platform-global-search"
           role="search"
@@ -151,7 +153,7 @@ function UtilityContent({
           }}
         >
           <Search size={16} aria-hidden="true" />
-          <label className="sr-only" htmlFor={`${idPrefix}-search-input`}>Platformada axtar</label>
+          <label className="sr-only" htmlFor={`${idPrefix}-search-input`}>{t("common.search")}</label>
           <input
             ref={searchInputRef}
             id={`${idPrefix}-search-input`}
@@ -311,6 +313,7 @@ export function PlatformUtilityRail({
   onDesktopOpenChange,
   requestedTab,
 }: PlatformUtilityRailProps) {
+  const t = useT();
   const pathname = usePathname();
   const router = useRouter();
   const reducedMotion = useReducedMotion();

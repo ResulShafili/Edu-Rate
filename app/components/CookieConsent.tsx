@@ -3,6 +3,7 @@
 import { Analytics } from "@vercel/analytics/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useT } from "../i18n/LanguageProvider";
 
 /**
  * Çərəz razılığı + statistika.
@@ -29,6 +30,7 @@ function readConsent(): Consent | null {
 }
 
 export function CookieConsent() {
+  const t = useT();
   const [consent, setConsent] = useState<Consent | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -56,19 +58,18 @@ export function CookieConsent() {
       {consent === null ? (
         <div className="cookie-consent" role="dialog" aria-labelledby="cookie-consent-title">
           <div>
-            <strong id="cookie-consent-title">Çərəzlər</strong>
+            <strong id="cookie-consent-title">{t("cookie.title")}</strong>
             <p>
-              Giriş üçün yalnız zəruri çərəzlərdən istifadə edirik. Saytı yaxşılaşdırmaq
-              üçün anonim ziyarət statistikası toplamağa icazə verirsən?{" "}
-              <Link href="/privacy">Ətraflı</Link>
+              {t("cookie.body")}{" "}
+              <Link href="/privacy">{t("cookie.more")}</Link>
             </p>
           </div>
           <div className="cookie-consent__actions">
             <button type="button" onClick={() => choose("declined")}>
-              İmtina et
+              {t("cookie.decline")}
             </button>
             <button type="button" className="is-primary" onClick={() => choose("accepted")}>
-              Qəbul et
+              {t("cookie.accept")}
             </button>
           </div>
         </div>

@@ -10,6 +10,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useT } from "../i18n/LanguageProvider";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useAuth } from "./AuthProvider";
 import { MotionLayer } from "./MotionLayer";
 import { CookieConsent } from "./CookieConsent";
@@ -25,6 +27,7 @@ type PlatformShellProps = {
 };
 
 export function PlatformShell({ children }: PlatformShellProps) {
+  const t = useT();
   const pathname = usePathname();
   const { isAdmin, user } = useAuth();
   const [navigationState, setNavigationState] = useState({ pathname, open: false });
@@ -165,7 +168,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
       <MotionLayer />
       <PwaLayer />
       <CookieConsent />
-      <a className="skip-link" href="#main-content">Əsas məzmuna keç</a>
+      <a className="skip-link" href="#main-content">{t("nav.skipToContent")}</a>
 
       <button
         ref={navigationButtonRef}
@@ -214,7 +217,8 @@ export function PlatformShell({ children }: PlatformShellProps) {
             <Link href="/" className="brand"><span className="brand-mark"><span /></span>EDURATE</Link>
             <div>
               <span>© 2026 EduRate</span>
-              <Link href="/support?topic=privacy">Əlaqə və məxfilik sorğusu</Link>
+              <Link href="/support?topic=privacy">{t("footer.legal")}</Link>
+              <LanguageSwitcher />
             </div>
           </footer>
         </div>
