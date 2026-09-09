@@ -16,7 +16,28 @@ npm run dev
 - Swagger UI: `http://localhost:3001/api-docs`
 - OpenAPI JSON: `http://localhost:3001/api/openapi.json`
 
-`DATABASE_URL` boş olduqda server yalnız development/test üçün yaddaş rejimində işləyir. Production mühitində PostgreSQL və ən az 32 simvolluq `JWT_SECRET` məcburidir.
+`DATABASE_URL` boş olduqda server yalnız development/test üçün yaddaş rejimində işləyir. Production mühitində PostgreSQL məcburidir.
+
+### JWT_SECRET (bütün mühitlərdə məcburi)
+
+`JWT_SECRET` **hər mühitdə** — development, test, staging, Docker və production —
+tələb olunur və ən az **32 simvol** olmalıdır. Təyin edilməyibsə və ya qısadırsa
+server başlamır və aydın xəta verir.
+
+Əvvəl burada koda yazılmış default açar var idi və o, yalnız production-da rədd
+edilirdi; nəticədə digər bütün mühitlər ictimai-məlum açarla token imzalayırdı.
+Belə açarı bilən şəxs saxta token düzəldib istənilən hesaba, o cümlədən admin
+hesabına giriş edə bilərdi. Default tamamilə silinib.
+
+Öz açarını yarat və `.env` faylına yaz:
+
+```bash
+openssl rand -base64 48
+```
+
+`backend/.env.example` faylındakı dəyər yalnız lokal başlanğıc üçündür; git-də
+saxlandığı üçün ictimai sayılır və deploy edilən heç bir mühitdə istifadə
+edilməməlidir.
 
 ## Render deployment
 

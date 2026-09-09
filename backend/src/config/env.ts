@@ -11,7 +11,22 @@ const envSchema = z
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     PORT: z.coerce.number().int().positive().default(3001),
     DATABASE_URL: z.string().url().optional().or(z.literal("")),
-    JWT_SECRET: z.string().min(16).default("edurate-local-development-secret"),
+    /**
+     * JWT imzalama açarı BÜTÜN mühitlərdə məcburidir.
+     *
+     * Əvvəl burada `.default("edurate-local-development-secret")` var idi və 32
+     * simvol yoxlaması yalnız `NODE_ENV === "production"` üçün işləyirdi. Yəni
+     * development, test, staging, Docker, self-host və fork mühitlərində tətbiq
+     * səssizcə koda yazılmış, ictimai-məlum açarla imzalayırdı; onu bilən
+     * istənilən şəxs saxta (forged) token düzəldib autentifikasiyanı keçə və
+     * admin hesabını ələ keçirə bilərdi (CWE-798).
+     *
+     * İndi default YOXDUR: açar verilməyibsə və ya zəifdirsə server ümumiyyətlə
+     * qalxmır (fail-fast) — mühitdən asılı olmayaraq.
+     */
+    JWT_SECRET: z
+      .string({ error: "JWT_SECRET təyin edilməlidir. Güclü açar yarat: openssl rand -base64 48" })
+      .min(32, { error: "JWT_SECRET ən az 32 simvol olmalıdır. Güclü açar yarat: openssl rand -base64 48" }),
     JWT_EXPIRES_IN: z.string().default("30d"),
     FRONTEND_URL: z
       .string()
@@ -32,11 +47,19 @@ const envSchema = z
     VAPID_SUBJECT: z.string().default("mailto:support@edurate.az"),
   })
   .superRefine((value, context) => {
-    if (value.NODE_ENV === "production" && value.JWT_SECRET.length < 32) {
+    // Koddan silinmiş köhnə default və sənədlərdəki nümunə mətn ictimai-məlumdur.
+    // Kimsə onları .env-ə köçürübsə uzunluq yoxlamasını keçə bilər, ona görə
+    // açıq şəkildə rədd edirik.
+    const publiclyKnownSecrets = new Set([
+      "edurate-local-development-secret",
+      "minimum-32-simvolluq-unikal-production-sirri",
+    ]);
+    if (publiclyKnownSecrets.has(value.JWT_SECRET.trim())) {
       context.addIssue({
         code: "custom",
         path: ["JWT_SECRET"],
-        message: "Production JWT_SECRET ən az 32 simvol olmalıdır.",
+        message:
+          "JWT_SECRET ictimai-məlum nümunə dəyərdir. Öz açarını yarat: openssl rand -base64 48",
       });
     }
 
@@ -60,7 +83,13 @@ const envSchema = z
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error("Environment dəyişənləri yanlışdır:", z.treeifyError(parsed.error));
+  // `treeifyError` konsolda `[Array]` kimi kəsilirdi və developer əsl səbəbi
+  // görmürdü. Hər problemi "SAHƏ: mesaj" şəklində açıq yazırıq ki, nəyi
+  // düzəltmək lazım olduğu dərhal aydın olsun.
+  const details = parsed.error.issues
+    .map((issue) => `  - ${issue.path.join(".") || "(kök)"}: ${issue.message}`)
+    .join("\n");
+  console.error(`Environment dəyişənləri yanlışdır:\n${details}`);
   throw new Error("Server konfiqurasiyası yanlışdır.");
 }
 
